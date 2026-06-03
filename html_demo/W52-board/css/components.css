@@ -56,6 +56,16 @@
   align-items: center;
   margin-top: auto;
 }
+
+/* ── 旗標圓點列（床位卡片用）── */
+.dots-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+  min-height: 12px;
+  margin-top: auto;
+}
 .empty-label { font-size: 22px; font-weight: 700; color: var(--text-empty); }
 .empty-bed-num {
   font-size: 16px;
@@ -69,47 +79,34 @@
 .gender-m { color: #1565C0; }
 .gender-f { color: #AD1457; }
 
-/* ── Badges ── */
-.badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 8px;
-  border-radius: var(--radius-badge);
-  font-size: 13px;
-  font-weight: 700;
-  white-space: nowrap;
-  line-height: 20px;
+/* ── 旗標圓點 ── */
+.flag-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
 }
-/* 規格 13 種（§7.1.2.1 (2.2)） */
-.badge-DNR      { background: #6A1B9A; color: #fff; }
-.badge-高危跌   { background: #E65100; color: #fff; }
-.badge-依賴L1   { background: #4527A0; color: #fff; }
-.badge-依賴L2   { background: #4527A0; color: #fff; }
-.badge-依賴L3   { background: #311B92; color: #fff; }
-.badge-隔離     { background: #B71C1C; color: #fff; }
-.badge-保密     { background: #37474F; color: #fff; }
-.badge-禁治療   { background: #0D47A1; color: #fff; }
-.badge-禁食     { background: #2E7D32; color: #fff; }
-.badge-過敏     { background: #BF360C; color: #fff; }
-.badge-RRT      { background: #C62828; color: #fff; }
-.badge-化療     { background: #880E4F; color: #fff; }
-.badge-輪椅     { background: #558B2F; color: #fff; }
-.badge-推床     { background: #4E342E; color: #fff; }
-.badge-氧氣設備 { background: #01579B; color: #fff; }
-.badge-洗腎     { background: #006064; color: #fff; }
-.badge-待轉入   { background: #1565C0; color: #fff; }
-.badge-待轉出   { background: #E65100; color: #fff; }
-.badge-待出院   { background: #2E7D32; color: #fff; }
-/* +N 指示器 */
-.badge-more {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 6px;
-  border-radius: var(--radius-badge);
-  font-size: 12px;
-  font-weight: 700;
-  background: rgba(0,0,0,0.10);
-  color: var(--text-secondary);
-  white-space: nowrap;
-  line-height: 20px;
-}
+/* 卡片內圓點略小 */
+.bed-card .flag-dot { width: 9px; height: 9px; }
+
+/* 圓點色碼（規格 13 種 + 運動/氧氣/洗腎 + 3 種流量狀態） */
+.flag-dot-DNR      { background: #6A1B9A; }
+.flag-dot-高危跌   { background: #E65100; }
+.flag-dot-依賴L1   { background: #4527A0; }
+.flag-dot-依賴L2   { background: #4527A0; }
+.flag-dot-依賴L3   { background: #311B92; }
+.flag-dot-隔離     { background: #B71C1C; }
+.flag-dot-保密     { background: #37474F; }
+.flag-dot-禁治療   { background: #0D47A1; }
+.flag-dot-禁食     { background: #2E7D32; }
+.flag-dot-過敏     { background: #BF360C; }
+.flag-dot-RRT      { background: #C62828; }
+.flag-dot-化療     { background: #880E4F; }
+.flag-dot-輪椅     { background: #558B2F; }
+.flag-dot-推床     { background: #4E342E; }
+.flag-dot-氧氣設備 { background: #01579B; }
+.flag-dot-洗腎     { background: #006064; }
+.flag-dot-待轉入   { background: #1565C0; }
+.flag-dot-待轉出   { background: #E65100; }
+.flag-dot-待出院   { background: #2E7D32; }

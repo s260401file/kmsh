@@ -84,20 +84,49 @@ body { flex-direction: column; }
   background: var(--filter-active-bg);
   color: var(--filter-active-text);
 }
-.filter-bar .badge-filter {
-  cursor: pointer;
+/* ── 圖例項（圓點 + 文字），filter-bar 與 modal 通用 ── */
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 14px 5px 10px;
+  border-radius: var(--radius-pill);
+  border: 1.5px solid var(--divider);
+  background: var(--bg-card-occ);
   font-size: 15px;
-  padding: 6px 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  white-space: nowrap;
   line-height: 20px;
-  transition: transform 0.1s, box-shadow 0.1s;
+  transition: transform 0.1s, background 0.1s, color 0.1s, border-color 0.1s, box-shadow 0.1s;
 }
-.filter-bar .badge-filter:hover {
+.legend-item:hover {
+  border-color: var(--text-secondary);
+  color: var(--text-primary);
   transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.35);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
 }
-.filter-bar .badge-filter.active {
+.legend-item.active {
+  background: var(--filter-active-bg);
+  color: var(--filter-active-text);
+  border-color: var(--filter-active-bg);
   box-shadow: 0 0 0 2.5px #1A2635, 0 0 0 5px rgba(0,0,0,0.15);
 }
+
+/* Modal 內旗標：不可點，較小尺寸 */
+.legend-item.modal-flag {
+  cursor: default;
+  font-size: 13px;
+  padding: 3px 10px 3px 8px;
+}
+.legend-item.modal-flag:hover {
+  transform: none;
+  border-color: var(--divider);
+  color: var(--text-secondary);
+  box-shadow: none;
+}
+/* 允許在 filter-bar 內也用 .filter-bar > .legend-item — 上方規則已涵蓋 */
 
 /* ── Main content area ── */
 .main-content {
@@ -150,8 +179,9 @@ body { flex-direction: column; }
 .ward-grid .patient-basic { font-size: 11px; }
 .ward-grid .empty-label  { font-size: 16px; }
 .ward-grid .empty-bed-num { font-size: 12px; margin-bottom: 2px; }
-.ward-grid .badge { font-size: 11px; padding: 1px 5px; line-height: 18px; }
-.ward-grid .badge-more { font-size: 10px; padding: 1px 4px; line-height: 18px; }
+/* 緊湊網格內圓點再小一點 */
+.ward-grid .bed-card .flag-dot { width: 8px; height: 8px; }
+.ward-grid .dots-row { gap: 3px; min-height: 10px; }
 
 /* ── 左翼上段（R1-R3）── */
 .bed-W52-052 { grid-column: 1; grid-row: 1; }

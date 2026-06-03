@@ -1,5 +1,15 @@
+// 卡片用：純圓點群（自動換行，全部顯示）
+function dotsHTML(badges) {
+  return badges
+    .map(b => `<span class="flag-dot flag-dot-${b}" title="${b}"></span>`)
+    .join("");
+}
+
+// Modal 用：圓點 + 文字（與圖例風格一致）
 function badgeHTML(badges) {
-  return badges.map(b => `<span class="badge badge-${b}">${b}</span>`).join("");
+  return badges
+    .map(b => `<span class="legend-item modal-flag"><span class="flag-dot flag-dot-${b}"></span><span>${b}</span></span>`)
+    .join("");
 }
 
 function buildBadges(patient, bedStatus = "") {
@@ -39,9 +49,6 @@ function renderBedCard(bed) {
   const genderAge  = `${p.Gender}/${p.Age}`;
   const genderCls  = p.Gender === "M" ? "gender-m" : "gender-f";
   const allBadges  = buildBadges(p, bed.Status);
-  const cardBadges = allBadges.slice(0, 3);
-  const extra      = allBadges.length - cardBadges.length;
-  const moreHtml   = extra > 0 ? `<span class="badge-more">+${extra}</span>` : "";
   return `
     <div class="bed-card ${bed.Status} bed-${bed.BedId}"
          data-id="${bed.BedId}" data-status="${bed.Status}"
@@ -61,7 +68,7 @@ function renderBedCard(bed) {
         <span class="patient-name ${genderCls}">${p.PatientName}</span>
         <span class="patient-basic">${genderAge}</span>
       </div>
-      <div class="card-row3">${badgeHTML(cardBadges)}${moreHtml}</div>
+      <div class="dots-row">${dotsHTML(allBadges)}</div>
     </div>`;
 }
 
