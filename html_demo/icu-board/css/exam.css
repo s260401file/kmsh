@@ -1,0 +1,212 @@
+/* ════════════════════════════════════════════════════
+   檢查 ／ 會診 — Exam & Consult (ICU)
+   左右雙表格佈局，對齊 W52 exam.css
+   ════════════════════════════════════════════════════ */
+
+/* ── 面板容器 ── */
+.ec-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 16px 20px 12px;
+  gap: 14px;
+}
+
+/* ── 面板標題 ── */
+.ec-title {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.ec-title-bar {
+  display: inline-block;
+  width: 5px;
+  height: 24px;
+  background: #7B1FA2;
+  border-radius: 3px;
+}
+
+/* ── 雙欄 ── */
+.ec-columns {
+  flex: 1;
+  display: flex;
+  gap: 20px;
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* ── 卡片 ── */
+.ec-card {
+  flex: 1;
+  background: var(--bg-card-occ);
+  border: 1px solid var(--divider);
+  border-radius: var(--radius-card);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+}
+
+/* 卡片標頭 */
+.ec-card-header {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--accent-green);
+  padding: 13px 18px 12px;
+  border-bottom: 1px solid var(--divider);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ec-card-count {
+  font-size: 13px;
+  font-weight: 900;
+  color: var(--text-muted);
+  font-family: var(--font-num);
+}
+
+/* 表格捲動容器 */
+.ec-table-wrap {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: auto;
+  touch-action: pan-y;
+}
+
+.ec-table-wrap::-webkit-scrollbar { width: 4px; height: 4px; }
+.ec-table-wrap::-webkit-scrollbar-thumb { background: var(--divider); border-radius: 2px; }
+
+/* ── 表格 ── */
+.ec-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.ec-table thead tr {
+  background: #E8F4EE;
+}
+
+.ec-table th {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-align: left;
+  padding: 10px 14px;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--divider);
+}
+
+.ec-table th.ec-th-center { text-align: center; }
+
+.ec-table tbody tr {
+  border-bottom: 1px solid var(--bg-card-empty);
+}
+
+.ec-table tbody tr:last-child { border-bottom: none; }
+
+.ec-table td {
+  font-size: 16px;
+  color: var(--text-primary);
+  padding: 12px 14px;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+/* ── 床號 ── */
+.ec-td-bed {
+  font-size: 15px;
+  font-family: var(--font-num);
+  font-weight: 700;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+/* ── 姓名 ── */
+.ec-td-name { white-space: nowrap; }
+.ec-gender-m { color: #1565C0; }
+.ec-gender-f { color: #AD1457; }
+
+/* ── 檢查項目／會診科別 ── */
+.ec-td-item {
+  font-size: 16px;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+/* ── 日期 ── */
+.ec-td-date {
+  font-size: 15px;
+  font-family: var(--font-num);
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+/* ── 時段 / 時間 ── */
+.ec-td-time {
+  font-size: 15px;
+  font-family: var(--font-num);
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+/* ── 會診醫師 ── */
+.ec-td-doctor {
+  font-size: 15px;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+/* ── 備註 ── */
+.ec-td-remark {
+  font-size: 14px;
+  color: var(--text-muted);
+  white-space: normal;
+  min-width: 100px;
+  max-width: 240px;
+  line-height: 1.4;
+}
+
+/* ── 狀態 badge ── */
+.ec-td-status {
+  text-align: center;
+  white-space: nowrap;
+}
+
+.ec-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 14px;
+  border-radius: var(--radius-badge);
+  font-size: 13px;
+  font-weight: 800;
+  color: #FFFFFF;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  min-width: 56px;
+}
+
+/* 檢查狀態 */
+.ec-status-待執行 { background: #263238; }
+.ec-status-已完成 { background: #2E7D32; }
+.ec-status-預約   { background: #1565C0; }
+
+/* 會診狀態 */
+.ec-status-進行中 { background: #E65100; }
+.ec-status-待安排 { background: #263238; }
+
+/* ── 空狀態 ── */
+.ec-empty-row td {
+  text-align: center;
+  color: var(--text-muted);
+  padding: 32px 18px;
+  font-size: 18px;
+}

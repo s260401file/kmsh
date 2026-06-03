@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>高雄市立民生醫院 ICU 電子白板 — 抗生素</title>
+  <link rel="stylesheet" href="css/variables.css?v=19">
+  <link rel="stylesheet" href="css/reset.css?v=19">
+  <link rel="stylesheet" href="css/main.css?v=19">
+  <link rel="stylesheet" href="css/components.css?v=19">
+  <link rel="stylesheet" href="css/antibiotic.css">
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="page-header">
+    <div class="header-left">ICU</div>
+    <div class="header-center">
+      <div class="staff-block"><div class="staff-label">病房主任</div><div class="staff-name" id="ward-director">—</div></div>
+      <div class="staff-block"><div class="staff-label">單位護理長</div><div class="staff-name" id="head-nurse">—</div></div>
+    </div>
+    <div class="header-right">
+      <div class="update-label">資料更新時間：剛剛</div>
+      <div class="clock-date" id="clock-date"></div>
+      <div class="clock-time" id="clock-time"></div>
+    </div>
+  </header>
+
+  <!-- Announce bar -->
+  <div class="announce-bar">
+    <span>◆</span>
+    <span>2025/05/15 院內感染管制週宣導：請確實執行手部衛生，進出隔離病房務必穿戴適當防護裝備。</span>
+  </div>
+
+  <!-- Main content（與 index.html 結構完全相同）-->
+  <main class="main-content">
+
+    <!-- 4F section -->
+    <div class="floor-section floor-4f">
+      <div class="floor-title">▌ 4F　共 20 床</div>
+      <div class="floor-beds">
+        <div class="grid-4f" id="ab-grid-4f"></div>
+      </div>
+    </div>
+
+    <!-- 3F section -->
+    <div class="floor-section floor-3f">
+      <div class="floor-title">▌ 3F　共 5 床</div>
+      <div class="floor-beds">
+        <div class="grid-3f" id="ab-grid-3f"></div>
+      </div>
+
+      <!-- 抗生素統計面板（取代 ward-stats）-->
+      <div class="ward-stats">
+        <div class="ws-row">
+          <div class="ws-item">
+            <div class="ws-value" id="ab-stat-total">—</div>
+            <div class="ws-label">抗生素總筆</div>
+          </div>
+          <div class="ws-item">
+            <div class="ws-value ws-abx-4f" id="ab-stat-4f">—</div>
+            <div class="ws-label">4F 筆數</div>
+          </div>
+          <div class="ws-item">
+            <div class="ws-value ws-abx-3f" id="ab-stat-3f">—</div>
+            <div class="ws-label">3F 筆數</div>
+          </div>
+          <div class="ws-item">
+            <div class="ws-value ws-abx-beds" id="ab-stat-beds">—</div>
+            <div class="ws-label">使用床位</div>
+          </div>
+        </div>
+        <div class="ws-row">
+          <div class="ws-item">
+            <div class="ws-value ws-abx-vanc" id="ab-stat-vanc">—</div>
+            <div class="ws-label">Vancomycin</div>
+          </div>
+          <div class="ws-item">
+            <div class="ws-value ws-abx-mero" id="ab-stat-mero">—</div>
+            <div class="ws-label">Meropenem</div>
+          </div>
+          <div class="ws-item">
+            <div class="ws-value ws-abx-pip" id="ab-stat-pip">—</div>
+            <div class="ws-label">Pip/Tazo</div>
+          </div>
+          <div class="ws-item">
+            <div class="ws-value ws-abx-other" id="ab-stat-other">—</div>
+            <div class="ws-label">其他</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Bottom tabs -->
+  <nav class="bottom-tabs">
+    <a href="index.html"      class="tab-btn">病室動態</a>
+    <a href="antibiotic.html" class="tab-btn active">抗生素</a>
+    <a href="tube.html"       class="tab-btn">管路</a>
+    <a href="surgery.html"    class="tab-btn">手術資訊</a>
+    <a href="exam.html"       class="tab-btn">檢查/會診</a>
+    <a href="contact.html"    class="tab-btn">連絡電話</a>
+    <a href="bulletin.html"   class="tab-btn">佈告欄</a>
+    <a href="evacuation.html" class="tab-btn">避難圖</a>
+  </nav>
+
+  <!-- 抗生素 Modal -->
+  <div class="ab-modal-overlay" id="ab-modal">
+    <div class="ab-modal-box">
+      <div class="ab-modal-header">
+        <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;">
+          <span class="ab-modal-bed"  id="ab-m-bed"></span>
+          <span class="ab-modal-name" id="ab-m-name"></span>
+          <span class="ab-modal-rec"  id="ab-m-rec"></span>
+        </div>
+        <button class="ab-modal-close" id="ab-modal-close">✕</button>
+      </div>
+      <div class="ab-modal-body" id="ab-modal-body"></div>
+      <div class="ab-modal-footer">
+        <button class="ab-btn-close" id="ab-modal-close-btn">關閉</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/mockData.js"></script>
+  <script src="js/antibioticData.js"></script>
+  <script src="js/antibiotic.js"></script>
+</body>
+</html>

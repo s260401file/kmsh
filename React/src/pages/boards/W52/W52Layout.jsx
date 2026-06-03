@@ -9,7 +9,7 @@ const TABS = [
   { path: 'care',       label: '照護提醒' },
   { path: 'surgery',    label: '手術資訊' },
   { path: 'exam',       label: '檢查/會診' },
-  { path: 'contact',    label: '連絡電話' },
+  { path: 'contact',    label: '連絡資訊' },
   { path: 'schedule',   label: '排班資訊' },
   { path: 'doctor',     label: '醫師資訊' },
   { path: 'bulletin',   label: '佈告欄' },

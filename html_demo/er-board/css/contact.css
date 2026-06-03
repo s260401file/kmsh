@@ -1,320 +1,109 @@
-/* ════════════════════════════════════════════════════
-   連絡電話 — Contact Directory  (ER board)
-   W52 contact.css と同一設計言語
-   ════════════════════════════════════════════════════ */
-
-:root {
-  --ct-mono:         "JetBrains Mono", "Courier New", monospace;
-  --ct-bg:           #131D2B;
-  --ct-accent:       #F4A928;
-  --ct-accent-glow:  rgba(244,169,40,0.20);
-  --ct-text:         #EDF1F5;
-  --ct-sub:          #5E7A93;
-  --ct-card-border:  rgba(255,255,255,0.07);
-  --ct-card-bg:      rgba(255,255,255,0.05);
-  --ct-ext-current:  54px;
-  --ct-ext-other:    30px;
-  --ct-ext-common:   26px;
-}
-
-/* ── 面板容器 ── */
+/* 連絡電話 — ER（對齊 OR/ICU ct-panel 設計） */
 .ct-panel {
   flex: 1;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  padding: 16px 20px 12px;
-  gap: 14px;
-  min-height: 0;
-}
-
-/* ════ 當班大卡 ════ */
-.ct-current-card {
-  background: var(--ct-bg);
-  border-radius: 12px;
-  padding: 18px 22px 20px;
-  flex-shrink: 0;
-  position: relative;
-  overflow: hidden;
-  animation: ct-fadein 0.4s ease both;
-}
-@keyframes ct-fadein {
-  from { opacity: 0; transform: translateY(-6px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-.ct-current-card::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: repeating-linear-gradient(
-    -52deg,
-    transparent,
-    transparent 32px,
-    rgba(255,255,255,0.015) 32px,
-    rgba(255,255,255,0.015) 33px
-  );
-  pointer-events: none;
-}
-
-/* ── 當班卡標頭 ── */
-.ct-current-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 16px;
-}
-.ct-pulse-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: var(--ct-accent);
-  flex-shrink: 0;
-  animation: ct-pulse 2.4s ease-in-out infinite;
-}
-@keyframes ct-pulse {
-  0%,100% { box-shadow: 0 0 0 0   rgba(244,169,40,0.7); }
-  55%      { box-shadow: 0 0 0 9px rgba(244,169,40,0); }
-}
-.ct-current-label {
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 2.5px;
-  text-transform: uppercase;
-  color: var(--ct-accent);
-}
-.ct-current-shift-name {
-  font-size: 20px;
-  font-weight: 800;
-  color: var(--ct-text);
-}
-.ct-current-shift-time {
-  font-family: var(--ct-mono);
-  font-size: 13px;
-  color: var(--ct-sub);
-  margin-left: 2px;
-}
-
-/* ── 當班人員橫排 ── */
-.ct-current-people {
-  display: flex;
   gap: 14px;
 }
-.ct-person-card {
-  flex: 1;
-  background: var(--ct-card-bg);
-  border: 1px solid var(--ct-card-border);
-  border-radius: 10px;
-  padding: 16px 20px 18px;
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-.ct-person-name {
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--ct-text);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  line-height: 1.3;
-}
-.ct-person-title {
-  font-size: 12px;
-  color: var(--ct-sub);
-  letter-spacing: 0.3px;
-  margin-top: 3px;
-}
-.ct-person-ext {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  margin-top: 14px;
-}
-.ct-ext-label {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  color: var(--ct-sub);
-}
-.ct-ext-number {
-  font-family: var(--ct-mono);
-  font-size: var(--ct-ext-current);
+.ct-page-title {
+  font-size: 24px;
   font-weight: 800;
-  color: var(--ct-accent);
-  line-height: 1;
-  letter-spacing: -1px;
-}
-.ct-person-mobile {
-  font-family: var(--ct-mono);
-  font-size: 13px;
-  color: var(--ct-sub);
-  letter-spacing: 0.5px;
-  margin-top: 10px;
-}
-
-/* ════ 下方雙欄 ════ */
-.ct-lower {
-  flex: 1;
-  display: flex;
-  gap: 14px;
-  overflow: hidden;
-  min-height: 0;
-}
-.ct-lower-left {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow-y: auto;
-  touch-action: pan-y;
-}
-.ct-lower-right {
-  flex: 1.1;
-  display: flex;
-  flex-direction: column;
-  overflow-y: auto;
-  touch-action: pan-y;
-}
-.ct-lower-left::-webkit-scrollbar,
-.ct-lower-right::-webkit-scrollbar  { width: 4px; }
-.ct-lower-left::-webkit-scrollbar-thumb,
-.ct-lower-right::-webkit-scrollbar-thumb { background: var(--divider); border-radius: 2px; }
-
-/* 區塊標題 */
-.ct-section-title {
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 2.5px;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  padding-bottom: 8px;
-  margin-bottom: 8px;
-  border-bottom: 1px solid var(--divider);
-  flex-shrink: 0;
-}
-
-/* ════ 非當班班別卡 ════ */
-.ct-shift-card {
-  background: var(--bg-card-occ);
-  border-radius: 10px;
-  box-shadow: var(--shadow-card);
-  overflow: hidden;
-  flex-shrink: 0;
-  margin-bottom: 10px;
-}
-.ct-shift-card:last-child { margin-bottom: 0; }
-.ct-shift-card-header {
+  color: var(--text-primary);
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 9px 16px;
-  background: var(--bg-card-empty);
+  flex-shrink: 0;
+}
+.ct-title-accent {
+  display: inline-block;
+  width: 5px;
+  height: 24px;
+  background: var(--accent-green);
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+.ct-title-caption {
+  font-size: 15px;
+  font-weight: 400;
+  color: var(--text-muted);
+}
+.ct-columns {
+  flex: 1;
+  display: flex;
+  gap: 20px;
+  overflow: hidden;
+  min-height: 0;
+}
+.ct-card {
+  background: var(--bg-card-occ);
+  border: 1px solid var(--divider);
+  border-radius: var(--radius-card);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.ct-card-duty   { flex: 0 0 auto; width: 58%; }
+.ct-card-common { flex: 1; }
+.ct-card-header {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--accent-green);
+  padding: 13px 18px 12px;
+  border-bottom: 1px solid var(--divider);
+  flex-shrink: 0;
+}
+.ct-table-wrap {
+  flex: 1;
+  overflow-y: auto;
+}
+.ct-table-wrap::-webkit-scrollbar { width: 4px; }
+.ct-table-wrap::-webkit-scrollbar-thumb { background: var(--divider); border-radius: 2px; }
+.ct-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.ct-table thead tr { background: #E8F5EE; }
+.ct-table th {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-align: left;
+  padding: 10px 18px;
+  white-space: nowrap;
   border-bottom: 1px solid var(--divider);
 }
-.ct-shift-pill {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 12px;
-  border-radius: var(--radius-pill);
-  font-size: 12px;
-  font-weight: 800;
+.ct-table tbody tr { border-bottom: 1px solid var(--bg-card-empty); }
+.ct-table tbody tr:last-child { border-bottom: none; }
+.ct-table td {
+  font-size: 17px;
+  color: var(--text-primary);
+  padding: 12px 18px;
+  vertical-align: middle;
   white-space: nowrap;
 }
-.ct-shift-pill.白班 { background: #FFF3E0; color: #E65100; }
-.ct-shift-pill.小夜 { background: #EDE7F6; color: #5E35B1; }
-.ct-shift-pill.大夜 { background: #E8EAF6; color: #1A237E; }
-.ct-shift-card-time {
-  font-family: var(--ct-mono);
-  font-size: 13px;
-  color: var(--text-muted);
+.ct-ext {
+  color: var(--accent-green);
+  font-weight: 700;
+  font-family: var(--font-num);
 }
-.ct-shift-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 11px 16px;
-  border-bottom: 1px solid var(--bg-card-empty);
+.ct-col-ext { text-align: right; padding-right: 20px; }
+.ct-mobile { color: var(--text-muted); font-size: 15px; }
+.ct-shift-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 700;
 }
-.ct-shift-row:last-child { border-bottom: none; }
-.ct-shift-row-info {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-}
-.ct-shift-row-name  { font-size: 18px; font-weight: 700; color: var(--text-primary); }
-.ct-shift-row-title { font-size: 12px; color: var(--text-muted); }
-.ct-shift-row-phones {
-  display: flex;
-  align-items: baseline;
-  gap: 12px;
-}
-.ct-shift-ext {
-  font-family: var(--ct-mono);
-  font-size: var(--ct-ext-other);
+.ct-shift-白班 { background: #FFF8E1; color: #B45309; }
+.ct-shift-小夜 { background: #EDE7F6; color: #6A1B9A; }
+.ct-shift-大夜 { background: #E3F2FD; color: var(--accent-blue); }
+.ct-category-header td {
+  background: #E8F5EE;
+  font-size: 12px;
   font-weight: 800;
-  color: var(--text-primary);
-  line-height: 1;
-  letter-spacing: -0.5px;
-}
-.ct-shift-mobile {
-  font-family: var(--ct-mono);
-  font-size: 13px;
-  color: var(--text-muted);
-}
-
-/* ════ 常用電話 ════ */
-.ct-common-group {
-  background: var(--bg-card-occ);
-  border-radius: 10px;
-  box-shadow: var(--shadow-card);
-  overflow: hidden;
-  flex-shrink: 0;
-  margin-bottom: 10px;
-}
-.ct-common-group:last-child { margin-bottom: 0; }
-.ct-common-group-header {
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  background: var(--bg-card-empty);
-  padding: 7px 16px;
-  border-bottom: 1px solid var(--divider);
-}
-.ct-common-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 16px;
-  border-bottom: 1px solid var(--bg-card-empty);
-}
-.ct-common-row:last-child { border-bottom: none; }
-.ct-common-name {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-.ct-common-ext {
-  font-family: var(--ct-mono);
-  font-size: var(--ct-ext-common);
-  font-weight: 800;
-  color: var(--text-secondary);
-  letter-spacing: -0.5px;
-  line-height: 1;
-}
-
-/* 急救類別紅色強調 */
-.ct-common-group.is-emergency .ct-common-group-header {
-  color: #B71C1C;
-  background: #FFF5F5;
-}
-.ct-common-group.is-emergency .ct-common-ext { color: #E05C5C; }
-
-/* 空狀態 */
-.ct-empty {
-  color: var(--text-muted);
-  font-size: 16px;
-  padding: 32px;
-  text-align: center;
+  color: var(--accent-green);
+  padding: 5px 18px;
+  letter-spacing: 1px;
 }

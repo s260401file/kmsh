@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>高雄市立民生醫院 ICU 電子白板 — 避難圖</title>
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/reset.css">
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/evacuation.css">
+</head>
+<body>
+
+  <!-- ── Header ── -->
+  <header class="page-header">
+    <div class="header-left">ICU</div>
+    <div class="header-center">
+      <div class="staff-block"><div class="staff-label">病房主任</div><div class="staff-name" id="ward-director">—</div></div>
+      <div class="staff-block"><div class="staff-label">單位護理長</div><div class="staff-name" id="head-nurse">—</div></div>
+    </div>
+    <div class="header-right">
+      <div class="update-label">資料更新時間：剛剛</div>
+      <div class="clock-date" id="clock-date"></div>
+      <div class="clock-time" id="clock-time"></div>
+    </div>
+  </header>
+
+  <!-- ── Announcement marquee ── -->
+  <div class="announce-bar">
+    <span>◆</span>
+    <span>2025/05/15 院內感染管制週宣導：請確實執行手部衛生，進出隔離病房務必穿戴適當防護裝備。</span>
+  </div>
+
+  <!-- ── Main content ── -->
+  <main class="main-content">
+    <div class="ev-panel">
+
+      <!-- 面板標題 -->
+      <div class="ev-title">
+        <span class="ev-title-bar"></span>
+        避難圖
+        <span class="ev-title-meta" id="ev-floor-info"></span>
+      </div>
+
+      <!-- 雙欄 -->
+      <div class="ev-columns">
+
+        <!-- 左欄：ICU 平面圖（4F + 3F 簡化矩形佈局）-->
+        <div class="ev-map-wrap" id="ev-map-wrap">
+          <svg viewBox="0 0 820 560" class="ev-svg" preserveAspectRatio="xMidYMid meet">
+            <defs>
+              <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5"
+                      markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="#E64A19"/>
+              </marker>
+            </defs>
+
+            <!-- ══ 4F 平面圖 ══ -->
+            <!-- 4F 外牆 -->
+            <rect x="30" y="20" width="760" height="230" fill="#FAFCFD" stroke="#2C3E50" stroke-width="3"/>
+            <!-- 4F 標籤 -->
+            <text x="40" y="38" font-size="14" font-weight="800" fill="#2D7A55">4F 加護病房（20床）</text>
+
+            <!-- 4F 護理站（中央）-->
+            <rect x="330" y="45" width="130" height="90" fill="#E8F5EE" stroke="#2D7A55" stroke-width="2"/>
+            <text x="395" y="85" font-size="13" font-weight="800" fill="#2D7A55" text-anchor="middle">護理站</text>
+            <text x="395" y="100" font-size="10" fill="#5B8772" text-anchor="middle">Nurse Station</text>
+            <!-- 氧氣切換閥 -->
+            <circle cx="395" cy="125" r="9" fill="#FFF" stroke="#1565C0" stroke-width="2"/>
+            <text x="395" y="129" font-size="10" font-weight="800" fill="#1565C0" text-anchor="middle">O₂</text>
+
+            <!-- 4F 左側床區（01-09）-->
+            <rect x="38" y="45" width="280" height="90" fill="#F5F9FC" stroke="#90A4AE" stroke-width="1.5"/>
+            <text x="178" y="65" font-size="12" font-weight="700" fill="#3A5068" text-anchor="middle">床區 01–11</text>
+            <!-- 示意床格 -->
+            <rect x="45"  y="75" width="30" height="22" fill="#E3F2FD" stroke="#1565C0" stroke-width="1"/>
+            <rect x="80"  y="75" width="30" height="22" fill="#E3F2FD" stroke="#1565C0" stroke-width="1"/>
+            <rect x="115" y="75" width="30" height="22" fill="#E3F2FD" stroke="#1565C0" stroke-width="1"/>
+            <rect x="150" y="75" width="30" height="22" fill="#E3F2FD" stroke="#1565C0" stroke-width="1"/>
+            <rect x="185" y="75" width="30" height="22" fill="#E3F2FD" stroke="#1565C0" stroke-width="1"/>
+            <rect x="220" y="75" width="30" height="22" fill="#E3F2FD" stroke="#1565C0" stroke-width="1"/>
+            <rect x="255" y="75" width="30" height="22" fill="#E3F2FD" stroke="#1565C0" stroke-width="1"/>
+            <text x="45"  y="70" font-size="8" fill="#7A8FA0">01</text>
+            <text x="80"  y="70" font-size="8" fill="#7A8FA0">02</text>
+            <text x="115" y="70" font-size="8" fill="#7A8FA0">05</text>
+            <text x="150" y="70" font-size="8" fill="#7A8FA0">06</text>
+            <text x="185" y="70" font-size="8" fill="#7A8FA0">07</text>
+            <text x="220" y="70" font-size="8" fill="#7A8FA0">08</text>
+            <text x="255" y="70" font-size="8" fill="#7A8FA0">09</text>
+
+            <!-- 4F 右側床區（12-22）-->
+            <rect x="472" y="45" width="300" height="90" fill="#F5F9FC" stroke="#90A4AE" stroke-width="1.5"/>
+            <text x="622" y="65" font-size="12" font-weight="700" fill="#3A5068" text-anchor="middle">床區 12–22</text>
+            <rect x="480" y="75" width="30" height="22" fill="#E3F2FD" stroke="#1565C0" stroke-width="1"/>
+            <rect x="515" y="75" width="30" height="22" fill="#E3F2FD" stroke="#1565C0" stroke-width="1"/>
+            <rect x="550" y="75" width="30" height="22" fill="#E3F2FD" stroke="#1565C0" stroke-width="1"/>
+            <rect x="585" y="75" width="30" height="22" fill="#E3F2FD" stroke="#1565C0" stroke-width="1"/>
+            <rect x="620" y="75" width="30" height="22" fill="#E3F2FD" stroke="#1565C0" stroke-width="1"/>
+            <rect x="655" y="75" width="30" height="22" fill="#E3F2FD" stroke="#1565C0" stroke-width="1"/>
+            <rect x="690" y="75" width="30" height="22" fill="#E3F2FD" stroke="#1565C0" stroke-width="1"/>
+            <text x="480" y="70" font-size="8" fill="#7A8FA0">10</text>
+            <text x="515" y="70" font-size="8" fill="#7A8FA0">11</text>
+            <text x="550" y="70" font-size="8" fill="#7A8FA0">12</text>
+            <text x="585" y="70" font-size="8" fill="#7A8FA0">15</text>
+            <text x="620" y="70" font-size="8" fill="#7A8FA0">16</text>
+            <text x="655" y="70" font-size="8" fill="#7A8FA0">18</text>
+            <text x="690" y="70" font-size="8" fill="#7A8FA0">19–22</text>
+
+            <!-- 4F 走廊 -->
+            <rect x="38" y="145" width="734" height="50" fill="#FFFBF0" stroke="#E0D5B5" stroke-width="1"/>
+            <text x="405" y="178" font-size="12" fill="#9C8C5A" text-anchor="middle" letter-spacing="2">4F CORRIDOR — 走 廊</text>
+
+            <!-- 4F 下方輔助空間 -->
+            <rect x="38"  y="203" width="120" height="38" fill="#F5F9FC" stroke="#90A4AE" stroke-width="1.5"/>
+            <text x="98"  y="227" font-size="11" fill="#3A5068" text-anchor="middle">備品室</text>
+            <rect x="168" y="203" width="120" height="38" fill="#F5F9FC" stroke="#90A4AE" stroke-width="1.5"/>
+            <text x="228" y="227" font-size="11" fill="#3A5068" text-anchor="middle">工作站</text>
+            <rect x="298" y="203" width="200" height="38" fill="#F5F9FC" stroke="#90A4AE" stroke-width="1.5"/>
+            <text x="398" y="227" font-size="11" fill="#3A5068" text-anchor="middle">家屬等候區</text>
+            <rect x="508" y="203" width="120" height="38" fill="#F5F9FC" stroke="#90A4AE" stroke-width="1.5"/>
+            <text x="568" y="227" font-size="11" fill="#3A5068" text-anchor="middle">汙衣間</text>
+            <rect x="638" y="203" width="134" height="38" fill="#F5F9FC" stroke="#90A4AE" stroke-width="1.5"/>
+            <text x="705" y="227" font-size="11" fill="#3A5068" text-anchor="middle">浴廁</text>
+
+            <!-- 4F 滅火器 -->
+            <circle cx="120" cy="170" r="10" fill="#E05C5C"/>
+            <text x="120" y="174" font-size="11" font-weight="800" fill="white" text-anchor="middle">F</text>
+            <circle cx="400" cy="170" r="10" fill="#E05C5C"/>
+            <text x="400" y="174" font-size="11" font-weight="800" fill="white" text-anchor="middle">F</text>
+            <circle cx="640" cy="170" r="10" fill="#E05C5C"/>
+            <text x="640" y="174" font-size="11" font-weight="800" fill="white" text-anchor="middle">F</text>
+
+            <!-- 4F 緊急照明 -->
+            <circle cx="250" cy="148" r="6" fill="#2D7A55"/>
+            <circle cx="250" cy="148" r="3" fill="#A5E1B7"/>
+            <circle cx="520" cy="148" r="6" fill="#2D7A55"/>
+            <circle cx="520" cy="148" r="3" fill="#A5E1B7"/>
+
+            <!-- 4F 安全門（左/右）-->
+            <rect x="8"   y="155" width="22" height="22" fill="#2D7A55"/>
+            <text x="19"  y="171" font-size="11" font-weight="800" fill="white" text-anchor="middle">出</text>
+            <text x="6"   y="154" font-size="11" fill="#2D7A55">←</text>
+
+            <rect x="790" y="155" width="22" height="22" fill="#2D7A55"/>
+            <text x="801" y="171" font-size="11" font-weight="800" fill="white" text-anchor="middle">出</text>
+            <text x="814" y="154" font-size="11" fill="#2D7A55">→</text>
+
+            <!-- 4F 逃生路線 -->
+            <path d="M 120 166 L 38 166"  stroke="#E64A19" stroke-width="3" stroke-dasharray="8,4" fill="none" marker-end="url(#arrow)"/>
+            <path d="M 400 166 L 120 166" stroke="#E64A19" stroke-width="3" stroke-dasharray="8,4" fill="none" marker-end="url(#arrow)"/>
+            <path d="M 640 166 L 790 166" stroke="#E64A19" stroke-width="3" stroke-dasharray="8,4" fill="none" marker-end="url(#arrow)"/>
+            <path d="M 520 166 L 640 166" stroke="#E64A19" stroke-width="3" stroke-dasharray="8,4" fill="none" marker-end="url(#arrow)"/>
+
+            <!-- ══ 3F 平面圖 ══ -->
+            <rect x="30" y="270" width="760" height="160" fill="#FAFCFD" stroke="#2C3E50" stroke-width="3"/>
+            <text x="40" y="290" font-size="14" font-weight="800" fill="#2D7A55">3F 加護病房（5床）</text>
+
+            <!-- 3F 護理站 -->
+            <rect x="330" y="300" width="130" height="70" fill="#E8F5EE" stroke="#2D7A55" stroke-width="2"/>
+            <text x="395" y="335" font-size="13" font-weight="800" fill="#2D7A55" text-anchor="middle">護理站</text>
+            <text x="395" y="350" font-size="10" fill="#5B8772" text-anchor="middle">Nurse Station</text>
+            <circle cx="395" cy="362" r="8" fill="#FFF" stroke="#1565C0" stroke-width="2"/>
+            <text x="395" y="366" font-size="9" font-weight="800" fill="#1565C0" text-anchor="middle">O₂</text>
+
+            <!-- 3F 床區（5床）-->
+            <rect x="38" y="300" width="280" height="70" fill="#F5F9FC" stroke="#90A4AE" stroke-width="1.5"/>
+            <text x="178" y="318" font-size="12" font-weight="700" fill="#3A5068" text-anchor="middle">床區 F3-01～05</text>
+            <rect x="45"  y="328" width="38" height="28" fill="#E3F2FD" stroke="#1565C0" stroke-width="1"/>
+            <rect x="90"  y="328" width="38" height="28" fill="#E3F2FD" stroke="#1565C0" stroke-width="1"/>
+            <rect x="135" y="328" width="38" height="28" fill="#E3F2FD" stroke="#1565C0" stroke-width="1"/>
+            <rect x="180" y="328" width="38" height="28" fill="#E3F2FD" stroke="#1565C0" stroke-width="1"/>
+            <rect x="225" y="328" width="38" height="28" fill="#E3F2FD" stroke="#1565C0" stroke-width="1"/>
+            <text x="45"  y="324" font-size="9" fill="#7A8FA0">F3-01</text>
+            <text x="90"  y="324" font-size="9" fill="#7A8FA0">F3-02</text>
+            <text x="135" y="324" font-size="9" fill="#7A8FA0">F3-03</text>
+            <text x="180" y="324" font-size="9" fill="#7A8FA0">F3-04</text>
+            <text x="225" y="324" font-size="9" fill="#7A8FA0">F3-05</text>
+
+            <!-- 3F 輔助空間 -->
+            <rect x="472" y="300" width="120" height="70" fill="#F5F9FC" stroke="#90A4AE" stroke-width="1.5"/>
+            <text x="532" y="340" font-size="11" fill="#3A5068" text-anchor="middle">備品室</text>
+            <rect x="602" y="300" width="188" height="70" fill="#F5F9FC" stroke="#90A4AE" stroke-width="1.5"/>
+            <text x="696" y="340" font-size="11" fill="#3A5068" text-anchor="middle">家屬等候 / 浴廁</text>
+
+            <!-- 3F 走廊 -->
+            <rect x="38" y="378" width="734" height="44" fill="#FFFBF0" stroke="#E0D5B5" stroke-width="1"/>
+            <text x="405" y="405" font-size="12" fill="#9C8C5A" text-anchor="middle" letter-spacing="2">3F CORRIDOR — 走 廊</text>
+
+            <!-- 3F 滅火器 -->
+            <circle cx="120" cy="395" r="10" fill="#E05C5C"/>
+            <text x="120" y="399" font-size="11" font-weight="800" fill="white" text-anchor="middle">F</text>
+
+            <!-- 3F 安全門 -->
+            <rect x="8"   y="384" width="22" height="22" fill="#2D7A55"/>
+            <text x="19"  y="400" font-size="11" font-weight="800" fill="white" text-anchor="middle">出</text>
+            <text x="6"   y="383" font-size="11" fill="#2D7A55">←</text>
+
+            <!-- 3F 逃生路線 -->
+            <path d="M 120 396 L 38 396" stroke="#E64A19" stroke-width="3" stroke-dasharray="8,4" fill="none" marker-end="url(#arrow)"/>
+            <path d="M 400 396 L 120 396" stroke="#E64A19" stroke-width="3" stroke-dasharray="8,4" fill="none" marker-end="url(#arrow)"/>
+
+            <!-- 樓層說明連結 -->
+            <text x="18" y="258" font-size="11" font-weight="700" fill="#2D7A55">↕ 電梯 / 樓梯</text>
+            <text x="18" y="452" font-size="10" font-weight="700" fill="#2D7A55">↓ 樓梯 → 1F</text>
+
+            <!-- 集合點（右下）-->
+            <g transform="translate(405, 510)">
+              <circle cx="0" cy="0" r="24" fill="#E64A19" stroke="#FFF" stroke-width="3"/>
+              <polygon points="0,-13 4,-4 14,-4 6,3 9,12 0,6 -9,12 -6,3 -14,-4 -4,-4"
+                       fill="#FFF8E1"/>
+              <text x="50" y="-2" font-size="12" font-weight="800" fill="#1A2635">集合點</text>
+              <text x="50" y="13" font-size="10" fill="#7A8FA0">1F 門診廣場</text>
+            </g>
+
+            <!-- 北方標示 -->
+            <g transform="translate(785, 35)">
+              <circle cx="0" cy="0" r="16" fill="none" stroke="#3A5068" stroke-width="1.5"/>
+              <text x="0" y="-19" font-size="11" fill="#3A5068" text-anchor="middle">N</text>
+              <path d="M 0 -10 L 4 7 L 0 3 L -4 7 z" fill="#E64A19"/>
+            </g>
+          </svg>
+        </div>
+
+        <!-- 右欄：設備清單 + 圖例 + 緊急聯絡 -->
+        <div class="ev-side">
+
+          <!-- 設備清單 -->
+          <div class="ev-card">
+            <div class="ev-card-header">
+              避難設備清單
+              <span class="ev-card-count" id="ev-equip-count"></span>
+            </div>
+            <div class="ev-equip-list" id="equip-list"></div>
+          </div>
+
+          <!-- 圖例 -->
+          <div class="ev-card">
+            <div class="ev-card-header">圖例</div>
+            <div class="ev-legend">
+              <div class="ev-legend-row">
+                <span class="ev-legend-icon"><span class="ev-icon-fire">F</span></span>
+                <span class="ev-legend-text">滅火器</span>
+              </div>
+              <div class="ev-legend-row">
+                <span class="ev-legend-icon"><span class="ev-icon-light"></span></span>
+                <span class="ev-legend-text">緊急照明</span>
+              </div>
+              <div class="ev-legend-row">
+                <span class="ev-legend-icon"><span class="ev-icon-exit">出</span></span>
+                <span class="ev-legend-text">安全門 / 樓梯間</span>
+              </div>
+              <div class="ev-legend-row">
+                <span class="ev-legend-icon"><span class="ev-icon-arrow"></span></span>
+                <span class="ev-legend-text">逃生路線方向</span>
+              </div>
+              <div class="ev-legend-row">
+                <span class="ev-legend-icon"><span class="ev-icon-meet">★</span></span>
+                <span class="ev-legend-text">集合點</span>
+              </div>
+              <div class="ev-legend-row">
+                <span class="ev-legend-icon"><span class="ev-icon-o2">O₂</span></span>
+                <span class="ev-legend-text">氧氣切換閥</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 緊急聯絡 -->
+          <div class="ev-card">
+            <div class="ev-card-header">緊急聯絡</div>
+            <div class="ev-contacts" id="emerg-contacts"></div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ── Bottom tabs ── -->
+  <nav class="bottom-tabs">
+    <a href="index.html"      class="tab-btn">病室動態</a>
+    <a href="antibiotic.html" class="tab-btn">抗生素</a>
+    <a href="tube.html"       class="tab-btn">管路</a>
+    <a href="surgery.html"    class="tab-btn">手術資訊</a>
+    <a href="exam.html"       class="tab-btn">檢查/會診</a>
+    <a href="contact.html"    class="tab-btn">連絡電話</a>
+    <a href="bulletin.html"   class="tab-btn">佈告欄</a>
+    <a href="evacuation.html" class="tab-btn active">避難圖</a>
+  </nav>
+
+  <script src="js/evacuationData.js"></script>
+  <script src="js/evacuation.js"></script>
+</body>
+</html>

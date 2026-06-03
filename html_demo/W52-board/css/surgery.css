@@ -95,7 +95,7 @@
   border-bottom: 1px solid var(--divider);
 }
 
-.surg-th-center { text-align: center; }
+.surg-table th.surg-th-center { text-align: center; }
 
 .surg-table tbody tr {
   border-bottom: 1px solid var(--bg-card-empty);

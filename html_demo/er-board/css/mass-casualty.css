@@ -1,0 +1,147 @@
+/* 大量傷患 — ER */
+.mc-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  gap: 12px;
+}
+/* 啟動狀態橫幅 */
+.mc-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #FFEBEE;
+  border: 2px solid var(--accent-red);
+  border-radius: 8px;
+  padding: 10px 18px;
+  flex-shrink: 0;
+}
+.mc-banner-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.mc-banner-title {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--accent-red);
+}
+.mc-status-badge {
+  background: var(--accent-red);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
+  padding: 3px 10px;
+  border-radius: 12px;
+  animation: mc-blink 1.5s step-end infinite;
+}
+@keyframes mc-blink { 0%,100%{opacity:1} 50%{opacity:0.5} }
+.mc-banner-time { font-size: 13px; color: var(--accent-red); }
+
+/* 統計橫列 */
+.mc-stats-row {
+  display: flex;
+  gap: 10px;
+  flex-shrink: 0;
+}
+.mc-stat-card {
+  flex: 1;
+  background: var(--bg-card-occ);
+  border: 1px solid var(--divider);
+  border-radius: 8px;
+  padding: 10px;
+  text-align: center;
+}
+.mc-stat-val {
+  font-size: 30px;
+  font-weight: 900;
+  font-family: var(--font-num);
+  line-height: 1;
+}
+.mc-stat-val.val-critical { color: var(--accent-red); }
+.mc-stat-val.val-moderate { color: var(--accent-yellow); }
+.mc-stat-val.val-total    { color: var(--accent-green); }
+.mc-stat-val.val-dead     { color: var(--text-muted); }
+.mc-stat-val.val-transfer { color: var(--accent-blue); }
+.mc-stat-lbl { font-size: 13px; color: var(--text-muted); margin-top: 3px; }
+
+/* 表格 */
+.mc-table-wrap {
+  flex: 1;
+  overflow-y: auto;
+  border: 1px solid var(--divider);
+  border-radius: 8px;
+}
+.mc-table-wrap::-webkit-scrollbar { width: 4px; }
+.mc-table-wrap::-webkit-scrollbar-thumb { background: var(--divider); border-radius: 2px; }
+.mc-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.mc-table th {
+  background: #E8F5EE;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-align: left;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--divider);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  white-space: nowrap;
+}
+.mc-table td {
+  font-size: 15px;
+  color: var(--text-primary);
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--bg-card-empty);
+  vertical-align: middle;
+}
+.mc-table tr:last-child td { border-bottom: none; }
+.mc-table tr:nth-child(even) { background: #F8FAF9; }
+
+/* 欄位樣式 */
+.mc-bed { font-weight: 700; color: var(--accent-green); font-family: var(--font-num); }
+.mc-patient { font-weight: 700; }
+.gender-m { color: #1565C0; }
+.gender-f { color: #AD1457; }
+.mc-basic { font-size: 12px; color: var(--text-muted); }
+
+/* 分級 badge */
+.triage-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  font-weight: 900;
+  font-size: 14px;
+  font-family: var(--font-num);
+}
+.triage-1 { background: #B71C1C; color: #fff; }
+.triage-2 { background: var(--accent-red); color: #fff; }
+.triage-3 { background: var(--accent-yellow); color: #fff; }
+.triage-4 { background: var(--accent-green); color: #fff; }
+.triage-5 { background: var(--bg-card-empty); color: var(--text-secondary); border: 1px solid var(--divider); }
+
+/* 旗標 badges */
+.flag-badges { display: flex; flex-wrap: wrap; gap: 3px; }
+.flag-badge {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.flag-死亡 { background: #1A2635; color: #fff; }
+.flag-MBD  { background: #B71C1C; color: #fff; }
+.flag-AAD  { background: #880E4F; color: #fff; }
+.flag-DNR  { background: #37474F; color: #fff; }
+.flag-留觀 { background: #E0F7FA; color: #006064; border: 1px solid #00838F; }
+.flag-住院 { background: #E8F5EE; color: var(--accent-green); border: 1px solid var(--accent-green); }
+.flag-轉出 { background: #FFF8E1; color: #E65100; border: 1px solid #E8A020; }
+.flag-轉入 { background: #E3F2FD; color: var(--accent-blue); border: 1px solid var(--accent-blue); }

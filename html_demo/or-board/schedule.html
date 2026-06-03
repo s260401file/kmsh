@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>手術室 — 手術派班</title>
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/reset.css">
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/schedule.css">
+</head>
+<body>
+
+  <!-- ── Header ── -->
+  <header class="page-header">
+    <div class="header-left">OR
+      <span class="ward-sub">手術室</span>
+    </div>
+    <div class="header-center">
+      <div class="staff-block">
+        <div class="staff-label">手術室主任</div>
+        <div class="staff-name" id="ward-director">—</div>
+      </div>
+      <div class="staff-block">
+        <div class="staff-label">護理長</div>
+        <div class="staff-name" id="head-nurse">—</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="update-label">資料更新時間：剛剛</div>
+      <div class="clock-date" id="clock-date"></div>
+      <div class="clock-time" id="clock-time"></div>
+    </div>
+  </header>
+
+  <!-- ── Announcement marquee ── -->
+  <div class="announce-bar">
+    <span>🔔</span>
+    <span>2026/05/24 手術室公告：今日共安排 7 台手術，OR-04 MVR 預計 13:00 完成，ICU 床位已預留，相關科別請備妥接收。</span>
+  </div>
+
+  <!-- ── Main content ── -->
+  <main class="main-content">
+    <div class="sc-body">
+
+      <!-- 左側 -->
+      <div class="sc-left">
+
+        <!-- 班別切換 -->
+        <div id="sc-shift-bar" class="sc-shift-bar"></div>
+
+        <!-- 護理長 -->
+        <div class="sc-info-card">
+          <div class="sc-info-label">值班護理長</div>
+          <div class="sc-info-value" id="sc-charge">—</div>
+        </div>
+
+        <!-- 麻醉科人員 -->
+        <div class="sc-info-card" style="padding-bottom:0;">
+          <div class="sc-info-label" style="margin-bottom:8px;">麻醉科人員</div>
+          <table class="sc-anes-table">
+            <thead>
+              <tr>
+                <th>職稱</th>
+                <th>姓名</th>
+                <th>分機</th>
+              </tr>
+            </thead>
+            <tbody id="sc-anesthesia-list"></tbody>
+          </table>
+        </div>
+
+        <!-- 體外循環技師 -->
+        <div class="sc-info-card">
+          <div class="sc-info-label">體外循環技師</div>
+          <div class="sc-info-value" id="sc-circtech">—</div>
+        </div>
+
+        <!-- 統計 -->
+        <div class="sc-stats">
+          <div class="sc-stat-card">
+            <div class="stat-val" id="sc-stat-nurse">—</div>
+            <div class="stat-lbl">護理師人數</div>
+          </div>
+          <div class="sc-stat-card">
+            <div class="stat-val" id="sc-stat-anes">—</div>
+            <div class="stat-lbl">麻醉科人員</div>
+          </div>
+          <div class="sc-stat-card">
+            <div class="stat-val" id="sc-stat-rooms">—</div>
+            <div class="stat-lbl">有人刀房</div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- 右側：派班表 -->
+      <div class="sc-right">
+        <div class="sc-section-title">刀房派班一覽</div>
+        <div class="sc-table-wrap">
+          <table class="sc-room-table">
+            <thead>
+              <tr>
+                <th>刀房</th>
+                <th class="sc-th-center">分機</th>
+                <th>刷手護理師</th>
+                <th>流動護理師</th>
+              </tr>
+            </thead>
+            <tbody id="sc-room-list"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- ── Bottom tabs ── -->
+  <nav class="bottom-tabs">
+    <a href="index.html"      class="tab-btn">手術動態</a>
+    <a href="schedule.html"   class="tab-btn active">手術派班</a>
+    <a href="handover.html"   class="tab-btn">特殊交班</a>
+    <a href="contact.html"    class="tab-btn">連絡電話</a>
+    <a href="bulletin.html"   class="tab-btn">佈告欄</a>
+    <a href="evacuation.html" class="tab-btn">避難圖</a>
+  </nav>
+
+  <script src="js/mockData.js"></script>
+  <script src="js/scheduleData.js"></script>
+  <script src="js/schedule.js"></script>
+</body>
+</html>

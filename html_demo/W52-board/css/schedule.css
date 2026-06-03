@@ -182,7 +182,7 @@
   border-bottom: 1px solid var(--divider);
 }
 
-.sc-th-center { text-align: center; }
+.sc-table th.sc-th-center { text-align: center; }
 
 .sc-table tbody tr {
   border-bottom: 1px solid var(--bg-card-empty);

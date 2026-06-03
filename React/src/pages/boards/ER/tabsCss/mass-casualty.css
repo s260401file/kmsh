@@ -1,0 +1,38 @@
+/* 大量傷患 — ER */
+.er-board .mc-panel { flex: 1; display: flex; flex-direction: column; overflow: hidden; gap: 12px; }
+.er-board .mc-stats-row { display: flex; gap: 10px; flex-shrink: 0; }
+.er-board .mc-stat-card { flex: 1; background: var(--bg-card-occ); border: 1px solid var(--divider); border-radius: 8px; padding: 10px; text-align: center; }
+.er-board .mc-stat-val { font-size: 30px; font-weight: 900; font-family: var(--font-num); line-height: 1; }
+.er-board .mc-stat-val.val-critical { color: var(--accent-red); }
+.er-board .mc-stat-val.val-moderate { color: #E8A020; }
+.er-board .mc-stat-val.val-total    { color: var(--accent-green); }
+.er-board .mc-stat-val.val-dead     { color: var(--text-muted); }
+.er-board .mc-stat-val.val-transfer { color: #1565C0; }
+.er-board .mc-stat-lbl { font-size: 13px; color: var(--text-muted); margin-top: 3px; }
+.er-board .mc-table-wrap { flex: 1; overflow-y: auto; border: 1px solid var(--divider); border-radius: 8px; }
+.er-board .mc-table-wrap::-webkit-scrollbar { width: 4px; }
+.er-board .mc-table-wrap::-webkit-scrollbar-thumb { background: var(--divider); border-radius: 2px; }
+.er-board .mc-table { width: 100%; border-collapse: collapse; }
+.er-board .mc-table th { background: #E8F5EE; font-size: 14px; font-weight: 700; color: var(--text-secondary); text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--divider); position: sticky; top: 0; z-index: 1; white-space: nowrap; }
+.er-board .mc-table td { font-size: 15px; color: var(--text-primary); padding: 11px 14px; border-bottom: 1px solid var(--bg-card-empty); vertical-align: middle; }
+.er-board .mc-table tr:last-child td { border-bottom: none; }
+.er-board .mc-table tr:nth-child(even) { background: #F8FAF9; }
+.er-board .mc-bed { font-weight: 700; color: var(--accent-red); font-family: var(--font-num); }
+.er-board .mc-patient { font-weight: 700; }
+.er-board .mc-basic { font-size: 12px; color: var(--text-muted); }
+.er-board .triage-badge { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; font-weight: 900; font-size: 14px; font-family: var(--font-num); }
+.er-board .triage-1 { background: #B71C1C; color: #fff; }
+.er-board .triage-2 { background: var(--accent-red); color: #fff; }
+.er-board .triage-3 { background: #E8A020; color: #fff; }
+.er-board .triage-4 { background: var(--accent-green); color: #fff; }
+.er-board .triage-5 { background: var(--bg-card-empty); color: var(--text-secondary); border: 1px solid var(--divider); }
+.er-board .flag-badges { display: flex; flex-wrap: wrap; gap: 3px; }
+.er-board .flag-badge { display: inline-block; padding: 1px 6px; border-radius: 3px; font-size: 11px; font-weight: 700; white-space: nowrap; }
+.er-board .flag-死亡 { background: #1A2635; color: #fff; }
+.er-board .flag-MBD  { background: #B71C1C; color: #fff; }
+.er-board .flag-AAD  { background: #880E4F; color: #fff; }
+.er-board .flag-DNR  { background: #37474F; color: #fff; }
+.er-board .flag-留觀 { background: #E0F7FA; color: #006064; border: 1px solid #00838F; }
+.er-board .flag-住院 { background: #E8F5E9; color: #2E7D32; border: 1px solid #4CAF50; }
+.er-board .flag-轉出 { background: #FFF8E1; color: #E65100; border: 1px solid #E8A020; }
+.er-board .flag-轉入 { background: #E3F2FD; color: #1565C0; border: 1px solid #1565C0; }

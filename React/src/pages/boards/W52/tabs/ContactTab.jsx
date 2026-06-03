@@ -8,7 +8,7 @@ export default function ContactTab() {
       <div className="ct-panel">
         <div className="ct-page-title">
           <span className="ct-title-accent"></span>
-          連絡電話
+          連絡資訊
           <span className="ct-title-caption">當日值班＋常用</span>
         </div>
         <div className="ct-columns">

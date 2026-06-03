@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>急診室 — 佈告欄</title>
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/reset.css">
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/bulletin.css">
+</head>
+<body>
+  <header class="page-header">
+    <div class="header-left">ER<span class="ward-sub">急診室</span></div>
+    <div class="header-center">
+      <div class="staff-block"><div class="staff-label">急診主任</div><div class="staff-name" id="ward-director">—</div></div>
+      <div class="staff-block"><div class="staff-label">護理長</div><div class="staff-name" id="head-nurse">—</div></div>
+    </div>
+    <div class="header-right">
+      <div class="update-label">資料更新時間：剛剛</div>
+      <div class="clock-date" id="clock-date"></div>
+      <div class="clock-time" id="clock-time"></div>
+    </div>
+  </header>
+  <div class="announce-bar">
+    <span>🚨</span>
+    <span>2026/05/24 急診分流提醒：目前二級危急病人待床中，ICU 床位有限，請優先處理急救室病人轉出作業。</span>
+  </div>
+  <main class="main-content" style="padding:0;overflow:hidden;">
+    <div class="bl-panel">
+      <div class="bl-title">
+        <span class="bl-title-bar"></span>
+        佈告欄
+      </div>
+      <div class="bl-columns">
+        <div class="bl-col">
+          <div class="bl-col-header">
+            急診室公告
+            <span class="bl-col-count" id="bl-unit-count"></span>
+          </div>
+          <div class="bl-list" id="unit-bulletin-list"></div>
+        </div>
+        <div class="bl-col">
+          <div class="bl-col-header">
+            院方公告
+            <span class="bl-col-count" id="bl-hosp-count"></span>
+          </div>
+          <div class="bl-list" id="hosp-bulletin-list"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+  <nav class="bottom-tabs">
+    <a href="index.html"         class="tab-btn">病室動態</a>
+    <a href="exam.html"          class="tab-btn">檢查/會診</a>
+    <a href="mass-casualty.html" class="tab-btn">大量傷患</a>
+    <a href="contact.html"       class="tab-btn">連絡電話</a>
+    <a href="bulletin.html"      class="tab-btn active">佈告欄</a>
+    <a href="evacuation.html"    class="tab-btn">避難圖</a>
+  </nav>
+  <script src="js/mockData.js"></script>
+  <script src="js/bulletinData.js"></script>
+  <script src="js/bulletin.js"></script>
+</body>
+</html>

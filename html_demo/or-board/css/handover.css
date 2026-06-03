@@ -1,0 +1,122 @@
+/* ══ 特殊交班 ══ */
+
+/* 主體：flex 填滿 main-content */
+.ho-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  gap: 14px;
+}
+
+/* ── 頁面標題列 ── */
+.ho-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+.ho-title {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.ho-title::before {
+  content: "";
+  display: inline-block;
+  width: 5px;
+  height: 22px;
+  background: var(--accent-green);
+  border-radius: 3px;
+}
+.ho-count-badge {
+  font-size: 15px;
+  background: #E8F4EE;
+  border: 1px solid var(--divider);
+  color: var(--accent-green);
+  padding: 5px 14px;
+  border-radius: 14px;
+  font-weight: 700;
+}
+
+/* ── 表格容器 ── */
+.ho-table-wrap {
+  flex: 1;
+  overflow-y: auto;
+  border: 1px solid var(--divider);
+  border-radius: 8px;
+}
+.ho-table-wrap::-webkit-scrollbar { width: 4px; }
+.ho-table-wrap::-webkit-scrollbar-thumb { background: var(--divider); border-radius: 2px; }
+
+/* ── 表格 ── */
+.ho-table { width: 100%; border-collapse: collapse; }
+.ho-table th {
+  background: #E8F4EE;
+  padding: 10px 12px;
+  text-align: left;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--divider);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  white-space: nowrap;
+}
+.ho-table th.ho-th-center { text-align: center; }
+.ho-table td {
+  padding: 12px 12px;
+  font-size: 15px;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--bg-card-empty);
+  vertical-align: top;
+}
+.ho-table tr:last-child td { border-bottom: none; }
+.ho-row:nth-child(even) { background: #F8FAF9; }
+
+/* ── 欄位樣式 ── */
+.ho-td-room { min-width: 100px; white-space: nowrap; }
+.ho-room-badge {
+  display: inline-block;
+  background: var(--accent-green);
+  color: #fff;
+  font-weight: 700;
+  font-size: 14px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-family: var(--font-num);
+  margin-right: 4px;
+}
+.ho-src-badge { font-size: 12px; vertical-align: middle; }
+.badge { display: inline-block; padding: 2px 7px; border-radius: 3px; font-size: 12px; }
+.badge-住院刀 { background: #E8F4EE; color: var(--accent-green); }
+.badge-門診刀 { background: #FFF3CD; color: #856404; }
+.badge-急診刀 { background: #FDECEA; color: #C0392B; }
+
+.ho-td-patient { min-width: 110px; }
+.ho-patient-name { font-weight: 700; font-size: 17px; }
+.gender-m { color: #2980B9; }
+.gender-f { color: #C0392B; }
+.ho-basic { font-size: 13px; color: var(--text-muted); margin-top: 3px; }
+
+.ho-td-surgery { min-width: 170px; }
+.ho-td-surgeon { min-width: 90px; color: var(--text-secondary); }
+
+.ho-td-dest { min-width: 90px; }
+.ho-dest-ward { font-weight: 700; font-size: 16px; }
+.ho-dest-bed { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
+
+.ho-td-blood { min-width: 90px; }
+.ho-td-drain { min-width: 110px; font-size: 14px; }
+.ho-td-notes { min-width: 130px; font-size: 14px; color: var(--text-secondary); }
+
+.ho-empty-row td {
+  text-align: center;
+  padding: 40px;
+  color: var(--text-muted);
+  font-size: 18px;
+}

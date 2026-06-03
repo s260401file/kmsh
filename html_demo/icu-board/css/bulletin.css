@@ -1,0 +1,184 @@
+/* ════════════════════════════════════════════════════
+   佈告欄 — Bulletin Board (ICU)
+   對齊 W52 bulletin.css 結構，使用 bl- 前綴
+   ════════════════════════════════════════════════════ */
+
+/* ── 面板容器 ── */
+.bl-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 16px 20px 12px;
+  gap: 14px;
+}
+
+/* ── 面板標題 ── */
+.bl-title {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.bl-title-bar {
+  display: inline-block;
+  width: 5px;
+  height: 24px;
+  background: #7B1FA2;
+  border-radius: 3px;
+}
+
+/* ── 雙欄佈局 ── */
+.bl-columns {
+  flex: 1;
+  display: flex;
+  gap: 20px;
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* ── 欄位容器 ── */
+.bl-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg-card-occ);
+  border: 1px solid var(--divider);
+  border-radius: var(--radius-card);
+}
+
+/* 欄標頭 */
+.bl-col-header {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--accent-green);
+  padding: 13px 18px 12px;
+  border-bottom: 1px solid var(--divider);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bl-col-count {
+  font-size: 13px;
+  font-weight: 900;
+  color: var(--text-muted);
+  font-family: var(--font-num);
+}
+
+/* 公告列表 */
+.bl-list {
+  flex: 1;
+  overflow-y: auto;
+  touch-action: pan-y;
+  padding: 14px 14px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.bl-list::-webkit-scrollbar { width: 4px; }
+.bl-list::-webkit-scrollbar-thumb { background: var(--divider); border-radius: 2px; }
+
+/* ── 公告卡片 ── */
+.bl-card {
+  display: flex;
+  background: var(--bg-page);
+  border-radius: 8px;
+  overflow: hidden;
+  flex-shrink: 0;
+  border: 1px solid var(--divider);
+}
+
+/* 左側優先度色條 */
+.bl-priority-bar {
+  width: 5px;
+  flex-shrink: 0;
+}
+
+.bl-bar-重要 { background: var(--accent-red); }
+.bl-bar-一般 { background: var(--accent-blue); }
+.bl-bar-院方 { background: #7B1FA2; }
+
+/* 卡片主體 */
+.bl-card-body {
+  flex: 1;
+  padding: 14px 16px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+/* 卡片頂列：badge + 標題 */
+.bl-card-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+/* 優先度 badge */
+.bl-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border-radius: var(--radius-pill);
+  font-size: 13px;
+  font-weight: 800;
+  white-space: nowrap;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.bl-badge-重要 { background: #FFEBEE; color: #C62828; }
+.bl-badge-一般 { background: #E3F2FD; color: #1565C0; }
+.bl-badge-院方 { background: #F3E5F5; color: #6A1B9A; }
+
+/* 公告標題 */
+.bl-card-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.4;
+}
+
+/* 公告內容 */
+.bl-card-content {
+  font-size: 16px;
+  color: var(--text-secondary);
+  line-height: 1.65;
+  white-space: pre-wrap;
+}
+
+/* 發布資訊 */
+.bl-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.bl-meta-date {
+  font-size: 13px;
+  color: var(--text-muted);
+  font-family: var(--font-num);
+}
+
+.bl-meta-author {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+/* 空狀態 */
+.bl-empty {
+  color: var(--text-muted);
+  font-size: 17px;
+  padding: 32px;
+  text-align: center;
+}

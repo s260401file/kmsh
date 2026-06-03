@@ -102,7 +102,7 @@
   border-bottom: 1px solid var(--divider);
 }
 
-.dr-th-center { text-align: center; }
+.dr-table th.dr-th-center { text-align: center; }
 
 .dr-table tbody tr {
   border-bottom: 1px solid var(--bg-card-empty);

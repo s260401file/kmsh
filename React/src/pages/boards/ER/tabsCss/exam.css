@@ -1,0 +1,25 @@
+/* 檢查/會診 — ER */
+.er-board .ec-panel { flex: 1; display: flex; flex-direction: column; overflow: hidden; padding: 16px 20px 12px; gap: 14px; }
+.er-board .ec-page-title { font-size: 24px; font-weight: 800; color: var(--text-primary); display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.er-board .ec-title-accent { display: inline-block; width: 5px; height: 24px; background: var(--accent-green); border-radius: 3px; flex-shrink: 0; }
+.er-board .ec-columns { flex: 1; display: flex; gap: 20px; overflow: hidden; min-height: 0; }
+.er-board .ec-card { flex: 1; background: var(--bg-card-occ); border: 1px solid var(--divider); border-radius: var(--radius-card); display: flex; flex-direction: column; overflow: hidden; }
+.er-board .ec-card-header { font-size: 17px; font-weight: 700; color: var(--accent-green); padding: 13px 18px 12px; border-bottom: 1px solid var(--divider); flex-shrink: 0; display: flex; align-items: center; gap: 8px; }
+.er-board .ec-card-count { font-size: 13px; font-weight: 900; color: var(--text-muted); font-family: var(--font-num); }
+.er-board .ec-table-wrap { flex: 1; overflow-y: auto; }
+.er-board .ec-table-wrap::-webkit-scrollbar { width: 4px; }
+.er-board .ec-table-wrap::-webkit-scrollbar-thumb { background: var(--divider); border-radius: 2px; }
+.er-board .ec-table { width: 100%; border-collapse: collapse; }
+.er-board .ec-table thead tr { background: #E8F5EE; }
+.er-board .ec-table th { font-size: 14px; font-weight: 700; color: var(--text-secondary); text-align: left; padding: 10px 16px; border-bottom: 1px solid var(--divider); white-space: nowrap; position: sticky; top: 0; background: #E8F5EE; z-index: 1; }
+.er-board .ec-table tbody tr { border-bottom: 1px solid var(--bg-card-empty); }
+.er-board .ec-table tbody tr:last-child { border-bottom: none; }
+.er-board .ec-table td { font-size: 15px; color: var(--text-primary); padding: 11px 16px; vertical-align: middle; }
+.er-board .ec-bed { font-weight: 700; color: var(--accent-red); font-family: var(--font-num); }
+.er-board .ec-status { display: inline-block; padding: 2px 9px; border-radius: var(--radius-pill); font-size: 12px; font-weight: 700; }
+.er-board .ec-status-待執行 { background: #FFF3CD; color: #856404; }
+.er-board .ec-status-執行中 { background: #E3F2FD; color: #1565C0; }
+.er-board .ec-status-完成   { background: #E8F5EE; color: var(--accent-green); }
+.er-board .ec-status-待回覆 { background: #FFF3CD; color: #856404; }
+.er-board .ec-status-已回覆 { background: #E8F5EE; color: var(--accent-green); }
+.er-board .ec-note { font-size: 13px; color: var(--text-muted); }

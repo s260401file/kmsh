@@ -1,8 +1,5 @@
 import { useState, useMemo } from 'react'
-import { useClock } from '../../../hooks/useClock'
-import { useMarquee } from '../../../hooks/useMarquee'
-import MOCK_DATA, { getStats } from './mockData'
-import './IcuPage.css'
+import MOCK_DATA, { getStats } from '../mockData'
 
 function buildBadges(patient) {
   if (!patient) return []
@@ -128,7 +125,6 @@ function BedModal({ bed, onClose }) {
   )
 }
 
-const TABS = ['病室動態','抗生素','管路','手術資訊','檢查/會診','連絡電話','派班資訊','佈告欄','避難圖']
 const FILTER_BADGES = [
   {f:'DNR',cls:'badge-DNR',label:'DNR'},{f:'高危跌',cls:'badge-高危跌',label:'高危跌'},
   {f:'依賴L1',cls:'badge-依賴L1',label:'依賴L1'},{f:'依賴L2',cls:'badge-依賴L2',label:'依賴L2'},
@@ -140,12 +136,9 @@ const FILTER_BADGES = [
   {f:'氧氣設備',cls:'badge-氧氣設備',label:'氧氣設備'},{f:'洗腎',cls:'badge-洗腎',label:'洗腎'},
 ]
 
-export default function IcuPage() {
-  const { date, time } = useClock()
-  const marquee = useMarquee('ICU', '院內感染管制週宣導：請確實執行手部衛生，進出隔離病房務必穿戴適當防護裝備。')
+export default function WardTab() {
   const [filter, setFilter] = useState('all')
   const [selectedBed, setSelectedBed] = useState(null)
-  const [activeTab, setActiveTab] = useState(0)
   const stats = useMemo(() => getStats(MOCK_DATA.beds), [])
   const handleFilter = f => setFilter(prev => (prev === f && f !== 'all') ? 'all' : f)
 
@@ -153,27 +146,8 @@ export default function IcuPage() {
   const f3beds = MOCK_DATA.beds.filter(b => b.floor === 3)
 
   return (
-    <div className="icu-board">
-      <header className="page-header">
-        <div className="header-left">ICU</div>
-        <div className="header-center">
-          <div className="staff-block"><div className="staff-label">病房主任</div><div className="staff-name">{MOCK_DATA.hospitalInfo.wardDirector}</div></div>
-          <div className="staff-block"><div className="staff-label">單位護理長</div><div className="staff-name">{MOCK_DATA.hospitalInfo.headNurse}</div></div>
-        </div>
-        <div className="header-right">
-          <div className="update-label">資料更新時間：剛剛</div>
-          <div className="clock-date">{date}</div>
-          <div className="clock-time">{time}</div>
-        </div>
-      </header>
-
-      <div className="announce-bar">
-        <span>◆</span>
-        <span>{marquee}</span>
-      </div>
-
+    <>
       <main className="main-content">
-        {/* 4F */}
         <div className="floor-section floor-4f">
           <div className="floor-title">▌ 4F　共 20 床</div>
           <div className="floor-beds">
@@ -186,7 +160,6 @@ export default function IcuPage() {
           </div>
         </div>
 
-        {/* 3F */}
         <div className="floor-section floor-3f">
           <div className="floor-title">▌ 3F　共 5 床</div>
           <div className="floor-beds">
@@ -197,7 +170,6 @@ export default function IcuPage() {
               ))}
             </div>
           </div>
-          {/* Stats panel */}
           <div className="ward-stats">
             <div className="ws-row">
               <div className="ws-item"><div className="ws-value">{stats.total}</div><div className="ws-label">總床數</div></div>
@@ -232,11 +204,7 @@ export default function IcuPage() {
         ))}
       </div>
 
-      <nav className="bottom-tabs">
-        {TABS.map((tab,i) => <button key={tab} className={`tab-btn${activeTab===i?' active':''}`} onClick={()=>setActiveTab(i)}>{tab}</button>)}
-      </nav>
-
       {selectedBed && <BedModal bed={selectedBed} onClose={()=>setSelectedBed(null)} />}
-    </div>
+    </>
   )
 }

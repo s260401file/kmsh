@@ -1,0 +1,175 @@
+﻿/* ════════════════════════════════════════════════════
+   抗生素 — Antibiotic
+   佈局與 index.html 完全一致（floor-section / grid-4f / grid-3f / ward-stats）
+   額外加：抗生素數量 badge + 統計顏色 + Modal
+   ════════════════════════════════════════════════════ */
+
+/* ── 有抗生素的床位：左側藍色邊框 ── */
+.bed-card.ab-has-abx {
+  border-left-color: var(--accent-blue) !important;
+}
+
+/* ── 抗生素數量 Badge（右上角）── */
+.ab-count-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  background: var(--accent-blue);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 900;
+  font-family: var(--font-num);
+  border-radius: 10px;
+  padding: 0 5px;
+  margin-left: auto;
+  letter-spacing: 0;
+  flex-shrink: 0;
+}
+
+/* ── 抗生素統計顏色（ws-value 色碼）── */
+.ws-value.ws-abx-4f    { color: #1565C0; }
+.ws-value.ws-abx-3f    { color: #0277BD; }
+.ws-value.ws-abx-beds  { color: #00838F; }
+.ws-value.ws-abx-vanc  { color: #6A1B9A; }
+.ws-value.ws-abx-mero  { color: #AD1457; }
+.ws-value.ws-abx-pip   { color: #E65100; }
+.ws-value.ws-abx-other { color: #546E7A; }
+
+/* ── 抗生素 Modal ── */
+.ab-modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: var(--modal-overlay);
+  z-index: 2000;
+  align-items: center;
+  justify-content: center;
+}
+.ab-modal-overlay.show { display: flex; }
+
+.ab-modal-box {
+  background: var(--bg-modal);
+  border-radius: var(--radius-modal);
+  width: 700px;
+  max-width: 94vw;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: var(--shadow-modal);
+  border: 1px solid var(--floor-border);
+  display: flex;
+  flex-direction: column;
+}
+
+.ab-modal-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 16px 22px 12px;
+  border-bottom: 1px solid var(--divider);
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.ab-modal-bed {
+  font-size: 22px;
+  font-weight: 900;
+  font-family: var(--font-num);
+  color: var(--accent-blue);
+}
+
+.ab-modal-name {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-left: 8px;
+}
+
+.ab-modal-rec {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-left: 10px;
+}
+
+.ab-modal-close {
+  font-size: 22px;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  margin-left: auto;
+}
+.ab-modal-close:hover { background: var(--bg-card-empty); }
+
+.ab-modal-body {
+  padding: 16px 22px 20px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+/* ── 抗生素清單表格 ── */
+.ab-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.ab-table thead tr { background: #EEF4FF; }
+
+.ab-table th {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-align: left;
+  padding: 9px 16px;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--divider);
+}
+
+.ab-table tbody tr { border-bottom: 1px solid var(--bg-card-empty); }
+.ab-table tbody tr:last-child { border-bottom: none; }
+
+.ab-table td {
+  font-size: 15px;
+  color: var(--text-primary);
+  padding: 12px 16px;
+  vertical-align: middle;
+}
+
+.ab-td-drug {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--accent-blue);
+}
+
+.ab-td-time {
+  font-family: var(--font-num);
+  font-size: 14px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.ab-modal-empty {
+  text-align: center;
+  color: var(--text-muted);
+  padding: 36px;
+  font-size: 18px;
+}
+
+.ab-modal-footer {
+  padding: 12px 22px 18px;
+  display: flex;
+  justify-content: flex-end;
+  border-top: 1px solid var(--divider);
+  flex-shrink: 0;
+}
+
+.ab-btn-close {
+  padding: 8px 30px;
+  border-radius: var(--radius-pill);
+  background: var(--accent-blue);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}

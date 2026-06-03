@@ -1,0 +1,28 @@
+/* 佈告欄 — OR */
+.or-board .bl-panel { flex: 1; display: flex; flex-direction: column; overflow: hidden; padding: 16px 20px 12px; gap: 14px; }
+.or-board .bl-title { font-size: 24px; font-weight: 800; color: var(--text-primary); display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.or-board .bl-title-bar { display: inline-block; width: 5px; height: 24px; background: var(--accent-green); border-radius: 3px; }
+.or-board .bl-columns { flex: 1; display: flex; gap: 20px; overflow: hidden; min-height: 0; }
+.or-board .bl-col { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: var(--bg-card-occ); border: 1px solid var(--divider); border-radius: var(--radius-card); }
+.or-board .bl-col-header { font-size: 17px; font-weight: 700; color: var(--accent-green); padding: 13px 18px 12px; border-bottom: 1px solid var(--divider); flex-shrink: 0; display: flex; align-items: center; gap: 8px; }
+.or-board .bl-col-count { font-size: 13px; font-weight: 900; color: var(--text-muted); font-family: var(--font-num); }
+.or-board .bl-list { flex: 1; overflow-y: auto; touch-action: pan-y; padding: 14px 14px 10px; display: flex; flex-direction: column; gap: 10px; }
+.or-board .bl-list::-webkit-scrollbar { width: 4px; }
+.or-board .bl-list::-webkit-scrollbar-thumb { background: var(--divider); border-radius: 2px; }
+.or-board .bl-card { display: flex; background: var(--bg-page); border-radius: 8px; overflow: hidden; flex-shrink: 0; border: 1px solid var(--divider); }
+.or-board .bl-priority-bar { width: 5px; flex-shrink: 0; }
+.or-board .bl-bar-重要 { background: #E05C5C; }
+.or-board .bl-bar-一般 { background: var(--accent-green); }
+.or-board .bl-bar-院方 { background: #7B1FA2; }
+.or-board .bl-card-body { flex: 1; padding: 14px 16px 12px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.or-board .bl-card-top { display: flex; align-items: flex-start; gap: 10px; }
+.or-board .bl-badge { display: inline-flex; align-items: center; padding: 2px 10px; border-radius: var(--radius-pill); font-size: 13px; font-weight: 800; white-space: nowrap; flex-shrink: 0; margin-top: 2px; }
+.or-board .bl-badge-重要 { background: #FFEBEE; color: #C62828; }
+.or-board .bl-badge-一般 { background: #E8F4EE; color: var(--accent-green); }
+.or-board .bl-badge-院方 { background: #F3E5F5; color: #6A1B9A; }
+.or-board .bl-card-title { font-size: 18px; font-weight: 700; color: var(--text-primary); line-height: 1.4; }
+.or-board .bl-card-content { font-size: 16px; color: var(--text-secondary); line-height: 1.65; white-space: pre-wrap; }
+.or-board .bl-card-meta { display: flex; align-items: center; gap: 12px; margin-top: 4px; }
+.or-board .bl-meta-date { font-size: 13px; color: var(--text-muted); font-family: var(--font-num); }
+.or-board .bl-meta-author { font-size: 13px; color: var(--text-muted); }
+.or-board .bl-empty { color: var(--text-muted); font-size: 17px; padding: 32px; text-align: center; }

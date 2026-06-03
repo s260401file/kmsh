@@ -1,0 +1,222 @@
+/* ICU 電子白板 — 所有樣式以 .icu-board 為根節點 */
+
+.icu-board {
+  --bg-page:#F2F5F8; --bg-header:#2D7A55; --bg-stats:#3D9B6E; --bg-filter:#E4EDF5;
+  --bg-floor-label:#DAEEE5; --bg-card-occ:#FFFFFF; --bg-card-empty:#E8ECF0;
+  --bg-card-iso:#FFEBEB; --bg-card-trans:#FFF8E1; --bg-card-dis:#E8F5E9;
+  --bg-modal:#FFFFFF; --bg-tabs:#1E5C3E; --bg-tab-active:#2D7A55;
+  --border-occ:#2D7A55; --border-empty:#B0BEC5; --border-iso:#E05C5C;
+  --border-trans:#E8A020; --border-dis:#4CAF50;
+  --text-primary:#1A2635; --text-secondary:#3A5068; --text-muted:#7A8FA0;
+  --text-empty:#90A4AE; --text-stats:#FFFFFF; --text-tab:#A8C8B8; --text-tab-active:#FFFFFF;
+  --accent-green:#2D7A55; --divider:#D0DBE5; --floor-border:#B0C8D8;
+  --filter-active-bg:#2D7A55; --filter-active-text:#FFFFFF; --filter-border:#2D7A55;
+  --modal-overlay:rgba(0,0,0,0.55); --shadow-card:0 2px 8px rgba(0,0,0,0.10);
+  --shadow-modal:0 8px 32px rgba(0,0,0,0.2);
+  --font-main:"Microsoft JhengHei UI","微軟正黑體","Noto Sans TC",sans-serif;
+  --font-num:"Roboto","Arial",sans-serif;
+  --radius-card:8px; --radius-modal:12px; --radius-badge:4px; --radius-pill:20px;
+  --header-h:72px; --filter-h:44px; --tabs-h:56px;
+}
+.icu-board *,.icu-board *::before,.icu-board *::after{box-sizing:border-box;margin:0;padding:0}
+.icu-board button{font-family:inherit;cursor:pointer;border:none;outline:none;background:none}
+.icu-board{font-family:var(--font-main);background:var(--bg-page);color:var(--text-primary);overflow:hidden;height:100vh;display:flex;flex-direction:column}
+
+/* ── Header ── */
+.icu-board .page-header{height:var(--header-h);background:var(--bg-header);display:flex;align-items:center;padding:0 20px;flex-shrink:0;border-bottom:2px solid var(--accent-green)}
+.icu-board .header-left{font-size:42px;font-weight:900;font-family:var(--font-num);color:#fff;letter-spacing:2px;width:120px}
+.icu-board .header-center{flex:1;display:flex;justify-content:center;gap:60px}
+.icu-board .staff-block{text-align:center}
+.icu-board .staff-label{font-size:14px;color:var(--text-stats);opacity:.75;margin-bottom:2px}
+.icu-board .staff-name{font-size:26px;font-weight:700;color:var(--text-stats)}
+.icu-board .header-right{text-align:right;width:220px}
+.icu-board .update-label{font-size:13px;color:var(--text-stats);opacity:.75}
+.icu-board .clock-date{font-size:16px;color:var(--text-stats);opacity:.85}
+.icu-board .clock-time{font-size:30px;font-weight:700;font-family:var(--font-num);color:var(--text-stats);letter-spacing:1px}
+
+/* ── Announce bar ── */
+.icu-board .announce-bar{background:#FFF8E1;border-bottom:1px solid var(--divider);padding:5px 16px;font-size:20px;color:#8B6000;display:flex;align-items:center;gap:8px;flex-shrink:0;overflow:hidden}
+.icu-board .announce-bar span{white-space:nowrap}
+
+/* ── Filter bar ── */
+.icu-board .filter-bar{height:var(--filter-h);background:var(--bg-filter);display:flex;align-items:center;padding:0 16px;gap:10px;flex-shrink:0;border-bottom:1px solid var(--divider)}
+.icu-board .filter-label{font-size:17px;color:var(--text-muted);margin-right:4px}
+.icu-board .filter-btn{padding:5px 18px;border-radius:var(--radius-pill);font-size:17px;font-weight:600;border:1.5px solid var(--filter-border);color:var(--text-secondary);background:transparent;transition:background .15s,color .15s}
+.icu-board .filter-btn.active,.icu-board .filter-btn:hover{background:var(--filter-active-bg);color:var(--filter-active-text)}
+.icu-board .filter-bar .badge-filter{cursor:pointer;font-size:15px;padding:6px 14px;line-height:20px;transition:transform .1s,box-shadow .1s}
+.icu-board .filter-bar .badge-filter:hover{transform:translateY(-1px);box-shadow:0 2px 8px rgba(0,0,0,0.35)}
+.icu-board .filter-bar .badge-filter.active{box-shadow:0 0 0 2.5px #1A2635,0 0 0 5px rgba(0,0,0,0.15)}
+
+/* ── Main content ── */
+.icu-board .main-content{flex:1;display:flex;overflow:hidden;padding:10px;gap:10px;min-height:0}
+
+/* ── Floor sections ── */
+.icu-board .floor-section{display:grid;grid-template-rows:auto 1fr;background:rgba(255,255,255,0.02);border:1px solid var(--floor-border);border-radius:10px;overflow:hidden;min-height:0}
+.icu-board .floor-4f{flex:4}
+.icu-board .floor-3f{flex:3;min-width:320px;grid-template-rows:auto auto 1fr}
+.icu-board .floor-title{background:var(--bg-floor-label);padding:6px 14px;font-size:15px;font-weight:700;color:var(--accent-green);letter-spacing:1px;border-bottom:1px solid var(--divider)}
+.icu-board .floor-beds{padding:10px;overflow:hidden;min-height:0}
+
+/* ── 4F Grid ── */
+.icu-board .grid-4f{display:grid;grid-template-columns:1fr 1fr 0.25fr 1fr 1fr 1fr 1fr;grid-template-rows:repeat(6,minmax(0,1fr));gap:10px;height:100%}
+.icu-board .bed-F4-06{grid-column:1;grid-row:1} .icu-board .bed-F4-07{grid-column:2;grid-row:1}
+.icu-board .bed-F4-05{grid-column:1;grid-row:2} .icu-board .bed-F4-03{grid-column:2;grid-row:2}
+.icu-board .bed-F4-09{grid-column:1;grid-row:3} .icu-board .bed-F4-10{grid-column:2;grid-row:3}
+.icu-board .bed-F4-01{grid-column:4;grid-row:1} .icu-board .bed-F4-02{grid-column:5;grid-row:1}
+.icu-board .bed-F4-08{grid-column:1/span 2;grid-row:4;justify-self:center;width:calc(50% - 5px)}
+.icu-board .bed-F4-12{grid-column:1;grid-row:5} .icu-board .bed-F4-11{grid-column:2;grid-row:5}
+.icu-board .bed-F4-15{grid-column:1;grid-row:6} .icu-board .bed-F4-13{grid-column:2;grid-row:6}
+.icu-board .bed-F4-17{grid-column:5;grid-row:5} .icu-board .bed-F4-19{grid-column:6;grid-row:5} .icu-board .bed-F4-21{grid-column:7;grid-row:5}
+.icu-board .bed-F4-16{grid-column:4;grid-row:6} .icu-board .bed-F4-18{grid-column:5;grid-row:6}
+.icu-board .bed-F4-20{grid-column:6;grid-row:6} .icu-board .bed-F4-22{grid-column:7;grid-row:6}
+
+/* ── 3F Grid ── */
+.icu-board .grid-3f{display:grid;grid-template-columns:repeat(5,1fr);grid-template-rows:repeat(2,minmax(0,1fr));gap:10px;height:100%}
+.icu-board .bed-F3-05{grid-column:3;grid-row:1}
+.icu-board .bed-F3-04{grid-column:1;grid-row:2} .icu-board .bed-F3-03{grid-column:3;grid-row:2}
+.icu-board .bed-F3-02{grid-column:4;grid-row:2} .icu-board .bed-F3-01{grid-column:5;grid-row:2}
+
+/* ── Ward Stats ── */
+.icu-board .ward-stats{background:transparent;display:flex;flex-direction:column;min-height:0;overflow:hidden;padding:4px 0 6px}
+.icu-board .ws-row{flex:1;display:flex;align-items:stretch;margin:4px 8px;background:var(--bg-card-empty);border-radius:8px;overflow:hidden}
+.icu-board .ws-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;padding:10px 4px}
+.icu-board .ws-item+.ws-item::before{content:"";position:absolute;left:0;top:15%;height:70%;width:1px;background:rgba(0,0,0,0.10)}
+.icu-board .ws-value{font-size:46px;font-weight:900;font-family:var(--font-num);color:var(--text-primary);line-height:1}
+.icu-board .ws-label{font-size:17px;color:var(--text-secondary);margin-top:6px;display:flex;align-items:center;gap:5px}
+.icu-board .ws-value.ws-surgery{color:#1565C0} .icu-board .ws-value.ws-exam{color:#E65100}
+.icu-board .ws-value.ws-consult{color:#BF360C}
+.icu-board .ws-value.ws-sev-a{color:#2E7D32} .icu-board .ws-value.ws-sev-b{color:#C68000} .icu-board .ws-value.ws-sev-c{color:#C62828}
+.icu-board .ws-value.ws-iso{color:#AD1457} .icu-board .ws-value.ws-dnr{color:#6A1B9A} .icu-board .ws-value.ws-rrt{color:#B71C1C}
+.icu-board .ws-value.ws-ett{color:#E65100} .icu-board .ws-value.ws-ng{color:#6A1B9A}
+.icu-board .ws-value.ws-foley{color:#00838F} .icu-board .ws-value.ws-cvc{color:#2E7D32}
+.icu-board .sev-dot{display:inline-block;width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.icu-board .sev-dot-a{background:#2E7D32} .icu-board .sev-dot-b{background:#C68000} .icu-board .sev-dot-c{background:#C62828}
+.icu-board .ws-item[data-filter]{cursor:pointer;transition:background .12s}
+.icu-board .ws-item[data-filter]:hover{background:rgba(0,0,0,0.04)}
+.icu-board .ws-item[data-filter].active{background:rgba(0,0,0,0.06);box-shadow:inset 0 0 0 2px rgba(0,0,0,0.28)}
+
+/* ── Bottom tabs ── */
+.icu-board .bottom-tabs{height:var(--tabs-h);background:var(--bg-tabs);display:flex;flex-shrink:0;border-top:1px solid var(--divider)}
+/* NavLink 渲染為 <a>，補充重置 */
+.icu-board .tab-btn{flex:1;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:600;color:var(--text-tab);border-right:1px solid rgba(255,255,255,0.08);position:relative;transition:background .15s,color .15s;text-decoration:none}
+.icu-board .tab-btn:last-child{border-right:none}
+.icu-board .tab-btn:hover{background:var(--bg-tab-active);color:var(--text-tab-active)}
+.icu-board .tab-btn.active{background:#fff;color:var(--accent-green);font-weight:800}
+.icu-board .tab-btn.active::after{content:"";position:absolute;top:0;left:0;right:0;height:4px;background:var(--accent-green);border-radius:0 0 4px 4px}
+
+/* ── Filter fade ── */
+.icu-board .bed-card.filtered-out{opacity:.2;pointer-events:none}
+
+/* ── Modal ── */
+.icu-board .modal-overlay{display:none;position:fixed;inset:0;background:var(--modal-overlay);z-index:1000;align-items:center;justify-content:center}
+.icu-board .modal-overlay.show{display:flex}
+.icu-board .modal-box{background:var(--bg-modal);border-radius:var(--radius-modal);width:580px;max-width:92vw;max-height:85vh;overflow-y:auto;box-shadow:var(--shadow-modal);border:1px solid var(--floor-border)}
+.icu-board .modal-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px 12px;border-bottom:1px solid var(--divider)}
+.icu-board .modal-bed-id{font-size:22px;font-weight:900;color:var(--accent-green);font-family:var(--font-num)}
+.icu-board .modal-patient{font-size:24px;font-weight:700;color:var(--text-primary);margin-left:10px}
+.icu-board .modal-basic{font-size:15px;color:var(--text-secondary);margin-left:8px}
+.icu-board .modal-close{font-size:22px;color:var(--text-muted);cursor:pointer;padding:4px 8px;border-radius:4px}
+.icu-board .modal-close:hover{background:var(--bg-card-empty)}
+.icu-board .modal-body{padding:16px 20px 20px}
+.icu-board .modal-row{display:flex;gap:12px;margin-bottom:12px}
+.icu-board .modal-field{flex:1;background:var(--bg-card-empty);border-radius:6px;padding:10px 14px}
+.icu-board .modal-field.full{flex:none;width:100%}
+.icu-board .field-label{font-size:12px;color:var(--text-muted);margin-bottom:3px}
+.icu-board .field-value{font-size:17px;font-weight:600;color:var(--text-primary)}
+.icu-board .field-value.diagnosis{font-size:15px;font-weight:500}
+.icu-board .modal-badges{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
+.icu-board .modal-footer{padding:10px 20px 16px;display:flex;justify-content:flex-end}
+.icu-board .btn-close-modal{padding:8px 28px;border-radius:var(--radius-pill);background:var(--accent-green);color:#fff;font-size:15px;font-weight:700;cursor:pointer}
+
+/* ── Bed card ── */
+.icu-board .bed-card{border-radius:var(--radius-card);padding:8px 12px;border-left:4px solid transparent;box-shadow:var(--shadow-card);cursor:pointer;position:relative;height:100%;display:flex;flex-direction:column;gap:6px;overflow:hidden;transition:transform .1s,box-shadow .1s;box-sizing:border-box}
+.icu-board .bed-card:hover{transform:translateY(-2px);box-shadow:0 4px 16px rgba(0,0,0,0.35)}
+.icu-board .bed-card.occupied{background:var(--bg-card-occ);border-left-color:var(--border-occ)}
+.icu-board .bed-card.isolation{background:var(--bg-card-iso);border-left-color:var(--border-iso)}
+.icu-board .bed-card.transfer{background:var(--bg-card-trans);border-left-color:var(--border-trans)}
+.icu-board .bed-card.discharge{background:var(--bg-card-dis);border-left-color:var(--border-dis)}
+.icu-board .bed-card.empty{background:var(--bg-card-empty);border-left:2px dashed var(--border-empty);cursor:default;align-items:center;justify-content:center;opacity:.6}
+.icu-board .bed-card.empty:hover{transform:none;box-shadow:var(--shadow-card)}
+.icu-board .card-row1{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.icu-board .bed-num{font-size:22px;font-weight:900;font-family:var(--font-num);color:var(--text-primary);letter-spacing:.5px;line-height:1}
+.icu-board .card-row2{display:flex;align-items:baseline;gap:6px}
+.icu-board .patient-name{font-size:18px;font-weight:700;line-height:1}
+.icu-board .patient-basic{font-size:13px;color:var(--text-secondary);line-height:1}
+.icu-board .card-row3{display:flex;gap:4px;flex-wrap:wrap;align-items:center;margin-top:auto}
+.icu-board .empty-label{font-size:22px;font-weight:700;color:var(--text-empty)}
+.icu-board .empty-bed-num{font-size:18px;font-weight:900;font-family:var(--font-num);color:var(--text-empty);margin-bottom:6px}
+.icu-board .gender-m{color:#1565C0} .icu-board .gender-f{color:#AD1457}
+
+/* ── Badges ── */
+.icu-board .badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:var(--radius-badge);font-size:13px;font-weight:700;white-space:nowrap;line-height:20px}
+.icu-board .badge-DNR{background:#6A1B9A;color:#fff} .icu-board .badge-高危跌{background:#E65100;color:#fff}
+.icu-board .badge-依賴L1{background:#4527A0;color:#fff} .icu-board .badge-依賴L2{background:#4527A0;color:#fff}
+.icu-board .badge-依賴L3{background:#311B92;color:#fff} .icu-board .badge-隔離{background:#B71C1C;color:#fff}
+.icu-board .badge-保密{background:#37474F;color:#fff} .icu-board .badge-禁治療{background:#0D47A1;color:#fff}
+.icu-board .badge-禁食{background:#2E7D32;color:#fff} .icu-board .badge-過敏{background:#BF360C;color:#fff}
+.icu-board .badge-RRT{background:#C62828;color:#fff} .icu-board .badge-化療{background:#880E4F;color:#fff}
+.icu-board .badge-輪椅{background:#558B2F;color:#fff} .icu-board .badge-推床{background:#4E342E;color:#fff}
+.icu-board .badge-氧氣設備{background:#01579B;color:#fff} .icu-board .badge-洗腎{background:#006064;color:#fff}
+.icu-board .badge-more{display:inline-flex;align-items:center;padding:2px 6px;border-radius:var(--radius-badge);font-size:12px;font-weight:700;background:rgba(0,0,0,0.10);color:var(--text-secondary);white-space:nowrap;line-height:20px}
+
+/* ══════════════════════════════════════════════
+   抗生素 Tab 額外樣式（AntibioticTab 共用）
+   ══════════════════════════════════════════════ */
+.icu-board .bed-card.ab-has-abx { border-left-color: var(--accent-blue, #1565C0) !important; }
+.icu-board .ab-count-badge { display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;background:#1565C0;color:#fff;font-size:11px;font-weight:900;font-family:var(--font-num);border-radius:10px;padding:0 5px;margin-left:auto;flex-shrink:0; }
+.icu-board .ws-value.ws-abx-4f { color:#1565C0; }
+.icu-board .ws-value.ws-abx-3f { color:#0277BD; }
+.icu-board .ws-value.ws-abx-beds { color:#00838F; }
+.icu-board .ws-value.ws-abx-vanc { color:#6A1B9A; }
+.icu-board .ws-value.ws-abx-mero { color:#AD1457; }
+.icu-board .ws-value.ws-abx-pip  { color:#E65100; }
+.icu-board .ws-value.ws-abx-other { color:#546E7A; }
+.icu-board .ab-modal-overlay { display:none;position:fixed;inset:0;background:var(--modal-overlay);z-index:2000;align-items:center;justify-content:center; }
+.icu-board .ab-modal-overlay.show { display:flex; }
+.icu-board .ab-modal-box { background:var(--bg-modal);border-radius:var(--radius-modal);width:700px;max-width:94vw;max-height:85vh;overflow-y:auto;box-shadow:var(--shadow-modal);border:1px solid var(--floor-border);display:flex;flex-direction:column; }
+.icu-board .ab-modal-header { display:flex;align-items:baseline;justify-content:space-between;padding:16px 22px 12px;border-bottom:1px solid var(--divider);gap:10px;flex-shrink:0; }
+.icu-board .ab-modal-bed { font-size:22px;font-weight:900;font-family:var(--font-num);color:#1565C0; }
+.icu-board .ab-modal-name { font-size:22px;font-weight:700;color:var(--text-primary);margin-left:8px; }
+.icu-board .ab-modal-rec { font-size:14px;color:var(--text-muted);margin-left:10px; }
+.icu-board .ab-modal-close { font-size:22px;color:var(--text-muted);cursor:pointer;padding:4px 8px;border-radius:4px;margin-left:auto; }
+.icu-board .ab-modal-close:hover { background:var(--bg-card-empty); }
+.icu-board .ab-modal-body { padding:16px 22px 20px;flex:1;overflow-y:auto; }
+.icu-board .ab-table { width:100%;border-collapse:collapse; }
+.icu-board .ab-table thead tr { background:#EEF4FF; }
+.icu-board .ab-table th { font-size:13px;font-weight:700;color:var(--text-secondary);text-align:left;padding:9px 16px;white-space:nowrap;border-bottom:1px solid var(--divider); }
+.icu-board .ab-table tbody tr { border-bottom:1px solid var(--bg-card-empty); }
+.icu-board .ab-table tbody tr:last-child { border-bottom:none; }
+.icu-board .ab-table td { font-size:15px;color:var(--text-primary);padding:12px 16px;vertical-align:middle; }
+.icu-board .ab-td-drug { font-size:16px;font-weight:700;color:#1565C0; }
+.icu-board .ab-td-time { font-family:var(--font-num);font-size:14px;color:var(--text-secondary);white-space:nowrap; }
+.icu-board .ab-modal-empty { text-align:center;color:var(--text-muted);padding:36px;font-size:18px; }
+.icu-board .ab-modal-footer { padding:12px 22px 18px;display:flex;justify-content:flex-end;border-top:1px solid var(--divider);flex-shrink:0; }
+.icu-board .ab-btn-close { padding:8px 30px;border-radius:var(--radius-pill);background:#1565C0;color:#fff;font-size:15px;font-weight:700;cursor:pointer; }
+
+/* ══════════════════════════════════════════════
+   管路 Tab 額外樣式（TubeTab 共用）
+   ══════════════════════════════════════════════ */
+.icu-board .tb-panel { flex:1;display:flex;flex-direction:column;overflow:hidden;padding:16px 20px 12px;gap:14px; }
+.icu-board .tb-title { font-size:24px;font-weight:800;color:var(--text-primary);display:flex;align-items:center;gap:10px;flex-shrink:0; }
+.icu-board .tb-title-bar { display:inline-block;width:5px;height:24px;background:#00838F;border-radius:3px; }
+.icu-board .tb-table-wrap { flex:1;overflow-y:auto;overflow-x:auto;background:var(--bg-card-occ);border:1px solid var(--divider);border-radius:var(--radius-card);touch-action:pan-y;min-height:0; }
+.icu-board .tb-table { width:100%;border-collapse:collapse; }
+.icu-board .tb-table thead tr { background:#E8F4EE; }
+.icu-board .tb-table th { font-size:14px;font-weight:700;color:var(--text-secondary);text-align:center;padding:10px 14px;white-space:nowrap;border-bottom:1px solid var(--divider);line-height:1.4; }
+.icu-board .tb-table th:first-child,.icu-board .tb-table th:nth-child(2) { text-align:left; }
+.icu-board .tb-table tbody tr { border-bottom:1px solid var(--bg-card-empty); }
+.icu-board .tb-table tbody tr:nth-child(even) { background:#FAFCFD; }
+.icu-board .tb-table td { font-size:16px;color:var(--text-primary);padding:12px 14px;vertical-align:middle;text-align:center; }
+.icu-board .tb-td-bed { text-align:left !important;font-size:15px;font-family:var(--font-num);font-weight:700;color:var(--text-secondary);white-space:nowrap; }
+.icu-board .tb-td-name { text-align:left !important;font-size:16px;font-weight:700;color:var(--text-primary);white-space:nowrap; }
+.icu-board .tb-check { font-size:20px;font-weight:900;color:#2E7D32; }
+.icu-board .tb-none { font-size:17px;color:var(--text-empty); }
+.icu-board .tb-stats { background:var(--bg-card-occ);border:1px solid var(--divider);border-radius:var(--radius-card);display:flex;align-items:center;padding:10px 24px;gap:36px;flex-shrink:0;flex-wrap:wrap; }
+.icu-board .tb-stat-item { display:flex;align-items:center;gap:8px; }
+.icu-board .tb-stat-label { font-size:15px;color:var(--text-secondary);font-weight:600; }
+.icu-board .tb-stat-value { font-size:26px;font-weight:900;font-family:var(--font-num); }
+.icu-board .tb-stat-ett   .tb-stat-value { color:#E65100; }
+.icu-board .tb-stat-ng    .tb-stat-value { color:#6A1B9A; }
+.icu-board .tb-stat-foley .tb-stat-value { color:#00838F; }
+.icu-board .tb-stat-cvc   .tb-stat-value { color:#2E7D32; }
+.icu-board .tb-stat-crrt  .tb-stat-value { color:#B71C1C; }

@@ -100,7 +100,7 @@
         <div class="ws-row">
           <div class="ws-item" data-filter="critical">
             <div class="ws-value ws-crit" id="stat-critical">—</div>
-            <div class="ws-label">一二級 危急</div>
+            <div class="ws-label">一二級 重症</div>
           </div>
           <div class="ws-item" data-filter="moderate">
             <div class="ws-value ws-mod" id="stat-moderate">—</div>
@@ -140,15 +140,12 @@
 
   <!-- ── Bottom tabs ── -->
   <nav class="bottom-tabs">
-    <button class="tab-btn active">病室動態</button>
-    <button class="tab-btn">檢傷分診</button>
-    <button class="tab-btn">大量傷患</button>
-    <button class="tab-btn">檢查/會診</button>
-    <button class="tab-btn">待床管理</button>
-    <button class="tab-btn">連絡電話</button>
-    <button class="tab-btn">派班資訊</button>
-    <button class="tab-btn">佈告欄</button>
-    <button class="tab-btn">避難圖</button>
+    <a href="index.html"         class="tab-btn active">病室動態</a>
+    <a href="exam.html"          class="tab-btn">檢查/會診</a>
+    <a href="mass-casualty.html" class="tab-btn">大量傷患</a>
+    <a href="contact.html"       class="tab-btn">連絡電話</a>
+    <a href="bulletin.html"      class="tab-btn">佈告欄</a>
+    <a href="evacuation.html"    class="tab-btn">避難圖</a>
   </nav>
 
   <!-- ── Bed detail modal ── -->
@@ -200,7 +197,7 @@
             <div class="field-value" id="m-arrival"></div>
           </div>
           <div class="modal-field">
-            <div class="field-label">滯留時間</div>
+            <div class="field-label">留觀時間</div>
             <div class="field-value" id="m-stay"></div>
           </div>
           <div class="modal-field">

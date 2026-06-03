@@ -1,0 +1,163 @@
+/* ════════════════════════════════════════════════════
+   管路狀態 — Tube Status
+   全寬表格，顯示所有在床病人的管路使用情況
+   ════════════════════════════════════════════════════ */
+
+/* ── 面板容器 ── */
+.tb-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 16px 20px 12px;
+  gap: 14px;
+}
+
+/* ── 面板標題 ── */
+.tb-title {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.tb-title-bar {
+  display: inline-block;
+  width: 5px;
+  height: 24px;
+  background: #00838F;
+  border-radius: 3px;
+}
+
+/* ── 表格捲動容器 ── */
+.tb-table-wrap {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: auto;
+  background: var(--bg-card-occ);
+  border: 1px solid var(--divider);
+  border-radius: var(--radius-card);
+  touch-action: pan-y;
+  min-height: 0;
+}
+
+.tb-table-wrap::-webkit-scrollbar { width: 4px; height: 4px; }
+.tb-table-wrap::-webkit-scrollbar-thumb { background: var(--divider); border-radius: 2px; }
+
+/* ── 表格 ── */
+.tb-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.tb-table thead tr {
+  background: #E8F4EE;
+}
+
+.tb-table th {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-align: center;
+  padding: 10px 14px;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--divider);
+  line-height: 1.4;
+}
+
+.tb-table th:first-child,
+.tb-table th:nth-child(2) {
+  text-align: left;
+}
+
+.tb-table tbody tr {
+  border-bottom: 1px solid var(--bg-card-empty);
+}
+
+.tb-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.tb-table tbody tr:nth-child(even) {
+  background: #FAFCFD;
+}
+
+.tb-table td {
+  font-size: 16px;
+  color: var(--text-primary);
+  padding: 12px 14px;
+  vertical-align: middle;
+  text-align: center;
+}
+
+/* 床號欄左對齊 */
+.tb-td-bed {
+  text-align: left !important;
+  font-size: 15px;
+  font-family: var(--font-num);
+  font-weight: 700;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+/* 病患名欄左對齊 */
+.tb-td-name {
+  text-align: left !important;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+/* ── ✓ 有管路 ── */
+.tb-check {
+  font-size: 20px;
+  font-weight: 900;
+  color: #2E7D32;
+}
+
+/* ── — 無管路 ── */
+.tb-none {
+  font-size: 17px;
+  color: var(--text-empty);
+}
+
+/* ── 底部統計橫條 ── */
+.tb-stats {
+  background: var(--bg-card-occ);
+  border: 1px solid var(--divider);
+  border-radius: var(--radius-card);
+  display: flex;
+  align-items: center;
+  padding: 10px 24px;
+  gap: 36px;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.tb-stat-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tb-stat-label {
+  font-size: 15px;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.tb-stat-value {
+  font-size: 26px;
+  font-weight: 900;
+  font-family: var(--font-num);
+}
+
+.tb-stat-ett   .tb-stat-value { color: #E65100; }
+.tb-stat-ng    .tb-stat-value { color: #6A1B9A; }
+.tb-stat-foley .tb-stat-value { color: #00838F; }
+.tb-stat-cvc   .tb-stat-value { color: #2E7D32; }
+.tb-stat-crrt  .tb-stat-value { color: #B71C1C; }

@@ -50,4 +50,10 @@
   --header-h:    72px;
   --filter-h:    44px;
   --tabs-h:      56px;
+
+  /* 子頁面共用 */
+  --bg-card:      #FFFFFF;
+  --bg-alt:       #F8FAFB;
+  --border:       #D6E4D8;
+  --border-light: #EBF2EC;
 }

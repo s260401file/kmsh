@@ -1,0 +1,294 @@
+/* ════════════════════════════════════════════════════
+   避難圖 — Evacuation Plan (OR)
+   對齊 ICU evacuation.css 結構，使用 ev- 前綴
+   ════════════════════════════════════════════════════ */
+
+/* ── 面板容器 ── */
+.ev-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 16px 20px 12px;
+  gap: 14px;
+}
+
+/* ── 面板標題 ── */
+.ev-title {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.ev-title-bar {
+  display: inline-block;
+  width: 5px;
+  height: 24px;
+  background: #E64A19;
+  border-radius: 3px;
+}
+
+.ev-title-meta {
+  font-size: 15px;
+  font-weight: 400;
+  color: var(--text-muted);
+  margin-left: 4px;
+}
+
+/* ── 雙欄佈局 ── */
+.ev-columns {
+  flex: 1;
+  display: flex;
+  gap: 16px;
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* ── 左欄：平面圖容器 ── */
+.ev-map-wrap {
+  flex: 1.6;
+  background: var(--bg-card-occ);
+  border: 1px solid var(--divider);
+  border-radius: var(--radius-card);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+  gap: 12px;
+}
+
+/* OR 平面示意（div-based grid） */
+.ev-floor-plan-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ev-floor-plan-title::before {
+  content: "";
+  display: inline-block;
+  width: 4px;
+  height: 15px;
+  background: #E64A19;
+  border-radius: 2px;
+}
+
+.ev-floor-plan {
+  flex: 1;
+  background: #F0F8F4;
+  border: 2px solid var(--divider);
+  border-radius: 8px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 20px 48px;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.ev-floor-label {
+  position: absolute;
+  top: 10px;
+  left: 14px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.ev-stairs {
+  position: absolute;
+  right: 14px;
+  top: 10px;
+  background: #FFF9C4;
+  border: 1.5px solid #F9A825;
+  border-radius: 6px;
+  padding: 5px 10px;
+  font-size: 13px;
+  color: #F57F17;
+  font-weight: 700;
+}
+
+.ev-or-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  width: 100%;
+}
+
+.ev-or-room {
+  background: #C8E6C9;
+  border: 1.5px solid #81C784;
+  border-radius: 8px;
+  text-align: center;
+  padding: 14px 4px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #2E7D32;
+}
+
+.ev-or-room.ev-or-exit {
+  background: #FFCDD2;
+  border-color: #EF9A9A;
+  color: #C62828;
+}
+
+.ev-exit-arrow {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.ev-exit-arrow .ev-arrow { font-size: 26px; color: #E64A19; }
+.ev-exit-arrow .ev-arrow-label { font-size: 13px; color: #E64A19; font-weight: 700; }
+
+/* 圖例橫列（平面圖下方） */
+.ev-legend {
+  display: flex;
+  gap: 20px;
+  flex-shrink: 0;
+}
+
+.ev-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.ev-legend-dot { width: 14px; height: 14px; border-radius: 3px; flex-shrink: 0; }
+.ev-legend-dot.dot-room   { background: #C8E6C9; border: 1px solid #81C784; }
+.ev-legend-dot.dot-exit   { background: #FFCDD2; border: 1px solid #EF9A9A; }
+.ev-legend-dot.dot-stairs { background: #FFF9C4; border: 1px solid #F9A825; }
+
+/* ── 右欄 ── */
+.ev-side {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+  touch-action: pan-y;
+  min-height: 0;
+}
+
+.ev-side::-webkit-scrollbar { width: 4px; }
+.ev-side::-webkit-scrollbar-thumb { background: var(--divider); border-radius: 2px; }
+
+/* ── 卡片 ── */
+.ev-card {
+  background: var(--bg-card-occ);
+  border: 1px solid var(--divider);
+  border-radius: var(--radius-card);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.ev-card-header {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--accent-green);
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--divider);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.ev-card-count {
+  font-size: 13px;
+  font-weight: 900;
+  color: var(--text-muted);
+  font-family: var(--font-num);
+}
+
+/* ── 設備清單 ── */
+.ev-equip-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.ev-equip-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 18px;
+  border-bottom: 1px solid var(--bg-card-empty);
+  gap: 10px;
+}
+
+.ev-equip-row:last-child { border-bottom: none; }
+
+.ev-equip-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.ev-equip-loc {
+  font-size: 14px;
+  color: var(--text-muted);
+  text-align: right;
+  flex: 1;
+}
+
+.ev-equip-qty {
+  font-size: 14px;
+  font-weight: 700;
+  font-family: var(--font-num);
+  color: var(--text-secondary);
+  background: var(--bg-card-empty);
+  padding: 2px 8px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+/* ── 緊急聯絡 ── */
+.ev-contacts {
+  display: flex;
+  flex-direction: column;
+}
+
+.ev-contact-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 11px 18px;
+  border-bottom: 1px solid var(--bg-card-empty);
+}
+
+.ev-contact-row:last-child { border-bottom: none; }
+
+.ev-contact-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: #C62828;
+}
+
+.ev-contact-ext {
+  font-size: 22px;
+  font-weight: 800;
+  font-family: var(--font-num);
+  color: #C62828;
+  letter-spacing: -0.5px;
+}

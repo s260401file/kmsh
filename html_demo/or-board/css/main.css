@@ -251,6 +251,8 @@ body { flex-direction: column; }
   border-right: 1px solid rgba(255,255,255,0.08);
   position: relative;
   transition: background 0.15s, color 0.15s;
+  text-decoration: none;
+  cursor: pointer;
 }
 .tab-btn:last-child { border-right: none; }
 .tab-btn:hover { background: var(--bg-tab-active); color: var(--text-tab-active); }

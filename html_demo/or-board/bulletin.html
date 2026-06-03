@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>手術室 — 佈告欄</title>
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/reset.css">
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/bulletin.css">
+</head>
+<body>
+
+  <!-- ── Header ── -->
+  <header class="page-header">
+    <div class="header-left">OR
+      <span class="ward-sub">手術室</span>
+    </div>
+    <div class="header-center">
+      <div class="staff-block">
+        <div class="staff-label">手術室主任</div>
+        <div class="staff-name" id="ward-director">—</div>
+      </div>
+      <div class="staff-block">
+        <div class="staff-label">護理長</div>
+        <div class="staff-name" id="head-nurse">—</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="update-label">資料更新時間：剛剛</div>
+      <div class="clock-date" id="clock-date"></div>
+      <div class="clock-time" id="clock-time"></div>
+    </div>
+  </header>
+
+  <!-- ── Announcement marquee ── -->
+  <div class="announce-bar">
+    <span>🔔</span>
+    <span>2026/05/24 手術室公告：今日共安排 7 台手術，OR-04 MVR 預計 13:00 完成，ICU 床位已預留，相關科別請備妥接收。</span>
+  </div>
+
+  <!-- ── Main content ── -->
+  <main class="main-content">
+    <div class="bl-panel">
+
+      <!-- 面板標題 -->
+      <div class="bl-title">
+        <span class="bl-title-bar"></span>
+        佈告欄
+      </div>
+
+      <!-- 雙欄 -->
+      <div class="bl-columns">
+
+        <!-- 左欄：手術室公告 -->
+        <div class="bl-col">
+          <div class="bl-col-header">
+            手術室公告
+            <span class="bl-col-count" id="bl-unit-count"></span>
+          </div>
+          <div class="bl-list" id="unit-bulletin-list"></div>
+        </div>
+
+        <!-- 右欄：院方公告 -->
+        <div class="bl-col">
+          <div class="bl-col-header">
+            院方公告
+            <span class="bl-col-count" id="bl-hosp-count"></span>
+          </div>
+          <div class="bl-list" id="hosp-bulletin-list"></div>
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- ── Bottom tabs ── -->
+  <nav class="bottom-tabs">
+    <a href="index.html"      class="tab-btn">手術動態</a>
+    <a href="schedule.html"   class="tab-btn">手術派班</a>
+    <a href="handover.html"   class="tab-btn">特殊交班</a>
+    <a href="contact.html"    class="tab-btn">連絡電話</a>
+    <a href="bulletin.html"   class="tab-btn active">佈告欄</a>
+    <a href="evacuation.html" class="tab-btn">避難圖</a>
+  </nav>
+
+  <script src="js/mockData.js"></script>
+  <script src="js/bulletinData.js"></script>
+  <script src="js/bulletin.js"></script>
+</body>
+</html>

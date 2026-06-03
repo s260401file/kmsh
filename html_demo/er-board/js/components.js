@@ -99,7 +99,7 @@ function renderAllBeds(beds) {
 
 const TRIAGE_LABELS = {
   1: "一級 復甦急救",
-  2: "二級 危急",
+  2: "二級 重症",
   3: "三級 緊急",
   4: "四級 次緊急",
   5: "五級 非緊急"
@@ -108,7 +108,7 @@ const TRIAGE_LABELS = {
 function openModal(bed) {
   const p = bed.Patient;
 
-  // 計算滯留時間
+  // 計算留觀時間
   const arrStr = `2026-${p.ArrivalDate.replace("/","-")}T${p.ArrivalTime}:00`;
   const arrival = new Date(arrStr);
   const now = new Date();

@@ -1,0 +1,105 @@
+/* 檢查/會診 — ER */
+.ec-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 16px 20px 12px;
+  gap: 14px;
+}
+.ec-page-title {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+.ec-title-accent {
+  display: inline-block;
+  width: 5px;
+  height: 24px;
+  background: var(--accent-green);
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+.ec-columns {
+  flex: 1;
+  display: flex;
+  gap: 20px;
+  overflow: hidden;
+  min-height: 0;
+}
+.ec-card {
+  flex: 1;
+  background: var(--bg-card-occ);
+  border: 1px solid var(--divider);
+  border-radius: var(--radius-card);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.ec-card-header {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--accent-green);
+  padding: 13px 18px 12px;
+  border-bottom: 1px solid var(--divider);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.ec-card-count {
+  font-size: 13px;
+  font-weight: 900;
+  color: var(--text-muted);
+  font-family: var(--font-num);
+}
+.ec-table-wrap {
+  flex: 1;
+  overflow-y: auto;
+}
+.ec-table-wrap::-webkit-scrollbar { width: 4px; }
+.ec-table-wrap::-webkit-scrollbar-thumb { background: var(--divider); border-radius: 2px; }
+.ec-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.ec-table thead tr { background: #E8F5EE; }
+.ec-table th {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-align: left;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--divider);
+  white-space: nowrap;
+  position: sticky;
+  top: 0;
+  background: #E8F5EE;
+  z-index: 1;
+}
+.ec-table tbody tr { border-bottom: 1px solid var(--bg-card-empty); }
+.ec-table tbody tr:last-child { border-bottom: none; }
+.ec-table td {
+  font-size: 15px;
+  color: var(--text-primary);
+  padding: 11px 16px;
+  vertical-align: middle;
+}
+.ec-bed { font-weight: 700; color: var(--accent-green); font-family: var(--font-num); }
+.ec-status {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: var(--radius-pill);
+  font-size: 12px;
+  font-weight: 700;
+}
+.ec-status-待執行 { background: #FFF3CD; color: #856404; }
+.ec-status-執行中 { background: #E3F2FD; color: #1565C0; }
+.ec-status-完成   { background: #E8F5EE; color: var(--accent-green); }
+.ec-status-待回覆 { background: #FFF3CD; color: #856404; }
+.ec-status-已回覆 { background: #E8F5EE; color: var(--accent-green); }
+.ec-note { font-size: 13px; color: var(--text-muted); }

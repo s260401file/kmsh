@@ -1,0 +1,145 @@
+/* ════════════════════════════════════════════════════
+   連絡電話 — Contact Directory (OR)
+   對齊 ICU contact.css 結構
+   ════════════════════════════════════════════════════ */
+
+/* ── 面板容器 ── */
+.ct-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  gap: 14px;
+}
+
+/* ── 頁面標題 ── */
+.ct-page-title {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.ct-title-accent {
+  display: inline-block;
+  width: 5px;
+  height: 24px;
+  background: var(--accent-green);
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.ct-title-caption {
+  font-size: 15px;
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+/* ── 雙欄佈局 ── */
+.ct-columns {
+  flex: 1;
+  display: flex;
+  gap: 20px;
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* ── 卡片 ── */
+.ct-card {
+  background: var(--bg-card-occ);
+  border: 1px solid var(--divider);
+  border-radius: var(--radius-card);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.ct-card-duty   { flex: 0 0 auto; width: 55%; }
+.ct-card-common { flex: 1; }
+
+/* 卡片標頭 */
+.ct-card-header {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--accent-green);
+  padding: 13px 18px 12px;
+  border-bottom: 1px solid var(--divider);
+  flex-shrink: 0;
+}
+
+/* 表格捲動容器 */
+.ct-table-wrap {
+  flex: 1;
+  overflow-y: auto;
+  touch-action: pan-y;
+}
+
+.ct-table-wrap::-webkit-scrollbar { width: 4px; }
+.ct-table-wrap::-webkit-scrollbar-thumb { background: var(--divider); border-radius: 2px; }
+
+/* ── 表格 ── */
+.ct-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.ct-table thead tr {
+  background: #E8F4EE;
+}
+
+.ct-table th {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-align: left;
+  padding: 10px 18px;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--divider);
+}
+
+.ct-table tbody tr {
+  border-bottom: 1px solid var(--bg-card-empty);
+}
+
+.ct-table tbody tr:last-child { border-bottom: none; }
+
+.ct-table td {
+  font-size: 17px;
+  color: var(--text-primary);
+  padding: 12px 18px;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.ct-table td.ct-ext {
+  color: var(--accent-green);
+  font-weight: 700;
+  font-family: var(--font-num);
+}
+
+.ct-table th.ct-col-ext,
+.ct-table td.ct-col-ext {
+  text-align: right;
+  padding-right: 20px;
+}
+
+.ct-table td.ct-mobile {
+  color: var(--text-muted);
+  font-size: 15px;
+}
+
+.ct-table td.ct-slot {
+  color: var(--text-muted);
+  font-size: 15px;
+}
+
+/* 空狀態 */
+.ct-empty-row td {
+  text-align: center;
+  color: var(--text-muted);
+  padding: 32px 18px;
+  font-size: 18px;
+}

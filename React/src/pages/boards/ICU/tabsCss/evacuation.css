@@ -1,0 +1,35 @@
+/* 避難圖 — ICU 版，所有選擇器以 .icu-board 為根 */
+.icu-board .ev-panel { flex:1;display:flex;flex-direction:column;overflow:hidden;padding:16px 20px 12px;gap:14px }
+.icu-board .ev-title { font-size:24px;font-weight:800;color:var(--text-primary);display:flex;align-items:center;gap:10px;flex-shrink:0 }
+.icu-board .ev-title-bar { display:inline-block;width:5px;height:24px;background:#E64A19;border-radius:3px }
+.icu-board .ev-title-meta { font-size:15px;font-weight:400;color:var(--text-muted);margin-left:4px }
+.icu-board .ev-columns { flex:1;display:flex;gap:16px;overflow:hidden;min-height:0 }
+.icu-board .ev-map-wrap { flex:1.7;background:var(--bg-card-occ);border:1px solid var(--divider);border-radius:var(--radius-card);padding:14px;display:flex;align-items:center;justify-content:center;overflow:hidden;min-width:0 }
+.icu-board .ev-svg { width:100%;height:100%;max-height:100%;display:block;font-family:var(--font-main) }
+.icu-board .ev-side { flex:1;display:flex;flex-direction:column;gap:12px;overflow-y:auto;touch-action:pan-y;min-height:0 }
+.icu-board .ev-card { background:var(--bg-card-occ);border:1px solid var(--divider);border-radius:var(--radius-card);display:flex;flex-direction:column;overflow:hidden;flex-shrink:0 }
+.icu-board .ev-card-header { font-size:17px;font-weight:700;color:var(--accent-green);padding:12px 18px;border-bottom:1px solid var(--divider);display:flex;align-items:center;gap:8px;flex-shrink:0 }
+.icu-board .ev-card-count { font-size:13px;font-weight:900;color:var(--text-muted);font-family:var(--font-num) }
+.icu-board .ev-equip-list { display:flex;flex-direction:column }
+.icu-board .ev-equip-row { display:flex;align-items:center;justify-content:space-between;padding:10px 18px;border-bottom:1px solid var(--bg-card-empty);gap:10px }
+.icu-board .ev-equip-row:last-child { border-bottom:none }
+.icu-board .ev-equip-name { font-size:16px;font-weight:700;color:var(--text-primary);white-space:nowrap;flex-shrink:0 }
+.icu-board .ev-equip-loc { font-size:14px;color:var(--text-muted);text-align:right;flex:1 }
+.icu-board .ev-equip-qty { font-size:14px;font-weight:700;font-family:var(--font-num);color:var(--text-secondary);background:var(--bg-card-empty);padding:2px 8px;border-radius:4px;flex-shrink:0 }
+.icu-board .ev-legend { padding:12px 18px;display:flex;flex-direction:column;gap:10px }
+.icu-board .ev-legend-row { display:flex;align-items:center;gap:12px }
+.icu-board .ev-legend-icon { width:30px;display:flex;align-items:center;justify-content:center;flex-shrink:0 }
+.icu-board .ev-legend-text { font-size:15px;color:var(--text-primary) }
+.icu-board .ev-icon-fire { display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;background:#E05C5C;color:white;font-weight:800;font-size:13px;border-radius:50% }
+.icu-board .ev-icon-light { display:inline-block;width:14px;height:14px;background:#2D7A55;border-radius:50%;position:relative }
+.icu-board .ev-icon-light::after { content:"";position:absolute;inset:4px;background:#A5E1B7;border-radius:50% }
+.icu-board .ev-icon-exit { display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;background:#2D7A55;color:white;font-weight:800;font-size:12px;border-radius:3px }
+.icu-board .ev-icon-arrow { display:inline-block;width:28px;height:3px;background:repeating-linear-gradient(to right,#E64A19 0,#E64A19 6px,transparent 6px,transparent 10px);position:relative }
+.icu-board .ev-icon-arrow::after { content:"";position:absolute;right:-2px;top:-4px;border-left:8px solid #E64A19;border-top:5px solid transparent;border-bottom:5px solid transparent }
+.icu-board .ev-icon-meet { display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;background:#E64A19;color:#FFF8E1;font-weight:800;font-size:14px;border-radius:50% }
+.icu-board .ev-icon-o2 { display:inline-flex;align-items:center;justify-content:center;width:26px;height:22px;background:#FFF;border:2px solid #1565C0;color:#1565C0;font-weight:800;font-size:11px;border-radius:50% }
+.icu-board .ev-contacts { display:flex;flex-direction:column }
+.icu-board .ev-contact-row { display:flex;align-items:center;justify-content:space-between;padding:11px 18px;border-bottom:1px solid var(--bg-card-empty) }
+.icu-board .ev-contact-row:last-child { border-bottom:none }
+.icu-board .ev-contact-name { font-size:16px;font-weight:700;color:#C62828 }
+.icu-board .ev-contact-ext { font-size:22px;font-weight:800;font-family:var(--font-num);color:#C62828;letter-spacing:-.5px }
