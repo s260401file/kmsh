@@ -1,0 +1,9 @@
+curl --location 'https://zwmc01t.vghks.gov.tw:4431/AMDRService/amdr/ord/qrynonexschlist' \
+--header 'Content-Type: application/json' \
+--data '{
+   "KeyId": "08be7b58-78d6-4ae7-9129-0577e04a4c17",
+      "hid": "4A0",
+      "apid": "APEBOARD",
+      "hhisnum": "19000136",
+      "hcasetyp": "A"
+    }'

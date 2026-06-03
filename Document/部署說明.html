@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>護理白板系統 — IIS 部署說明</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Microsoft JhengHei", "Segoe UI", sans-serif;
+      font-size: 15px;
+      line-height: 1.7;
+      color: #1e2733;
+      background: #f4f6f9;
+    }
+
+    /* ── 側欄 ── */
+    nav {
+      position: fixed;
+      top: 0; left: 0;
+      width: 230px;
+      height: 100vh;
+      background: #1a2332;
+      color: #c9d4e3;
+      overflow-y: auto;
+      padding: 24px 0;
+      z-index: 100;
+    }
+    nav .logo {
+      padding: 0 20px 20px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #7eb8f7;
+      letter-spacing: .5px;
+      border-bottom: 1px solid #2d3f55;
+    }
+    nav ul { list-style: none; padding: 12px 0; }
+    nav ul li a {
+      display: block;
+      padding: 7px 20px;
+      color: #a8bbd4;
+      text-decoration: none;
+      font-size: 13.5px;
+      transition: background .15s, color .15s;
+    }
+    nav ul li a:hover { background: #243246; color: #fff; }
+    nav ul li.section-title {
+      padding: 14px 20px 4px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: #4e6480;
+      text-transform: uppercase;
+    }
+
+    /* ── 主內容 ── */
+    main {
+      margin-left: 230px;
+      padding: 40px 48px 80px;
+      max-width: 980px;
+    }
+
+    h1 {
+      font-size: 26px;
+      color: #0f3460;
+      margin-bottom: 6px;
+    }
+    .subtitle {
+      color: #6b7c93;
+      font-size: 14px;
+      margin-bottom: 36px;
+      padding-bottom: 24px;
+      border-bottom: 2px solid #dde3ec;
+    }
+
+    h2 {
+      font-size: 19px;
+      color: #0f3460;
+      margin: 44px 0 16px;
+      padding-left: 12px;
+      border-left: 4px solid #2e7dff;
+    }
+    h3 {
+      font-size: 15.5px;
+      color: #1e2733;
+      margin: 28px 0 10px;
+      font-weight: 700;
+    }
+
+    p { margin-bottom: 12px; }
+
+    /* ── 提示框 ── */
+    .alert {
+      display: flex;
+      gap: 12px;
+      padding: 14px 18px;
+      border-radius: 6px;
+      margin: 16px 0;
+      font-size: 14px;
+    }
+    .alert-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+    .alert.info    { background: #e8f2ff; border-left: 4px solid #2e7dff; }
+    .alert.warn    { background: #fff8e1; border-left: 4px solid #f59e0b; }
+    .alert.danger  { background: #fff0f0; border-left: 4px solid #ef4444; }
+    .alert.success { background: #ecfdf5; border-left: 4px solid #10b981; }
+
+    /* ── 步驟標記 ── */
+    .steps { counter-reset: step; }
+    .step {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 20px;
+      align-items: flex-start;
+    }
+    .step-num {
+      counter-increment: step;
+      background: #2e7dff;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 700;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+    .step-body { flex: 1; }
+
+    /* ── 表格 ── */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+      margin: 16px 0;
+    }
+    th {
+      background: #2e7dff;
+      color: #fff;
+      padding: 10px 14px;
+      text-align: left;
+      font-weight: 600;
+    }
+    td {
+      padding: 9px 14px;
+      border-bottom: 1px solid #dde3ec;
+    }
+    tr:nth-child(even) td { background: #f8fafc; }
+    tr:hover td { background: #eef4ff; }
+
+    /* ── 程式碼 ── */
+    pre {
+      background: #1a2332;
+      color: #c9d4e3;
+      border-radius: 6px;
+      padding: 16px 18px;
+      margin: 12px 0;
+      overflow-x: auto;
+      font-size: 13.5px;
+      font-family: "Consolas", "Cascadia Code", monospace;
+      line-height: 1.6;
+    }
+    code {
+      background: #e8f0fb;
+      color: #1a5faa;
+      padding: 1px 6px;
+      border-radius: 3px;
+      font-family: "Consolas", monospace;
+      font-size: 13px;
+    }
+    pre code { background: none; color: inherit; padding: 0; }
+
+    /* ── 驗證清單 ── */
+    .checklist { list-style: none; padding: 0; }
+    .checklist li {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 8px 0;
+      border-bottom: 1px solid #eef1f5;
+      font-size: 14px;
+    }
+    .checklist li:last-child { border-bottom: none; }
+    .check { color: #10b981; font-size: 17px; flex-shrink: 0; }
+
+    /* ── 版本標籤 ── */
+    .badge {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-left: 6px;
+      vertical-align: middle;
+    }
+    .badge-blue  { background: #dbeafe; color: #1d4ed8; }
+    .badge-green { background: #d1fae5; color: #065f46; }
+    .badge-red   { background: #fee2e2; color: #991b1b; }
+
+    /* ── 分隔 ── */
+    hr { border: none; border-top: 1px solid #dde3ec; margin: 36px 0; }
+
+    /* ── 錯誤排查 ── */
+    .error-card {
+      background: #fff;
+      border: 1px solid #dde3ec;
+      border-radius: 8px;
+      padding: 16px 20px;
+      margin: 12px 0;
+    }
+    .error-code {
+      font-family: "Consolas", monospace;
+      font-size: 13px;
+      color: #ef4444;
+      font-weight: 700;
+    }
+    .error-cause { color: #6b7c93; font-size: 13.5px; margin: 6px 0 4px; }
+    .error-fix { font-size: 14px; }
+
+    footer {
+      margin-left: 230px;
+      padding: 20px 48px;
+      font-size: 12.5px;
+      color: #9aa5b4;
+      border-top: 1px solid #dde3ec;
+    }
+  </style>
+</head>
+<body>
+
+<!-- 側欄導覽 -->
+<nav>
+  <div class="logo">🏥 護理白板系統<br>IIS 部署說明</div>
+  <ul>
+    <li class="section-title">前置準備</li>
+    <li><a href="#overview">系統架構</a></li>
+    <li><a href="#prerequisites">必要模組安裝</a></li>
+
+    <li class="section-title">部署步驟</li>
+    <li><a href="#step0">第零步：啟用 ARR Proxy</a></li>
+    <li><a href="#step1">第一步：部署 API</a></li>
+    <li><a href="#step2">第二步：部署 React 前端</a></li>
+    <li><a href="#step3">第三步：防火牆</a></li>
+
+    <li class="section-title">驗證與排查</li>
+    <li><a href="#verify">驗證清單</a></li>
+    <li><a href="#update">日後更新方式</a></li>
+    <li><a href="#troubleshoot">常見錯誤排查</a></li>
+  </ul>
+</nav>
+
+<!-- 主內容 -->
+<main>
+
+  <h1>護理白板系統 — IIS 部署說明</h1>
+  <p class="subtitle">
+    適用版本：React 19 + Vite 8 &nbsp;|&nbsp; ASP.NET Core .NET 8 &nbsp;|&nbsp; Windows Server IIS<br>
+    最後更新：2026-05-30
+  </p>
+
+  <!-- ── 架構 ── -->
+  <h2 id="overview">系統架構</h2>
+  <p>部署完成後，院內同仁透過內網 IP 訪問，整體架構如下：</p>
+
+  <pre>【院內同仁瀏覽器】
+       │
+       │  http://&lt;伺服器內網IP&gt;  (port 80)
+       ▼
+【IIS — 前端網站 kmsh-whiteboard】
+       │
+       ├─ 靜態檔案 /        → C:\inetpub\wwwroot\kmsh-whiteboard\  (React build)
+       ├─ /api/*  ──ARR──▶  http://localhost:5100/api/*            (轉發到 API)
+       └─ 其他路徑           → /index.html                          (SPA fallback)
+       │
+       ▼
+【IIS — API 網站 kmsh-whiteboard-api】
+       監聽 127.0.0.1:5100  (僅本機，不對外)
+       實體路徑：C:\inetpub\wwwroot\kmsh-api\
+       .NET 8 in-process hosting</pre>
+
+  <table>
+    <tr><th>元件</th><th>網址</th><th>實體路徑</th></tr>
+    <tr><td>React 前端</td><td>http://&lt;內網IP&gt;/</td><td>C:\inetpub\wwwroot\kmsh-whiteboard\</td></tr>
+    <tr><td>.NET API</td><td>http://localhost:5100/（僅本機）</td><td>C:\inetpub\wwwroot\kmsh-api\</td></tr>
+  </table>
+
+  <hr>
+
+  <!-- ── 必要模組 ── -->
+  <h2 id="prerequisites">必要模組安裝</h2>
+  <p>以下模組若未安裝，依序完成後再繼續部署步驟。</p>
+
+  <table>
+    <tr>
+      <th>模組</th>
+      <th>確認方式</th>
+      <th>下載位置</th>
+    </tr>
+    <tr>
+      <td><strong>.NET 8 Hosting Bundle</strong><br><small>讓 IIS 執行 ASP.NET Core</small></td>
+      <td>IIS 管理員頂層節點 → 模組 → 看到 <code>AspNetCoreModuleV2</code></td>
+      <td>dotnet.microsoft.com/download/dotnet/8.0<br>→ ASP.NET Core Runtime → <strong>Hosting Bundle</strong><br>（檔名：<code>dotnet-hosting-8.x.x-win.exe</code>）</td>
+    </tr>
+    <tr>
+      <td><strong>URL Rewrite</strong><br><small>SPA 路由 fallback 規則</small></td>
+      <td>IIS 管理員首頁看到「URL 重寫」圖示</td>
+      <td>iis.net/downloads/microsoft/url-rewrite<br>（檔名：<code>rewrite_amd64_en-US.msi</code>）</td>
+    </tr>
+    <tr>
+      <td><strong>ARR 3.0</strong><br><small>將 /api/* 反向代理到本機 API</small></td>
+      <td>IIS 管理員<strong>伺服器頂層節點</strong>首頁看到「Application Request Routing Cache」圖示<br>
+          <small style="color:#ef4444">⚠️ 注意：此圖示只出現在頂層伺服器節點，不在網站節點</small></td>
+      <td>iis.net/downloads/microsoft/application-request-routing<br>（檔名：<code>requestRouter_amd64.msi</code>，約 9 MB）<br>
+          安裝後重新開啟 IIS 管理員才會看到圖示</td>
+    </tr>
+  </table>
+
+  <div class="alert warn">
+    <span class="alert-icon">⚠️</span>
+    <div>
+      <strong>Hosting Bundle 安裝順序很重要！</strong><br>
+      Hosting Bundle 必須在 IIS 功能啟用之後安裝。若先裝 Hosting Bundle 再啟用 IIS，模組不會自動註冊。
+      若已發生此情況，到「控制台 → 程式與功能」找到 Hosting Bundle，選「修復（Repair）」後再執行 <code>iisreset</code>。
+    </div>
+  </div>
+
+  <div class="alert info">
+    <span class="alert-icon">💡</span>
+    <div>
+      安裝任一模組後都要執行 <code>iisreset</code> 讓 IIS 重新載入模組清單。
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- ── 第零步 ── -->
+  <h2 id="step0">第零步：安裝 ARR 並啟用 Proxy</h2>
+  <p>ARR（Application Request Routing）負責將前端的 <code>/api/*</code> 請求轉發到本機 API，是讓 CRUD 功能正常運作的關鍵。</p>
+
+  <h3>0-1　下載並安裝 ARR 3.0</h3>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        前往 <code>https://www.iis.net/downloads/microsoft/application-request-routing</code><br>
+        下載「Application Request Routing 3.0」→ 檔名：<code>requestRouter_amd64.msi</code>（約 9 MB）
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-body">以<strong>系統管理員</strong>身份執行安裝程式，一路 Next 完成。</div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-body"><strong>重新開啟 IIS 管理員</strong>（不需重開機）。</div>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-body">
+        點選左側<strong>最上層伺服器節點</strong>（非網站），確認首頁 IIS 區塊出現「<strong>Application Request Routing Cache</strong>」圖示。
+        <div class="alert info" style="margin-top:10px">
+          <span class="alert-icon">💡</span>
+          <div>此圖示只出現在伺服器頂層節點的功能檢視，點到網站節點（如 kmsh-whiteboard）會看不到。</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h3>0-2　啟用 Proxy 功能</h3>
+  <p>ARR 安裝後，proxy 功能預設是關閉的，需手動開啟一次。</p>
+
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-body">雙擊「<strong>Application Request Routing Cache</strong>」。</div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-body">右側「動作」面板點「<strong>Server Proxy Settings...</strong>」。</div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-body">勾選「<strong>Enable proxy</strong>」→ 按右側 <strong>Apply</strong>。</div>
+    </div>
+  </div>
+
+  <div class="alert success">
+    <span class="alert-icon">✅</span>
+    <div>
+      驗證：瀏覽器開 <code>http://localhost/api/Text</code>，應看到 <code>[]</code>（與直接開 <code>http://localhost:5100/api/Text</code> 結果相同）。
+      若成功，TestPage 頁面在載入時就不會再出現 IIS 錯誤代碼閃現的情形。
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- ── 第一步：API ── -->
+  <h2 id="step1">第一步：部署 .NET API 到 IIS</h2>
+
+  <h3>1-1　發佈 API（PowerShell 執行）</h3>
+  <pre>cd "C:\WorkDir\Nursing Whiteboard\API\kmsh-whiteboard"
+dotnet publish -c Release -o "C:\inetpub\wwwroot\kmsh-api"
+New-Item -ItemType Directory -Path "C:\inetpub\wwwroot\kmsh-api\logs" -Force</pre>
+
+  <h3>1-2　IIS 建立 API 應用程式集區</h3>
+  <table>
+    <tr><th>欄位</th><th>設定值</th></tr>
+    <tr><td>名稱</td><td>kmsh-whiteboard-api</td></tr>
+    <tr><td>.NET CLR 版本</td><td>沒有受管理的程式碼</td></tr>
+    <tr><td>受管線模式</td><td>整合式</td></tr>
+  </table>
+  <p>建立後，進入「<strong>進階設定</strong>」：</p>
+  <table>
+    <tr><th>項目</th><th>值</th><th>目的</th></tr>
+    <tr><td>閒置逾時（分鐘）</td><td>0</td><td>防止 idle 被系統回收</td></tr>
+    <tr><td>啟動模式</td><td>AlwaysRunning</td><td>IIS 啟動即自動啟動 API</td></tr>
+  </table>
+
+  <h3>1-3　IIS 建立 API 網站</h3>
+  <table>
+    <tr><th>欄位</th><th>設定值</th></tr>
+    <tr><td>網站名稱</td><td>kmsh-whiteboard-api</td></tr>
+    <tr><td>應用程式集區</td><td>kmsh-whiteboard-api</td></tr>
+    <tr><td>實體路徑</td><td>C:\inetpub\wwwroot\kmsh-api</td></tr>
+    <tr><td>繫結 — 通訊協定</td><td>http</td></tr>
+    <tr><td>繫結 — IP 位址</td><td>127.0.0.1（僅本機）</td></tr>
+    <tr><td>繫結 — 連接埠</td><td>5100</td></tr>
+  </table>
+
+  <div class="alert success">
+    <span class="alert-icon">✅</span>
+    <div>
+      驗證：瀏覽器開 <code>http://localhost:5100/api/Text</code>，應看到 <code>[]</code>（空 JSON 陣列）。
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- ── 第二步：React ── -->
+  <h2 id="step2">第二步：部署 React 前端到 IIS</h2>
+
+  <h3>2-1　Build React 專案</h3>
+  <pre>cd "C:\WorkDir\Nursing Whiteboard\React"
+npm run build</pre>
+  <p>產出目錄：<code>C:\WorkDir\Nursing Whiteboard\React\dist\</code><br>
+  其中包含 <code>web.config</code>（已預先放在 <code>public/</code> 目錄，build 時自動複製進來）。</p>
+
+  <h3>2-2　複製到 IIS 目錄</h3>
+  <pre>New-Item -ItemType Directory -Path "C:\inetpub\wwwroot\kmsh-whiteboard" -Force
+Copy-Item -Path "C:\WorkDir\Nursing Whiteboard\React\dist\*" `
+          -Destination "C:\inetpub\wwwroot\kmsh-whiteboard" `
+          -Recurse -Force</pre>
+
+  <p>複製完成後，<code>C:\inetpub\wwwroot\kmsh-whiteboard\</code> 應包含：</p>
+  <pre>kmsh-whiteboard\
+  assets\
+  favicon.svg
+  icons.svg
+  index.html
+  web.config     ← 這個一定要在！</pre>
+
+  <h3>2-3　web.config 說明（自動產生，不需手動建立）</h3>
+  <p><code>React\public\web.config</code> 已預先設定好兩條規則，build 後自動出現在 dist 裡：</p>
+  <pre>&lt;!-- 規則一：/api/* 轉發到本機 API（port 5100） --&gt;
+&lt;rule name="API Proxy" stopProcessing="true"&gt;
+  &lt;match url="^api/(.*)" /&gt;
+  &lt;action type="Rewrite" url="http://localhost:5100/api/{R:1}" /&gt;
+&lt;/rule&gt;
+
+&lt;!-- 規則二：所有非實體檔案路由 fallback 到 index.html --&gt;
+&lt;rule name="SPA Fallback" stopProcessing="true"&gt;
+  &lt;match url=".*" /&gt;
+  &lt;conditions logicalGrouping="MatchAll"&gt;
+    &lt;add input="{REQUEST_FILENAME}" matchType="IsFile" negate="true" /&gt;
+    &lt;add input="{REQUEST_FILENAME}" matchType="IsDirectory" negate="true" /&gt;
+  &lt;/conditions&gt;
+  &lt;action type="Rewrite" url="/index.html" /&gt;
+&lt;/rule&gt;</pre>
+
+  <h3>2-4　IIS 建立前端應用程式集區</h3>
+  <table>
+    <tr><th>欄位</th><th>設定值</th></tr>
+    <tr><td>名稱</td><td>kmsh-whiteboard-front</td></tr>
+    <tr><td>.NET CLR 版本</td><td>沒有受管理的程式碼</td></tr>
+    <tr><td>受管線模式</td><td>整合式</td></tr>
+  </table>
+
+  <h3>2-5　IIS 建立前端網站</h3>
+  <table>
+    <tr><th>欄位</th><th>設定值</th></tr>
+    <tr><td>網站名稱</td><td>kmsh-whiteboard</td></tr>
+    <tr><td>應用程式集區</td><td>kmsh-whiteboard-front</td></tr>
+    <tr><td>實體路徑</td><td>C:\inetpub\wwwroot\kmsh-whiteboard</td></tr>
+    <tr><td>繫結 — 通訊協定</td><td>http</td></tr>
+    <tr><td>繫結 — IP 位址</td><td>*（全部未指派）</td></tr>
+    <tr><td>繫結 — 連接埠</td><td>80</td></tr>
+  </table>
+
+  <hr>
+
+  <!-- ── 第三步：防火牆 ── -->
+  <h2 id="step3">第三步：防火牆開放 Port 80</h2>
+  <pre>New-NetFirewallRule -DisplayName "IIS kmsh-whiteboard HTTP" `
+                   -Direction Inbound -Protocol TCP `
+                   -LocalPort 80 -Action Allow</pre>
+  <p>此指令需以<strong>系統管理員</strong>身份執行。若規則已存在可略過。</p>
+
+  <hr>
+
+  <!-- ── 驗證 ── -->
+  <h2 id="verify">驗證清單</h2>
+  <ul class="checklist">
+    <li>
+      <span class="check">✔</span>
+      <div><strong>API 直接存取</strong><br>
+        瀏覽器開 <code>http://localhost:5100/api/Text</code> → 回傳 <code>[]</code>（JSON 陣列）
+      </div>
+    </li>
+    <li>
+      <span class="check">✔</span>
+      <div><strong>ARR Proxy 轉發</strong><br>
+        瀏覽器開 <code>http://localhost/api/Text</code> → 結果同上（代表 IIS 成功轉發）
+      </div>
+    </li>
+    <li>
+      <span class="check">✔</span>
+      <div><strong>React 首頁</strong><br>
+        瀏覽器開 <code>http://localhost/</code> → 顯示「hi whiteboard」
+      </div>
+    </li>
+    <li>
+      <span class="check">✔</span>
+      <div><strong>SPA 路由（關鍵測試）</strong><br>
+        在網址列直接輸入 <code>http://localhost/test</code>（非從首頁點連結）→ 正常顯示 TestPage，非 IIS 404
+      </div>
+    </li>
+    <li>
+      <span class="check">✔</span>
+      <div><strong>院內其他電腦訪問</strong><br>
+        從另一台電腦開 <code>http://&lt;伺服器內網IP&gt;/</code> → 首頁正常，CRUD 功能正常
+      </div>
+    </li>
+  </ul>
+
+  <hr>
+
+  <!-- ── 日後更新 ── -->
+  <h2 id="update">日後更新方式</h2>
+
+  <h3>更新 React 前端</h3>
+  <pre>cd "C:\WorkDir\Nursing Whiteboard\React"
+npm run build
+Copy-Item -Path ".\dist\*" -Destination "C:\inetpub\wwwroot\kmsh-whiteboard" -Recurse -Force</pre>
+  <p>不需重啟 IIS，靜態檔案即時生效。</p>
+
+  <h3>更新 .NET API</h3>
+  <pre>cd "C:\WorkDir\Nursing Whiteboard\API\kmsh-whiteboard"
+dotnet publish -c Release -o "C:\inetpub\wwwroot\kmsh-api"</pre>
+  <div class="alert info">
+    <span class="alert-icon">💡</span>
+    <div>
+      publish 時 IIS 若鎖住 dll 無法覆蓋，先在 IIS 管理員停止 <code>kmsh-whiteboard-api</code> 網站，publish 完再啟動。
+      或啟用 <strong>app_offline.htm</strong>：在 <code>C:\inetpub\wwwroot\kmsh-api\</code> 建立一個空的 <code>app_offline.htm</code>，IIS 會自動卸載應用程式，讓 publish 完成；完成後刪除此檔即可恢復。
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- ── 錯誤排查 ── -->
+  <h2 id="troubleshoot">常見錯誤排查</h2>
+
+  <div class="error-card">
+    <div class="error-code">HTTP 500.19 — 錯誤碼 0x8007000d（API web.config）</div>
+    <div class="error-cause">原因：IIS 找不到 <code>AspNetCoreModuleV2</code>，代表 .NET 8 Hosting Bundle 未正確安裝到 IIS。</div>
+    <div class="error-fix">
+      <strong>解法：</strong>
+      <ol style="margin: 8px 0 0 20px; line-height: 1.9;">
+        <li>從 <code>dotnet.microsoft.com/download/dotnet/8.0</code> 下載 <strong>Hosting Bundle</strong>（非 x64 Runtime）</li>
+        <li>以系統管理員執行安裝程式</li>
+        <li>執行 <code>iisreset</code></li>
+        <li>確認：<code>Get-WebGlobalModule | Where-Object { $_.Name -like "*AspNetCore*" }</code> 有輸出</li>
+      </ol>
+      <div class="alert warn" style="margin-top:10px">
+        <span class="alert-icon">⚠️</span>
+        若已安裝仍出錯，可能是 IIS 啟用在 Hosting Bundle 之後。到控制台找到 Hosting Bundle → 選「修復」。
+      </div>
+    </div>
+  </div>
+
+  <div class="error-card">
+    <div class="error-code">HTTP 500.19 — 錯誤碼 0x8007000d（前端 web.config）</div>
+    <div class="error-cause">原因：<code>&lt;rewrite&gt;</code> 標籤需要 URL Rewrite 模組，模組未安裝時 IIS 無法識別此設定。</div>
+    <div class="error-fix">
+      <strong>解法：</strong>
+      <ol style="margin: 8px 0 0 20px; line-height: 1.9;">
+        <li>下載 URL Rewrite：<code>iis.net/downloads/microsoft/url-rewrite</code></li>
+        <li>安裝 <code>rewrite_amd64_en-US.msi</code></li>
+        <li>執行 <code>iisreset</code></li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="error-card">
+    <div class="error-code">/test 直接輸入網址回 IIS 404</div>
+    <div class="error-cause">原因：URL Rewrite 的 SPA Fallback 規則未生效，或 web.config 不在正確位置。</div>
+    <div class="error-fix">
+      <strong>解法：</strong> 確認 <code>C:\inetpub\wwwroot\kmsh-whiteboard\web.config</code> 存在。若不存在，重新執行 <code>npm run build</code> 並複製 dist。
+    </div>
+  </div>
+
+  <div class="error-card">
+    <div class="error-code">TestPage 載入時出現一堆 HTML 代碼並在 3 秒後消失</div>
+    <div class="error-cause">原因：TestPage 載入時自動呼叫 <code>GET /api/Text</code>，但 IIS 回傳 404 HTML 錯誤頁（ARR 未安裝或 Proxy 未啟用），錯誤訊息把整段 HTML 顯示出來，3 秒後 setTimeout 自動清除。</div>
+    <div class="error-fix">
+      <strong>解法：</strong>
+      <ol style="margin: 8px 0 0 20px; line-height: 1.9;">
+        <li>確認 IIS 管理員<strong>伺服器頂層節點</strong>首頁有「Application Request Routing Cache」圖示<br>
+            → 若沒有：下載安裝 <code>requestRouter_amd64.msi</code>，重新開啟 IIS 管理員</li>
+        <li>雙擊「Application Request Routing Cache」→ Server Proxy Settings → <strong>Enable proxy 已勾選</strong></li>
+        <li>驗證：瀏覽器開 <code>http://localhost/api/Text</code> 應回傳 <code>[]</code></li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="error-card">
+    <div class="error-code">/api/Text 回 502 Bad Gateway</div>
+    <div class="error-cause">原因：ARR Proxy 已啟用但 API 網站未在 port 5100 執行，或 port 設定錯誤。</div>
+    <div class="error-fix">
+      <strong>解法：</strong>
+      <ol style="margin: 8px 0 0 20px; line-height: 1.9;">
+        <li>確認 <code>http://localhost:5100/api/Text</code> 本機可直接訪問</li>
+        <li>確認 IIS kmsh-whiteboard-api 網站狀態為「已啟動」</li>
+        <li>確認 API 網站繫結為 <code>127.0.0.1:5100</code>（非 0.0.0.0）</li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="error-card">
+    <div class="error-code">API 更新時 publish 失敗（檔案被鎖定）</div>
+    <div class="error-cause">原因：IIS 的 worker process 正在使用 dll，無法覆蓋。</div>
+    <div class="error-fix">
+      <strong>解法：</strong> 在 <code>C:\inetpub\wwwroot\kmsh-api\</code> 建立空白的 <code>app_offline.htm</code>，
+      IIS 會自動卸載應用程式。publish 完成後刪除此檔即可。
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  護理白板系統部署說明文件 &nbsp;|&nbsp; 2026-05-30
+</footer>
+
+</body>
+</html>

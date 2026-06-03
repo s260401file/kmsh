@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>高雄市立民生醫院 W52病房 電子白板 — 照護團隊</title>
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/reset.css">
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/team.css">
+</head>
+<body>
+
+  <!-- ── Header ── -->
+  <header class="page-header">
+    <div class="header-left">
+      W52
+      <span class="ward-sub">一般病房</span>
+    </div>
+    <div class="header-center">
+      <div class="staff-block">
+        <div class="staff-label">病房主任</div>
+        <div class="staff-name" id="ward-director">—</div>
+      </div>
+      <div class="staff-block">
+        <div class="staff-label">單位護理長</div>
+        <div class="staff-name" id="head-nurse">—</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="update-label">資料更新時間：剛剛</div>
+      <div class="clock-date" id="clock-date"></div>
+      <div class="clock-time" id="clock-time"></div>
+    </div>
+  </header>
+
+  <!-- ── Announcement marquee ── -->
+  <div class="announce-bar">
+    <span>◆</span>
+    <span>2026/05/15 院內感染管制週宣導：請確實執行手部衛生，進出隔離病房務必穿戴適當防護裝備。</span>
+  </div>
+
+  <!-- ── Main content ── -->
+  <main class="main-content">
+    <div class="tm-panel">
+
+      <!-- 面板標題 -->
+      <div class="tm-title">
+        <span class="tm-title-bar"></span>
+        照護團隊
+        <span class="tm-title-meta" id="tm-total"></span>
+      </div>
+
+      <!-- 群組卡片網格 -->
+      <div class="tm-grid" id="team-grid"></div>
+
+    </div>
+  </main>
+
+  <!-- ── Bottom tabs ── -->
+  <nav class="bottom-tabs">
+    <a href="index.html"      class="tab-btn">病室動態</a>
+    <a href="care.html"       class="tab-btn">照護提醒</a>
+    <a href="surgery.html"    class="tab-btn">手術資訊</a>
+    <a href="exam.html"       class="tab-btn">檢查/會診</a>
+    <a href="contact.html"    class="tab-btn">連絡電話</a>
+    <a href="schedule.html"   class="tab-btn">排班資訊</a>
+    <a href="doctor.html"     class="tab-btn">醫師資訊</a>
+    <a href="bulletin.html"   class="tab-btn">佈告欄</a>
+    <a href="evacuation.html" class="tab-btn">避難圖</a>
+    <a href="handover.html"   class="tab-btn">護理交班</a>
+    <a href="team.html"       class="tab-btn active">照護團隊</a>
+  </nav>
+
+  <script src="js/teamData.js"></script>
+  <script src="js/team.js"></script>
+</body>
+</html>

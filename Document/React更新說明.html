@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>護理白板系統 — React 更新說明</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Microsoft JhengHei", "Segoe UI", sans-serif;
+      font-size: 15px;
+      line-height: 1.7;
+      color: #1e2733;
+      background: #f4f6f9;
+    }
+
+    main {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 48px 40px 80px;
+    }
+
+    h1 {
+      font-size: 24px;
+      color: #0f3460;
+      margin-bottom: 6px;
+    }
+    .subtitle {
+      color: #6b7c93;
+      font-size: 13.5px;
+      padding-bottom: 24px;
+      margin-bottom: 36px;
+      border-bottom: 2px solid #dde3ec;
+    }
+
+    h2 {
+      font-size: 17px;
+      color: #0f3460;
+      margin: 40px 0 14px;
+      padding-left: 12px;
+      border-left: 4px solid #2e7dff;
+    }
+
+    h3 {
+      font-size: 14.5px;
+      font-weight: 700;
+      color: #1e2733;
+      margin: 24px 0 8px;
+    }
+
+    p { margin-bottom: 10px; color: #374151; }
+
+    /* ── 步驟 ── */
+    .steps { counter-reset: step; margin: 12px 0; }
+    .step {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      margin-bottom: 16px;
+    }
+    .step-num {
+      counter-increment: step;
+      background: #2e7dff;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 700;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 3px;
+    }
+    .step-body { flex: 1; }
+
+    /* ── 程式碼 ── */
+    pre {
+      background: #1a2332;
+      color: #c9d4e3;
+      border-radius: 8px;
+      padding: 18px 20px;
+      margin: 12px 0;
+      overflow-x: auto;
+      font-size: 14px;
+      font-family: "Consolas", "Cascadia Code", monospace;
+      line-height: 1.7;
+      position: relative;
+    }
+    code {
+      background: #e8f0fb;
+      color: #1a5faa;
+      padding: 1px 6px;
+      border-radius: 3px;
+      font-family: "Consolas", monospace;
+      font-size: 13px;
+    }
+    pre code { background: none; color: inherit; padding: 0; }
+
+    .comment { color: #6b8aaa; }
+
+    /* ── 提示框 ── */
+    .alert {
+      display: flex;
+      gap: 12px;
+      padding: 13px 16px;
+      border-radius: 6px;
+      margin: 14px 0;
+      font-size: 14px;
+    }
+    .alert-icon { font-size: 17px; flex-shrink: 0; margin-top: 1px; }
+    .alert.info    { background: #e8f2ff; border-left: 4px solid #2e7dff; }
+    .alert.warn    { background: #fff8e1; border-left: 4px solid #f59e0b; }
+    .alert.success { background: #ecfdf5; border-left: 4px solid #10b981; }
+
+    /* ── 對照表 ── */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+      margin: 14px 0;
+    }
+    th {
+      background: #2e7dff;
+      color: #fff;
+      padding: 10px 14px;
+      text-align: left;
+      font-weight: 600;
+    }
+    td {
+      padding: 9px 14px;
+      border-bottom: 1px solid #dde3ec;
+      vertical-align: top;
+    }
+    tr:nth-child(even) td { background: #f8fafc; }
+
+    hr { border: none; border-top: 1px solid #dde3ec; margin: 36px 0; }
+
+    footer {
+      text-align: center;
+      margin-top: 60px;
+      font-size: 12.5px;
+      color: #9aa5b4;
+    }
+  </style>
+</head>
+<body>
+<main>
+
+  <h1>護理白板系統 — React 前端更新說明</h1>
+  <p class="subtitle">每次修改 React 程式碼後，需重新 Build 並部署到 IIS 才會生效 &nbsp;|&nbsp; 最後更新：2026-05-30</p>
+
+  <!-- ── 快速指令 ── -->
+  <h2>快速更新（兩個指令）</h2>
+  <p>在開發機上開啟 PowerShell，執行以下兩行：</p>
+
+  <pre><span class="comment"># 第一步：進入 React 專案目錄並 Build</span>
+cd "C:\WorkDir\Nursing Whiteboard\React"
+npm run build
+
+<span class="comment"># 第二步：複製 build 產出到 IIS 目錄</span>
+Copy-Item -Path ".\dist\*" -Destination "C:\inetpub\wwwroot\kmsh-whiteboard" -Recurse -Force</pre>
+
+  <div class="alert success">
+    <span class="alert-icon">✅</span>
+    <div>完成後重新整理瀏覽器（<code>Ctrl + F5</code>）即可看到最新版本，<strong>不需重啟 IIS</strong>。</div>
+  </div>
+
+  <hr>
+
+  <!-- ── 步驟說明 ── -->
+  <h2>詳細步驟說明</h2>
+
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <strong>完成程式碼修改</strong><br>
+        在 <code>C:\WorkDir\Nursing Whiteboard\React\src\</code> 下修改或新增頁面元件。
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <strong>執行 Build</strong><br>
+        <pre>cd "C:\WorkDir\Nursing Whiteboard\React"
+npm run build</pre>
+        Build 完成後會在 <code>React\dist\</code> 產出靜態檔案（index.html、assets/、web.config）。<br>
+        成功時終端機會顯示類似：
+        <pre><span class="comment">✓ built in 580ms</span></pre>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <strong>複製到 IIS 目錄</strong><br>
+        <pre>Copy-Item -Path ".\dist\*" -Destination "C:\inetpub\wwwroot\kmsh-whiteboard" -Recurse -Force</pre>
+        此指令會覆蓋舊版本的所有檔案。
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-body">
+        <strong>瀏覽器強制重新整理</strong><br>
+        按 <code>Ctrl + F5</code>（或 <code>Ctrl + Shift + R</code>）強制清除快取並重新載入頁面。
+      </div>
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- ── 新增頁面 ── -->
+  <h2>新增頁面的標準流程</h2>
+  <p>若本次更新包含新增路由頁面，需同時修改以下兩個檔案：</p>
+
+  <h3>① 新增頁面元件</h3>
+  <p>在 <code>src/pages/</code> 建立新檔案，例如 <code>NewPage.jsx</code>：</p>
+  <pre>import &#123; Link &#125; from 'react-router-dom'
+
+function NewPage() &#123;
+  return (
+    &lt;div&gt;
+      &lt;p&gt;頁面內容&lt;/p&gt;
+      &lt;Link to="/"&gt;返回首頁&lt;/Link&gt;
+    &lt;/div&gt;
+  )
+&#125;
+
+export default NewPage</pre>
+
+  <h3>② 在 App.jsx 註冊路由</h3>
+  <p>開啟 <code>src/App.jsx</code>，加入 import 和 Route：</p>
+  <pre>import NewPage from './pages/NewPage'
+
+<span class="comment">// Routes 區塊內加入：</span>
+&lt;Route path="/new" element=&#123;&lt;NewPage /&gt;&#125; /&gt;</pre>
+
+  <h3>③ 在首頁加入按鈕</h3>
+  <p>開啟 <code>src/pages/Home.jsx</code>，加入按鈕：</p>
+  <pre>&lt;button onClick=&#123;() =&gt; navigate('/new')&#125;&gt;新頁面&lt;/button&gt;</pre>
+
+  <hr>
+
+  <!-- ── 目錄說明 ── -->
+  <h2>重要目錄對照</h2>
+  <table>
+    <tr><th>用途</th><th>路徑</th></tr>
+    <tr>
+      <td>React 原始碼</td>
+      <td><code>C:\WorkDir\Nursing Whiteboard\React\src\</code></td>
+    </tr>
+    <tr>
+      <td>Build 產出（中繼）</td>
+      <td><code>C:\WorkDir\Nursing Whiteboard\React\dist\</code></td>
+    </tr>
+    <tr>
+      <td>IIS 前端部署目錄</td>
+      <td><code>C:\inetpub\wwwroot\kmsh-whiteboard\</code></td>
+    </tr>
+    <tr>
+      <td>IIS web.config 來源</td>
+      <td><code>C:\WorkDir\Nursing Whiteboard\React\public\web.config</code><br>
+          <small>Build 時自動複製進 dist，不需手動處理</small></td>
+    </tr>
+  </table>
+
+  <hr>
+
+  <!-- ── 注意事項 ── -->
+  <h2>注意事項</h2>
+
+  <div class="alert warn">
+    <span class="alert-icon">⚠️</span>
+    <div>
+      <strong>不要直接修改 IIS 目錄的檔案</strong><br>
+      <code>C:\inetpub\wwwroot\kmsh-whiteboard\</code> 裡的檔案每次 Build 後都會被覆蓋，
+      請一律修改 <code>src\</code> 原始碼再重新 Build。
+    </div>
+  </div>
+
+  <div class="alert info">
+    <span class="alert-icon">💡</span>
+    <div>
+      <strong>開發環境測試</strong><br>
+      修改程式碼時可先在開發模式即時預覽，確認無誤後再 Build 部署：
+      <pre style="margin-top:8px">cd "C:\WorkDir\Nursing Whiteboard\React"
+npm run dev</pre>
+      開啟 <code>http://localhost:5173</code> 即可看到即時更新（修改儲存後自動刷新）。
+    </div>
+  </div>
+
+  <div class="alert info">
+    <span class="alert-icon">💡</span>
+    <div>
+      <strong>API 未同步更新的情況</strong><br>
+      若同時也修改了 .NET API，需另外執行 API 的更新流程，
+      詳見《<a href="部署說明.html">IIS 部署說明.html</a>》的「日後更新方式」章節。
+    </div>
+  </div>
+
+  <footer>護理白板系統 React 更新說明 &nbsp;|&nbsp; 2026-05-30</footer>
+
+</main>
+</body>
+</html>

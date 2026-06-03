@@ -1,0 +1,22 @@
+# ── React / Node.js ──
+React/node_modules/
+React/dist/
+React/.env
+React/.env.local
+
+# ── .NET API ──
+API/**/bin/
+API/**/obj/
+API/**/.vs/
+API/**/*.user
+API/**/logs/
+
+# ── Windows / IDE ──
+.DS_Store
+Thumbs.db
+*.suo
+*.user
+.vs/
+
+# ── 敏感設定（正式環境請勿提交）──
+# API/**/appsettings.Production.json

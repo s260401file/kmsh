@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Get-ChildItem -Recurse \"c:\\\\WorkDir\\\\Nursing Whiteboard\\\\API\")",
+      "Bash(Select-Object FullName, PSIsContainer)",
+      "Bash(Sort-Object FullName)",
+      "Bash(dotnet add *)",
+      "Read(//mnt/c/WorkDir/Nursing Whiteboard/**)",
+      "Bash(npm create *)",
+      "PowerShell(Get-WebConfiguration \"system.webServer/globalModules/add[@name='AspNetCoreModuleV2']\")",
+      "PowerShell(Get-WebConfigurationProperty -pspath 'MACHINE/WEBROOT/APPHOST' -filter \"system.webServer/proxy\" -name \"enabled\" 2>&1)",
+      "Bash(Get-ChildItem -Path \"C:\\\\WorkDir\\\\Nursing Whiteboard\\\\html_demo\\\\W52-board\" -Recurse -Force)",
+      "Bash(Select-Object FullName)",
+      "Bash(rm \"/mnt/c/WorkDir/Nursing Whiteboard/React/src/pages/W52Page.jsx\" \"/mnt/c/WorkDir/Nursing Whiteboard/React/src/pages/IcuPage.jsx\" \"/mnt/c/WorkDir/Nursing Whiteboard/React/src/pages/OrPage.jsx\" \"/mnt/c/WorkDir/Nursing Whiteboard/React/src/pages/ErPage.jsx\" 2>&1 && echo \"已刪除舊佔位頁面\")",
+      "PowerShell($pages = @\\(\"W52Page\",\"IcuPage\",\"OrPage\",\"ErPage\"\\); foreach \\($p in $pages\\) { $path = \"C:\\\\WorkDir\\\\Nursing Whiteboard\\\\React\\\\src\\\\pages\\\\$p.jsx\"; if \\(Test-Path $path\\) { Remove-Item $path; Write-Output \"已刪除 $p.jsx\" } else { Write-Output \"$p.jsx 不存在，略過\" } })",
+      "Bash(Get-ChildItem -Path \"C:\\\\WorkDir\\\\Nursing Whiteboard\\\\html_demo\\\\W52-board\\\\\" -Recurse | Select-Object FullName)",
+      "Bash(find /mnt/c/WorkDir -name \"W52-board\" -type d 2>/dev/null)",
+      "Read(//mnt/c/**)"
+    ],
+    "additionalDirectories": [
+      "\\mnt\\c\\WorkDir\\Nursing Whiteboard\\React\\src\\pages"
+    ]
+  }
+}

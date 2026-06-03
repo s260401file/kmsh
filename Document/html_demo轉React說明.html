@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>護理白板系統 — html_demo 轉 React 說明</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "Microsoft JhengHei", "Segoe UI", sans-serif;
+      font-size: 15px; line-height: 1.7; color: #1e2733; background: #f4f6f9;
+    }
+
+    nav {
+      position: fixed; top: 0; left: 0; width: 230px; height: 100vh;
+      background: #1a2332; color: #c9d4e3; overflow-y: auto; padding: 24px 0; z-index: 100;
+    }
+    nav .logo { padding: 0 20px 20px; font-size: 13px; font-weight: 700; color: #7eb8f7; letter-spacing: .5px; border-bottom: 1px solid #2d3f55; }
+    nav ul { list-style: none; padding: 12px 0; }
+    nav ul li a { display: block; padding: 7px 20px; color: #a8bbd4; text-decoration: none; font-size: 13.5px; transition: background .15s, color .15s; }
+    nav ul li a:hover { background: #243246; color: #fff; }
+    nav ul li.section-title { padding: 14px 20px 4px; font-size: 11px; font-weight: 700; letter-spacing: 1px; color: #4e6480; text-transform: uppercase; }
+
+    main { margin-left: 230px; padding: 40px 48px 80px; max-width: 980px; }
+
+    h1 { font-size: 26px; color: #0f3460; margin-bottom: 6px; }
+    .subtitle { color: #6b7c93; font-size: 14px; margin-bottom: 36px; padding-bottom: 24px; border-bottom: 2px solid #dde3ec; }
+    h2 { font-size: 19px; color: #0f3460; margin: 44px 0 16px; padding-left: 12px; border-left: 4px solid #2e7dff; }
+    h3 { font-size: 15.5px; color: #1e2733; margin: 28px 0 10px; font-weight: 700; }
+    p { margin-bottom: 12px; color: #374151; }
+
+    .alert { display: flex; gap: 12px; padding: 14px 18px; border-radius: 6px; margin: 16px 0; font-size: 14px; }
+    .alert-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+    .alert.info    { background: #e8f2ff; border-left: 4px solid #2e7dff; }
+    .alert.warn    { background: #fff8e1; border-left: 4px solid #f59e0b; }
+    .alert.success { background: #ecfdf5; border-left: 4px solid #10b981; }
+
+    pre {
+      background: #1a2332; color: #c9d4e3; border-radius: 6px; padding: 16px 18px;
+      margin: 12px 0; overflow-x: auto; font-size: 13.5px;
+      font-family: "Consolas", "Cascadia Code", monospace; line-height: 1.6;
+    }
+    code { background: #e8f0fb; color: #1a5faa; padding: 1px 6px; border-radius: 3px; font-family: "Consolas", monospace; font-size: 13px; }
+    pre code { background: none; color: inherit; padding: 0; }
+    .cmt { color: #6b8aaa; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 14px; margin: 16px 0; }
+    th { background: #2e7dff; color: #fff; padding: 10px 14px; text-align: left; font-weight: 600; }
+    td { padding: 9px 14px; border-bottom: 1px solid #dde3ec; vertical-align: top; }
+    tr:nth-child(even) td { background: #f8fafc; }
+
+    .mapping-row { display: flex; gap: 16px; align-items: flex-start; margin: 12px 0; }
+    .mapping-box { flex: 1; background: #fff; border: 1px solid #dde3ec; border-radius: 8px; padding: 12px 16px; }
+    .mapping-box.html { border-top: 3px solid #e67e22; }
+    .mapping-box.react { border-top: 3px solid #2e7dff; }
+    .mapping-label { font-size: 12px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; margin-bottom: 8px; }
+    .mapping-box.html .mapping-label { color: #e67e22; }
+    .mapping-box.react .mapping-label { color: #2e7dff; }
+    .arrow { font-size: 24px; color: #9aa5b4; align-self: center; flex-shrink: 0; }
+
+    .steps { counter-reset: step; }
+    .step { display: flex; gap: 14px; align-items: flex-start; margin-bottom: 18px; }
+    .step-num { counter-increment: step; background: #2e7dff; color: #fff; font-size: 13px; font-weight: 700; width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 3px; }
+    .step-body { flex: 1; }
+
+    .file-tree { background: #1a2332; color: #c9d4e3; border-radius: 8px; padding: 16px 18px; font-family: "Consolas", monospace; font-size: 13.5px; line-height: 1.8; margin: 12px 0; }
+    .ft-new { color: #86efac; }
+    .ft-mod { color: #fde68a; }
+    .ft-del { color: #fca5a5; text-decoration: line-through; }
+    .ft-dim { color: #4e6480; }
+
+    hr { border: none; border-top: 1px solid #dde3ec; margin: 36px 0; }
+    footer { margin-left: 230px; padding: 20px 48px; font-size: 12.5px; color: #9aa5b4; border-top: 1px solid #dde3ec; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">🏥 護理白板系統<br>html_demo → React 說明</div>
+  <ul>
+    <li class="section-title">概覽</li>
+    <li><a href="#overview">設計稿對應關係</a></li>
+    <li><a href="#file-structure">React 檔案結構</a></li>
+
+    <li class="section-title">轉換對照</li>
+    <li><a href="#css">CSS 轉換規則</a></li>
+    <li><a href="#js">JS 邏輯轉換</a></li>
+    <li><a href="#html">HTML → JSX</a></li>
+    <li><a href="#data">資料層（mockData）</a></li>
+
+    <li class="section-title">日後更新</li>
+    <li><a href="#workflow">更新工作流程</a></li>
+    <li><a href="#deploy">部署到 IIS</a></li>
+  </ul>
+</nav>
+
+<main>
+
+  <h1>html_demo 轉 React 說明</h1>
+  <p class="subtitle">
+    說明 <code>html_demo/</code> 設計稿如何對應到 React 元件，以及日後更新設計稿的同步流程<br>
+    最後更新：2026-05-30
+  </p>
+
+  <!-- ── 設計稿對應 ── -->
+  <h2 id="overview">設計稿對應關係</h2>
+  <p>每個 html_demo 資料夾對應一個 React 板，四者一一對應：</p>
+
+  <table>
+    <tr><th>html_demo 資料夾</th><th>React 路由</th><th>React 元件路徑</th><th>CSS scope class</th></tr>
+    <tr><td><code>html_demo/W52-board/</code></td><td><code>/w52</code></td><td><code>pages/boards/W52/W52Page.jsx</code></td><td><code>.w52-board</code></td></tr>
+    <tr><td><code>html_demo/icu-board/</code></td><td><code>/icu</code></td><td><code>pages/boards/ICU/IcuPage.jsx</code></td><td><code>.icu-board</code></td></tr>
+    <tr><td><code>html_demo/or-board/</code></td><td><code>/or</code></td><td><code>pages/boards/OR/OrPage.jsx</code></td><td><code>.or-board</code></td></tr>
+    <tr><td><code>html_demo/er-board/</code></td><td><code>/er</code></td><td><code>pages/boards/ER/ErPage.jsx</code></td><td><code>.er-board</code></td></tr>
+  </table>
+
+  <div class="alert info">
+    <span class="alert-icon">💡</span>
+    <div>
+      <strong>設計稿是唯一真實來源（Source of Truth）</strong><br>
+      所有視覺設計以 <code>html_demo/</code> 為準。設計師更新 html_demo → 通知開發者同步到 React。
+      React 程式碼不應獨立修改樣式，避免兩邊不一致。
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- ── 檔案結構 ── -->
+  <h2 id="file-structure">React 檔案結構</h2>
+  <p>每個板在 <code>src/pages/boards/</code> 下有獨立資料夾，包含三個檔案：</p>
+
+  <div class="file-tree">
+src/<br>
+├── hooks/<br>
+│   └── <span class="ft-new">useClock.js</span>          <span class="ft-dim">← 時鐘 hook，4 板共用</span><br>
+├── pages/<br>
+│   ├── boards/<br>
+│   │   ├── W52/<br>
+│   │   │   ├── <span class="ft-new">W52Page.jsx</span>   <span class="ft-dim">← 主元件（HTML+JS 轉換）</span><br>
+│   │   │   ├── <span class="ft-new">W52Page.css</span>   <span class="ft-dim">← 4個CSS合併 + .w52-board 前綴</span><br>
+│   │   │   └── <span class="ft-new">mockData.js</span>   <span class="ft-dim">← 資料（日後換成 API）</span><br>
+│   │   ├── ICU/ <span class="ft-dim">（同上結構）</span><br>
+│   │   ├── OR/  <span class="ft-dim">（同上結構）</span><br>
+│   │   └── ER/  <span class="ft-dim">（同上結構）</span><br>
+│   ├── Home.jsx<br>
+│   └── TestPage.jsx<br>
+└── App.jsx                   <span class="ft-dim">← 路由設定</span>
+  </div>
+
+  <hr>
+
+  <!-- ── CSS 轉換 ── -->
+  <h2 id="css">CSS 轉換規則</h2>
+  <p>html_demo 各板的 CSS class 名稱相同（如 <code>.page-header</code>、<code>.bed-card</code>），若直接匯入會互相覆蓋。解法：<strong>所有 CSS 選擇器加板專屬前綴</strong>。</p>
+
+  <h3>合併 4 個 CSS 檔案 → 1 個</h3>
+  <div class="mapping-row">
+    <div class="mapping-box html">
+      <div class="mapping-label">html_demo（4個檔案）</div>
+      <pre><code>css/variables.css   ← :root { --bg-header: ... }
+css/reset.css       ← body { display: flex; }
+css/main.css        ← .page-header { ... }
+css/components.css  ← .bed-card { ... }</code></pre>
+    </div>
+    <div class="arrow">→</div>
+    <div class="mapping-box react">
+      <div class="mapping-label">React（1個檔案）</div>
+      <pre><code>W52Page.css         ← 4個合併，全部加 .w52-board 前綴</code></pre>
+    </div>
+  </div>
+
+  <h3>三種轉換模式</h3>
+  <table>
+    <tr><th>html_demo 寫法</th><th>React CSS 寫法</th><th>說明</th></tr>
+    <tr>
+      <td><code>:root { --bg-header: #2D7A55; }</code></td>
+      <td><code>.w52-board { --bg-header: #2D7A55; }</code></td>
+      <td>CSS 變數改為板作用域</td>
+    </tr>
+    <tr>
+      <td><code>body { display: flex; }</code></td>
+      <td><code>.w52-board { display: flex; }</code></td>
+      <td>body 樣式改為 wrapper div</td>
+    </tr>
+    <tr>
+      <td><code>.page-header { background: ... }</code></td>
+      <td><code>.w52-board .page-header { background: ... }</code></td>
+      <td>所有選擇器加板前綴</td>
+    </tr>
+  </table>
+
+  <div class="alert warn">
+    <span class="alert-icon">⚠️</span>
+    <div>
+      更新 CSS 時，只需把 html_demo 的 CSS 合併後，在每個選擇器前加上對應的前綴（<code>.w52-board</code>、<code>.icu-board</code> 等）即可。
+      工具或編輯器的「全域取代」功能可快速完成。
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- ── JS 轉換 ── -->
+  <h2 id="js">JS 邏輯轉換</h2>
+  <p>html_demo 的 JS 邏輯轉換對應如下：</p>
+
+  <table>
+    <tr><th>html_demo 機制</th><th>React 對應</th><th>位置</th></tr>
+    <tr>
+      <td><code>setInterval(updateClock, 1000)</code><br>操作 DOM <code>#clock-date</code></td>
+      <td><code>useClock()</code> hook<br>回傳 <code>&#123; date, time &#125;</code> state</td>
+      <td><code>src/hooks/useClock.js</code>（共用）</td>
+    </tr>
+    <tr>
+      <td><code>let currentFilter = "all"</code><br>全域變數</td>
+      <td><code>const [filter, setFilter] = useState('all')</code></td>
+      <td>各板 JSX 元件內</td>
+    </tr>
+    <tr>
+      <td><code>applyFilter()</code><br>操作 DOM classList</td>
+      <td><code>isBedVisible(bed, filter)</code><br>純函數，回傳 boolean</td>
+      <td>各板 JSX 元件內</td>
+    </tr>
+    <tr>
+      <td><code>openModal(bed)</code><br>填入 30+ 個 <code>#m-*</code> DOM</td>
+      <td><code>const [selectedBed, setSelectedBed] = useState(null)</code><br><code>&#123;selectedBed &amp;&amp; &lt;BedModal bed=&#123;selectedBed&#125; /&gt;&#125;</code></td>
+      <td>各板 JSX 元件內</td>
+    </tr>
+    <tr>
+      <td><code>renderBedCard(bed)</code><br>回傳 HTML template string</td>
+      <td><code>&lt;BedCard bed=&#123;bed&#125; /&gt;</code><br>React 元件</td>
+      <td>各板 JSX 元件內</td>
+    </tr>
+    <tr>
+      <td><code>MOCK_DATA.Beds.forEach()</code><br>手動插入 DOM</td>
+      <td><code>MOCK_DATA.Beds.map(bed =&gt; &lt;BedCard /&gt;)</code></td>
+      <td>JSX 內直接渲染</td>
+    </tr>
+  </table>
+
+  <h3>範例：Filter 邏輯</h3>
+  <div class="mapping-row">
+    <div class="mapping-box html">
+      <div class="mapping-label">html_demo（main.js）</div>
+      <pre><code>let currentFilter = "all";
+function setFilter(filter) {
+  currentFilter = filter;
+  document.querySelectorAll(".bed-card")
+    .forEach(card => {
+      let show = false;
+      switch (currentFilter) {
+        case "surgery": show = card.dataset.surgery==="1"; break;
+        ...
+      }
+      card.classList.toggle("filtered-out", !show);
+    });
+}</code></pre>
+    </div>
+    <div class="arrow">→</div>
+    <div class="mapping-box react">
+      <div class="mapping-label">React（JSX）</div>
+      <pre><code>const [filter, setFilter] = useState('all');
+
+function isBedVisible(bed, filter) {
+  if (filter === 'all') return true;
+  switch (filter) {
+    case 'surgery': return !!bed.Patient?.Surgery;
+    ...
+  }
+}
+
+<span class="cmt">// 渲染時傳入 filteredOut prop</span>
+{MOCK_DATA.Beds.map(bed => (
+  &lt;BedCard
+    key={bed.BedId}
+    bed={bed}
+    filteredOut={!isBedVisible(bed, filter)}
+  /&gt;
+))}</code></pre>
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- ── HTML → JSX ── -->
+  <h2 id="html">HTML → JSX 轉換規則</h2>
+  <p>HTML 結構幾乎原封不動搬入 JSX，只有以下機械性替換：</p>
+
+  <table>
+    <tr><th>HTML 寫法</th><th>JSX 寫法</th></tr>
+    <tr><td><code>class="page-header"</code></td><td><code>className="page-header"</code></td></tr>
+    <tr><td><code>onclick="setFilter('surgery')"</code></td><td><code>onClick={() =&gt; handleFilter('surgery')}</code></td></tr>
+    <tr><td><code>&lt;div id="bedModal"&gt;</code> + display toggle</td><td><code>&#123;selectedBed &amp;&amp; &lt;BedModal /&gt;&#125;</code></td></tr>
+    <tr><td><code>id="clock-date"</code>（DOM 更新）</td><td><code>&#123;date&#125;</code>（state 直接渲染）</td></tr>
+    <tr><td><code>id="stat-total"</code>（DOM 更新）</td><td><code>&#123;stats.total&#125;</code>（state 直接渲染）</td></tr>
+    <tr><td>template string 動態生成 HTML</td><td>JSX <code>.map()</code> 迴圈</td></tr>
+    <tr><td><code>style="grid-column:1/5"</code></td><td><code>style=&#123;&#123;gridColumn:'1/5'&#125;&#125;</code></td></tr>
+    <tr><td>HTML 自閉合標籤 <code>&lt;div/&gt;</code>（可選）</td><td>JSX 必須自閉合 <code>&lt;div /&gt;</code></td></tr>
+  </table>
+
+  <hr>
+
+  <!-- ── 資料層 ── -->
+  <h2 id="data">資料層（mockData.js）</h2>
+  <p>html_demo 的 <code>mockData.js</code> 直接複製到 React，只需加上 <code>export</code>：</p>
+
+  <div class="mapping-row">
+    <div class="mapping-box html">
+      <div class="mapping-label">html_demo/W52-board/js/mockData.js</div>
+      <pre><code>const MOCK_DATA = &#123;
+  HospitalInfo: &#123; ... &#125;,
+  Beds: [ ... ]
+&#125;;
+
+function getStats(beds) &#123; ... &#125;</code></pre>
+    </div>
+    <div class="arrow">→</div>
+    <div class="mapping-box react">
+      <div class="mapping-label">pages/boards/W52/mockData.js</div>
+      <pre><code>const MOCK_DATA = &#123;
+  HospitalInfo: &#123; ... &#125;,
+  Beds: [ ... ]
+&#125;;
+
+export function getStats(beds) &#123; ... &#125;
+
+<span class="cmt">// 最後加這行</span>
+export default MOCK_DATA;</code></pre>
+    </div>
+  </div>
+
+  <div class="alert info">
+    <span class="alert-icon">💡</span>
+    <div>
+      <strong>日後換成真實 API</strong><br>
+      當 API 串接完成後，只需把 <code>mockData.js</code> 的資料換成 API 呼叫即可。
+      JSX 元件不需修改，因為資料結構完全相同。
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- ── 日後更新 ── -->
+  <h2 id="workflow">日後更新工作流程</h2>
+  <p>設計師更新 html_demo 後，對應修改 React 的步驟：</p>
+
+  <h3>情況一：只有 CSS 樣式變動</h3>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-body">確認哪個板的哪個 CSS 檔案有變動（variables / main / components）</div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        開啟對應的 React CSS 檔（如 <code>pages/boards/W52/W52Page.css</code>），找到對應規則修改<br>
+        <strong>注意</strong>：React CSS 的選擇器有 <code>.w52-board</code> 前綴，不要忘記加
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-body">執行 <code>npm run dev</code> 預覽確認，再 build 部署</div>
+    </div>
+  </div>
+
+  <h3>情況二：HTML 結構有變動</h3>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-body">比對 html_demo 的 <code>index.html</code> body 與 React JSX 的差異</div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        依照「HTML → JSX 轉換規則」更新對應板的 <code>*Page.jsx</code> 中的 JSX 結構<br>
+        （class → className、inline onclick → onClick 等機械替換）
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-body">若有新增 data-* 屬性對應新的 filter 邏輯，同步更新 <code>isBedVisible()</code> 函數</div>
+    </div>
+  </div>
+
+  <h3>情況三：JS 邏輯有變動</h3>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-body">確認 <code>main.js</code> 或 <code>components.js</code> 的變動內容</div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        對應更新 React 元件：<br>
+        • <code>buildBadges()</code> 改動 → 更新 JSX 內同名函數<br>
+        • <code>applyFilter()</code> 改動 → 更新 <code>isBedVisible()</code><br>
+        • <code>openModal()</code> 改動 → 更新 <code>*Modal</code> 元件的 JSX
+      </div>
+    </div>
+  </div>
+
+  <h3>情況四：mockData 資料結構有變動</h3>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-body">複製更新後的 <code>mockData.js</code> 到對應 React 資料夾</div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-body">在最後加上 <code>export default MOCK_DATA;</code> 和 <code>export function getStats</code></div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-body">若欄位名稱有變動，同步更新 JSX 中存取的屬性名稱（如 <code>bed.Patient.PatientName</code>）</div>
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- ── 部署 ── -->
+  <h2 id="deploy">部署到 IIS（每次更新後執行）</h2>
+  <pre><span class="cmt"># 進入 React 專案目錄</span>
+cd "C:\WorkDir\Nursing Whiteboard\React"
+
+<span class="cmt"># Build 生產版本</span>
+npm run build
+
+<span class="cmt"># 複製到 IIS 目錄</span>
+Copy-Item -Path ".\dist\*" -Destination "C:\inetpub\wwwroot\kmsh-whiteboard" -Recurse -Force</pre>
+
+  <div class="alert success">
+    <span class="alert-icon">✅</span>
+    <div>部署完成後重新整理瀏覽器（<code>Ctrl + F5</code>）即可，不需重啟 IIS。</div>
+  </div>
+
+  <hr>
+
+  <h2>各板特殊差異說明</h2>
+  <table>
+    <tr><th>板</th><th>特殊之處</th></tr>
+    <tr>
+      <td>W52</td>
+      <td>資料欄位採 <strong>PascalCase</strong>（<code>PatientName</code>、<code>AttendingDoctor</code>）<br>
+          床位 ID 格式：<code>W52-001</code>，顯示時去掉前綴</td>
+    </tr>
+    <tr>
+      <td>ICU</td>
+      <td>資料欄位採 <strong>camelCase</strong>（<code>name</code>、<code>doctor</code>）<br>
+          雙樓層結構（4F / 3F），統計面板放在 3F section 內<br>
+          有額外欄位：<code>ventilator</code>、<code>crrt</code>、<code>ng</code></td>
+    </tr>
+    <tr>
+      <td>OR</td>
+      <td>資料結構是 <code>Rooms</code>（非 <code>Beds</code>），卡片 class 是 <code>or-card</code>（非 <code>bed-card</code>）<br>
+          Modal 有手術時長計算（開始/結束時間差）<br>
+          來源分類：急診刀 / 門診刀 / 住院刀</td>
+    </tr>
+    <tr>
+      <td>ER</td>
+      <td>床位 ID 含中文字「負」→ CSS class 需轉換：<code>負2 → bed-neg2</code><br>
+          檢傷分級 1-5 級（triage badge）<br>
+          有 <code>nursing-station</code>（護理站）元素<br>
+          Modal 計算到院滯留時間</td>
+    </tr>
+  </table>
+
+</main>
+
+<footer>護理白板系統 html_demo 轉 React 說明 &nbsp;|&nbsp; 2026-05-30</footer>
+
+</body>
+</html>

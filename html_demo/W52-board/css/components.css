@@ -1,0 +1,112 @@
+/* ── Bed card ── */
+.bed-card {
+  border-radius: var(--radius-card);
+  padding: 8px 10px;
+  border-left: 4px solid transparent;
+  box-shadow: var(--shadow-card);
+  cursor: pointer;
+  position: relative;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  overflow: hidden;
+  transition: transform 0.1s, box-shadow 0.1s;
+  box-sizing: border-box;
+}
+.bed-card:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,0.35); }
+
+/* Status variants */
+.bed-card.occupied  { background: var(--bg-card-occ);  border-left-color: var(--border-occ); }
+.bed-card.isolation { background: var(--bg-card-iso);  border-left-color: var(--border-iso); }
+.bed-card.transfer    { background: var(--bg-card-trans);    border-left-color: var(--border-trans); }
+.bed-card.transfer-in { background: var(--bg-card-trans-in); border-left-color: var(--border-trans-in); }
+.bed-card.discharge   { background: var(--bg-card-dis);      border-left-color: var(--border-dis); }
+.bed-card.empty {
+  background: var(--bg-card-empty);
+  border-left: 2px dashed var(--border-empty);
+  cursor: default;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.6;
+}
+.bed-card.empty:hover { transform: none; box-shadow: var(--shadow-card); }
+
+/* Card rows */
+.card-row1 { display: flex; align-items: center; gap: 6px; }
+.bed-num {
+  font-size: 22px;
+  font-weight: 900;
+  font-family: var(--font-num);
+  color: var(--text-primary);
+  letter-spacing: 0.5px;
+  line-height: 1;
+}
+.card-row2 { display: flex; align-items: baseline; gap: 6px; }
+.patient-name {
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1;
+}
+.patient-basic { font-size: 13px; color: var(--text-secondary); line-height: 1; }
+.card-row3 {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: auto;
+}
+
+/* ── 旗標圓點列（床位卡片用）── */
+.dots-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+  min-height: 12px;
+  margin-top: auto;
+}
+.empty-label { font-size: 22px; font-weight: 700; color: var(--text-empty); }
+.empty-bed-num {
+  font-size: 16px;
+  font-weight: 900;
+  font-family: var(--font-num);
+  color: var(--text-empty);
+  margin-bottom: 4px;
+}
+
+/* ── Gender name colors ── */
+.gender-m { color: #1565C0; }
+.gender-f { color: #AD1457; }
+
+/* ── 旗標圓點 ── */
+.flag-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+/* 卡片內圓點略小 */
+.bed-card .flag-dot { width: 9px; height: 9px; }
+
+/* 圓點色碼（規格 13 種 + 運動/氧氣/洗腎 + 3 種流量狀態） */
+.flag-dot-DNR      { background: #6A1B9A; }
+.flag-dot-高危跌   { background: #E65100; }
+.flag-dot-依賴L1   { background: #4527A0; }
+.flag-dot-依賴L2   { background: #4527A0; }
+.flag-dot-依賴L3   { background: #311B92; }
+.flag-dot-隔離     { background: #B71C1C; }
+.flag-dot-保密     { background: #37474F; }
+.flag-dot-禁治療   { background: #0D47A1; }
+.flag-dot-禁食     { background: #2E7D32; }
+.flag-dot-過敏     { background: #BF360C; }
+.flag-dot-RRT      { background: #C62828; }
+.flag-dot-化療     { background: #880E4F; }
+.flag-dot-輪椅     { background: #558B2F; }
+.flag-dot-推床     { background: #4E342E; }
+.flag-dot-氧氣設備 { background: #01579B; }
+.flag-dot-洗腎     { background: #006064; }
+.flag-dot-待轉入   { background: #1565C0; }
+.flag-dot-待轉出   { background: #E65100; }
+.flag-dot-待出院   { background: #2E7D32; }

@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>護理白板系統 — W52 子頁面整合說明</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "Microsoft JhengHei", "Segoe UI", sans-serif;
+      font-size: 15px; line-height: 1.7; color: #1e2733; background: #f4f6f9;
+    }
+
+    nav {
+      position: fixed; top: 0; left: 0; width: 230px; height: 100vh;
+      background: #1a2332; color: #c9d4e3; overflow-y: auto; padding: 24px 0; z-index: 100;
+    }
+    nav .logo { padding: 0 20px 20px; font-size: 13px; font-weight: 700; color: #7eb8f7; letter-spacing: .5px; border-bottom: 1px solid #2d3f55; }
+    nav ul { list-style: none; padding: 12px 0; }
+    nav ul li a { display: block; padding: 7px 20px; color: #a8bbd4; text-decoration: none; font-size: 13.5px; transition: background .15s, color .15s; }
+    nav ul li a:hover { background: #243246; color: #fff; }
+    nav ul li.section-title { padding: 14px 20px 4px; font-size: 11px; font-weight: 700; letter-spacing: 1px; color: #4e6480; text-transform: uppercase; }
+
+    main { margin-left: 230px; padding: 40px 48px 80px; max-width: 980px; }
+
+    h1 { font-size: 26px; color: #0f3460; margin-bottom: 6px; }
+    .subtitle { color: #6b7c93; font-size: 14px; margin-bottom: 36px; padding-bottom: 24px; border-bottom: 2px solid #dde3ec; }
+    h2 { font-size: 19px; color: #0f3460; margin: 44px 0 16px; padding-left: 12px; border-left: 4px solid #2e7dff; }
+    h3 { font-size: 15.5px; color: #1e2733; margin: 28px 0 10px; font-weight: 700; }
+    p { margin-bottom: 12px; color: #374151; }
+
+    .alert { display: flex; gap: 12px; padding: 14px 18px; border-radius: 6px; margin: 16px 0; font-size: 14px; }
+    .alert-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+    .alert.info    { background: #e8f2ff; border-left: 4px solid #2e7dff; }
+    .alert.warn    { background: #fff8e1; border-left: 4px solid #f59e0b; }
+    .alert.success { background: #ecfdf5; border-left: 4px solid #10b981; }
+
+    pre {
+      background: #1a2332; color: #c9d4e3; border-radius: 6px; padding: 16px 18px;
+      margin: 12px 0; overflow-x: auto; font-size: 13.5px;
+      font-family: "Consolas", "Cascadia Code", monospace; line-height: 1.6;
+    }
+    code { background: #e8f0fb; color: #1a5faa; padding: 1px 6px; border-radius: 3px; font-family: "Consolas", monospace; font-size: 13px; }
+    pre code { background: none; color: inherit; padding: 0; }
+    .cmt { color: #6b8aaa; }
+    .hi  { color: #86efac; }
+    .kw  { color: #fbbf24; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 14px; margin: 16px 0; }
+    th { background: #2e7dff; color: #fff; padding: 10px 14px; text-align: left; font-weight: 600; }
+    td { padding: 9px 14px; border-bottom: 1px solid #dde3ec; vertical-align: top; }
+    tr:nth-child(even) td { background: #f8fafc; }
+    tr:hover td { background: #eef4ff; }
+
+    .file-tree {
+      background: #1a2332; color: #c9d4e3; border-radius: 8px;
+      padding: 16px 20px; font-family: "Consolas", monospace; font-size: 13.5px;
+      line-height: 1.9; margin: 12px 0;
+    }
+    .ft-new  { color: #86efac; }
+    .ft-del  { color: #fca5a5; text-decoration: line-through; }
+    .ft-keep { color: #c9d4e3; }
+    .ft-dim  { color: #4e6480; }
+
+    .route-box {
+      background: #fff; border: 1px solid #dde3ec; border-radius: 8px;
+      padding: 16px 20px; margin: 12px 0; font-family: "Consolas", monospace; font-size: 14px; line-height: 2;
+    }
+    .route-path { color: #1565C0; font-weight: 700; }
+    .route-arrow { color: #9aa5b4; }
+    .route-comp { color: #2D7A55; }
+    .route-indent { margin-left: 20px; color: #374151; }
+
+    .tab-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 16px 0; }
+    .tab-card { background: #fff; border: 1px solid #dde3ec; border-radius: 8px; padding: 14px 16px; }
+    .tab-card .tab-num { font-size: 11px; font-weight: 700; color: #9aa5b4; letter-spacing: 1px; }
+    .tab-card .tab-name { font-size: 16px; font-weight: 700; color: #1e2733; margin: 4px 0 2px; }
+    .tab-card .tab-path { font-size: 12px; color: #1565C0; font-family: "Consolas", monospace; }
+    .tab-card .tab-file { font-size: 12px; color: #6b7c93; margin-top: 4px; }
+
+    .flow-row { display: flex; gap: 10px; align-items: center; margin: 10px 0; flex-wrap: wrap; }
+    .flow-box { background: #fff; border: 1px solid #dde3ec; border-radius: 6px; padding: 8px 14px; font-size: 13.5px; font-weight: 600; }
+    .flow-box.green { border-color: #2D7A55; color: #2D7A55; background: #f0fdf4; }
+    .flow-box.blue  { border-color: #1565C0; color: #1565C0; background: #eff6ff; }
+    .flow-arrow { color: #9aa5b4; font-size: 18px; }
+
+    hr { border: none; border-top: 1px solid #dde3ec; margin: 36px 0; }
+    footer { margin-left: 230px; padding: 20px 48px; font-size: 12.5px; color: #9aa5b4; border-top: 1px solid #dde3ec; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">🏥 護理白板系統<br>W52 子頁面整合說明</div>
+  <ul>
+    <li class="section-title">概覽</li>
+    <li><a href="#overview">整合目標</a></li>
+    <li><a href="#tabs">11 個 Tab 一覽</a></li>
+
+    <li class="section-title">架構設計</li>
+    <li><a href="#routing">路由結構</a></li>
+    <li><a href="#layout">Layout 模式</a></li>
+    <li><a href="#file-structure">檔案結構</a></li>
+
+    <li class="section-title">轉換對照</li>
+    <li><a href="#css">CSS 轉換規則</a></li>
+    <li><a href="#data">資料層說明</a></li>
+    <li><a href="#jsx">JSX 轉換模式</a></li>
+
+    <li class="section-title">驗證與更新</li>
+    <li><a href="#verify">驗證清單</a></li>
+    <li><a href="#update">日後更新流程</a></li>
+    <li><a href="#deploy">部署</a></li>
+  </ul>
+</nav>
+
+<main>
+
+  <h1>W52 子頁面整合說明</h1>
+  <p class="subtitle">
+    說明 W52-board html_demo 的 11 個頁面如何整合進 React 巢狀路由<br>
+    適用版本：React 19 + React Router 7 &nbsp;|&nbsp; 最後更新：2026-06-03
+  </p>
+
+  <!-- ── 整合目標 ── -->
+  <h2 id="overview">整合目標</h2>
+  <p>html_demo W52-board 設計稿共有 <strong>11 個 HTML 頁面</strong>，底部 Tab 已改為 <code>&lt;a href="*.html"&gt;</code> 超連結導覽。目標是將這 11 個頁面整合進 React，使用 <strong>React Router 巢狀路由</strong>實作，讓 Tab 點擊時透過 URL 路由切換，不需重載頁面。</p>
+
+  <div class="alert info">
+    <span class="alert-icon">💡</span>
+    <div>
+      <strong>設計稿是唯一真實來源</strong><br>
+      所有視覺設計以 <code>html_demo/W52-board/</code> 為準。設計師更新 html_demo → 通知開發者同步到 React。
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- ── Tab 一覽 ── -->
+  <h2 id="tabs">11 個 Tab 一覽</h2>
+  <div class="tab-grid">
+    <div class="tab-card">
+      <div class="tab-num">TAB 01</div>
+      <div class="tab-name">病室動態</div>
+      <div class="tab-path">/w52/ward</div>
+      <div class="tab-file">WardTab.jsx（床位主頁）</div>
+    </div>
+    <div class="tab-card">
+      <div class="tab-num">TAB 02</div>
+      <div class="tab-name">照護提醒</div>
+      <div class="tab-path">/w52/care</div>
+      <div class="tab-file">CareTab.jsx</div>
+    </div>
+    <div class="tab-card">
+      <div class="tab-num">TAB 03</div>
+      <div class="tab-name">手術資訊</div>
+      <div class="tab-path">/w52/surgery</div>
+      <div class="tab-file">SurgeryTab.jsx</div>
+    </div>
+    <div class="tab-card">
+      <div class="tab-num">TAB 04</div>
+      <div class="tab-name">檢查/會診</div>
+      <div class="tab-path">/w52/exam</div>
+      <div class="tab-file">ExamTab.jsx</div>
+    </div>
+    <div class="tab-card">
+      <div class="tab-num">TAB 05</div>
+      <div class="tab-name">連絡電話</div>
+      <div class="tab-path">/w52/contact</div>
+      <div class="tab-file">ContactTab.jsx</div>
+    </div>
+    <div class="tab-card">
+      <div class="tab-num">TAB 06</div>
+      <div class="tab-name">排班資訊</div>
+      <div class="tab-path">/w52/schedule</div>
+      <div class="tab-file">ScheduleTab.jsx</div>
+    </div>
+    <div class="tab-card">
+      <div class="tab-num">TAB 07</div>
+      <div class="tab-name">醫師資訊</div>
+      <div class="tab-path">/w52/doctor</div>
+      <div class="tab-file">DoctorTab.jsx</div>
+    </div>
+    <div class="tab-card">
+      <div class="tab-num">TAB 08</div>
+      <div class="tab-name">佈告欄</div>
+      <div class="tab-path">/w52/bulletin</div>
+      <div class="tab-file">BulletinTab.jsx</div>
+    </div>
+    <div class="tab-card">
+      <div class="tab-num">TAB 09</div>
+      <div class="tab-name">避難圖</div>
+      <div class="tab-path">/w52/evacuation</div>
+      <div class="tab-file">EvacuationTab.jsx</div>
+    </div>
+    <div class="tab-card">
+      <div class="tab-num">TAB 10</div>
+      <div class="tab-name">護理交班</div>
+      <div class="tab-path">/w52/handover</div>
+      <div class="tab-file">HandoverTab.jsx</div>
+    </div>
+    <div class="tab-card">
+      <div class="tab-num">TAB 11</div>
+      <div class="tab-name">照護團隊</div>
+      <div class="tab-path">/w52/team</div>
+      <div class="tab-file">TeamTab.jsx</div>
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- ── 路由結構 ── -->
+  <h2 id="routing">路由結構</h2>
+  <p>使用 React Router 的 <strong>巢狀路由（Nested Routes）+ Outlet</strong> 模式：</p>
+
+  <div class="route-box">
+    <span class="route-path">/w52</span>
+    <span class="route-arrow"> → </span>
+    <span class="route-comp">W52Layout</span>（共用 header + tabs）<br>
+    <div class="route-indent">
+      <span class="route-path">/w52</span> <span class="route-arrow">→ redirect →</span> <span class="route-path">/w52/ward</span><br>
+      <span class="route-path">/w52/ward</span>       <span class="route-arrow">→</span> <span class="route-comp">WardTab</span>（病室動態）<br>
+      <span class="route-path">/w52/care</span>       <span class="route-arrow">→</span> <span class="route-comp">CareTab</span>（照護提醒）<br>
+      <span class="route-path">/w52/surgery</span>    <span class="route-arrow">→</span> <span class="route-comp">SurgeryTab</span>（手術資訊）<br>
+      <span class="route-path">/w52/exam</span>       <span class="route-arrow">→</span> <span class="route-comp">ExamTab</span>（檢查/會診）<br>
+      <span class="route-path">/w52/contact</span>    <span class="route-arrow">→</span> <span class="route-comp">ContactTab</span>（連絡電話）<br>
+      <span class="route-path">/w52/schedule</span>   <span class="route-arrow">→</span> <span class="route-comp">ScheduleTab</span>（排班資訊）<br>
+      <span class="route-path">/w52/doctor</span>     <span class="route-arrow">→</span> <span class="route-comp">DoctorTab</span>（醫師資訊）<br>
+      <span class="route-path">/w52/bulletin</span>   <span class="route-arrow">→</span> <span class="route-comp">BulletinTab</span>（佈告欄）<br>
+      <span class="route-path">/w52/evacuation</span> <span class="route-arrow">→</span> <span class="route-comp">EvacuationTab</span>（避難圖）<br>
+      <span class="route-path">/w52/handover</span>   <span class="route-arrow">→</span> <span class="route-comp">HandoverTab</span>（護理交班）<br>
+      <span class="route-path">/w52/team</span>       <span class="route-arrow">→</span> <span class="route-comp">TeamTab</span>（照護團隊）
+    </div>
+  </div>
+
+  <p><code>App.jsx</code> 中的寫法：</p>
+  <pre><span class="cmt">// App.jsx — W52 巢狀路由</span>
+&lt;Route path="/w52" element={&lt;W52Layout /&gt;}&gt;
+  &lt;Route index element={&lt;Navigate to="ward" replace /&gt;} /&gt;
+  &lt;Route path="ward"       element={&lt;WardTab /&gt;} /&gt;
+  &lt;Route path="care"       element={&lt;CareTab /&gt;} /&gt;
+  &lt;Route path="surgery"    element={&lt;SurgeryTab /&gt;} /&gt;
+  &lt;Route path="exam"       element={&lt;ExamTab /&gt;} /&gt;
+  &lt;Route path="contact"    element={&lt;ContactTab /&gt;} /&gt;
+  &lt;Route path="schedule"   element={&lt;ScheduleTab /&gt;} /&gt;
+  &lt;Route path="doctor"     element={&lt;DoctorTab /&gt;} /&gt;
+  &lt;Route path="bulletin"   element={&lt;BulletinTab /&gt;} /&gt;
+  &lt;Route path="evacuation" element={&lt;EvacuationTab /&gt;} /&gt;
+  &lt;Route path="handover"   element={&lt;HandoverTab /&gt;} /&gt;
+  &lt;Route path="team"       element={&lt;TeamTab /&gt;} /&gt;
+&lt;/Route&gt;</pre>
+
+  <hr>
+
+  <!-- ── Layout 模式 ── -->
+  <h2 id="layout">Layout 模式</h2>
+  <p>整個 W52 板拆成兩層：</p>
+
+  <div class="flow-row">
+    <div class="flow-box green">W52Layout</div>
+    <span class="flow-arrow">包含</span>
+    <div class="flow-box">header</div>
+    <div class="flow-box">announce-bar</div>
+    <div class="flow-box blue">&lt;Outlet /&gt;</div>
+    <div class="flow-box">bottom-tabs（NavLink）</div>
+  </div>
+
+  <div class="flow-row">
+    <div class="flow-box blue">&lt;Outlet /&gt;</div>
+    <span class="flow-arrow">由各 Tab 填入</span>
+    <div class="flow-box">WardTab → &lt;main&gt; + filter-bar + modal</div>
+  </div>
+  <div class="flow-row" style="margin-top:4px">
+    <div style="width:110px"></div>
+    <span class="flow-arrow" style="opacity:0">→</span>
+    <div class="flow-box">CareTab → &lt;main&gt; only</div>
+  </div>
+
+  <h3>關鍵設計：各 Tab 渲染責任</h3>
+  <table>
+    <tr><th>Tab</th><th>渲染什麼</th><th>說明</th></tr>
+    <tr>
+      <td><strong>WardTab</strong></td>
+      <td><code>&lt;main&gt;</code> + <code>filter-bar</code> + modal</td>
+      <td>用 Fragment <code>&lt;&gt;...&lt;/&gt;</code> 返回多個元素，讓 filter-bar 出現在 Layout <code>&lt;Outlet&gt;</code> 的位置，保留原始 CSS 結構</td>
+    </tr>
+    <tr>
+      <td>其他 9 個 Tab</td>
+      <td><code>&lt;main className="main-content"&gt;</code> 包含各自面板</td>
+      <td>無 filter-bar，結構簡單</td>
+    </tr>
+  </table>
+
+  <h3>NavLink 取代 &lt;button&gt;</h3>
+  <p>底部 Tab 改用 <code>NavLink</code>，自動偵測當前路由並加 <code>active</code> class：</p>
+  <pre><span class="cmt">// 舊：button 切換 activeTab state（無 URL 變化）</span>
+&lt;button className={`tab-btn${activeTab===i?' active':''}`} onClick={()=>setActiveTab(i)}&gt;
+
+<span class="cmt">// 新：NavLink 自動處理 active 狀態</span>
+&lt;NavLink
+  to="care"
+  className={({ isActive }) => `tab-btn${isActive ? ' active' : ''}`}
+&gt;
+  照護提醒
+&lt;/NavLink&gt;</pre>
+
+  <div class="alert warn">
+    <span class="alert-icon">⚠️</span>
+    <div>
+      NavLink 渲染為 <code>&lt;a&gt;</code> 標籤，CSS 需補上 <code>text-decoration: none</code>，
+      已在 <code>W52Layout.css</code> 的 <code>.w52-board .tab-btn</code> 規則中加入。
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- ── 檔案結構 ── -->
+  <h2 id="file-structure">檔案結構</h2>
+  <div class="file-tree">
+src/pages/boards/W52/<br>
+├── <span class="ft-new">W52Layout.jsx</span>        <span class="ft-dim">← 新增：共用 header + NavLink tabs + &lt;Outlet&gt;</span><br>
+├── <span class="ft-new">W52Layout.css</span>        <span class="ft-dim">← 複製自 W52Page.css（內容相同，補 a 標籤重置）</span><br>
+├── <span class="ft-del">W52Page.jsx</span>          <span class="ft-dim">← 已刪除（由 W52Layout + WardTab 取代）</span><br>
+├── <span class="ft-keep">W52Page.css</span>         <span class="ft-dim">← 保留（已複製為 W52Layout.css）</span><br>
+├── <span class="ft-keep">mockData.js</span>         <span class="ft-dim">← 不動（WardTab 沿用）</span><br>
+│<br>
+├── tabs/                     <span class="ft-dim">← 11 個 Tab 元件</span><br>
+│   ├── <span class="ft-new">WardTab.jsx</span>      <span class="ft-dim">← 病室動態（從 W52Page 抽出）</span><br>
+│   ├── <span class="ft-new">CareTab.jsx</span><br>
+│   ├── <span class="ft-new">SurgeryTab.jsx</span><br>
+│   ├── <span class="ft-new">ExamTab.jsx</span><br>
+│   ├── <span class="ft-new">ContactTab.jsx</span><br>
+│   ├── <span class="ft-new">ScheduleTab.jsx</span>  <span class="ft-dim">← 含班別切換 useState</span><br>
+│   ├── <span class="ft-new">DoctorTab.jsx</span><br>
+│   ├── <span class="ft-new">BulletinTab.jsx</span><br>
+│   ├── <span class="ft-new">EvacuationTab.jsx</span><span class="ft-dim">← 含 inline SVG 平面圖</span><br>
+│   ├── <span class="ft-new">HandoverTab.jsx</span><br>
+│   └── <span class="ft-new">TeamTab.jsx</span><br>
+│<br>
+├── tabsData/                 <span class="ft-dim">← 10 個資料檔（複製自 html_demo + export default）</span><br>
+│   ├── <span class="ft-new">careData.js</span><br>
+│   ├── <span class="ft-new">surgeryData.js</span><br>
+│   ├── <span class="ft-new">examData.js</span><br>
+│   ├── <span class="ft-new">contactData.js</span><br>
+│   ├── <span class="ft-new">scheduleData.js</span><br>
+│   ├── <span class="ft-new">doctorData.js</span><br>
+│   ├── <span class="ft-new">bulletinData.js</span><br>
+│   ├── <span class="ft-new">evacuationData.js</span><br>
+│   ├── <span class="ft-new">handoverData.js</span><br>
+│   └── <span class="ft-new">teamData.js</span><br>
+│<br>
+└── tabsCss/                  <span class="ft-dim">← 10 個 CSS（複製自 html_demo + .w52-board 前綴）</span><br>
+    ├── <span class="ft-new">care.css</span><br>
+    ├── <span class="ft-new">surgery.css</span><br>
+    ├── <span class="ft-new">exam.css</span><br>
+    ├── <span class="ft-new">contact.css</span><br>
+    ├── <span class="ft-new">schedule.css</span><br>
+    ├── <span class="ft-new">doctor.css</span><br>
+    ├── <span class="ft-new">bulletin.css</span><br>
+    ├── <span class="ft-new">evacuation.css</span><br>
+    ├── <span class="ft-new">handover.css</span><br>
+    └── <span class="ft-new">team.css</span>
+  </div>
+
+  <hr>
+
+  <!-- ── CSS 轉換 ── -->
+  <h2 id="css">CSS 轉換規則</h2>
+  <p>每個 Tab 有自己的 CSS 檔（<code>tabsCss/*.css</code>），轉換時所有選擇器加 <code>.w52-board</code> 前綴以避免樣式衝突：</p>
+
+  <table>
+    <tr><th>html_demo CSS 寫法</th><th>React tabsCss 寫法</th></tr>
+    <tr><td><code>.care-panel { ... }</code></td><td><code>.w52-board .care-panel { ... }</code></td></tr>
+    <tr><td><code>.care-item.priority-bar-高 { ... }</code></td><td><code>.w52-board .care-item.priority-bar-高 { ... }</code></td></tr>
+    <tr><td>各 Tab 的 CSS 變數引用（<code>var(--accent-green)</code>）</td><td>由 <code>W52Layout.css</code> 的 <code>.w52-board { ... }</code> 提供，不需重複定義</td></tr>
+  </table>
+
+  <h3>各 Tab CSS 對照</h3>
+  <table>
+    <tr><th>Tab</th><th>html_demo CSS</th><th>React tabsCss</th><th>主要面板 class</th></tr>
+    <tr><td>照護提醒</td><td>care.css</td><td>tabsCss/care.css</td><td><code>.care-panel</code></td></tr>
+    <tr><td>手術資訊</td><td>surgery.css</td><td>tabsCss/surgery.css</td><td><code>.surg-panel</code></td></tr>
+    <tr><td>檢查/會診</td><td>exam.css</td><td>tabsCss/exam.css</td><td><code>.ec-panel</code></td></tr>
+    <tr><td>連絡電話</td><td>contact.css</td><td>tabsCss/contact.css</td><td><code>.ct-panel</code></td></tr>
+    <tr><td>排班資訊</td><td>schedule.css</td><td>tabsCss/schedule.css</td><td><code>.sc-panel</code></td></tr>
+    <tr><td>醫師資訊</td><td>doctor.css</td><td>tabsCss/doctor.css</td><td><code>.dr-panel</code></td></tr>
+    <tr><td>佈告欄</td><td>bulletin.css</td><td>tabsCss/bulletin.css</td><td><code>.bl-panel</code></td></tr>
+    <tr><td>避難圖</td><td>evacuation.css</td><td>tabsCss/evacuation.css</td><td><code>.ev-panel</code></td></tr>
+    <tr><td>護理交班</td><td>handover.css</td><td>tabsCss/handover.css</td><td><code>.ho-panel</code></td></tr>
+    <tr><td>照護團隊</td><td>team.css</td><td>tabsCss/team.css</td><td><code>.tm-panel</code></td></tr>
+  </table>
+
+  <hr>
+
+  <!-- ── 資料層 ── -->
+  <h2 id="data">資料層說明</h2>
+  <p>html_demo 的每個 <code>*Data.js</code> 都以 <strong>PascalCase 欄位</strong>定義 Mock 資料，對應後端 C# Model。React 版本直接複製，只加一行 <code>export default</code>：</p>
+
+  <pre><span class="cmt">// html_demo/js/careData.js</span>
+const _MOCK_CARE_REMINDERS = { "Data": { "Items": [...] } }
+async function getCareReminders(wardCode) { ... }
+
+<span class="cmt">// React tabsData/careData.js（只加最後一行）</span>
+const CARE_DATA = { "Data": { "Items": [...] } }
+<span class="hi">export default CARE_DATA</span></pre>
+
+  <h3>日後換成真實 API</h3>
+  <p>每個 Tab 目前直接 import 靜態資料：</p>
+  <pre><span class="cmt">// 現在（Mock）</span>
+import CARE_DATA from '../tabsData/careData'
+const items = CARE_DATA.Data.Items
+
+<span class="cmt">// 日後（API）</span>
+const [items, setItems] = useState([])
+useEffect(() => {
+  fetch(`/api/wards/W52/care-reminders`)
+    .then(r => r.json())
+    .then(data => setItems(data.Data.Items))
+}, [])</pre>
+
+  <div class="alert info">
+    <span class="alert-icon">💡</span>
+    <div>
+      API 欄位結構與 Mock 完全相同（PascalCase），換 API 時不需修改 JSX 的欄位存取邏輯。
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- ── JSX 轉換 ── -->
+  <h2 id="jsx">JSX 轉換模式</h2>
+  <p>每個 Tab 的 HTML → JSX 轉換遵循統一模式：</p>
+
+  <table>
+    <tr><th>html_demo HTML</th><th>React JSX</th></tr>
+    <tr><td><code>class="care-panel"</code></td><td><code>className="care-panel"</code></td></tr>
+    <tr><td><code>id="care-list"</code>（JS 注入內容）</td><td><code>{items.map(item =&gt; &lt;div key={item.ReminderId}&gt;...&lt;/div&gt;)}</code></td></tr>
+    <tr><td><code>stroke-width="2"</code>（SVG 屬性）</td><td><code>strokeWidth="2"</code>（camelCase）</td></tr>
+    <tr><td>JS 動態計算的日期格式</td><td>保留在元件 function 內，直接計算後放入 JSX</td></tr>
+    <tr><td>onclick 事件（班別切換）</td><td><code>useState</code> + <code>onClick</code></td></tr>
+  </table>
+
+  <h3>特殊處理：排班 Tab 班別切換</h3>
+  <pre><span class="cmt">// ScheduleTab.jsx — 用 useState 取代 JS 全局 currentShift</span>
+const [activeIdx, setActiveIdx] = useState(0)
+const shift = shifts[activeIdx]
+
+&lt;button
+  className={`sc-shift-btn${i === 0 ? ' is-current' : ''}${activeIdx === i ? ' active' : ''}`}
+  onClick={() => setActiveIdx(i)}
+&gt;</pre>
+
+  <h3>特殊處理：避難圖 SVG</h3>
+  <p>HTML 的 <code>&lt;svg&gt;</code> 直接搬入 JSX，只需把 kebab-case 屬性改為 camelCase：</p>
+  <pre><span class="cmt">// HTML：stroke-width="3.5" stroke-dasharray="10,5"</span>
+<span class="cmt">// JSX：</span>
+strokeWidth="3.5" strokeDasharray="10,5"</pre>
+
+  <hr>
+
+  <!-- ── 驗證 ── -->
+  <h2 id="verify">驗證清單</h2>
+  <table>
+    <tr><th>測試方式</th><th>預期結果</th></tr>
+    <tr><td>開 <code>localhost:5173/w52</code></td><td>自動跳轉到 <code>/w52/ward</code>，顯示床位頁</td></tr>
+    <tr><td>點底部「照護提醒」</td><td>URL 變 <code>/w52/care</code>，顯示照護提醒卡片列表</td></tr>
+    <tr><td>直接輸入 <code>/w52/schedule</code></td><td>排班資訊頁，可切換白班/小夜/大夜</td></tr>
+    <tr><td>直接輸入 <code>/w52/evacuation</code></td><td>避難圖頁，SVG 平面圖正常顯示</td></tr>
+    <tr><td>瀏覽器上一頁</td><td>回到前一個 Tab（URL history 正常）</td></tr>
+    <tr><td>IIS 訪問 <code>localhost/w52/care</code></td><td>正常顯示（SPA fallback 規則覆蓋）</td></tr>
+  </table>
+
+  <hr>
+
+  <!-- ── 日後更新 ── -->
+  <h2 id="update">日後更新流程</h2>
+  <p>設計師更新 html_demo 後，依照以下步驟同步到 React：</p>
+
+  <h3>情況一：某個 Tab 的 CSS 有改動</h3>
+  <p>找到對應的 <code>tabsCss/*.css</code>，用新的 CSS 覆蓋，並在所有選擇器前補上 <code>.w52-board</code>。</p>
+
+  <h3>情況二：某個 Tab 的 HTML 結構有改動</h3>
+  <p>比對 <code>html_demo/*.html</code> 的 <code>&lt;main&gt;</code> 區塊與 <code>tabs/*.jsx</code> 的差異，依 HTML → JSX 轉換規則更新。</p>
+
+  <h3>情況三：資料欄位有新增</h3>
+  <p>更新 <code>tabsData/*.js</code> 的資料結構，同步更新 <code>tabs/*.jsx</code> 中對應的渲染邏輯。</p>
+
+  <h3>情況四：新增 Tab 頁面</h3>
+  <ol style="padding-left:20px;line-height:2;color:#374151">
+    <li>在 html_demo 設計新的 <code>*.html</code> 和對應 CSS</li>
+    <li>在 React 建立 <code>tabsData/newData.js</code>（複製 + export default）</li>
+    <li>在 <code>tabsCss/new.css</code>（複製 + .w52-board 前綴）</li>
+    <li>建立 <code>tabs/NewTab.jsx</code>（HTML → JSX 轉換）</li>
+    <li>在 <code>W52Layout.jsx</code> 的 <code>TABS</code> 陣列加入新 Tab</li>
+    <li>在 <code>App.jsx</code> 加入新路由 <code>&lt;Route path="new" element={&lt;NewTab /&gt;} /&gt;</code></li>
+  </ol>
+
+  <hr>
+
+  <!-- ── 部署 ── -->
+  <h2 id="deploy">部署到 IIS</h2>
+  <pre><span class="cmt"># 進入 React 專案</span>
+cd "C:\WorkDir\Nursing Whiteboard\React"
+
+<span class="cmt"># Build</span>
+npm run build
+
+<span class="cmt"># 部署</span>
+Copy-Item -Path ".\dist\*" -Destination "C:\inetpub\wwwroot\kmsh-whiteboard" -Recurse -Force</pre>
+
+  <div class="alert info">
+    <span class="alert-icon">💡</span>
+    <div>
+      IIS 的 SPA Fallback 規則（<code>public/web.config</code>）已覆蓋 <code>/w52/*</code> 的所有子路徑，
+      不需額外設定。直接輸入 <code>http://localhost/w52/schedule</code> 也能正常顯示。
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  護理白板系統 W52 子頁面整合說明 &nbsp;|&nbsp; 2026-06-03
+</footer>
+
+</body>
+</html>

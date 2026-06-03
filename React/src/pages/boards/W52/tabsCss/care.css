@@ -1,0 +1,31 @@
+/* 照護提醒 — 所有選擇器以 .w52-board 為根 */
+.w52-board .care-panel { flex: 1; display: flex; flex-direction: column; overflow: hidden; padding: 16px 20px 12px; gap: 14px; }
+.w52-board .care-title { font-size: 24px; font-weight: 800; color: var(--text-primary); display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.w52-board .care-title-bar { display: inline-block; width: 5px; height: 24px; background: var(--accent-green); border-radius: 3px; }
+.w52-board .care-list { flex: 1; overflow-y: auto; touch-action: pan-y; display: flex; flex-direction: column; gap: 8px; padding-right: 4px; }
+.w52-board .care-list::-webkit-scrollbar { width: 6px; }
+.w52-board .care-list::-webkit-scrollbar-thumb { background: var(--divider); border-radius: 3px; }
+.w52-board .care-item { display: flex; align-items: center; gap: 14px; background: var(--bg-card-occ); border-radius: var(--radius-card); box-shadow: var(--shadow-card); padding: 12px 16px 12px 0; min-height: 62px; flex-shrink: 0; }
+.w52-board .care-priority-bar { width: 6px; align-self: stretch; border-radius: 8px 0 0 8px; flex-shrink: 0; }
+.w52-board .care-priority-bar.priority-bar-高 { background: var(--accent-red); }
+.w52-board .care-priority-bar.priority-bar-中 { background: var(--accent-yellow); }
+.w52-board .care-priority-bar.priority-bar-低 { background: var(--accent-green); }
+.w52-board .care-bed-info { display: flex; align-items: baseline; gap: 8px; flex-shrink: 0; min-width: 160px; }
+.w52-board .care-bed { font-size: 22px; font-weight: 900; font-family: var(--font-num); color: var(--text-primary); letter-spacing: 0.5px; line-height: 1; }
+.w52-board .care-patient { font-size: 18px; font-weight: 700; line-height: 1; }
+.w52-board .care-gender-m { color: #1565C0; }
+.w52-board .care-gender-f { color: #AD1457; }
+.w52-board .care-basic { font-size: 13px; color: var(--text-secondary); line-height: 1; }
+.w52-board .care-category { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: var(--radius-pill); font-size: 13px; font-weight: 700; white-space: nowrap; flex-shrink: 0; background: #E8ECF2; color: var(--text-secondary); }
+.w52-board .care-category.cat-術後照護 { background: #E3F2FD; color: #1565C0; }
+.w52-board .care-category.cat-感控     { background: #FCE4EC; color: #AD1457; }
+.w52-board .care-category.cat-藥物     { background: #FFF8E1; color: #F57F17; }
+.w52-board .care-category.cat-管路     { background: #EDE7F6; color: #5E35B1; }
+.w52-board .care-category.cat-跌倒防護 { background: #FFEBEE; color: #B71C1C; }
+.w52-board .care-category.cat-衛教     { background: #E8F5E9; color: #2E7D32; }
+.w52-board .care-category.cat-檢查追蹤 { background: #FFF3E0; color: #E65100; }
+.w52-board .care-category.cat-出院準備 { background: #F3E5F5; color: #7B1FA2; }
+.w52-board .care-content { flex: 1; font-size: 19px; font-weight: 500; color: var(--text-primary); line-height: 1.4; }
+.w52-board .care-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; min-width: 100px; }
+.w52-board .care-time { font-size: 18px; font-weight: 700; font-family: var(--font-num); color: var(--text-secondary); }
+.w52-board .care-nurse { font-size: 13px; color: var(--text-muted); }

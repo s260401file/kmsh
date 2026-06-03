@@ -1,0 +1,39 @@
+/* 醫師資訊 — 所有選擇器以 .w52-board 為根 */
+.w52-board .dr-panel { flex: 1; display: flex; flex-direction: column; overflow: hidden; padding: 16px 20px 12px; gap: 14px; }
+.w52-board .dr-title { font-size: 24px; font-weight: 800; color: var(--text-primary); display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.w52-board .dr-title-bar { display: inline-block; width: 5px; height: 24px; background: var(--accent-red); border-radius: 3px; }
+.w52-board .dr-columns { flex: 1; display: flex; gap: 20px; overflow: hidden; min-height: 0; }
+.w52-board .dr-card { flex: 1; background: var(--bg-card-occ); border: 1px solid var(--divider); border-radius: var(--radius-card); display: flex; flex-direction: column; overflow: hidden; }
+.w52-board .dr-card-header { font-size: 17px; font-weight: 700; color: var(--accent-green); padding: 13px 18px 12px; border-bottom: 1px solid var(--divider); flex-shrink: 0; display: flex; align-items: center; gap: 8px; }
+.w52-board .dr-card-count { font-size: 13px; font-weight: 900; color: var(--text-muted); font-family: var(--font-num); }
+.w52-board .dr-table-wrap { flex: 1; overflow-y: auto; touch-action: pan-y; }
+.w52-board .dr-table-wrap::-webkit-scrollbar { width: 4px; }
+.w52-board .dr-table-wrap::-webkit-scrollbar-thumb { background: var(--divider); border-radius: 2px; }
+.w52-board .dr-table { width: 100%; border-collapse: collapse; }
+.w52-board .dr-table thead tr { background: #E8F4EE; }
+.w52-board .dr-table th { font-size: 14px; font-weight: 700; color: var(--text-secondary); text-align: left; padding: 10px 18px; white-space: nowrap; border-bottom: 1px solid var(--divider); }
+.w52-board .dr-th-center { text-align: center; }
+.w52-board .dr-table tbody tr { border-bottom: 1px solid var(--bg-card-empty); }
+.w52-board .dr-table tbody tr:last-child { border-bottom: none; }
+.w52-board .dr-table td { font-size: 17px; color: var(--text-primary); padding: 12px 18px; vertical-align: middle; }
+.w52-board .dr-role-badge { display: inline-flex; align-items: center; padding: 2px 10px; border-radius: var(--radius-pill); font-size: 13px; font-weight: 700; white-space: nowrap; }
+.w52-board .dr-role-主治醫師   { background: #E3F2FD; color: #1565C0; }
+.w52-board .dr-role-專科護理師 { background: #E8F5E9; color: #2E7D32; }
+.w52-board .dr-td-specialty { font-size: 15px; color: var(--text-muted); white-space: nowrap; }
+.w52-board .dr-td-ext { font-size: 15px; color: var(--text-secondary); white-space: nowrap; }
+.w52-board .dr-beds { display: flex; flex-wrap: wrap; gap: 4px; }
+.w52-board .dr-bed-tag { font-size: 12px; font-weight: 700; font-family: var(--font-num); background: var(--bg-card-empty); color: var(--text-secondary); border: 1px solid var(--divider); border-radius: 4px; padding: 1px 6px; white-space: nowrap; }
+.w52-board .dr-beds-none { font-size: 14px; color: var(--text-muted); }
+.w52-board .dr-td-date { white-space: nowrap; }
+.w52-board .dr-date-main { font-size: 16px; font-weight: 700; color: var(--text-primary); }
+.w52-board .dr-date-day { font-size: 13px; color: var(--text-muted); margin-left: 4px; }
+.w52-board .dr-date-today .dr-date-main { color: var(--accent-green); }
+.w52-board .dr-td-time { font-size: 16px; font-weight: 600; color: var(--text-primary); white-space: nowrap; font-family: var(--font-num); }
+.w52-board .dr-actual-time { font-size: 13px; color: var(--text-muted); margin-left: 6px; font-weight: 400; }
+.w52-board .dr-td-status { text-align: center; white-space: nowrap; }
+.w52-board .dr-status-done { font-size: 18px; font-weight: 800; color: var(--accent-green); }
+.w52-board .dr-status-pending { font-size: 13px; font-weight: 700; color: var(--accent-blue); background: #E3F2FD; padding: 2px 10px; border-radius: var(--radius-pill); }
+.w52-board .dr-row-done td { opacity: .55; }
+.w52-board .dr-row-done .dr-td-status { opacity: 1; }
+.w52-board .dr-date-sep td { background: var(--bg-card-empty); font-size: 13px; font-weight: 700; color: var(--text-muted); padding: 6px 18px; letter-spacing: .5px; }
+.w52-board .dr-empty-row td { text-align: center; color: var(--text-muted); padding: 32px 18px; font-size: 18px; }

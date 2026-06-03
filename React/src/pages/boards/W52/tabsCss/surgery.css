@@ -1,0 +1,36 @@
+/* 手術資訊 — 所有選擇器以 .w52-board 為根 */
+.w52-board .surg-panel { flex: 1; display: flex; flex-direction: column; overflow: hidden; padding: 16px 20px 12px; gap: 14px; }
+.w52-board .surg-title { font-size: 24px; font-weight: 800; color: var(--text-primary); display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.w52-board .surg-title-bar { display: inline-block; width: 5px; height: 24px; background: var(--accent-blue); border-radius: 3px; }
+.w52-board .surg-card { flex: 1; background: var(--bg-card-occ); border: 1px solid var(--divider); border-radius: var(--radius-card); display: flex; flex-direction: column; overflow: hidden; min-height: 0; }
+.w52-board .surg-card-header { font-size: 17px; font-weight: 700; color: var(--accent-green); padding: 13px 18px 12px; border-bottom: 1px solid var(--divider); flex-shrink: 0; display: flex; align-items: center; gap: 8px; }
+.w52-board .surg-card-count { font-size: 13px; font-weight: 900; color: var(--text-muted); font-family: var(--font-num); }
+.w52-board .surg-table-wrap { flex: 1; overflow-y: auto; overflow-x: auto; touch-action: pan-y; }
+.w52-board .surg-table-wrap::-webkit-scrollbar { width: 4px; height: 4px; }
+.w52-board .surg-table-wrap::-webkit-scrollbar-thumb { background: var(--divider); border-radius: 2px; }
+.w52-board .surg-table { width: 100%; border-collapse: collapse; }
+.w52-board .surg-table thead tr { background: #E8F4EE; }
+.w52-board .surg-table th { font-size: 14px; font-weight: 700; color: var(--text-secondary); text-align: left; padding: 10px 14px; white-space: nowrap; border-bottom: 1px solid var(--divider); }
+.w52-board .surg-th-center { text-align: center; }
+.w52-board .surg-table tbody tr { border-bottom: 1px solid var(--bg-card-empty); }
+.w52-board .surg-table tbody tr:last-child { border-bottom: none; }
+.w52-board .surg-table td { font-size: 16px; color: var(--text-primary); padding: 12px 14px; vertical-align: middle; white-space: nowrap; }
+.w52-board .surg-td-bed { font-size: 15px; font-family: var(--font-num); font-weight: 700; color: var(--text-secondary); }
+.w52-board .surg-name { font-weight: 700; font-size: 16px; }
+.w52-board .surg-gender-m { color: #1565C0; }
+.w52-board .surg-gender-f { color: #AD1457; }
+.w52-board .surg-basic { font-size: 13px; color: var(--text-muted); margin-left: 4px; }
+.w52-board .surg-td-time { font-size: 16px; font-weight: 700; font-family: var(--font-num); color: var(--text-primary); }
+.w52-board .surg-td-or { font-size: 14px; font-weight: 600; color: var(--text-secondary); background: var(--bg-card-empty); padding: 2px 8px; border-radius: 4px; font-family: var(--font-num); }
+.w52-board .surg-td-procedure { font-size: 15px; color: var(--text-primary); white-space: normal; min-width: 180px; max-width: 280px; line-height: 1.35; }
+.w52-board .surg-td-diagnosis { font-size: 14px; color: var(--text-muted); white-space: normal; min-width: 110px; max-width: 200px; line-height: 1.35; }
+.w52-board .surg-td-anesthesia { font-size: 14px; color: var(--text-secondary); }
+.w52-board .surg-td-surgeon { font-size: 15px; color: var(--text-primary); }
+.w52-board .surg-td-status { text-align: center; white-space: nowrap; }
+.w52-board .surg-status { display: inline-flex; align-items: center; justify-content: center; padding: 4px 14px; border-radius: var(--radius-badge); font-size: 13px; font-weight: 800; color: #FFFFFF; letter-spacing: 0.5px; white-space: nowrap; min-width: 56px; }
+.w52-board .surg-status-待手術 { background: #1565C0; }
+.w52-board .surg-status-手術中 { background: #E65100; }
+.w52-board .surg-status-已完成 { background: #2E7D32; }
+.w52-board .surg-status-取消   { background: #263238; }
+.w52-board .surg-row-cancel td:not(.surg-td-status) { opacity: 0.55; }
+.w52-board .surg-empty-row td { text-align: center; color: var(--text-muted); padding: 32px 18px; font-size: 18px; }

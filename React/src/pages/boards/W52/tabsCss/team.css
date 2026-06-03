@@ -1,0 +1,32 @@
+/* 照護團隊 — 所有選擇器以 .w52-board 為根 */
+.w52-board .tm-panel { flex: 1; display: flex; flex-direction: column; overflow: hidden; padding: 16px 20px 12px; gap: 14px; }
+.w52-board .tm-title { font-size: 24px; font-weight: 800; color: var(--text-primary); display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.w52-board .tm-title-bar { display: inline-block; width: 5px; height: 24px; background: #0097A7; border-radius: 3px; }
+.w52-board .tm-title-meta { font-size: 15px; font-weight: 400; color: var(--text-muted); margin-left: 4px; }
+.w52-board .tm-grid { flex: 1; overflow-y: auto; touch-action: pan-y; display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; padding-right: 4px; align-content: start; }
+.w52-board .tm-grid::-webkit-scrollbar { width: 6px; }
+.w52-board .tm-grid::-webkit-scrollbar-thumb { background: var(--divider); border-radius: 3px; }
+.w52-board .tm-card { background: var(--bg-card-occ); border: 1px solid var(--divider); border-radius: var(--radius-card); display: flex; flex-direction: column; overflow: hidden; }
+.w52-board .tm-card-header { display: flex; align-items: center; gap: 10px; padding: 12px 16px 11px; border-bottom: 1px solid var(--divider); }
+.w52-board .tm-card-accent { width: 4px; height: 18px; border-radius: 2px; flex-shrink: 0; }
+.w52-board .tm-accent-leader     { background: #C9A227; }
+.w52-board .tm-accent-attending  { background: #1565C0; }
+.w52-board .tm-accent-resident   { background: #1976D2; }
+.w52-board .tm-accent-specialist { background: #2E7D32; }
+.w52-board .tm-accent-nurse      { background: #AD1457; }
+.w52-board .tm-accent-allied     { background: #6A1B9A; }
+.w52-board .tm-card-title { font-size: 17px; font-weight: 700; color: var(--text-primary); }
+.w52-board .tm-card-count { font-size: 13px; font-weight: 900; color: var(--text-muted); font-family: var(--font-num); margin-left: auto; }
+.w52-board .tm-table { width: 100%; border-collapse: collapse; }
+.w52-board .tm-table thead tr { background: #E8F4EE; }
+.w52-board .tm-table th { font-size: 13px; font-weight: 700; color: var(--text-secondary); text-align: left; padding: 8px 16px; white-space: nowrap; border-bottom: 1px solid var(--divider); }
+.w52-board .tm-table tbody tr { border-bottom: 1px solid var(--bg-card-empty); }
+.w52-board .tm-table tbody tr:last-child { border-bottom: none; }
+.w52-board .tm-table td { font-size: 16px; color: var(--text-primary); padding: 10px 16px; vertical-align: middle; white-space: nowrap; }
+.w52-board .tm-td-role { font-size: 13px; font-weight: 700; color: var(--text-muted); white-space: nowrap; }
+.w52-board .tm-td-dept { font-size: 14px; color: var(--text-muted); }
+.w52-board .tm-td-ext { font-size: 15px; font-weight: 700; font-family: var(--font-num); color: var(--text-secondary); white-space: nowrap; }
+.w52-board .tm-td-mobile { font-size: 13px; color: var(--text-muted); font-family: var(--font-num); }
+.w52-board .tm-row-leader td { background: #FFF8E1; }
+.w52-board .tm-row-leader .tm-td-role { color: #B7791F; font-weight: 800; }
+.w52-board .tm-empty-row td { text-align: center; color: var(--text-muted); padding: 20px 16px; font-size: 15px; }

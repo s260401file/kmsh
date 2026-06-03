@@ -1,0 +1,47 @@
+/* 護理交班 — 所有選擇器以 .w52-board 為根 */
+.w52-board .ho-panel { flex: 1; display: flex; flex-direction: column; overflow: hidden; padding: 16px 20px 12px; gap: 12px; }
+.w52-board .ho-title { font-size: 24px; font-weight: 800; color: var(--text-primary); display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.w52-board .ho-title-bar { display: inline-block; width: 5px; height: 24px; background: #00838F; border-radius: 3px; }
+.w52-board .ho-title-meta { font-size: 15px; font-weight: 400; color: var(--text-muted); margin-left: 4px; }
+.w52-board .ho-meta-bar { background: var(--bg-card-occ); border: 1px solid var(--divider); border-radius: var(--radius-card); padding: 12px 18px; display: flex; flex-wrap: wrap; align-items: center; gap: 24px; flex-shrink: 0; }
+.w52-board .ho-meta-block { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.w52-board .ho-meta-label { font-size: 12px; font-weight: 800; letter-spacing: 1.5px; color: var(--text-muted); text-transform: uppercase; white-space: nowrap; }
+.w52-board .ho-meta-pill { display: inline-flex; align-items: center; padding: 3px 12px; border-radius: var(--radius-pill); font-size: 14px; font-weight: 800; white-space: nowrap; }
+.w52-board .ho-pill-白班 { background: #FFF3E0; color: #E65100; }
+.w52-board .ho-pill-小夜 { background: #EDE7F6; color: #5E35B1; }
+.w52-board .ho-pill-大夜 { background: #E8EAF6; color: #1A237E; }
+.w52-board .ho-meta-arrow { font-size: 18px; color: #00838F; font-weight: 800; }
+.w52-board .ho-meta-time { font-family: var(--font-num); font-size: 18px; font-weight: 800; color: var(--text-primary); letter-spacing: -.5px; }
+.w52-board .ho-meta-nurses { font-size: 15px; color: var(--text-primary); font-weight: 600; }
+.w52-board .ho-list { flex: 1; overflow-y: auto; touch-action: pan-y; display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; padding-right: 4px; align-content: start; }
+.w52-board .ho-list::-webkit-scrollbar { width: 6px; }
+.w52-board .ho-list::-webkit-scrollbar-thumb { background: var(--divider); border-radius: 3px; }
+.w52-board .ho-card { display: flex; background: var(--bg-card-occ); border-radius: var(--radius-card); box-shadow: var(--shadow-card); overflow: hidden; border: 1px solid var(--divider); }
+.w52-board .ho-priority-bar { width: 5px; flex-shrink: 0; }
+.w52-board .ho-bar-高   { background: var(--accent-red); }
+.w52-board .ho-bar-中   { background: var(--accent-yellow); }
+.w52-board .ho-bar-一般 { background: var(--accent-blue); }
+.w52-board .ho-card-body { flex: 1; display: flex; flex-direction: column; gap: 8px; padding: 12px 16px 14px; min-width: 0; }
+.w52-board .ho-card-top { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.w52-board .ho-bed-label { font-size: 12px; color: var(--text-muted); }
+.w52-board .ho-bed-no { font-size: 22px; font-weight: 900; font-family: var(--font-num); color: var(--text-primary); line-height: 1; letter-spacing: .5px; }
+.w52-board .ho-patient-name { font-size: 19px; font-weight: 700; line-height: 1; }
+.w52-board .ho-gender-m { color: #1565C0; }
+.w52-board .ho-gender-f { color: #AD1457; }
+.w52-board .ho-basic { font-size: 13px; color: var(--text-secondary); line-height: 1; }
+.w52-board .ho-priority-badge { display: inline-flex; align-items: center; padding: 2px 10px; border-radius: var(--radius-badge); font-size: 12px; font-weight: 800; margin-left: auto; white-space: nowrap; }
+.w52-board .ho-pri-高   { background: #FFEBEE; color: #C62828; }
+.w52-board .ho-pri-中   { background: #FFF3E0; color: #E65100; }
+.w52-board .ho-pri-一般 { background: #E3F2FD; color: #1565C0; }
+.w52-board .ho-diagnosis { font-size: 14px; color: var(--text-muted); line-height: 1.3; }
+.w52-board .ho-items { display: flex; flex-direction: column; gap: 5px; margin-top: 2px; }
+.w52-board .ho-item { display: flex; align-items: baseline; gap: 8px; }
+.w52-board .ho-cat-badge { display: inline-flex; align-items: center; padding: 1px 8px; border-radius: 4px; font-size: 11px; font-weight: 800; white-space: nowrap; flex-shrink: 0; letter-spacing: .5px; }
+.w52-board .ho-cat-管路     { background: #E3F2FD; color: #1565C0; }
+.w52-board .ho-cat-用藥     { background: #F3E5F5; color: #7B1FA2; }
+.w52-board .ho-cat-生命徵象 { background: #FFF3E0; color: #E65100; }
+.w52-board .ho-cat-警示     { background: #FFEBEE; color: #C62828; }
+.w52-board .ho-cat-家屬     { background: #E8F5E9; color: #2E7D32; }
+.w52-board .ho-cat-待辦     { background: #ECEFF1; color: var(--text-secondary); }
+.w52-board .ho-item-content { font-size: 14.5px; color: var(--text-primary); line-height: 1.45; }
+.w52-board .ho-empty { grid-column: 1 / -1; color: var(--text-muted); font-size: 17px; padding: 32px; text-align: center; }

@@ -1,0 +1,218 @@
+/* ════════════════════════════════════════════════════
+   手術資訊 — Surgery Info
+   §7.1.2 (4.1) 當日手術，共 12 欄位
+   單表格全寬佈局，狀態 badge 與檢查／會診一致
+   ════════════════════════════════════════════════════ */
+
+/* ── 面板容器 ── */
+.surg-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 16px 20px 12px;
+  gap: 14px;
+}
+
+/* ── 面板標題 ── */
+.surg-title {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.surg-title-bar {
+  display: inline-block;
+  width: 5px;
+  height: 24px;
+  background: var(--accent-blue);
+  border-radius: 3px;
+}
+
+/* ── 卡片（全寬）── */
+.surg-card {
+  flex: 1;
+  background: var(--bg-card-occ);
+  border: 1px solid var(--divider);
+  border-radius: var(--radius-card);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* 卡片標頭 */
+.surg-card-header {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--accent-green);
+  padding: 13px 18px 12px;
+  border-bottom: 1px solid var(--divider);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.surg-card-count {
+  font-size: 13px;
+  font-weight: 900;
+  color: var(--text-muted);
+  font-family: var(--font-num);
+}
+
+/* 表格捲動容器 */
+.surg-table-wrap {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: auto;
+  touch-action: pan-y;
+}
+.surg-table-wrap::-webkit-scrollbar { width: 4px; height: 4px; }
+.surg-table-wrap::-webkit-scrollbar-thumb { background: var(--divider); border-radius: 2px; }
+
+/* ── 表格 ── */
+.surg-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.surg-table thead tr {
+  background: #E8F4EE;
+}
+
+.surg-table th {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-align: left;
+  padding: 10px 14px;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--divider);
+}
+
+.surg-th-center { text-align: center; }
+
+.surg-table tbody tr {
+  border-bottom: 1px solid var(--bg-card-empty);
+}
+.surg-table tbody tr:last-child { border-bottom: none; }
+
+.surg-table td {
+  font-size: 16px;
+  color: var(--text-primary);
+  padding: 12px 14px;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+/* ── 床號 ── */
+.surg-td-bed {
+  font-size: 15px;
+  font-family: var(--font-num);
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+/* ── 姓名（含性別年齡）── */
+.surg-td-name { white-space: nowrap; }
+.surg-name {
+  font-weight: 700;
+  font-size: 16px;
+}
+.surg-gender-m { color: #1565C0; }
+.surg-gender-f { color: #AD1457; }
+.surg-basic {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-left: 4px;
+}
+
+/* ── 排程時間 ── */
+.surg-td-time {
+  font-size: 16px;
+  font-weight: 700;
+  font-family: var(--font-num);
+  color: var(--text-primary);
+}
+
+/* ── 手術間 ── */
+.surg-td-or {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--bg-card-empty);
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-family: var(--font-num);
+}
+
+/* ── 術式 ── */
+.surg-td-procedure {
+  font-size: 15px;
+  color: var(--text-primary);
+  white-space: normal;
+  min-width: 180px;
+  max-width: 280px;
+  line-height: 1.35;
+}
+
+/* ── 診斷 ── */
+.surg-td-diagnosis {
+  font-size: 14px;
+  color: var(--text-muted);
+  white-space: normal;
+  min-width: 110px;
+  max-width: 200px;
+  line-height: 1.35;
+}
+
+/* ── 麻醉方式 ── */
+.surg-td-anesthesia {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+/* ── 主治醫師 ── */
+.surg-td-surgeon {
+  font-size: 15px;
+  color: var(--text-primary);
+}
+
+/* ── 狀態 badge（與 .ec-status 一致）── */
+.surg-td-status { text-align: center; white-space: nowrap; }
+
+.surg-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 14px;
+  border-radius: var(--radius-badge);
+  font-size: 13px;
+  font-weight: 800;
+  color: #FFFFFF;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  min-width: 56px;
+}
+.surg-status-待手術 { background: #1565C0; }
+.surg-status-手術中 { background: #E65100; }
+.surg-status-已完成 { background: #2E7D32; }
+.surg-status-取消   { background: #263238; }
+
+/* 取消列整列淡化 */
+.surg-row-cancel td:not(.surg-td-status) {
+  opacity: 0.55;
+}
+
+/* ── 空狀態 ── */
+.surg-empty-row td {
+  text-align: center;
+  color: var(--text-muted);
+  padding: 32px 18px;
+  font-size: 18px;
+}

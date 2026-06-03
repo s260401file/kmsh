@@ -1,0 +1,53 @@
+/* ── Light Theme (single theme) ── */
+:root {
+  --bg-page:         #F2F5F8;
+  --bg-header:       #1A7040;
+  --bg-stats:        #228B52;
+  --bg-filter:       #E4EDF5;
+  --bg-floor-label:  #D6EDE1;
+  --bg-card-occ:     #FFFFFF;
+  --bg-card-empty:   #E8ECF0;
+  --bg-card-surgery: #E8F5E9;
+  --bg-card-prep:    #FFF8E1;
+  --bg-modal:        #FFFFFF;
+  --bg-tabs:         #145A34;
+  --bg-tab-active:   #1A7040;
+
+  --border-occ:      #1A7040;
+  --border-empty:    #B0BEC5;
+  --border-er-knife: #CC3333;
+  --border-op-knife: #1565C0;
+  --border-inp-knife:#1A7040;
+
+  --text-primary:    #1A2635;
+  --text-secondary:  #3A5068;
+  --text-muted:      #7A8FA0;
+  --text-empty:      #90A4AE;
+  --text-stats:      #FFFFFF;
+  --text-tab:        #A8C8B8;
+  --text-tab-active: #FFFFFF;
+
+  --accent-green:    #1A7040;
+  --accent-yellow:   #E8A020;
+  --accent-red:      #E05C5C;
+  --accent-blue:     #1565C0;
+
+  --divider:         #D0DBE5;
+  --floor-border:    #B0C8D8;
+  --filter-active-bg: #1A7040;
+  --filter-active-text: #FFFFFF;
+  --filter-border:   #1A7040;
+  --modal-overlay:   rgba(0,0,0,0.55);
+  --shadow-card:     0 2px 8px rgba(0,0,0,0.10);
+  --shadow-modal:    0 8px 32px rgba(0,0,0,0.2);
+
+  --font-main:   "Microsoft JhengHei UI", "微軟正黑體", "Noto Sans TC", sans-serif;
+  --font-num:    "Roboto", "Arial", sans-serif;
+  --radius-card: 8px;
+  --radius-modal:12px;
+  --radius-badge:4px;
+  --radius-pill: 20px;
+  --header-h:    72px;
+  --filter-h:    44px;
+  --tabs-h:      56px;
+}

@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "icu-board",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["serve", "-l", "3030", "icu-board"],
+      "port": 3030
+    }
+  ]
+}

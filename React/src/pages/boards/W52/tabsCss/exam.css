@@ -1,0 +1,32 @@
+/* 檢查/會診 — 所有選擇器以 .w52-board 為根 */
+.w52-board .ec-panel { flex: 1; display: flex; flex-direction: column; overflow: hidden; padding: 16px 20px 12px; gap: 14px; }
+.w52-board .ec-title { font-size: 24px; font-weight: 800; color: var(--text-primary); display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.w52-board .ec-title-bar { display: inline-block; width: 5px; height: 24px; background: #7B1FA2; border-radius: 3px; }
+.w52-board .ec-columns { flex: 1; display: flex; gap: 20px; overflow: hidden; min-height: 0; }
+.w52-board .ec-card { flex: 1; background: var(--bg-card-occ); border: 1px solid var(--divider); border-radius: var(--radius-card); display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
+.w52-board .ec-card-header { font-size: 17px; font-weight: 700; color: var(--accent-green); padding: 13px 18px 12px; border-bottom: 1px solid var(--divider); flex-shrink: 0; display: flex; align-items: center; gap: 8px; }
+.w52-board .ec-card-count { font-size: 13px; font-weight: 900; color: var(--text-muted); font-family: var(--font-num); }
+.w52-board .ec-table-wrap { flex: 1; overflow-y: auto; overflow-x: auto; touch-action: pan-y; }
+.w52-board .ec-table-wrap::-webkit-scrollbar { width: 4px; height: 4px; }
+.w52-board .ec-table-wrap::-webkit-scrollbar-thumb { background: var(--divider); border-radius: 2px; }
+.w52-board .ec-table { width: 100%; border-collapse: collapse; }
+.w52-board .ec-table thead tr { background: #E8F4EE; }
+.w52-board .ec-table th { font-size: 14px; font-weight: 700; color: var(--text-secondary); text-align: left; padding: 10px 14px; white-space: nowrap; border-bottom: 1px solid var(--divider); }
+.w52-board .ec-th-center { text-align: center; }
+.w52-board .ec-table tbody tr { border-bottom: 1px solid var(--bg-card-empty); }
+.w52-board .ec-table tbody tr:last-child { border-bottom: none; }
+.w52-board .ec-table td { font-size: 16px; color: var(--text-primary); padding: 12px 14px; vertical-align: middle; white-space: nowrap; }
+.w52-board .ec-td-bed { font-size: 15px; font-family: var(--font-num); font-weight: 700; color: var(--text-secondary); white-space: nowrap; }
+.w52-board .ec-gender-m { color: #1565C0; }
+.w52-board .ec-gender-f { color: #AD1457; }
+.w52-board .ec-td-item { font-size: 16px; color: var(--text-primary); white-space: nowrap; }
+.w52-board .ec-td-date,.w52-board .ec-td-time,.w52-board .ec-td-doctor { font-size: 15px; font-family: var(--font-num); color: var(--text-secondary); white-space: nowrap; }
+.w52-board .ec-td-remark { font-size: 14px; color: var(--text-muted); white-space: normal; min-width: 100px; max-width: 240px; line-height: 1.4; }
+.w52-board .ec-td-status { text-align: center; white-space: nowrap; }
+.w52-board .ec-status { display: inline-flex; align-items: center; justify-content: center; padding: 4px 14px; border-radius: var(--radius-badge); font-size: 13px; font-weight: 800; color: #FFFFFF; letter-spacing: 0.5px; white-space: nowrap; min-width: 56px; }
+.w52-board .ec-status-待執行 { background: #263238; }
+.w52-board .ec-status-已完成 { background: #2E7D32; }
+.w52-board .ec-status-預約   { background: #1565C0; }
+.w52-board .ec-status-進行中 { background: #E65100; }
+.w52-board .ec-status-待安排 { background: #263238; }
+.w52-board .ec-empty-row td { text-align: center; color: var(--text-muted); padding: 32px 18px; font-size: 18px; }

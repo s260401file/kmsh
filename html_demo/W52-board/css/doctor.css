@@ -1,0 +1,244 @@
+/* ════════════════════════════════════════════════════
+   醫師資訊 — Doctor Info
+   樣式對齊連絡電話（contact.css）：
+   24px/800 標題、17px td、14px th、#E8F4EE thead
+   ════════════════════════════════════════════════════ */
+
+/* ── 面板容器 ── */
+.dr-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 16px 20px 12px;
+  gap: 14px;
+}
+
+/* ── 面板標題 ── */
+.dr-title {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.dr-title-bar {
+  display: inline-block;
+  width: 5px;
+  height: 24px;
+  background: var(--accent-red);
+  border-radius: 3px;
+}
+
+/* ── 雙欄佈局 ── */
+.dr-columns {
+  flex: 1;
+  display: flex;
+  gap: 20px;
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* ── 卡片（對齊 .ct-card）── */
+.dr-card {
+  flex: 1;
+  background: var(--bg-card-occ);
+  border: 1px solid var(--divider);
+  border-radius: var(--radius-card);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* 卡片標頭（對齊 .ct-card-header）*/
+.dr-card-header {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--accent-green);
+  padding: 13px 18px 12px;
+  border-bottom: 1px solid var(--divider);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dr-card-count {
+  font-size: 13px;
+  font-weight: 900;
+  color: var(--text-muted);
+  font-family: var(--font-num);
+}
+
+/* 表格捲動容器 */
+.dr-table-wrap {
+  flex: 1;
+  overflow-y: auto;
+  touch-action: pan-y;
+}
+.dr-table-wrap::-webkit-scrollbar { width: 4px; }
+.dr-table-wrap::-webkit-scrollbar-thumb { background: var(--divider); border-radius: 2px; }
+
+/* ── 表格（完全對齊 .ct-table）── */
+.dr-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.dr-table thead tr {
+  background: #E8F4EE;
+}
+
+.dr-table th {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-align: left;
+  padding: 10px 18px;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--divider);
+}
+
+.dr-th-center { text-align: center; }
+
+.dr-table tbody tr {
+  border-bottom: 1px solid var(--bg-card-empty);
+}
+.dr-table tbody tr:last-child { border-bottom: none; }
+
+.dr-table td {
+  font-size: 17px;
+  color: var(--text-primary);
+  padding: 12px 18px;
+  vertical-align: middle;
+}
+
+/* ── 職別標籤 ── */
+.dr-role-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border-radius: var(--radius-pill);
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.dr-role-主治醫師   { background: #E3F2FD; color: #1565C0; }
+.dr-role-專科護理師 { background: #E8F5E9; color: #2E7D32; }
+
+/* ── 專科欄位 ── */
+.dr-td-specialty {
+  font-size: 15px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* ── 分機欄位 ── */
+.dr-td-ext {
+  font-size: 15px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+/* ── 負責床位：小標籤群（同 schedule.css .sc-bed-tag）── */
+.dr-beds {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.dr-bed-tag {
+  font-size: 12px;
+  font-weight: 700;
+  font-family: var(--font-num);
+  background: var(--bg-card-empty);
+  color: var(--text-secondary);
+  border: 1px solid var(--divider);
+  border-radius: 4px;
+  padding: 1px 6px;
+  white-space: nowrap;
+}
+
+.dr-beds-none {
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+/* ── 查房日期欄位 ── */
+.dr-td-date {
+  white-space: nowrap;
+}
+
+.dr-date-main {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.dr-date-day {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-left: 4px;
+}
+
+/* 今日日期強調 */
+.dr-date-today .dr-date-main { color: var(--accent-green); }
+
+/* ── 查房時段 ── */
+.dr-td-time {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  font-family: var(--font-num);
+}
+
+.dr-actual-time {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-left: 6px;
+  font-weight: 400;
+}
+
+/* ── 查房完成狀態 ── */
+.dr-td-status { text-align: center; white-space: nowrap; }
+
+.dr-status-done {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--accent-green);
+}
+
+.dr-status-pending {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent-blue);
+  background: #E3F2FD;
+  padding: 2px 10px;
+  border-radius: var(--radius-pill);
+}
+
+/* 已完成列淡化 */
+.dr-row-done td { opacity: 0.55; }
+.dr-row-done .dr-td-status { opacity: 1; }
+
+/* 日期分隔列 */
+.dr-date-sep td {
+  background: var(--bg-card-empty);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-muted);
+  padding: 6px 18px;
+  letter-spacing: 0.5px;
+}
+
+/* ── 空狀態 ── */
+.dr-empty-row td {
+  text-align: center;
+  color: var(--text-muted);
+  padding: 32px 18px;
+  font-size: 18px;
+}

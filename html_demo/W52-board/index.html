@@ -1,0 +1,270 @@
+﻿<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>高雄市立民生醫院 W52病房 電子白板</title>
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/reset.css">
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/components.css">
+</head>
+<body>
+
+  <!-- ── Header ── -->
+  <header class="page-header">
+    <div class="header-left">
+      W52
+      <span class="ward-sub">一般病房</span>
+    </div>
+    <div class="header-center">
+      <div class="staff-block">
+        <div class="staff-label">病房主任</div>
+        <div class="staff-name" id="ward-director">—</div>
+      </div>
+      <div class="staff-block">
+        <div class="staff-label">單位護理長</div>
+        <div class="staff-name" id="head-nurse">—</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="update-label">資料更新時間：剛剛</div>
+      <div class="clock-date" id="clock-date"></div>
+      <div class="clock-time" id="clock-time"></div>
+    </div>
+  </header>
+
+  <!-- ── Announcement marquee ── -->
+  <div class="announce-bar">
+    <span>◆</span>
+    <span>2026/05/15 院內感染管制週宣導：請確實執行手部衛生，進出隔離病房務必穿戴適當防護裝備。</span>
+  </div>
+
+  <!-- ── Main content ── -->
+  <main class="main-content">
+
+    <!-- Beds panel -->
+    <div class="beds-panel">
+      <div class="ward-title">▌ W52病房　共 41 床（L 型配置：左翼 18 床 ＋ 右雙排 14 床 ＋ 底排 9 床）</div>
+      <div class="ward-grid" id="ward-grid">
+
+        <!-- ── 房型輪廓 ── -->
+        <!-- 五人房（L形：R1-R2 × C1-C4，051@R2C1，空角 R2×C2-C4 顯示標籤） -->
+        <div class="room-grp rg-five"  style="grid-column:1/5;grid-row:1/3"></div>
+        <div class="room-lbl rl-five"  style="grid-column:2/5;grid-row:2">五人房</div>
+        <!-- 三人房（L形：R3-R4 × C2-C3，050@R3C2，039@R4C2，038@R4C3，空角 R3×C3） -->
+        <div class="room-grp rg-three" style="grid-column:2/4;grid-row:3/5"></div>
+        <div class="room-lbl rl-three" style="grid-column:3;grid-row:3">三人房</div>
+        <!-- 四人房（L形：R5-R6 × C2-C4，037@R5C2，036@R6C2，035@R6C3，033@R6C4，空角 R5×C3-C4） -->
+        <div class="room-grp rg-four"  style="grid-column:2/5;grid-row:5/7"></div>
+        <div class="room-lbl rl-four"  style="grid-column:3/5;grid-row:5">四人房</div>
+
+        <!-- Stats wrap（透明，C9-C13 × R1-R6，flex 垂直居中）-->
+        <div class="stats-wrap">
+          <div class="ws-row">
+            <div class="ws-item">
+              <div class="ws-value" id="stat-total">—</div>
+              <div class="ws-label">總床數</div>
+            </div>
+            <div class="ws-item">
+              <div class="ws-value" id="stat-occupied">—</div>
+              <div class="ws-label">住院</div>
+            </div>
+          </div>
+          <div class="ws-row">
+            <div class="ws-item" data-filter="surgery">
+              <div class="ws-value ws-surgery" id="stat-surgery">—</div>
+              <div class="ws-label">手術 ▾</div>
+            </div>
+            <div class="ws-item" data-filter="exam">
+              <div class="ws-value ws-exam" id="stat-exam">—</div>
+              <div class="ws-label">檢查 ▾</div>
+            </div>
+            <div class="ws-item" data-filter="consult">
+              <div class="ws-value ws-consult" id="stat-consult">—</div>
+              <div class="ws-label">會診 ▾</div>
+            </div>
+          </div>
+          <div class="ws-row">
+            <div class="ws-item" data-filter="iso">
+              <div class="ws-value ws-iso" id="stat-iso">—</div>
+              <div class="ws-label">隔離 ▾</div>
+            </div>
+            <div class="ws-item" data-filter="DNR">
+              <div class="ws-value ws-dnr" id="stat-dnr">—</div>
+              <div class="ws-label">DNR ▾</div>
+            </div>
+            <div class="ws-item" data-filter="RRT">
+              <div class="ws-value ws-rrt" id="stat-rrt">—</div>
+              <div class="ws-label">RRT ▾</div>
+            </div>
+          </div>
+          <div class="ws-row">
+            <div class="ws-item" data-filter="tube-port">
+              <div class="ws-value ws-port" id="stat-port">—</div>
+              <div class="ws-label">人工血管 ▾</div>
+            </div>
+            <div class="ws-item" data-filter="tube-dlvc">
+              <div class="ws-value ws-dlvc" id="stat-dlvc">—</div>
+              <div class="ws-label">雙腔靜脈 ▾</div>
+            </div>
+            <div class="ws-item" data-filter="tube-foley">
+              <div class="ws-value ws-foley" id="stat-foley">—</div>
+              <div class="ws-label">導尿管 ▾</div>
+            </div>
+          </div>
+          <div class="ws-row">
+            <div class="ws-item" data-filter="tube-cvc">
+              <div class="ws-value ws-cvc" id="stat-cvc">—</div>
+              <div class="ws-label">中心靜脈 ▾</div>
+            </div>
+            <div class="ws-item" data-filter="tube-cardiac">
+              <div class="ws-value ws-cardiac" id="stat-cardiac">—</div>
+              <div class="ws-label">心導管 ▾</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ── Filter bar (圖例 = 圓點 + 文字) ── -->
+  <div class="filter-bar">
+    <button class="filter-btn active" data-filter="all">全部</button>
+    <button class="legend-item" data-filter="DNR"><span class="flag-dot flag-dot-DNR"></span><span>DNR</span></button>
+    <button class="legend-item" data-filter="高危跌"><span class="flag-dot flag-dot-高危跌"></span><span>高危跌</span></button>
+    <button class="legend-item" data-filter="依賴L1"><span class="flag-dot flag-dot-依賴L1"></span><span>依賴L1</span></button>
+    <button class="legend-item" data-filter="依賴L2"><span class="flag-dot flag-dot-依賴L2"></span><span>依賴L2</span></button>
+    <button class="legend-item" data-filter="依賴L3"><span class="flag-dot flag-dot-依賴L3"></span><span>依賴L3</span></button>
+    <button class="legend-item" data-filter="隔離"><span class="flag-dot flag-dot-隔離"></span><span>隔離</span></button>
+    <button class="legend-item" data-filter="保密"><span class="flag-dot flag-dot-保密"></span><span>保密</span></button>
+    <button class="legend-item" data-filter="禁治療"><span class="flag-dot flag-dot-禁治療"></span><span>禁治療</span></button>
+    <button class="legend-item" data-filter="禁食"><span class="flag-dot flag-dot-禁食"></span><span>禁食</span></button>
+    <button class="legend-item" data-filter="過敏"><span class="flag-dot flag-dot-過敏"></span><span>過敏</span></button>
+    <button class="legend-item" data-filter="RRT"><span class="flag-dot flag-dot-RRT"></span><span>RRT</span></button>
+    <button class="legend-item" data-filter="化療"><span class="flag-dot flag-dot-化療"></span><span>化療</span></button>
+    <button class="legend-item" data-filter="輪椅"><span class="flag-dot flag-dot-輪椅"></span><span>輪椅</span></button>
+    <button class="legend-item" data-filter="推床"><span class="flag-dot flag-dot-推床"></span><span>推床</span></button>
+    <button class="legend-item" data-filter="氧氣設備"><span class="flag-dot flag-dot-氧氣設備"></span><span>氧氣設備</span></button>
+    <button class="legend-item" data-filter="洗腎"><span class="flag-dot flag-dot-洗腎"></span><span>洗腎</span></button>
+    <button class="legend-item" data-filter="待轉入"><span class="flag-dot flag-dot-待轉入"></span><span>待轉入</span></button>
+    <button class="legend-item" data-filter="待轉出"><span class="flag-dot flag-dot-待轉出"></span><span>待轉出</span></button>
+    <button class="legend-item" data-filter="待出院"><span class="flag-dot flag-dot-待出院"></span><span>待出院</span></button>
+  </div>
+
+  <!-- ── Bottom tabs (11 tabs per §7.1.2.1) ── -->
+  <nav class="bottom-tabs">
+    <a href="index.html"   class="tab-btn active">病室動態</a>
+    <a href="care.html"    class="tab-btn">照護提醒</a>
+    <a href="surgery.html" class="tab-btn">手術資訊</a>
+    <a href="exam.html"    class="tab-btn">檢查/會診</a>
+    <a href="contact.html" class="tab-btn">連絡電話</a>
+    <a href="schedule.html" class="tab-btn">排班資訊</a>
+    <a href="doctor.html" class="tab-btn">醫師資訊</a>
+    <a href="bulletin.html" class="tab-btn">佈告欄</a>
+    <a href="evacuation.html" class="tab-btn">避難圖</a>
+    <a href="handover.html" class="tab-btn">護理交班</a>
+    <a href="team.html" class="tab-btn">照護團隊</a>
+  </nav>
+
+  <!-- ── Bed detail modal ── -->
+  <div class="modal-overlay" id="bedModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <div style="display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;">
+          <span class="modal-bed-id" id="m-bedid"></span>
+          <span class="modal-patient" id="m-name"></span>
+          <span class="modal-basic"   id="m-basic"></span>
+          <div class="modal-badges"   id="m-badges"></div>
+        </div>
+        <button class="modal-close" id="modalClose">✕</button>
+      </div>
+      <div class="modal-body">
+        <!-- 診斷 -->
+        <div class="modal-row">
+          <div class="modal-field full">
+            <div class="field-label">診斷</div>
+            <div class="field-value diagnosis" id="m-diag"></div>
+          </div>
+        </div>
+        <!-- 病歷號 / 生日 / 科別 -->
+        <div class="modal-row">
+          <div class="modal-field">
+            <div class="field-label">病歷號</div>
+            <div class="field-value" id="m-medrec"></div>
+          </div>
+          <div class="modal-field">
+            <div class="field-label">生日</div>
+            <div class="field-value" id="m-birth"></div>
+          </div>
+          <div class="modal-field">
+            <div class="field-label">科別</div>
+            <div class="field-value" id="m-dept"></div>
+          </div>
+        </div>
+        <!-- 主治醫師 / 責任護理師 -->
+        <div class="modal-row">
+          <div class="modal-field">
+            <div class="field-label">主治醫師</div>
+            <div class="field-value" id="m-doctor"></div>
+          </div>
+          <div class="modal-field">
+            <div class="field-label">責任護理師</div>
+            <div class="field-value" id="m-nurse"></div>
+          </div>
+        </div>
+        <!-- 入院日期 / 住院天數 / 病況等級 -->
+        <div class="modal-row">
+          <div class="modal-field">
+            <div class="field-label">入院日期</div>
+            <div class="field-value" id="m-admit"></div>
+          </div>
+          <div class="modal-field">
+            <div class="field-label">住院天數</div>
+            <div class="field-value" id="m-days"></div>
+          </div>
+          <div class="modal-field">
+            <div class="field-label">病況等級</div>
+            <div class="field-value" id="m-cond"></div>
+          </div>
+        </div>
+        <!-- 隔離狀態 / DNR -->
+        <div class="modal-row">
+          <div class="modal-field">
+            <div class="field-label">隔離狀態</div>
+            <div class="field-value" id="m-iso"></div>
+          </div>
+          <div class="modal-field">
+            <div class="field-label">DNR</div>
+            <div class="field-value" id="m-dnr"></div>
+          </div>
+        </div>
+        <!-- 管路 -->
+        <div class="modal-row">
+          <div class="modal-field full">
+            <div class="field-label">管路</div>
+            <div class="field-value" id="m-tubes" style="font-size:15px;font-weight:400;"></div>
+          </div>
+        </div>
+        <!-- 備註 -->
+        <div class="modal-row">
+          <div class="modal-field full">
+            <div class="field-label">備註</div>
+            <div class="field-value" id="m-notes" style="font-size:15px;font-weight:400;"></div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-close-modal" id="modalCloseBtn">關閉</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/mockData.js"></script>
+  <script src="js/components.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
+

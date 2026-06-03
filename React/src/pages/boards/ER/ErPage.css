@@ -1,0 +1,180 @@
+/* 急診室電子白板 — 所有樣式以 .er-board 為根節點 */
+
+.er-board {
+  --bg-page:#F2F5F8; --bg-header:#2D7A55; --bg-filter:#E4EDF5;
+  --bg-floor-label:#DAEEE5; --bg-card-occ:#FFFFFF; --bg-card-empty:#E8ECF0;
+  --bg-card-iso:#FFEBEB; --bg-card-trans:#FFF8E1; --bg-card-dis:#E8F5E9;
+  --bg-card-obs:#E0F7FA; --bg-card-await:#FFFDE7;
+  --bg-card-neg-iso:#F3E5F5; --bg-card-triage1:#FFEBEE;
+  --bg-modal:#FFFFFF; --bg-tabs:#1E5C3E; --bg-tab-active:#2D7A55;
+  --border-occ:#2D7A55; --border-empty:#B0BEC5; --border-iso:#E05C5C;
+  --border-trans:#E8A020; --border-dis:#4CAF50; --border-obs:#00838F;
+  --border-await:#E8A020; --border-neg-iso:#6A1B9A;
+  --text-primary:#1A2635; --text-secondary:#3A5068; --text-muted:#7A8FA0;
+  --text-empty:#90A4AE; --text-stats:#FFFFFF; --text-tab:#A8C8B8; --text-tab-active:#FFFFFF;
+  --accent-green:#2D7A55; --accent-red:#E05C5C; --divider:#D0DBE5; --floor-border:#B0C8D8;
+  --filter-active-bg:#2D7A55; --filter-active-text:#FFFFFF; --filter-border:#2D7A55;
+  --modal-overlay:rgba(0,0,0,0.55); --shadow-card:0 2px 8px rgba(0,0,0,0.10);
+  --shadow-modal:0 8px 32px rgba(0,0,0,0.2);
+  --font-main:"Microsoft JhengHei UI","微軟正黑體","Noto Sans TC",sans-serif;
+  --font-num:"Roboto","Arial",sans-serif;
+  --radius-card:8px; --radius-modal:12px; --radius-badge:4px; --radius-pill:20px;
+  --header-h:72px; --filter-h:44px; --tabs-h:56px;
+}
+.er-board *,.er-board *::before,.er-board *::after{box-sizing:border-box;margin:0;padding:0}
+.er-board button{font-family:inherit;cursor:pointer;border:none;outline:none;background:none}
+.er-board{font-family:var(--font-main);background:var(--bg-page);color:var(--text-primary);overflow:hidden;height:100vh;display:flex;flex-direction:column}
+
+/* ── Header ── */
+.er-board .page-header{height:var(--header-h);background:var(--bg-header);display:flex;align-items:center;padding:0 20px;flex-shrink:0;border-bottom:2px solid var(--accent-red)}
+.er-board .header-left{font-size:36px;font-weight:900;font-family:var(--font-num);color:#fff;letter-spacing:2px;width:160px;line-height:1.1}
+.er-board .header-left .ward-sub{font-size:14px;font-weight:600;opacity:.7;letter-spacing:1px;display:block}
+.er-board .header-center{flex:1;display:flex;justify-content:center;gap:60px}
+.er-board .staff-block{text-align:center}
+.er-board .staff-label{font-size:14px;color:var(--text-stats);opacity:.75;margin-bottom:2px}
+.er-board .staff-name{font-size:26px;font-weight:700;color:var(--text-stats)}
+.er-board .header-right{text-align:right;width:220px}
+.er-board .update-label{font-size:13px;color:var(--text-stats);opacity:.75}
+.er-board .clock-date{font-size:16px;color:var(--text-stats);opacity:.85}
+.er-board .clock-time{font-size:30px;font-weight:700;font-family:var(--font-num);color:var(--text-stats);letter-spacing:1px}
+
+/* ── Announce bar ── */
+.er-board .announce-bar{background:#FFF8E1;border-bottom:1px solid var(--divider);padding:5px 16px;font-size:20px;color:#8B6000;display:flex;align-items:center;gap:8px;flex-shrink:0;overflow:hidden}
+.er-board .announce-bar span{white-space:nowrap}
+
+/* ── Filter bar ── */
+.er-board .filter-bar{height:var(--filter-h);background:var(--bg-filter);display:flex;align-items:center;padding:0 16px;gap:8px;flex-shrink:0;border-bottom:1px solid var(--divider)}
+.er-board .filter-label{font-size:17px;color:var(--text-muted);margin-right:4px}
+.er-board .filter-btn{padding:5px 18px;border-radius:var(--radius-pill);font-size:17px;font-weight:600;border:1.5px solid var(--filter-border);color:var(--text-secondary);background:transparent;transition:background .15s,color .15s}
+.er-board .filter-btn.active,.er-board .filter-btn:hover{background:var(--filter-active-bg);color:var(--filter-active-text)}
+.er-board .filter-bar .badge-filter{cursor:pointer;font-size:14px;padding:5px 12px;line-height:20px;transition:transform .1s,box-shadow .1s}
+.er-board .filter-bar .badge-filter:hover{transform:translateY(-1px);box-shadow:0 2px 8px rgba(0,0,0,0.35)}
+.er-board .filter-bar .badge-filter.active{box-shadow:0 0 0 2.5px #1A2635,0 0 0 5px rgba(0,0,0,0.15)}
+
+/* ── Main ── */
+.er-board .main-content{flex:1;display:flex;overflow:hidden;padding:10px;gap:10px;min-height:0}
+
+/* ── Beds panel ── */
+.er-board .beds-panel{flex:1;display:flex;flex-direction:column;border:1px solid var(--floor-border);border-radius:10px;overflow:hidden;min-height:0}
+.er-board .ward-title{background:var(--bg-floor-label);padding:6px 14px;font-size:15px;font-weight:700;color:var(--accent-red);letter-spacing:1px;border-bottom:1px solid var(--divider);flex-shrink:0}
+.er-board .ward-grid{display:grid;grid-template-columns:repeat(11,minmax(0,1fr));grid-template-rows:minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) minmax(0,0.35fr) minmax(0,1fr) minmax(0,0.2fr) minmax(0,1fr) minmax(0,1fr);gap:6px;padding:8px;flex:1;min-height:0;overflow:hidden}
+.er-board .ward-grid .bed-card{padding:9px 11px;gap:6px}
+.er-board .ward-grid .bed-num{font-size:16px}
+.er-board .ward-grid .patient-name{font-size:18px}
+.er-board .ward-grid .patient-basic{font-size:13px}
+.er-board .ward-grid .empty-label{font-size:16px}
+.er-board .ward-grid .empty-bed-num{font-size:13px;margin-bottom:2px}
+.er-board .ward-grid .badge{font-size:12px;padding:2px 5px;line-height:17px}
+.er-board .ward-grid .badge-more{font-size:11px;padding:1px 4px;line-height:17px}
+.er-board .ward-grid .triage-badge{font-size:12px;padding:2px 5px;line-height:17px}
+
+/* ── Bed grid positions ── */
+.er-board .bed-neg2{grid-column:1;grid-row:1}   .er-board .bed-neg1{grid-column:1;grid-row:2}
+.er-board .bed-MER01{grid-column:5;grid-row:2}
+.er-board .bed-MER02{grid-column:7;grid-row:3}  .er-board .bed-MER03{grid-column:8;grid-row:3}
+.er-board .bed-MER05{grid-column:9;grid-row:3}  .er-board .bed-MER06{grid-column:10;grid-row:3}
+.er-board .bed-MER07{grid-column:11;grid-row:3}
+.er-board .bed-MER08{grid-column:6;grid-row:5}  .er-board .bed-MER09{grid-column:7;grid-row:5}
+.er-board .bed-MER10{grid-column:8;grid-row:5}  .er-board .bed-MER11{grid-column:9;grid-row:5}
+.er-board .bed-MER12{grid-column:10;grid-row:5} .er-board .bed-MER13{grid-column:11;grid-row:5}
+.er-board .bed-OER01{grid-column:6;grid-row:7}  .er-board .bed-OER02{grid-column:6;grid-row:8}
+.er-board .bed-MER993{grid-column:1;grid-row:8} .er-board .bed-MER992{grid-column:2;grid-row:8}
+.er-board .bed-MER991{grid-column:3;grid-row:8}
+
+/* ── Nursing station ── */
+.er-board .nursing-station{grid-column:4;grid-row:5;display:flex;align-items:center;justify-content:center;background:var(--bg-card-empty);border-top:2px solid var(--floor-border);border-left:2px solid var(--floor-border);border-right:2px solid var(--floor-border);border-bottom:none;border-radius:var(--radius-card) var(--radius-card) 0 0;font-size:16px;font-weight:700;color:var(--text-muted);pointer-events:none;letter-spacing:2px}
+
+/* ── Stats panel ── */
+.er-board .stats-panel{width:300px;flex-shrink:0;background:transparent;border:1px solid var(--floor-border);border-radius:10px;overflow:hidden;display:flex;flex-direction:column}
+.er-board .stats-title{background:var(--bg-floor-label);padding:6px 14px;font-size:15px;font-weight:700;color:var(--accent-red);letter-spacing:1px;border-bottom:1px solid var(--divider);flex-shrink:0}
+.er-board .stats-body{flex:1;display:flex;flex-direction:column;padding:8px;gap:8px;overflow:hidden}
+.er-board .ws-row{flex:1;display:flex;align-items:stretch;background:var(--bg-card-empty);border-radius:8px;overflow:hidden}
+.er-board .ws-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;padding:10px 4px}
+.er-board .ws-item+.ws-item::before{content:"";position:absolute;left:0;top:15%;height:70%;width:1px;background:rgba(0,0,0,0.10)}
+.er-board .ws-value{font-size:40px;font-weight:900;font-family:var(--font-num);color:var(--text-primary);line-height:1}
+.er-board .ws-label{font-size:15px;color:var(--text-secondary);margin-top:5px;display:flex;align-items:center;gap:5px}
+.er-board .ws-value.ws-obs{color:#00838F} .er-board .ws-value.ws-crit{color:#B71C1C}
+.er-board .ws-value.ws-mod{color:#1B5E20} .er-board .ws-value.ws-dnr{color:#6A1B9A}
+.er-board .ws-value.ws-transfer-in{color:#1565C0} .er-board .ws-value.ws-transfer-out{color:#E65100}
+.er-board .ws-value.ws-admitted{color:#2E7D32}
+.er-board .ws-value.ws-await-gen{color:#F57F17} .er-board .ws-value.ws-await-icu{color:#BF360C}
+.er-board .ws-value.ws-await-iso{color:#6A1B9A}
+.er-board .ws-item[data-filter]{cursor:pointer;transition:background .12s}
+.er-board .ws-item[data-filter]:hover{background:rgba(0,0,0,0.04)}
+.er-board .ws-item[data-filter].active{background:rgba(0,0,0,0.06);box-shadow:inset 0 0 0 2px rgba(0,0,0,0.28)}
+
+/* ── Tabs ── */
+.er-board .bottom-tabs{height:var(--tabs-h);background:var(--bg-tabs);display:flex;flex-shrink:0;border-top:1px solid var(--divider)}
+.er-board .tab-btn{flex:1;display:flex;align-items:center;justify-content:center;font-size:19px;font-weight:600;color:var(--text-tab);border-right:1px solid rgba(255,255,255,0.08);position:relative;transition:background .15s,color .15s}
+.er-board .tab-btn:last-child{border-right:none}
+.er-board .tab-btn:hover{background:var(--bg-tab-active);color:var(--text-tab-active)}
+.er-board .tab-btn.active{background:#fff;color:var(--accent-red);font-weight:800}
+.er-board .tab-btn.active::after{content:"";position:absolute;top:0;left:0;right:0;height:4px;background:var(--accent-red);border-radius:0 0 4px 4px}
+
+/* ── Filter fade ── */
+.er-board .bed-card.filtered-out{opacity:.2;pointer-events:none}
+
+/* ── Modal ── */
+.er-board .modal-overlay{display:none;position:fixed;inset:0;background:var(--modal-overlay);z-index:1000;align-items:center;justify-content:center}
+.er-board .modal-overlay.show{display:flex}
+.er-board .modal-box{background:var(--bg-modal);border-radius:var(--radius-modal);width:600px;max-width:94vw;max-height:88vh;overflow-y:auto;box-shadow:var(--shadow-modal);border:1px solid var(--floor-border)}
+.er-board .modal-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px 12px;border-bottom:1px solid var(--divider)}
+.er-board .modal-bed-id{font-size:22px;font-weight:900;color:var(--accent-red);font-family:var(--font-num)}
+.er-board .modal-patient{font-size:24px;font-weight:700;color:var(--text-primary);margin-left:10px}
+.er-board .modal-basic{font-size:15px;color:var(--text-secondary);margin-left:8px}
+.er-board .modal-close{font-size:22px;color:var(--text-muted);cursor:pointer;padding:4px 8px;border-radius:4px}
+.er-board .modal-close:hover{background:var(--bg-card-empty)}
+.er-board .modal-body{padding:16px 20px 20px}
+.er-board .modal-row{display:flex;gap:12px;margin-bottom:12px}
+.er-board .modal-field{flex:1;background:var(--bg-card-empty);border-radius:6px;padding:10px 14px}
+.er-board .modal-field.full{flex:none;width:100%}
+.er-board .field-label{font-size:12px;color:var(--text-muted);margin-bottom:3px}
+.er-board .field-value{font-size:17px;font-weight:600;color:var(--text-primary)}
+.er-board .field-value.diagnosis{font-size:15px;font-weight:500}
+.er-board .field-value.triage-val{font-size:17px;font-weight:800}
+.er-board .field-value.triage-val.t1{color:#B71C1C} .er-board .field-value.triage-val.t2{color:#D32F2F}
+.er-board .field-value.triage-val.t3{color:#E65100} .er-board .field-value.triage-val.t4{color:#2D7A55}
+.er-board .field-value.triage-val.t5{color:#1565C0}
+.er-board .modal-badges{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
+.er-board .modal-footer{padding:10px 20px 16px;display:flex;justify-content:flex-end}
+.er-board .btn-close-modal{padding:8px 28px;border-radius:var(--radius-pill);background:var(--accent-red);color:#fff;font-size:15px;font-weight:700;cursor:pointer}
+
+/* ── Bed card ── */
+.er-board .bed-card{border-radius:var(--radius-card);padding:8px 12px;border-left:4px solid transparent;box-shadow:var(--shadow-card);cursor:pointer;position:relative;height:100%;display:flex;flex-direction:column;gap:6px;overflow:hidden;transition:transform .1s,box-shadow .1s;box-sizing:border-box}
+.er-board .bed-card:hover{transform:translateY(-2px);box-shadow:0 4px 16px rgba(0,0,0,0.35)}
+.er-board .bed-card.occupied{background:var(--bg-card-occ);border-left-color:var(--border-occ)}
+.er-board .bed-card.isolation{background:var(--bg-card-iso);border-left-color:var(--border-iso)}
+.er-board .bed-card.observation{background:var(--bg-card-obs);border-left-color:var(--border-obs)}
+.er-board .bed-card.awaiting{background:var(--bg-card-await);border-left-color:var(--border-await)}
+.er-board .bed-card.transfer{background:var(--bg-card-trans);border-left-color:var(--border-trans)}
+.er-board .bed-card.empty{background:var(--bg-card-empty);border-left:2px dashed var(--border-empty);cursor:default;align-items:center;justify-content:center;opacity:.6}
+.er-board .bed-card.empty:hover{transform:none;box-shadow:var(--shadow-card)}
+.er-board .bed-card.triage-1{background:var(--bg-card-triage1);border-left-color:#CC1111}
+.er-board .bed-card.triage-2{border-left-color:#E05C5C} .er-board .bed-card.triage-3{border-left-color:#E8900A}
+.er-board .bed-card.triage-4{border-left-color:var(--border-occ)} .er-board .bed-card.triage-5{border-left-color:#4A8FAE}
+.er-board .bed-card.neg-iso{background:var(--bg-card-neg-iso);border-left-color:#9B59B6}
+.er-board .bed-card.deceased{border-left-color:#37474F !important;opacity:.65;filter:grayscale(0.4)}
+.er-board .card-row1{display:flex;align-items:center;gap:5px;flex-wrap:nowrap}
+.er-board .bed-num{font-size:22px;font-weight:900;font-family:var(--font-num);color:var(--text-primary);letter-spacing:.5px;line-height:1}
+.er-board .card-row2{display:flex;align-items:baseline;gap:6px}
+.er-board .patient-name{font-size:18px;font-weight:700;line-height:1}
+.er-board .patient-basic{font-size:13px;color:var(--text-secondary);line-height:1}
+.er-board .card-row3{display:flex;gap:4px;flex-wrap:wrap;align-items:center;margin-top:auto}
+.er-board .empty-label{font-size:22px;font-weight:700;color:var(--text-empty)}
+.er-board .empty-bed-num{font-size:18px;font-weight:900;font-family:var(--font-num);color:var(--text-empty);margin-bottom:6px}
+.er-board .gender-m{color:#1565C0} .er-board .gender-f{color:#AD1457}
+
+/* ── Triage badge ── */
+.er-board .triage-badge{display:inline-flex;align-items:center;padding:2px 7px;border-radius:var(--radius-badge);font-size:13px;font-weight:900;font-family:var(--font-num);white-space:nowrap;line-height:20px;flex-shrink:0}
+.er-board .triage-badge.t1{background:#CC1111;color:#fff} .er-board .triage-badge.t2{background:#E05C5C;color:#fff}
+.er-board .triage-badge.t3{background:#E8900A;color:#fff} .er-board .triage-badge.t4{background:#3BAF7A;color:#fff}
+.er-board .triage-badge.t5{background:#4A8FAE;color:#fff}
+
+/* ── ER Badges ── */
+.er-board .badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:var(--radius-badge);font-size:13px;font-weight:700;white-space:nowrap;line-height:20px}
+.er-board .badge-死亡{background:#37474F;color:#fff} .er-board .badge-DNR{background:#6A1B9A;color:#fff}
+.er-board .badge-住院{background:#2E7D32;color:#fff} .er-board .badge-負壓{background:#6A1B9A;color:#fff}
+.er-board .badge-留觀{background:#006064;color:#fff} .er-board .badge-待床{background:#F57F17;color:#fff}
+.er-board .badge-轉出{background:#455A64;color:#fff} .er-board .badge-轉入{background:#1565C0;color:#fff}
+.er-board .badge-AAD{background:#4E342E;color:#fff} .er-board .badge-MBD{background:#263238;color:#fff}
+.er-board .badge-more{display:inline-flex;align-items:center;padding:2px 6px;border-radius:var(--radius-badge);font-size:12px;font-weight:700;background:rgba(0,0,0,0.10);color:var(--text-secondary);white-space:nowrap;line-height:20px}
