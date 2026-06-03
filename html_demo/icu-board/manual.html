@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ICU 電子白板｜規格驗證 &amp; 操作說明</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Microsoft JhengHei UI", "微軟正黑體", "Noto Sans TC", sans-serif;
+    background: #F5F7FA;
+    color: #1A2635;
+    font-size: 15px;
+    line-height: 1.6;
+  }
+  a { color: #2D7A55; }
+
+  /* ── Layout ── */
+  .page { max-width: 960px; margin: 0 auto; padding: 32px 24px 60px; }
+
+  /* ── Cover ── */
+  .cover {
+    background: linear-gradient(135deg, #1A2F45 0%, #0D1B2A 100%);
+    color: #fff;
+    border-radius: 12px;
+    padding: 40px 48px;
+    margin-bottom: 36px;
+  }
+  .cover-badge {
+    display: inline-block;
+    background: #3BAF7A;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 20px;
+    margin-bottom: 16px;
+    letter-spacing: 1px;
+  }
+  .cover h1 { font-size: 32px; font-weight: 900; margin-bottom: 6px; }
+  .cover .sub { font-size: 16px; color: rgba(255,255,255,0.65); margin-bottom: 24px; }
+  .cover-meta { display: flex; gap: 32px; flex-wrap: wrap; }
+  .cover-meta-item { font-size: 13px; color: rgba(255,255,255,0.55); }
+  .cover-meta-item strong { color: rgba(255,255,255,0.90); font-size: 14px; }
+
+  /* ── Section ── */
+  .section { margin-bottom: 40px; }
+  .section-title {
+    font-size: 20px;
+    font-weight: 800;
+    color: #1A2635;
+    border-left: 4px solid #3BAF7A;
+    padding-left: 12px;
+    margin-bottom: 18px;
+  }
+  .section-subtitle {
+    font-size: 16px;
+    font-weight: 700;
+    color: #2D4A60;
+    margin: 20px 0 10px;
+  }
+  p { margin-bottom: 10px; color: #3A5068; }
+
+  /* ── Spec table ── */
+  .spec-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  .spec-table th {
+    background: #1A2F45;
+    color: #fff;
+    padding: 10px 14px;
+    text-align: left;
+    font-weight: 700;
+  }
+  .spec-table td {
+    padding: 9px 14px;
+    border-bottom: 1px solid #E0E8F0;
+    vertical-align: top;
+  }
+  .spec-table tr:nth-child(even) td { background: #F8FAFC; }
+  .spec-table tr:hover td { background: #EEF4F9; }
+  .spec-ref { font-size: 12px; color: #7A9AB8; font-weight: 600; }
+
+  /* Status badges */
+  .s-done   { display:inline-block; background:#2E7D32; color:#fff; font-size:12px; font-weight:700; padding:2px 8px; border-radius:4px; white-space:nowrap; }
+  .s-warn   { display:inline-block; background:#E65100; color:#fff; font-size:12px; font-weight:700; padding:2px 8px; border-radius:4px; white-space:nowrap; }
+  .s-todo   { display:inline-block; background:#9E9E9E; color:#fff; font-size:12px; font-weight:700; padding:2px 8px; border-radius:4px; white-space:nowrap; }
+  .s-extra  { display:inline-block; background:#1565C0; color:#fff; font-size:12px; font-weight:700; padding:2px 8px; border-radius:4px; white-space:nowrap; }
+
+  /* ── Info card ── */
+  .info-card {
+    background: #fff;
+    border: 1px solid #D0DBE5;
+    border-radius: 10px;
+    padding: 20px 24px;
+    margin-bottom: 16px;
+  }
+  .info-card h4 { font-size: 15px; font-weight: 700; color: #1A2635; margin-bottom: 10px; }
+
+  /* ── 病人註記 legend ── */
+  .badge-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 10px;
+  }
+  .badge-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #fff;
+    border: 1px solid #D0DBE5;
+    border-radius: 8px;
+    padding: 8px 10px;
+  }
+  .badge-pill {
+    display: inline-block;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 4px;
+    white-space: nowrap;
+    min-width: 32px;
+    text-align: center;
+  }
+  .badge-desc { font-size: 12px; color: #5A7090; }
+
+  /* ── UI mock ── */
+  .mock-filterbar {
+    background: #EDF4F0;
+    border-radius: 8px;
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+    border: 1px solid #C8DDD5;
+  }
+  .mock-label { color: #7A9AB8; font-size: 13px; }
+  .mock-btn {
+    padding: 4px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    border: 1.5px solid #2D7A55;
+    color: #3A5068;
+    background: transparent;
+    cursor: default;
+  }
+  .mock-btn.active { background: #2D7A55; color: #fff; }
+
+  .mock-statrow {
+    background: #E8ECF0;
+    border-radius: 8px;
+    display: flex;
+    margin-bottom: 8px;
+    overflow: hidden;
+  }
+  .mock-stat {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px 6px;
+    border-right: 1px solid rgba(0,0,0,0.10);
+    position: relative;
+  }
+  .mock-stat:last-child { border-right: none; }
+  .mock-stat.clickable { cursor: pointer; }
+  .mock-stat.clickable:hover { background: rgba(0,0,0,0.04); }
+  .mock-stat.active { background: rgba(0,0,0,0.06); box-shadow: inset 0 0 0 2px rgba(0,0,0,0.28); }
+  .mock-stat-val { font-size: 28px; font-weight: 900; color: #1A2635; font-family: "Roboto", Arial, sans-serif; line-height: 1; }
+  .mock-stat-val.blue { color: #1565C0; }
+  .mock-stat-val.yellow { color: #C68000; }
+  .mock-stat-val.orange { color: #BF360C; }
+  .mock-stat-val.green { color: #2E7D32; }
+  .mock-stat-val.amber { color: #E67E22; }
+  .mock-stat-val.red { color: #C62828; }
+  .mock-stat-val.pink { color: #AD1457; }
+  .mock-stat-val.gold { color: #C68000; }
+  .mock-stat-val.bright-red { color: #B71C1C; }
+  .mock-stat-lbl { font-size: 12px; color: #5A7090; margin-top: 4px; }
+  .mock-stat-lbl .dot { display:inline-block; width:7px; height:7px; border-radius:50%; margin-right:3px; }
+
+  .mock-bed {
+    display: inline-flex;
+    flex-direction: column;
+    gap: 3px;
+    background: #FFFFFF;
+    border-left: 3px solid #2D7A55;
+    border-radius: 6px;
+    padding: 6px 10px;
+    width: 110px;
+    vertical-align: top;
+    margin: 4px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  }
+  .mock-bed.iso { background: #FFEBEB; border-left-color: #E05C5C; }
+  .mock-bed.empty { background: #E8ECF0; border-left: 2px dashed #B0BEC5; opacity: 0.8; }
+  .mock-bed-num { font-size: 13px; font-weight: 900; color: #1A2635; }
+  .mock-bed-name { font-size: 12px; font-weight: 700; }
+  .mock-bed-name.m { color: #1565C0; }
+  .mock-bed-name.f { color: #AD1457; }
+  .mock-bed-age { font-size: 11px; color: #5A7090; }
+  .mock-bed-badges { display:flex; gap:3px; flex-wrap:wrap; }
+  .mock-bp { display:inline-block; color:#fff; font-size:10px; font-weight:700; padding:1px 5px; border-radius:3px; }
+
+  /* ── Step list ── */
+  .steps { list-style: none; counter-reset: step; }
+  .steps li {
+    counter-increment: step;
+    display: flex;
+    gap: 14px;
+    margin-bottom: 14px;
+    align-items: flex-start;
+  }
+  .steps li::before {
+    content: counter(step);
+    min-width: 26px;
+    height: 26px;
+    background: #3BAF7A;
+    color: #fff;
+    border-radius: 50%;
+    font-size: 13px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  /* ── Note box ── */
+  .note {
+    background: #E8F5E9;
+    border-left: 4px solid #3BAF7A;
+    border-radius: 0 8px 8px 0;
+    padding: 12px 16px;
+    margin: 12px 0;
+    font-size: 14px;
+    color: #1B5E20;
+  }
+  .warn-note {
+    background: #FFF8E1;
+    border-left: 4px solid #F5B942;
+    border-radius: 0 8px 8px 0;
+    padding: 12px 16px;
+    margin: 12px 0;
+    font-size: 14px;
+    color: #6D4C00;
+  }
+
+  /* ── Summary chips ── */
+  .summary-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
+  .chip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: #fff;
+    border: 1px solid #D0DBE5;
+    border-radius: 8px;
+    padding: 8px 14px;
+  }
+  .chip-num { font-size: 22px; font-weight: 900; color: #2D7A55; font-family: "Roboto", Arial, sans-serif; }
+  .chip-lbl { font-size: 12px; color: #5A7090; }
+
+  /* ── footer ── */
+  .footer { border-top: 1px solid #D0DBE5; padding-top: 20px; margin-top: 40px; font-size: 13px; color: #9EB0C0; text-align: center; }
+
+  @media print {
+    body { background: #fff; }
+    .page { padding: 16px; }
+    .cover { background: #1A2F45 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ── Cover ── -->
+  <div class="cover">
+    <div class="cover-badge">護理科電子白板系統</div>
+    <h1>ICU 電子白板</h1>
+    <div class="sub">規格符合度驗證 &amp; 使用者操作說明書</div>
+    <div class="cover-meta">
+      <div class="cover-meta-item"><strong>醫院</strong><br>高雄市立民生醫院</div>
+      <div class="cover-meta-item"><strong>病房</strong><br>ICU（4F 20床 ＋ 3F 5床）</div>
+      <div class="cover-meta-item"><strong>規格版本</strong><br>需求規格書 20260508</div>
+      <div class="cover-meta-item"><strong>文件日期</strong><br>2026-05-22</div>
+    </div>
+  </div>
+
+  <!-- ── Summary ── -->
+  <div class="summary-row">
+    <div class="chip"><span class="chip-num">10</span><span class="chip-lbl">規格項目<br>已完成</span></div>
+    <div class="chip"><span class="chip-num" style="color:#9E9E9E;">9</span><span class="chip-lbl">待開發<br>功能</span></div>
+  </div>
+
+  <!-- ══════════════════════════════
+       PART 1：規格符合度
+  ══════════════════════════════ -->
+  <div class="section">
+    <div class="section-title">一、規格符合度對照（§7.1.2.2 ICU 擴充功能）</div>
+
+    <table class="spec-table">
+      <thead>
+        <tr>
+          <th style="width:90px">規格條款</th>
+          <th>功能項目</th>
+          <th style="width:110px">實作狀態</th>
+          <th>說明</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- 白板基本 -->
+        <tr>
+          <td class="spec-ref">§7.1.2.1<br>(1)</td>
+          <td>白板基本資訊：站別、護理長、病房主任、電子時鐘、跑馬燈</td>
+          <td><span class="s-done">✓ 完成</span></td>
+          <td>Header 顯示站別「ICU」、護理長、病房主任；即時時鐘（秒更新）；公告跑馬燈</td>
+        </tr>
+        <!-- 病人基本 -->
+        <tr>
+          <td class="spec-ref">§7.1.2.2<br>(1.1)</td>
+          <td>病人基本資料：床號、姓名、性別顏色區分</td>
+          <td><span class="s-done">✓ 完成</span></td>
+          <td>男性姓名藍色（M）、女性姓名粉紅色（F）</td>
+        </tr>
+        <!-- 詳細資料 -->
+        <tr>
+          <td class="spec-ref">§7.1.2.2<br>(1.1.1)</td>
+          <td>病人詳細資料彈窗：床號、姓名、病歷號、生日、年齡、科別、診斷、主治醫師</td>
+          <td><span class="s-done">✓ 完成</span></td>
+          <td>點擊床位卡片開啟 Modal，另含責任護理師、入院日期、住院天數、病況等級、DNR、呼吸器、CRRT、管路、備註</td>
+        </tr>
+        <!-- 病患註記 -->
+        <tr>
+          <td class="spec-ref">§7.1.2.2<br>(1.2)</td>
+          <td>病人註記 13 種（規格書順序）：DNR、高危跌、病人依賴度(L1/L2/L3)、隔離、保密、禁治療、禁食、過敏、RRT、化療、運送方式(輪椅/推床)、氧氣設備、洗腎</td>
+          <td><span class="s-done">✓ 完成</span></td>
+          <td>依規格書順序排列，完整文字顯示；ICU 病患依賴度均設為 L3；接觸/飛沫/空氣隔離統一顯示「隔離」badge，Modal 仍顯示完整類型；CRRT 對應「洗腎」badge；卡片最多顯示前 3 個，超出以 +N 標示</td>
+        </tr>
+        <!-- 床數統計 -->
+        <tr>
+          <td class="spec-ref">§7.1.2.2<br>(1.3)</td>
+          <td>床數統計：總床數、住院、手術、<u>檢查</u>、會診</td>
+          <td><span class="s-done">✓ 完成</span></td>
+          <td>統計面板顯示全部 5 項；各項（手術/檢查/會診）可點擊過濾對應床位</td>
+        </tr>
+        <!-- 嚴重程度 -->
+        <tr>
+          <td class="spec-ref">§7.1.2.2<br>(1.4)</td>
+          <td>疾病嚴重程度統計：A（穩定）/ B（重症）/ C（危急）顏色區分</td>
+          <td><span class="s-done">✓ 完成</span></td>
+          <td>第二統計列顯示三種病況人數與彩色小圓點；可點擊過濾</td>
+        </tr>
+        <!-- 床位動態 -->
+        <tr>
+          <td class="spec-ref">§7.1.2.1<br>(2.5)</td>
+          <td>床位動態：空床、占床、隔離、待轉出（含轉床）、待出院</td>
+          <td><span class="s-done">✓ 完成</span></td>
+          <td>4 種狀態以左側彩色邊框區分：綠色=占床、紅色=隔離、琥珀=待轉、淺綠=待出院</td>
+        </tr>
+        <!-- 隔離統計 -->
+        <tr>
+          <td class="spec-ref">§7.1.2.2<br>(1.2)</td>
+          <td>隔離統計（統計列）</td>
+          <td><span class="s-done">✓ 完成</span></td>
+          <td>統計面板第二列顯示隔離床數；可點擊一次過濾全部隔離床，再點還原</td>
+        </tr>
+        <!-- DNR / RRT -->
+        <tr>
+          <td class="spec-ref">§7.1.2.2<br>(1.2)</td>
+          <td>DNR / RRT 統計</td>
+          <td><span class="s-done">✓ 完成</span></td>
+          <td>統計面板第二列顯示數量；點擊後同步高亮 filter bar 的 DNR / RRT badge 按鈕</td>
+        </tr>
+        <!-- 管路 -->
+        <tr>
+          <td class="spec-ref">§7.1.2.2<br>(1.5)</td>
+          <td>管路使用統計（氣管內管、鼻胃管、導尿管、中心靜脈導管）</td>
+          <td><span class="s-done">✓ 完成</span></td>
+          <td>統計面板第三列顯示 4 種管路數量（可點擊過濾）；床位 Modal 增列「管路」欄位，無管路時顯示「無」；氣管內管對應 ventilator 欄位</td>
+        </tr>
+        <!-- 抗生素 -->
+        <tr>
+          <td class="spec-ref">§7.1.2.2<br>(2)</td>
+          <td>抗生素：點選病床顯示藥品名稱、開始時間、首次時間、結束時間</td>
+          <td><span class="s-todo">待開發</span></td>
+          <td>頁籤「抗生素」已建立，功能尚未實作</td>
+        </tr>
+        <!-- 手術 -->
+        <tr>
+          <td class="spec-ref">§7.1.2.2<br>(3)</td>
+          <td>手術資訊：當日 + 前後 3 日（刀房、刀次、術式、診斷、麻醉、手術狀態）</td>
+          <td><span class="s-todo">待開發</span></td>
+          <td>頁籤「手術資訊」已建立，功能尚未實作</td>
+        </tr>
+        <!-- 檢查會診 -->
+        <tr>
+          <td class="spec-ref">§7.1.2.2<br>(4)</td>
+          <td>檢查 / 會診：床號、執行日期、時段、狀態，24小時後自動移除</td>
+          <td><span class="s-todo">待開發</span></td>
+          <td>頁籤「檢查/會診」已建立，功能尚未實作</td>
+        </tr>
+        <!-- 連絡 -->
+        <tr>
+          <td class="spec-ref">§7.1.2.1<br>(6)</td>
+          <td>連絡電話：值班電話 + 常用電話（可手動新增）</td>
+          <td><span class="s-todo">待開發</span></td>
+          <td>頁籤已建立</td>
+        </tr>
+        <!-- 排班 -->
+        <tr>
+          <td class="spec-ref">§7.1.2.1<br>(7)</td>
+          <td>派班資訊：護理人員 / 專師 / 住院醫師排班（含負責床位）</td>
+          <td><span class="s-todo">待開發</span></td>
+          <td>頁籤已建立</td>
+        </tr>
+        <!-- 佈告欄 -->
+        <tr>
+          <td class="spec-ref">§7.1.2.1<br>(9)</td>
+          <td>佈告欄：護理站 + 院方公告（可手動新增）</td>
+          <td><span class="s-todo">待開發</span></td>
+          <td>頁籤已建立</td>
+        </tr>
+        <!-- 避難圖 -->
+        <tr>
+          <td class="spec-ref">§7.1.2.1<br>(10)</td>
+          <td>避難圖</td>
+          <td><span class="s-todo">待開發</span></td>
+          <td>頁籤已建立</td>
+        </tr>
+        <!-- 護理交班 -->
+        <tr>
+          <td class="spec-ref">§7.1.2.1<br>(11)</td>
+          <td>護理交班：交班日誌摘要</td>
+          <td><span class="s-todo">待開發</span></td>
+          <td>頁籤尚未加入</td>
+        </tr>
+        <!-- 照護團隊 -->
+        <tr>
+          <td class="spec-ref">§7.1.2.1<br>(12)</td>
+          <td>照護團隊：科別、職別、姓名、電話 / 分機</td>
+          <td><span class="s-todo">待開發</span></td>
+          <td>頁籤尚未加入</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="warn-note" style="margin-top:14px;">
+      ⚠️ <strong>設計偏差說明</strong>：規格 §(1.3) 原要求顯示「出檢」（外出檢查）統計，
+      依醫院需求調整為「檢查」（對應院內/外檢查預約），統計數值邏輯不變，
+      如需恢復原始欄位名稱請告知。
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════
+       PART 2：操作說明
+  ══════════════════════════════ -->
+  <div class="section">
+    <div class="section-title">二、整體版面說明</div>
+
+    <div class="info-card">
+      <h4>版面區塊配置（由上至下）</h4>
+      <table class="spec-table" style="font-size:13px;">
+        <thead><tr><th>區域</th><th>內容</th><th>高度</th></tr></thead>
+        <tbody>
+          <tr><td>標題列</td><td>站別（ICU）、病房主任、護理長、日期時鐘</td><td>72px</td></tr>
+          <tr><td>跑馬燈</td><td>院內感染管制公告等通知</td><td>自動</td></tr>
+          <tr><td>圖例 / 過濾列</td><td>全部按鈕 ＋ 16 種 病人註記 過濾器</td><td>44px</td></tr>
+          <tr><td>主內容區</td><td>4F 病床（左 4/7）＋ 3F 病床 ＋ 統計面板（右 3/7）</td><td>剩餘高度</td></tr>
+          <tr><td>頁籤列</td><td>病室動態 / 抗生素 / 管路 / 手術資訊 / 檢查會診 等</td><td>56px</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">三、病床卡片說明</div>
+
+    <div class="section-subtitle">3.1 狀態顏色</div>
+    <div class="info-card">
+      <table class="spec-table" style="font-size:13px;">
+        <thead><tr><th>左側邊框顏色</th><th>卡片狀態</th><th>說明</th></tr></thead>
+        <tbody>
+          <tr><td><span style="display:inline-block;width:12px;height:12px;background:#3BAF7A;border-radius:2px;"></span> 綠色</td><td>occupied（住院中）</td><td>一般住院病人</td></tr>
+          <tr><td><span style="display:inline-block;width:12px;height:12px;background:#E8736A;border-radius:2px;"></span> 紅色</td><td>isolation（隔離）</td><td>需執行接觸 / 飛沫 / 空氣隔離措施</td></tr>
+          <tr><td><span style="display:inline-block;width:12px;height:12px;background:#F5B942;border-radius:2px;"></span> 琥珀</td><td>transfer（待轉）</td><td>預計當日轉至其他病房或院外</td></tr>
+          <tr><td><span style="display:inline-block;width:12px;height:12px;background:#6DBF67;border-radius:2px;"></span> 淺綠</td><td>discharge（待出院）</td><td>預計當日辦理出院</td></tr>
+          <tr><td><span style="display:inline-block;width:12px;height:12px;background:#2A3D55;border-radius:2px;border:1px dashed #2A3D55;"></span> 虛線</td><td>empty（空床）</td><td>無病人，不可點擊</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="section-subtitle">3.2 卡片範例</div>
+    <div style="background:#DAEEE5;padding:12px;border-radius:8px;display:flex;flex-wrap:wrap;gap:6px;border:1px solid #B8D8CC;">
+      <div class="mock-bed">
+        <div class="mock-bed-num">4F-05</div>
+        <div><span class="mock-bed-name m">黃○雄</span> <span class="mock-bed-age">M/80</span></div>
+        <div class="mock-bed-badges">
+          <span class="mock-bp" style="background:#6A1B9A">DNR</span>
+          <span class="mock-bp" style="background:#E65100">高危跌</span>
+          <span class="mock-bp" style="background:#C62828">RRT</span>
+          <span class="mock-bp" style="background:rgba(0,0,0,0.12);color:#3A5068;">+1</span>
+        </div>
+      </div>
+      <div class="mock-bed iso">
+        <div class="mock-bed-num">4F-07</div>
+        <div><span class="mock-bed-name m">陳○祥</span> <span class="mock-bed-age">M/71</span></div>
+        <div class="mock-bed-badges">
+          <span class="mock-bp" style="background:#B71C1C">隔離</span>
+          <span class="mock-bp" style="background:#BF360C">過敏</span>
+        </div>
+      </div>
+      <div class="mock-bed" style="border-left-color:#E8A020;background:#FFF8E1;">
+        <div class="mock-bed-num">4F-10</div>
+        <div><span class="mock-bed-name f">柯○芳</span> <span class="mock-bed-age">F/49</span></div>
+        <div class="mock-bed-badges"></div>
+      </div>
+      <div class="mock-bed empty">
+        <div class="mock-bed-num" style="visibility:hidden;">—</div>
+        <div style="font-size:12px;font-weight:700;color:#90A4AE;text-align:center;">空床</div>
+        <div class="mock-bed-badges"></div>
+      </div>
+    </div>
+    <p style="margin-top:8px;font-size:13px;color:#7A9AB8;">▲ 男性姓名藍色、女性粉紅色；卡片最多顯示 3 個 病人註記，超出部分以 +N 標示</p>
+
+    <div class="section-subtitle" style="margin-top:20px;">3.3 點擊卡片</div>
+    <div class="info-card">
+      <h4>開啟病人詳細資料 Modal</h4>
+      <ul style="list-style:disc;padding-left:20px;color:#3A5068;font-size:14px;">
+        <li>點擊任何非空床的床位卡片，彈出詳細資料視窗</li>
+        <li>顯示：床號、姓名、性別/年齡、診斷、病歷號、生日、科別</li>
+        <li>顯示：主治醫師、責任護理師、入院日期、住院天數、病況等級</li>
+        <li>顯示：隔離狀態、DNR、呼吸器、CRRT、管路、備註</li>
+        <li>點擊視窗外部或「關閉」按鈕可關閉</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">四、病患標記（病人註記）說明</div>
+    <p>共 13 種規格標記（§7.1.2.2 (1.2)），依規格書順序顯示完整文字。</p>
+    <div class="badge-grid" style="margin-top:14px;">
+      <div class="badge-item"><span class="badge-pill" style="background:#6A1B9A">DNR</span><span class="badge-desc">拒絕心肺復甦術</span></div>
+      <div class="badge-item"><span class="badge-pill" style="background:#E65100">高危跌</span><span class="badge-desc">高危跌倒風險</span></div>
+      <div class="badge-item"><span class="badge-pill" style="background:#311B92">依賴L3</span><span class="badge-desc">病人依賴度（ICU 均為重度）</span></div>
+      <div class="badge-item"><span class="badge-pill" style="background:#B71C1C">隔離</span><span class="badge-desc">接觸/飛沫/空氣隔離<br>（Modal 顯示完整類型）</span></div>
+      <div class="badge-item"><span class="badge-pill" style="background:#37474F">保密</span><span class="badge-desc">病人保密，不得透露住院資訊</span></div>
+      <div class="badge-item"><span class="badge-pill" style="background:#0D47A1">禁治療</span><span class="badge-desc">禁止治療</span></div>
+      <div class="badge-item"><span class="badge-pill" style="background:#2E7D32">禁食</span><span class="badge-desc">禁食（NPO）</span></div>
+      <div class="badge-item"><span class="badge-pill" style="background:#BF360C">過敏</span><span class="badge-desc">藥物過敏</span></div>
+      <div class="badge-item"><span class="badge-pill" style="background:#C62828">RRT</span><span class="badge-desc">快速反應小組啟動</span></div>
+      <div class="badge-item"><span class="badge-pill" style="background:#880E4F">化療</span><span class="badge-desc">化學治療中</span></div>
+      <div class="badge-item"><span class="badge-pill" style="background:#558B2F">輪椅</span><span class="badge-desc">運送方式：輪椅</span></div>
+      <div class="badge-item"><span class="badge-pill" style="background:#4E342E">推床</span><span class="badge-desc">運送方式：推床</span></div>
+      <div class="badge-item"><span class="badge-pill" style="background:#01579B">氧氣設備</span><span class="badge-desc">使用氧氣設備</span></div>
+      <div class="badge-item"><span class="badge-pill" style="background:#006064">洗腎</span><span class="badge-desc">CRRT（持續性腎臟替代治療）</span></div>
+    </div>
+
+    <div class="note" style="margin-top:14px;">
+      📌 <strong>病人註記 顯示規則</strong>：依規格書順序 DNR → 高危跌 → 依賴L3 → 隔離 → 保密 → 禁治療 → 禁食 → 過敏 → RRT → 化療 → 輪椅/推床 → 氧氣設備 → 洗腎，卡片最多顯示前 3 個，超出以 <strong>+N</strong> 標示。點擊床位卡片後，Modal 顯示全部標記。
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">五、統計面板操作</div>
+
+    <p>統計面板位於主畫面右下方（3F 床位區旁），分為三列：</p>
+
+    <div class="section-subtitle" style="margin-top:12px;">第一列：床位流量</div>
+    <div class="mock-statrow">
+      <div class="mock-stat"><div class="mock-stat-val">25</div><div class="mock-stat-lbl">總床數</div></div>
+      <div class="mock-stat"><div class="mock-stat-val">21</div><div class="mock-stat-lbl">住院</div></div>
+      <div class="mock-stat clickable"><div class="mock-stat-val blue">2</div><div class="mock-stat-lbl">手術 ▾</div></div>
+      <div class="mock-stat clickable"><div class="mock-stat-val yellow">2</div><div class="mock-stat-lbl">檢查 ▾</div></div>
+      <div class="mock-stat clickable"><div class="mock-stat-val orange">4</div><div class="mock-stat-lbl">會診 ▾</div></div>
+    </div>
+
+    <div class="section-subtitle">第二列：病況 &amp; 特殊註記</div>
+    <div class="mock-statrow">
+      <div class="mock-stat clickable"><div class="mock-stat-val green">4</div><div class="mock-stat-lbl"><span class="dot" style="background:#69DB7C"></span>穩定 ▾</div></div>
+      <div class="mock-stat clickable"><div class="mock-stat-val amber">15</div><div class="mock-stat-lbl"><span class="dot" style="background:#F5B942"></span>重症 ▾</div></div>
+      <div class="mock-stat clickable"><div class="mock-stat-val red">2</div><div class="mock-stat-lbl"><span class="dot" style="background:#FF6B6B"></span>危急 ▾</div></div>
+      <div class="mock-stat clickable"><div class="mock-stat-val pink">3</div><div class="mock-stat-lbl">隔離 ▾</div></div>
+      <div class="mock-stat clickable active"><div class="mock-stat-val gold">5</div><div class="mock-stat-lbl">DNR ▾</div></div>
+      <div class="mock-stat clickable"><div class="mock-stat-val bright-red">1</div><div class="mock-stat-lbl">RRT ▾</div></div>
+    </div>
+    <p style="font-size:13px;color:#7A9AB8;margin-top:6px;">▲ ▾ 符號表示可點擊；上圖中「DNR 5」呈現點擊後的高亮（白色框線）效果</p>
+
+    <div class="section-subtitle">第三列：管路統計（可點擊過濾）</div>
+    <div class="mock-statrow">
+      <div class="mock-stat clickable"><div class="mock-stat-val" style="color:#E65100">7</div><div class="mock-stat-lbl">氣管內管 ▾</div></div>
+      <div class="mock-stat clickable"><div class="mock-stat-val" style="color:#6A1B9A">10</div><div class="mock-stat-lbl">鼻胃管 ▾</div></div>
+      <div class="mock-stat clickable"><div class="mock-stat-val" style="color:#00838F">20</div><div class="mock-stat-lbl">導尿管 ▾</div></div>
+      <div class="mock-stat clickable"><div class="mock-stat-val" style="color:#2E7D32">14</div><div class="mock-stat-lbl">中心靜脈 ▾</div></div>
+    </div>
+    <p style="font-size:13px;color:#7A9AB8;margin-top:6px;">▲ 點擊後過濾具有該管路的床位；再點還原</p>
+
+    <div class="info-card" style="margin-top:16px;">
+      <h4>互動規則</h4>
+      <ul style="list-style:disc;padding-left:20px;color:#3A5068;font-size:14px;line-height:1.8;">
+        <li><strong>總床數 / 住院</strong>：僅顯示數字，不可點擊過濾</li>
+        <li><strong>手術 / 檢查 / 會診 / 穩定 / 重症 / 危急 / 隔離</strong>：點擊後過濾符合條件的床位，其餘淡出</li>
+        <li><strong>DNR</strong>：點擊等同 filter bar 點擊「DNR」病人註記，兩者同步高亮</li>
+        <li><strong>RRT</strong>：點擊等同 filter bar 點擊「RRT」病人註記，兩者同步高亮</li>
+        <li><strong>氣管內管 / 鼻胃管 / 導尿管 / 中心靜脈</strong>：點擊後過濾具有該管路的床位（§7.1.2.2 (1.5)）</li>
+        <li><strong>再點一次</strong>：取消過濾，回到全部顯示（無須移動至左上「全部」按鈕）</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">六、圖例 / 過濾列操作</div>
+
+    <div class="mock-filterbar">
+      <span class="mock-label">圖例 / 過濾：</span>
+      <button class="mock-btn active">全部</button>
+      <span class="badge-pill" style="background:#6A1B9A;font-size:13px;padding:4px 10px;cursor:default">DNR</span>
+      <span class="badge-pill" style="background:#E65100;font-size:13px;padding:4px 10px;cursor:default">高危跌</span>
+      <span class="badge-pill" style="background:#4527A0;font-size:13px;padding:4px 10px;cursor:default">依賴L1</span>
+      <span class="badge-pill" style="background:#4527A0;font-size:13px;padding:4px 10px;cursor:default">依賴L2</span>
+      <span class="badge-pill" style="background:#311B92;font-size:13px;padding:4px 10px;cursor:default">依賴L3</span>
+      <span class="badge-pill" style="background:#B71C1C;font-size:13px;padding:4px 10px;cursor:default">隔離</span>
+      <span class="badge-pill" style="background:#37474F;font-size:13px;padding:4px 10px;cursor:default">保密</span>
+      <span class="badge-pill" style="background:#0D47A1;font-size:13px;padding:4px 10px;cursor:default">禁治療</span>
+      <span class="badge-pill" style="background:#2E7D32;font-size:13px;padding:4px 10px;cursor:default">禁食</span>
+      <span class="badge-pill" style="background:#BF360C;font-size:13px;padding:4px 10px;cursor:default">過敏</span>
+      <span class="badge-pill" style="background:#C62828;font-size:13px;padding:4px 10px;cursor:default">RRT</span>
+      <span class="badge-pill" style="background:#880E4F;font-size:13px;padding:4px 10px;cursor:default">化療</span>
+      <span class="badge-pill" style="background:#558B2F;font-size:13px;padding:4px 10px;cursor:default">輪椅</span>
+      <span class="badge-pill" style="background:#4E342E;font-size:13px;padding:4px 10px;cursor:default">推床</span>
+      <span class="badge-pill" style="background:#01579B;font-size:13px;padding:4px 10px;cursor:default">氧氣設備</span>
+      <span class="badge-pill" style="background:#006064;font-size:13px;padding:4px 10px;cursor:default">洗腎</span>
+    </div>
+
+    <div class="info-card">
+      <h4>操作方式</h4>
+      <ul style="list-style:disc;padding-left:20px;color:#3A5068;font-size:14px;line-height:1.8;">
+        <li>16 個彩色按鈕（13 種規格 病人註記 ＋ 依賴 L1/L2/L3 細分）同時作為<strong>圖例</strong>與<strong>過濾器</strong></li>
+        <li>點擊任一 病人註記 按鈕 → 僅顯示具有該標記的床位（空床不受影響）</li>
+        <li>被選中的按鈕出現深色光暈邊框；DNR 統計欄 / DNR 按鈕、RRT 統計欄 / RRT 按鈕互相連動</li>
+        <li>再點一次同一按鈕 → 取消過濾，回到全部顯示</li>
+        <li>點擊「全部」→ 強制還原所有床位顯示</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ── Footer ── -->
+  <div class="footer">
+    高雄市立民生醫院 ICU 電子白板系統｜規格驗證文件 v1.3｜2026-05-27<br>
+    本文件依 §7.1.2.2 ICU 擴充功能 及 §7.1.2.1 一般病房功能對照製作
+  </div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>高雄市立民生醫院 手術室 電子白板</title>
+  <link rel="stylesheet" href="css/variables.css?v=2">
+  <link rel="stylesheet" href="css/reset.css?v=1">
+  <link rel="stylesheet" href="css/main.css?v=2">
+  <link rel="stylesheet" href="css/components.css?v=2">
+</head>
+<body>
+
+  <!-- ── Header ── -->
+  <header class="page-header">
+    <div class="header-left">OR
+      <span class="ward-sub">手術室</span>
+    </div>
+    <div class="header-center">
+      <div class="staff-block">
+        <div class="staff-label">手術室主任</div>
+        <div class="staff-name" id="ward-director">—</div>
+      </div>
+      <div class="staff-block">
+        <div class="staff-label">護理長</div>
+        <div class="staff-name" id="head-nurse">—</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="update-label">資料更新時間：剛剛</div>
+      <div class="clock-date" id="clock-date"></div>
+      <div class="clock-time" id="clock-time"></div>
+    </div>
+  </header>
+
+  <!-- ── Announcement marquee ── -->
+  <div class="announce-bar">
+    <span>🔔</span>
+    <span>2026/05/24 手術室公告：今日共安排 7 台手術，OR-04 MVR 預計 13:00 完成，ICU 床位已預留，相關科別請備妥接收。</span>
+  </div>
+
+  <!-- ── Main content ── -->
+  <main class="main-content">
+
+    <!-- OR Rooms panel -->
+    <div class="or-panel">
+      <div class="ward-title">▌ 手術室　共 7 間（OR-01 ～ OR-07）</div>
+      <div class="or-grid" id="or-grid"></div>
+    </div>
+
+    <!-- Stats panel -->
+    <div class="stats-panel">
+      <div class="stats-title">▌ 手術統計</div>
+      <div class="stats-body">
+
+        <div class="ws-row">
+          <div class="ws-item">
+            <div class="ws-value" id="stat-total">—</div>
+            <div class="ws-label">刀房總數</div>
+          </div>
+          <div class="ws-item" data-filter="busy">
+            <div class="ws-value ws-busy" id="stat-inSurgery">—</div>
+            <div class="ws-label">手術中</div>
+          </div>
+        </div>
+
+        <div class="ws-row">
+          <div class="ws-item" data-filter="er">
+            <div class="ws-value ws-erknife" id="stat-erKnife">—</div>
+            <div class="ws-label">急診刀</div>
+          </div>
+          <div class="ws-item" data-filter="op">
+            <div class="ws-value ws-opknife" id="stat-opKnife">—</div>
+            <div class="ws-label">門診刀</div>
+          </div>
+          <div class="ws-item" data-filter="inp">
+            <div class="ws-value ws-inpknife" id="stat-inpKnife">—</div>
+            <div class="ws-label">住院刀</div>
+          </div>
+        </div>
+
+        <div class="ws-row">
+          <div class="ws-item" data-filter="prep">
+            <div class="ws-value ws-prep" id="stat-prep">—</div>
+            <div class="ws-label">準備中</div>
+          </div>
+          <div class="ws-item" data-filter="done">
+            <div class="ws-value ws-done" id="stat-completed">—</div>
+            <div class="ws-label">已完成</div>
+          </div>
+          <div class="ws-item">
+            <div class="ws-value ws-empty" id="stat-empty">—</div>
+            <div class="ws-label">空房</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ── Filter bar ── -->
+  <div class="filter-bar">
+    <span class="filter-label">來源 / 狀態：</span>
+    <button class="filter-btn active" data-filter="all">全部</button>
+    <button class="badge badge-filter badge-er"  data-filter="er">急診刀</button>
+    <button class="badge badge-filter badge-op"  data-filter="op">門診刀</button>
+    <button class="badge badge-filter badge-inp" data-filter="inp">住院刀</button>
+    <button class="filter-btn" data-filter="busy">手術中</button>
+    <button class="filter-btn" data-filter="prep">準備中</button>
+    <button class="filter-btn" data-filter="done">已完成</button>
+  </div>
+
+  <!-- ── Bottom tabs ── -->
+  <nav class="bottom-tabs">
+    <button class="tab-btn active">手術動態</button>
+    <button class="tab-btn">手術派班</button>
+    <button class="tab-btn">電話</button>
+    <button class="tab-btn">備註交班</button>
+    <button class="tab-btn">佈告欄</button>
+    <button class="tab-btn">避難圖</button>
+  </nav>
+
+  <!-- ── Room detail modal ── -->
+  <div class="modal-overlay" id="roomModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <div style="display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;">
+          <span class="modal-room-id" id="m-roomid"></span>
+          <span class="modal-patient" id="m-name"></span>
+          <span class="modal-basic"   id="m-basic"></span>
+          <div class="modal-badges"   id="m-badges"></div>
+        </div>
+        <button class="modal-close" id="modalClose">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-row">
+          <div class="modal-field full">
+            <div class="field-label">診斷</div>
+            <div class="field-value diagnosis" id="m-diag"></div>
+          </div>
+        </div>
+        <div class="modal-row">
+          <div class="modal-field full">
+            <div class="field-label">術式</div>
+            <div class="field-value" id="m-surgery"></div>
+          </div>
+        </div>
+        <div class="modal-row">
+          <div class="modal-field">
+            <div class="field-label">病歷號</div>
+            <div class="field-value" id="m-medrec"></div>
+          </div>
+          <div class="modal-field">
+            <div class="field-label">生日</div>
+            <div class="field-value" id="m-birth"></div>
+          </div>
+          <div class="modal-field">
+            <div class="field-label">科別</div>
+            <div class="field-value" id="m-dept"></div>
+          </div>
+        </div>
+        <div class="modal-row">
+          <div class="modal-field">
+            <div class="field-label">手術醫師</div>
+            <div class="field-value" id="m-doctor"></div>
+          </div>
+          <div class="modal-field">
+            <div class="field-label">刷手護理師</div>
+            <div class="field-value" id="m-scrub"></div>
+          </div>
+          <div class="modal-field">
+            <div class="field-label">流動護理師</div>
+            <div class="field-value" id="m-circ"></div>
+          </div>
+        </div>
+        <div class="modal-row">
+          <div class="modal-field">
+            <div class="field-label">麻醉方式</div>
+            <div class="field-value" id="m-anes"></div>
+          </div>
+          <div class="modal-field">
+            <div class="field-label">手術來源</div>
+            <div class="field-value" id="m-source"></div>
+          </div>
+          <div class="modal-field">
+            <div class="field-label">手術狀態</div>
+            <div class="field-value" id="m-surg-status"></div>
+          </div>
+        </div>
+        <div class="modal-row">
+          <div class="modal-field">
+            <div class="field-label">排程時間</div>
+            <div class="field-value" id="m-sched"></div>
+          </div>
+          <div class="modal-field">
+            <div class="field-label">開始時間</div>
+            <div class="field-value" id="m-start"></div>
+          </div>
+          <div class="modal-field">
+            <div class="field-label">結束時間</div>
+            <div class="field-value" id="m-end"></div>
+          </div>
+          <div class="modal-field">
+            <div class="field-label">手術時長</div>
+            <div class="field-value" id="m-duration"></div>
+          </div>
+        </div>
+        <div class="modal-row">
+          <div class="modal-field full">
+            <div class="field-label">備註</div>
+            <div class="field-value" id="m-notes" style="font-size:15px;font-weight:400;"></div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-close-modal" id="modalCloseBtn">關閉</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/mockData.js"></script>
+  <script src="js/components.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

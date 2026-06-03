@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OR 手術室電子白板｜規格驗證 &amp; 操作說明</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Microsoft JhengHei UI", "微軟正黑體", "Noto Sans TC", sans-serif;
+    background: #F5F7FA;
+    color: #1A2635;
+    font-size: 15px;
+    line-height: 1.6;
+  }
+  a { color: #1A7040; }
+
+  /* ── Layout ── */
+  .page { max-width: 960px; margin: 0 auto; padding: 32px 24px 60px; }
+
+  /* ── Cover ── */
+  .cover {
+    background: linear-gradient(135deg, #1A2F45 0%, #0D1B2A 100%);
+    color: #fff;
+    border-radius: 12px;
+    padding: 40px 48px;
+    margin-bottom: 36px;
+  }
+  .cover-badge {
+    display: inline-block;
+    background: #27C46A;
+    color: #0A1E10;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 20px;
+    margin-bottom: 16px;
+    letter-spacing: 1px;
+  }
+  .cover h1 { font-size: 32px; font-weight: 900; margin-bottom: 6px; }
+  .cover .sub { font-size: 16px; color: rgba(255,255,255,0.65); margin-bottom: 24px; }
+  .cover-meta { display: flex; gap: 32px; flex-wrap: wrap; }
+  .cover-meta-item { font-size: 13px; color: rgba(255,255,255,0.55); }
+  .cover-meta-item strong { color: rgba(255,255,255,0.90); font-size: 14px; }
+
+  /* ── Section ── */
+  .section { margin-bottom: 40px; }
+  .section-title {
+    font-size: 20px;
+    font-weight: 800;
+    color: #1A2635;
+    border-left: 4px solid #27C46A;
+    padding-left: 12px;
+    margin-bottom: 18px;
+  }
+  .section-subtitle {
+    font-size: 16px;
+    font-weight: 700;
+    color: #2D4A60;
+    margin: 20px 0 10px;
+  }
+  p { margin-bottom: 10px; color: #3A5068; }
+
+  /* ── Spec table ── */
+  .spec-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  .spec-table th {
+    background: #1A2F45;
+    color: #fff;
+    padding: 10px 14px;
+    text-align: left;
+    font-weight: 700;
+  }
+  .spec-table td {
+    padding: 9px 14px;
+    border-bottom: 1px solid #E0E8F0;
+    vertical-align: top;
+  }
+  .spec-table tr:nth-child(even) td { background: #F8FAFC; }
+  .spec-table tr:hover td { background: #EEF4F9; }
+  .spec-ref { font-size: 12px; color: #7A9AB8; font-weight: 600; }
+
+  /* Status badges */
+  .s-done   { display:inline-block; background:#2E7D32; color:#fff; font-size:12px; font-weight:700; padding:2px 8px; border-radius:4px; white-space:nowrap; }
+  .s-warn   { display:inline-block; background:#E65100; color:#fff; font-size:12px; font-weight:700; padding:2px 8px; border-radius:4px; white-space:nowrap; }
+  .s-todo   { display:inline-block; background:#9E9E9E; color:#fff; font-size:12px; font-weight:700; padding:2px 8px; border-radius:4px; white-space:nowrap; }
+  .s-extra  { display:inline-block; background:#1565C0; color:#fff; font-size:12px; font-weight:700; padding:2px 8px; border-radius:4px; white-space:nowrap; }
+
+  /* ── Info card ── */
+  .info-card {
+    background: #fff;
+    border: 1px solid #D0DBE5;
+    border-radius: 10px;
+    padding: 20px 24px;
+    margin-bottom: 16px;
+  }
+  .info-card h4 { font-size: 15px; font-weight: 700; color: #1A2635; margin-bottom: 10px; }
+
+  /* ── 病人註記 legend ── */
+  .badge-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 10px;
+  }
+  .badge-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #fff;
+    border: 1px solid #D0DBE5;
+    border-radius: 8px;
+    padding: 8px 10px;
+  }
+  .badge-pill {
+    display: inline-block;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 4px;
+    white-space: nowrap;
+    min-width: 48px;
+    text-align: center;
+  }
+  .badge-desc { font-size: 12px; color: #5A7090; }
+
+  /* ── UI mock ── */
+  .mock-filterbar {
+    background: #EDF4F0;
+    border-radius: 8px;
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+    border: 1px solid #C0DDD0;
+  }
+  .mock-label { color: #7A9AB8; font-size: 13px; }
+  .mock-btn {
+    padding: 4px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    border: 1.5px solid #1A7040;
+    color: #3A5068;
+    background: transparent;
+    cursor: default;
+  }
+  .mock-btn.active { background: #1A7040; color: #fff; }
+  .mock-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: default;
+  }
+
+  .mock-statrow {
+    background: #E8ECF0;
+    border-radius: 8px;
+    display: flex;
+    margin-bottom: 8px;
+    overflow: hidden;
+  }
+  .mock-stat {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px 6px;
+    border-right: 1px solid rgba(0,0,0,0.10);
+  }
+  .mock-stat:last-child { border-right: none; }
+  .mock-stat-val { font-size: 28px; font-weight: 900; color: #1A2635; font-family: "Roboto", Arial, sans-serif; line-height: 1; }
+  .mock-stat-val.green    { color: #1A7040; }
+  .mock-stat-val.red      { color: #C0392B; }
+  .mock-stat-val.blue     { color: #1565C0; }
+  .mock-stat-val.teal     { color: #00695C; }
+  .mock-stat-val.amber    { color: #E67E22; }
+  .mock-stat-val.gray     { color: #607D8B; }
+  .mock-stat-val.dark-gray{ color: #78909C; }
+  .mock-stat-label { font-size: 13px; color: #5A7090; margin-top: 4px; }
+
+  /* ── OR room card mock ── */
+  .mock-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin: 12px 0;
+  }
+  .mock-room {
+    border-radius: 8px;
+    padding: 10px 12px;
+    border-left: 4px solid transparent;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  }
+  .mock-room.in-surgery { background: #E8F5E9; }
+  .mock-room.prep       { background: #FFF8E1; }
+  .mock-room.completed  { background: #ECEFF1; opacity: 0.85; }
+  .mock-room.empty      { background: #E8ECF0; border-left: 2px dashed #B0BEC5; align-items: center; justify-content: center; }
+  .mock-room.src-er     { border-left-color: #CC3333; }
+  .mock-room.src-op     { border-left-color: #1565C0; }
+  .mock-room.src-inp    { border-left-color: #27AE60; }
+  .mock-room-num { font-size: 16px; font-weight: 900; color: #1A2635; }
+  .mock-room-patient { font-size: 13px; font-weight: 700; color: #1A2635; }
+  .mock-room-surgery { font-size: 11px; color: #5A7090; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .mock-room-empty-label { color: #90A4AE; font-size: 14px; font-weight: 700; }
+  .mock-src-badge {
+    display: inline-block; font-size: 11px; font-weight: 700; padding: 1px 6px;
+    border-radius: 4px; color: #fff;
+  }
+  .mock-src-badge.er  { background: #CC3333; }
+  .mock-src-badge.op  { background: #1565C0; }
+  .mock-src-badge.inp { background: #27AE60; }
+  .mock-status-badge {
+    display: inline-block; font-size: 11px; font-weight: 700; padding: 1px 6px;
+    border-radius: 4px;
+  }
+  .mock-status-badge.busy { background: #1A7040; color: #fff; }
+  .mock-status-badge.prep { background: #E67E22; color: #fff; }
+  .mock-status-badge.done { background: #607D8B; color: #fff; }
+
+  /* ── Notes / warnings ── */
+  .note {
+    background: #EDF7F1;
+    border-left: 4px solid #27C46A;
+    border-radius: 6px;
+    padding: 12px 16px;
+    font-size: 13px;
+    color: #1A4A2E;
+    margin: 12px 0;
+  }
+  .warn-note {
+    background: #FFF3E0;
+    border-left: 4px solid #F5B942;
+    border-radius: 6px;
+    padding: 12px 16px;
+    font-size: 13px;
+    color: #4A3000;
+    margin: 12px 0;
+  }
+
+  /* ── Summary ── */
+  .summary-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
+  .chip {
+    display: flex; align-items: center; gap: 6px;
+    background: #fff; border: 1px solid #D0DBE5;
+    border-radius: 8px; padding: 8px 14px;
+  }
+  .chip-num { font-size: 22px; font-weight: 900; color: #27C46A; font-family: "Roboto", Arial, sans-serif; }
+  .chip-lbl { font-size: 12px; color: #5A7090; }
+
+  /* ── Footer ── */
+  .footer {
+    text-align: center;
+    font-size: 12px;
+    color: #7A9AB8;
+    margin-top: 48px;
+    padding-top: 20px;
+    border-top: 1px solid #D0DBE5;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ── Cover ── -->
+  <div class="cover">
+    <div class="cover-badge">§ 7.1.2.3 OR 擴充功能</div>
+    <h1>OR 手術室 電子白板</h1>
+    <div class="sub">高雄市立民生醫院 — 護理科電子白板系統 HTML Demo</div>
+    <div class="cover-meta">
+      <div class="cover-meta-item"><strong>版本</strong><br>v1.0 Demo</div>
+      <div class="cover-meta-item"><strong>刀房數</strong><br>7 間（OR-01 ～ OR-07）</div>
+      <div class="cover-meta-item"><strong>布局</strong><br>4 列 × 2 行，自動流排</div>
+      <div class="cover-meta-item"><strong>識別色</strong><br>手術室深綠 #27C46A</div>
+    </div>
+  </div>
+
+  <!-- ── Summary ── -->
+  <div class="summary-row">
+    <div class="chip"><span class="chip-num">4</span><span class="chip-lbl">規格項目<br>已完成</span></div>
+    <div class="chip"><span class="chip-num" style="color:#E65100;">1</span><span class="chip-lbl">待確認<br>項目</span></div>
+    <div class="chip"><span class="chip-num" style="color:#9E9E9E;">2</span><span class="chip-lbl">待開發<br>功能</span></div>
+  </div>
+
+  <!-- ── 1. 規格符合度 ── -->
+  <div class="section">
+    <div class="section-title">1. 規格符合度（§ 7.1.2.3）</div>
+    <table class="spec-table">
+      <thead>
+        <tr>
+          <th>規格項目</th>
+          <th>Demo 狀態</th>
+          <th>說明</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>手術動態</strong>：每間刀房顯示手術中病人基本資料<br><span class="spec-ref">§ 7.1.2.3 (1.1)</span></td>
+          <td><span class="s-done">已完成</span></td>
+          <td>卡片顯示刀房號、手術來源、手術狀態、病人姓名/性別/年齡、術式、手術醫師</td>
+        </tr>
+        <tr>
+          <td><strong>手術詳細資料</strong>：病歷號、性別、年齡、科別、術式、手術醫師、麻醉方式、狀態<br><span class="spec-ref">§ 7.1.2.3 (1.1.1)</span></td>
+          <td><span class="s-done">已完成</span></td>
+          <td>點擊刀房卡片開啟 Modal，顯示全部欄位（含刷手/流動護理師、排程/開始/結束時間）</td>
+        </tr>
+        <tr>
+          <td><strong>手術統計</strong>：總手術數、急診刀、門診刀、住院刀<br><span class="spec-ref">§ 7.1.2.3 (1.2)</span></td>
+          <td><span class="s-done">已完成</span></td>
+          <td>右側統計面板即時顯示，並可點擊觸發過濾</td>
+        </tr>
+        <tr>
+          <td><strong>來源顏色區分</strong>：急診刀紅、門診刀藍、住院刀綠<br><span class="spec-ref">§ 7.1.2.3 (1.1) 備注</span></td>
+          <td><span class="s-done">已完成</span></td>
+          <td>卡片左側邊框 + 病人註記 雙重標示，色彩語意清晰</td>
+        </tr>
+        <tr>
+          <td><strong>手術派班</strong>：3 班各刀房刷手/流動護理師<br><span class="spec-ref">§ 7.1.2.3 (2)</span></td>
+          <td><span class="s-todo">待開發</span></td>
+          <td>底部 Tab「手術派班」已建立，React 版本串接班表 API 後實作</td>
+        </tr>
+        <tr>
+          <td><strong>特殊交班</strong>：手術後轉院區交班事項<br><span class="spec-ref">§ 7.1.2.3 (3)</span></td>
+          <td><span class="s-todo">待開發</span></td>
+          <td>底部 Tab「備註交班」已建立，React 版本填表功能後實作</td>
+        </tr>
+        <tr>
+          <td><strong>依平面位置圖設置刀房號</strong><br><span class="spec-ref">§ 7.1.2.3 標題</span></td>
+          <td><span class="s-warn">待確認</span></td>
+          <td>Demo 使用 OR-01～OR-07 順序編號；正式版需對照 3F 平面圖確認刀房號碼與排列</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ── 2. 版面說明 ── -->
+  <div class="section">
+    <div class="section-title">2. 版面說明</div>
+    <p>OR 白板採用 <strong>4 列 × 2 行</strong>的等比例格線，共 7 間刀房（第 8 格空白）。刀房依序 OR-01～OR-07 由左至右、由上至下自動排列，無需根據平面圖做偏移定位（正式版視需求調整）。</p>
+    <div class="note">
+      <strong>與病房白板的差異：</strong>OR 白板以「刀房間」為單位，而非「病床」。每張卡片代表一間手術室的即時狀態，不顯示護理區帶或走廊隔間。
+    </div>
+    <div class="info-card">
+      <h4>布局示意（暗色預覽）</h4>
+      <div class="mock-grid">
+        <!-- Row 1 -->
+        <div class="mock-room in-surgery src-inp">
+          <div style="display:flex;gap:4px;flex-wrap:wrap;">
+            <span class="mock-room-num">OR-01</span>
+            <span class="mock-src-badge inp">住院刀</span>
+            <span class="mock-status-badge busy">手術中</span>
+          </div>
+          <div class="mock-room-patient">王○明 M/65</div>
+          <div class="mock-room-surgery">腹腔鏡膽囊切除術 LC</div>
+        </div>
+        <div class="mock-room in-surgery src-op">
+          <div style="display:flex;gap:4px;flex-wrap:wrap;">
+            <span class="mock-room-num">OR-02</span>
+            <span class="mock-src-badge op">門診刀</span>
+            <span class="mock-status-badge busy">手術中</span>
+          </div>
+          <div class="mock-room-patient">陳○芳 F/42</div>
+          <div class="mock-room-surgery">子宮鏡肌瘤切除術</div>
+        </div>
+        <div class="mock-room in-surgery src-er">
+          <div style="display:flex;gap:4px;flex-wrap:wrap;">
+            <span class="mock-room-num">OR-03</span>
+            <span class="mock-src-badge er">急診刀</span>
+            <span class="mock-status-badge busy">手術中</span>
+          </div>
+          <div class="mock-room-patient">張○強 M/34</div>
+          <div class="mock-room-surgery">右股骨 ORIF</div>
+        </div>
+        <div class="mock-room prep src-inp">
+          <div style="display:flex;gap:4px;flex-wrap:wrap;">
+            <span class="mock-room-num">OR-04</span>
+            <span class="mock-src-badge inp">住院刀</span>
+            <span class="mock-status-badge prep">準備中</span>
+          </div>
+          <div class="mock-room-patient">吳○秀 F/58</div>
+          <div class="mock-room-surgery">二尖瓣置換術 MVR</div>
+        </div>
+        <div class="mock-room in-surgery src-inp">
+          <div style="display:flex;gap:4px;flex-wrap:wrap;">
+            <span class="mock-room-num">OR-05</span>
+            <span class="mock-src-badge inp">住院刀</span>
+            <span class="mock-status-badge busy">手術中</span>
+          </div>
+          <div class="mock-room-patient">劉○明 M/72</div>
+          <div class="mock-room-surgery">TURP 前列腺刮除</div>
+        </div>
+        <!-- Row 2 -->
+        <div class="mock-room completed src-op">
+          <div style="display:flex;gap:4px;flex-wrap:wrap;">
+            <span class="mock-room-num">OR-06</span>
+            <span class="mock-src-badge op">門診刀</span>
+            <span class="mock-status-badge done">已完成</span>
+          </div>
+          <div class="mock-room-patient">林○雯 F/29</div>
+          <div class="mock-room-surgery">左手攣縮疤痕鬆解</div>
+        </div>
+        <div class="mock-room in-surgery src-er">
+          <div style="display:flex;gap:4px;flex-wrap:wrap;">
+            <span class="mock-room-num">OR-07</span>
+            <span class="mock-src-badge er">急診刀</span>
+            <span class="mock-status-badge busy">手術中</span>
+          </div>
+          <div class="mock-room-patient">許○宏 M/48</div>
+          <div class="mock-room-surgery">腹腔鏡闌尾切除術</div>
+        </div>
+        <div style="border:2px dashed #C8D8E4;border-radius:6px;opacity:0.35;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 3. 刀房卡片 ── -->
+  <div class="section">
+    <div class="section-title">3. 刀房卡片設計</div>
+    <p>每張卡片分四列顯示關鍵資訊，設計原則為一眼辨識「哪間刀房、什麼刀、什麼狀態、哪位病人」。</p>
+
+    <div class="info-card">
+      <h4>卡片欄位佈局</h4>
+      <table class="spec-table">
+        <thead><tr><th>列號</th><th>內容</th><th>視覺說明</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Row 1</strong></td><td>刀房號 + 手術來源 病人註記 + 手術狀態 病人註記</td><td>三元素水平排列，優先識別刀房身分</td></tr>
+          <tr><td><strong>Row 2</strong></td><td>病患姓名（性別色）+ 性別/年齡</td><td>男性藍色、女性粉紅色</td></tr>
+          <tr><td><strong>Row 3</strong></td><td>術式名稱（超長自動省略）</td><td>單行顯示，overflow ellipsis</td></tr>
+          <tr><td><strong>Row 4</strong></td><td>手術醫師（簡短版）</td><td>置底，輔助資訊顏色較淡</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="info-card">
+      <h4>刀房狀態 × 底色對照</h4>
+      <table class="spec-table">
+        <thead><tr><th>Status 值</th><th>中文</th><th>卡片底色（暗色版）</th><th>說明</th></tr></thead>
+        <tbody>
+          <tr><td><code>in-surgery</code></td><td>手術中</td><td>#0A1E10（深綠）</td><td>最高優先級，最易識別</td></tr>
+          <tr><td><code>prep</code></td><td>準備中</td><td>#201A08（琥珀深）</td><td>即將開刀，需備妥</td></tr>
+          <tr><td><code>completed</code></td><td>已完成</td><td>#1A2F45（標準藍深）+ opacity 0.7</td><td>降低視覺重量，表示已結束</td></tr>
+          <tr><td><code>empty</code></td><td>空房</td><td>#151E28 虛線邊框</td><td>無排程，不可點擊</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="info-card">
+      <h4>手術來源 × 左側邊框色</h4>
+      <table class="spec-table">
+        <thead><tr><th>CSS Class</th><th>來源</th><th>邊框色</th><th>說明</th></tr></thead>
+        <tbody>
+          <tr><td><code>src-er</code></td><td>急診刀</td><td>#CC3333（紅）</td><td>緊急手術，最高警示</td></tr>
+          <tr><td><code>src-op</code></td><td>門診刀</td><td>#1976D2（藍）</td><td>排程門診手術</td></tr>
+          <tr><td><code>src-inp</code></td><td>住院刀</td><td>#27AE60（綠）</td><td>住院病人排定手術</td></tr>
+        </tbody>
+      </table>
+      <div class="warn-note">
+        <strong>注意：</strong>左側邊框顯示手術「來源」，卡片底色顯示手術「狀態」，兩者分工明確。急診刀 + 手術中 = 紅色邊框 + 深綠底色。
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 4. 統計面板 ── -->
+  <div class="section">
+    <div class="section-title">4. 統計面板</div>
+    <p>右側統計面板顯示即時手術數字，數字依語意著色，點擊可觸發過濾（同 ER/ICU 板）。</p>
+    <div class="mock-statrow">
+      <div class="mock-stat">
+        <div class="mock-stat-val">10</div>
+        <div class="mock-stat-label">刀房總數</div>
+      </div>
+      <div class="mock-stat">
+        <div class="mock-stat-val green">5</div>
+        <div class="mock-stat-label">手術中</div>
+      </div>
+    </div>
+    <div class="mock-statrow">
+      <div class="mock-stat">
+        <div class="mock-stat-val red">2</div>
+        <div class="mock-stat-label">急診刀</div>
+      </div>
+      <div class="mock-stat">
+        <div class="mock-stat-val blue">3</div>
+        <div class="mock-stat-label">門診刀</div>
+      </div>
+      <div class="mock-stat">
+        <div class="mock-stat-val teal">4</div>
+        <div class="mock-stat-label">住院刀</div>
+      </div>
+    </div>
+    <div class="mock-statrow">
+      <div class="mock-stat">
+        <div class="mock-stat-val amber">2</div>
+        <div class="mock-stat-label">準備中</div>
+      </div>
+      <div class="mock-stat">
+        <div class="mock-stat-val gray">2</div>
+        <div class="mock-stat-label">已完成</div>
+      </div>
+      <div class="mock-stat">
+        <div class="mock-stat-val dark-gray">1</div>
+        <div class="mock-stat-label">空房</div>
+      </div>
+    </div>
+    <div class="note">
+      點擊統計數字（有 <code>data-filter</code> 屬性者）可直接套用對應過濾，再次點擊解除過濾，效果與 Filter Bar 相同。
+    </div>
+  </div>
+
+  <!-- ── 5. 過濾列 ── -->
+  <div class="section">
+    <div class="section-title">5. 過濾列（Filter Bar）</div>
+    <p>過濾列提供來源（急診刀/門診刀/住院刀）與狀態（手術中/準備中/已完成）兩個維度的快速過濾。</p>
+    <div class="mock-filterbar">
+      <span class="mock-label">來源 / 狀態：</span>
+      <button class="mock-btn active">全部</button>
+      <span class="mock-badge" style="background:#CC3333;color:#fff;">急診刀</span>
+      <span class="mock-badge" style="background:#1976D2;color:#fff;">門診刀</span>
+      <span class="mock-badge" style="background:#27AE60;color:#fff;">住院刀</span>
+      <button class="mock-btn" style="border-color:#5A7090;">手術中</button>
+      <button class="mock-btn" style="border-color:#5A7090;">準備中</button>
+      <button class="mock-btn" style="border-color:#5A7090;">已完成</button>
+    </div>
+    <table class="spec-table">
+      <thead><tr><th>按鈕</th><th>data-filter 值</th><th>過濾邏輯</th></tr></thead>
+      <tbody>
+        <tr><td>全部</td><td><code>all</code></td><td>顯示所有刀房</td></tr>
+        <tr><td>急診刀</td><td><code>er</code></td><td><code>data-source === "急診刀"</code></td></tr>
+        <tr><td>門診刀</td><td><code>op</code></td><td><code>data-source === "門診刀"</code></td></tr>
+        <tr><td>住院刀</td><td><code>inp</code></td><td><code>data-source === "住院刀"</code></td></tr>
+        <tr><td>手術中</td><td><code>busy</code></td><td><code>data-status === "in-surgery"</code></td></tr>
+        <tr><td>準備中</td><td><code>prep</code></td><td><code>data-status === "prep"</code></td></tr>
+        <tr><td>已完成</td><td><code>done</code></td><td><code>data-status === "completed"</code></td></tr>
+      </tbody>
+    </table>
+    <div class="note">空房（Status: empty）永遠顯示，不受過濾影響。</div>
+  </div>
+
+  <!-- ── 6. Modal 詳細資料 ── -->
+  <div class="section">
+    <div class="section-title">6. Modal 詳細資料</div>
+    <p>點擊非空刀房卡片開啟 Modal，顯示手術室完整資訊。</p>
+    <div class="info-card">
+      <h4>Modal 欄位一覽</h4>
+      <table class="spec-table">
+        <thead><tr><th>欄位 ID</th><th>欄位名稱</th><th>資料來源</th></tr></thead>
+        <tbody>
+          <tr><td><code>m-roomid</code></td><td>刀房號</td><td>RoomId</td></tr>
+          <tr><td><code>m-name</code></td><td>病患姓名</td><td>PatientName</td></tr>
+          <tr><td><code>m-basic</code></td><td>性別/年齡</td><td>Gender + Age</td></tr>
+          <tr><td><code>m-badges</code></td><td>來源 + 狀態 病人註記</td><td>SurgerySource + SurgeryStatus</td></tr>
+          <tr><td><code>m-diag</code></td><td>診斷</td><td>Diagnosis</td></tr>
+          <tr><td><code>m-surgery</code></td><td>術式</td><td>SurgeryName</td></tr>
+          <tr><td><code>m-medrec</code></td><td>病歷號</td><td>MedRecord</td></tr>
+          <tr><td><code>m-birth</code></td><td>生日</td><td>BirthDate</td></tr>
+          <tr><td><code>m-dept</code></td><td>科別</td><td>Department</td></tr>
+          <tr><td><code>m-doctor</code></td><td>手術醫師</td><td>Doctor</td></tr>
+          <tr><td><code>m-scrub</code></td><td>刷手護理師</td><td>ScrubNurse</td></tr>
+          <tr><td><code>m-circ</code></td><td>流動護理師</td><td>CircNurse</td></tr>
+          <tr><td><code>m-anes</code></td><td>麻醉方式</td><td>AnesType</td></tr>
+          <tr><td><code>m-source</code></td><td>手術來源</td><td>SurgerySource</td></tr>
+          <tr><td><code>m-surg-status</code></td><td>手術狀態</td><td>SurgeryStatus</td></tr>
+          <tr><td><code>m-sched</code></td><td>排程時間</td><td>ScheduledTime</td></tr>
+          <tr><td><code>m-start</code></td><td>開始時間</td><td>StartTime</td></tr>
+          <tr><td><code>m-end</code></td><td>結束時間</td><td>EndTime（進行中顯示「進行中」）</td></tr>
+          <tr><td><code>m-duration</code></td><td>手術時長</td><td>動態計算（進行中顯示已用時間）</td></tr>
+          <tr><td><code>m-notes</code></td><td>備註</td><td>Notes</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── 7. React 串接指引 ── -->
+  <div class="section">
+    <div class="section-title">7. React 串接指引</div>
+
+    <div class="info-card">
+      <h4>API 欄位對應（Room 物件，PascalCase）</h4>
+      <table class="spec-table">
+        <thead><tr><th>欄位</th><th>型別</th><th>說明</th></tr></thead>
+        <tbody>
+          <tr><td>RoomId</td><td>string</td><td>"OR-01" ～ "OR-07"（依平面圖編號）</td></tr>
+          <tr><td>Status</td><td>string</td><td>"in-surgery" | "prep" | "completed" | "empty"</td></tr>
+          <tr><td>Patient</td><td>object | null</td><td>null 時卡片顯示空房</td></tr>
+          <tr><td>Patient.SurgerySource</td><td>string</td><td>"急診刀" | "門診刀" | "住院刀"</td></tr>
+          <tr><td>Patient.SurgeryStatus</td><td>string</td><td>"手術中" | "準備中" | "已完成" | "取消"</td></tr>
+          <tr><td>Patient.SurgeryName</td><td>string</td><td>術式完整名稱（可含英文縮寫）</td></tr>
+          <tr><td>Patient.Doctor</td><td>string</td><td>手術醫師（含職稱）</td></tr>
+          <tr><td>Patient.ScrubNurse</td><td>string</td><td>刷手護理師（含職稱）</td></tr>
+          <tr><td>Patient.CircNurse</td><td>string</td><td>流動護理師（含職稱）</td></tr>
+          <tr><td>Patient.AnesType</td><td>string</td><td>麻醉方式（如 "全身麻醉 (GA)"）</td></tr>
+          <tr><td>Patient.ScheduledTime</td><td>string</td><td>"HH:MM" 排程時間</td></tr>
+          <tr><td>Patient.StartTime</td><td>string | null</td><td>實際開始時間，未開始為 null</td></tr>
+          <tr><td>Patient.EndTime</td><td>string | null</td><td>結束時間，進行中為 null</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="warn-note">
+      <strong>⚠ 刀房號碼確認：</strong>正式版 RoomId 需依 3F 手術室平面圖核對實際刀房編號（OR-01 起始或其他命名規則），並在 <code>renderRoomCard</code> 的 CSS class 策略中處理。目前 Demo 採自動流排（auto-flow），無需特殊 CSS 定位。
+    </div>
+
+  </div>
+
+  <div class="footer">
+    高雄市立民生醫院 護理科電子白板系統 — OR 手術室 HTML Demo v1.1 / 2026-05-29<br>
+    本文件依 §7.1.2.3 OR 擴充功能對照製作
+  </div>
+
+</div>
+</body>
+</html>

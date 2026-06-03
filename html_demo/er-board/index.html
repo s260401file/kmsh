@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>高雄市立民生醫院 急診室 電子白板</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/variables.css?v=1">
+  <link rel="stylesheet" href="css/reset.css?v=1">
+  <link rel="stylesheet" href="css/main.css?v=6">
+  <link rel="stylesheet" href="css/components.css?v=1">
+  <link rel="stylesheet" href="css/contact.css?v=1">
+  <link rel="stylesheet" href="css/schedule.css?v=1">
+</head>
+<body>
+
+  <!-- ── Header ── -->
+  <header class="page-header">
+    <div class="header-left">ER
+      <span class="ward-sub">急診室</span>
+    </div>
+    <div class="header-center">
+      <div class="staff-block">
+        <div class="staff-label">急診主任</div>
+        <div class="staff-name" id="ward-director">—</div>
+      </div>
+      <div class="staff-block">
+        <div class="staff-label">護理長</div>
+        <div class="staff-name" id="head-nurse">—</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="update-label">資料更新時間：剛剛</div>
+      <div class="clock-date" id="clock-date"></div>
+      <div class="clock-time" id="clock-time"></div>
+    </div>
+  </header>
+
+  <!-- ── Announcement marquee ── -->
+  <div class="announce-bar">
+    <span>🚨</span>
+    <span>2026/05/24 急診分流提醒：目前二級危急病人待床中，ICU 床位有限，請優先處理急救室病人轉出作業。</span>
+  </div>
+
+  <!-- ── Main content ── -->
+  <main class="main-content">
+
+    <!-- Beds panel -->
+    <div class="beds-panel">
+      <div class="ward-title">▌ 急診室　共 19 床（負壓 2＋急救 1＋第一診療 5＋第二診療 6＋留觀 2＋待床 3）</div>
+      <div class="ward-grid" id="ward-grid">
+        <div class="nursing-station">櫃檯</div>
+
+      </div>
+    </div>
+
+    <!-- Stats panel -->
+    <div class="stats-panel">
+      <div class="stats-title">▌ 急診統計</div>
+      <div class="stats-body">
+
+        <div class="ws-row">
+          <div class="ws-item">
+            <div class="ws-value" id="stat-total">—</div>
+            <div class="ws-label">總床數</div>
+          </div>
+          <div class="ws-item">
+            <div class="ws-value" id="stat-attending">—</div>
+            <div class="ws-label">看診中</div>
+          </div>
+        </div>
+
+        <div class="ws-row">
+          <div class="ws-item" data-filter="obs">
+            <div class="ws-value ws-obs" id="stat-observation">—</div>
+            <div class="ws-label">留觀</div>
+          </div>
+          <div class="ws-item" data-filter="轉入">
+            <div class="ws-value ws-transfer-in" id="stat-transfer-in">—</div>
+            <div class="ws-label">轉入</div>
+          </div>
+          <div class="ws-item" data-filter="轉出">
+            <div class="ws-value ws-transfer-out" id="stat-transfer-out">—</div>
+            <div class="ws-label">轉出</div>
+          </div>
+        </div>
+
+        <div class="ws-row">
+          <div class="ws-item" data-filter="await-gen">
+            <div class="ws-value ws-await-gen" id="stat-await-gen">—</div>
+            <div class="ws-label">待床 一般</div>
+          </div>
+          <div class="ws-item" data-filter="await-icu">
+            <div class="ws-value ws-await-icu" id="stat-await-icu">—</div>
+            <div class="ws-label">待床 加護</div>
+          </div>
+          <div class="ws-item" data-filter="await-iso">
+            <div class="ws-value ws-await-iso" id="stat-await-iso">—</div>
+            <div class="ws-label">待床 隔離</div>
+          </div>
+        </div>
+
+        <div class="ws-row">
+          <div class="ws-item" data-filter="critical">
+            <div class="ws-value ws-crit" id="stat-critical">—</div>
+            <div class="ws-label">一二級 危急</div>
+          </div>
+          <div class="ws-item" data-filter="moderate">
+            <div class="ws-value ws-mod" id="stat-moderate">—</div>
+            <div class="ws-label">三~五級 輕中症</div>
+          </div>
+        </div>
+
+        <div class="ws-row">
+          <div class="ws-item" data-filter="DNR">
+            <div class="ws-value ws-dnr" id="stat-dnr">—</div>
+            <div class="ws-label">DNR</div>
+          </div>
+          <div class="ws-item" data-filter="住院">
+            <div class="ws-value ws-admitted" id="stat-admitted">—</div>
+            <div class="ws-label">住院</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ── Schedule panel ── -->
+  <div class="schedule-panel" id="schedule-panel">
+    <div class="sc-panel">
+      <div id="sc-current"></div>
+      <div class="sc-lower">
+        <div class="sc-lower-left">
+          <div class="sc-section-title">其他班別</div>
+          <div id="sc-others"></div>
+        </div>
+        <div class="sc-lower-right">
+          <div class="sc-section-title">醫師排班</div>
+          <div id="sc-doctors"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Phone panel ── -->
+  <div class="phone-panel" id="phone-panel">
+    <div class="ct-panel">
+      <div id="duty-current"></div>
+      <div class="ct-lower">
+        <div class="ct-lower-left">
+          <div class="ct-section-title">其他班別</div>
+          <div id="duty-others"></div>
+        </div>
+        <div class="ct-lower-right">
+          <div class="ct-section-title">常用連絡電話</div>
+          <div id="common-list"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Filter bar ── -->
+  <div class="filter-bar">
+    <span class="filter-label">圖例 / 過濾：</span>
+    <button class="filter-btn active" data-filter="all">全部</button>
+    <button class="badge badge-filter badge-死亡"  data-filter="死亡">死亡</button>
+    <button class="badge badge-filter badge-MBD"  data-filter="MBD">MBD</button>
+    <button class="badge badge-filter badge-AAD"  data-filter="AAD">AAD</button>
+    <button class="badge badge-filter badge-轉出" data-filter="轉出">轉出</button>
+    <button class="badge badge-filter badge-轉入" data-filter="轉入">轉入</button>
+    <button class="badge badge-filter badge-DNR"  data-filter="DNR">DNR</button>
+    <button class="badge badge-filter badge-留觀" data-filter="obs">留觀</button>
+    <button class="badge badge-filter badge-住院" data-filter="住院">住院</button>
+  </div>
+
+  <!-- ── Bottom tabs ── -->
+  <nav class="bottom-tabs">
+    <button class="tab-btn active">病室動態</button>
+    <button class="tab-btn">檢傷分診</button>
+    <button class="tab-btn">大量傷患</button>
+    <button class="tab-btn">檢查/會診</button>
+    <button class="tab-btn">待床管理</button>
+    <button class="tab-btn">連絡電話</button>
+    <button class="tab-btn">排班資訊</button>
+    <button class="tab-btn">佈告欄</button>
+    <button class="tab-btn">避難圖</button>
+  </nav>
+
+  <!-- ── Bed detail modal ── -->
+  <div class="modal-overlay" id="bedModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <div style="display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;">
+          <span class="modal-bed-id" id="m-bedid"></span>
+          <span class="modal-patient" id="m-name"></span>
+          <span class="modal-basic"  id="m-basic"></span>
+          <div class="modal-badges"  id="m-badges"></div>
+        </div>
+        <button class="modal-close" id="modalClose">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-row">
+          <div class="modal-field full">
+            <div class="field-label">診斷</div>
+            <div class="field-value diagnosis" id="m-diag"></div>
+          </div>
+        </div>
+        <div class="modal-row">
+          <div class="modal-field">
+            <div class="field-label">病歷號</div>
+            <div class="field-value" id="m-medrec"></div>
+          </div>
+          <div class="modal-field">
+            <div class="field-label">生日</div>
+            <div class="field-value" id="m-birth"></div>
+          </div>
+          <div class="modal-field">
+            <div class="field-label">科別</div>
+            <div class="field-value" id="m-dept"></div>
+          </div>
+        </div>
+        <div class="modal-row">
+          <div class="modal-field">
+            <div class="field-label">主治醫師</div>
+            <div class="field-value" id="m-doctor"></div>
+          </div>
+          <div class="modal-field">
+            <div class="field-label">責任護理師</div>
+            <div class="field-value" id="m-nurse"></div>
+          </div>
+        </div>
+        <div class="modal-row">
+          <div class="modal-field">
+            <div class="field-label">到院時間</div>
+            <div class="field-value" id="m-arrival"></div>
+          </div>
+          <div class="modal-field">
+            <div class="field-label">滯留時間</div>
+            <div class="field-value" id="m-stay"></div>
+          </div>
+          <div class="modal-field">
+            <div class="field-label">檢傷分級</div>
+            <div class="field-value triage-val" id="m-triage"></div>
+          </div>
+        </div>
+        <div class="modal-row">
+          <div class="modal-field">
+            <div class="field-label">隔離狀態</div>
+            <div class="field-value" id="m-iso"></div>
+          </div>
+          <div class="modal-field">
+            <div class="field-label">DNR</div>
+            <div class="field-value" id="m-dnr"></div>
+          </div>
+          <div class="modal-field">
+            <div class="field-label">急診狀態</div>
+            <div class="field-value" id="m-er-status"></div>
+          </div>
+        </div>
+        <div class="modal-row">
+          <div class="modal-field full">
+            <div class="field-label">備註</div>
+            <div class="field-value" id="m-notes" style="font-size:15px;font-weight:400;"></div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-close-modal" id="modalCloseBtn">關閉</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/mockData.js?v=5"></script>
+  <script src="js/contactData.js?v=1"></script>
+  <script src="js/scheduleData.js?v=1"></script>
+  <script src="js/components.js?v=5"></script>
+  <script src="js/contact.js?v=1"></script>
+  <script src="js/schedule.js?v=1"></script>
+  <script src="js/main.js?v=6"></script>
+</body>
+</html>

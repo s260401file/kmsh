@@ -1,0 +1,187 @@
+/* ── Bed card ── */
+.bed-card {
+  border-radius: var(--radius-card);
+  padding: 8px 12px;
+  border-left: 4px solid transparent;
+  box-shadow: var(--shadow-card);
+  cursor: pointer;
+  position: relative;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  overflow: hidden;
+  transition: transform 0.1s, box-shadow 0.1s;
+  box-sizing: border-box;
+}
+.bed-card:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,0.35); }
+
+/* ── Status variants ── */
+.bed-card.occupied    { background: var(--bg-card-occ);   border-left-color: var(--border-occ); }
+.bed-card.isolation   { background: var(--bg-card-iso);   border-left-color: var(--border-iso); }
+.bed-card.observation { background: var(--bg-card-obs);   border-left-color: var(--border-obs); }
+.bed-card.awaiting    { background: var(--bg-card-await); border-left-color: var(--border-await); }
+.bed-card.transfer    { background: var(--bg-card-trans); border-left-color: var(--border-trans); }
+.bed-card.empty {
+  background: var(--bg-card-empty);
+  border-left: 2px dashed var(--border-empty);
+  cursor: default;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.6;
+}
+.bed-card.empty:hover { transform: none; box-shadow: var(--shadow-card); }
+
+/* ── Triage border overrides（must come after status variants）── */
+.bed-card.triage-1 { background: var(--bg-card-triage1); border-left-color: #CC1111; }
+.bed-card.triage-2 { border-left-color: #E05C5C; }
+.bed-card.triage-3 { border-left-color: #E8900A; }
+.bed-card.triage-4 { border-left-color: var(--border-occ); }
+.bed-card.triage-5 { border-left-color: #4A8FAE; }
+.bed-card.neg-iso  { background: var(--bg-card-neg-iso); border-left-color: #9B59B6; }
+
+/* ── Card rows ── */
+.card-row1 {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: nowrap;
+}
+.bed-num {
+  font-size: 22px;
+  font-weight: 900;
+  font-family: var(--font-num);
+  color: var(--text-primary);
+  letter-spacing: 0.5px;
+  line-height: 1;
+}
+.card-row2 {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+.patient-name {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1;
+}
+.patient-basic {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1;
+}
+.card-row3 {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: auto;
+}
+.empty-label {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-empty);
+}
+.empty-bed-num {
+  font-size: 18px;
+  font-weight: 900;
+  font-family: var(--font-num);
+  color: var(--text-empty);
+  margin-bottom: 6px;
+}
+
+/* ── Gender name colors ── */
+.gender-m { color: #1565C0; }
+.gender-f { color: #AD1457; }
+
+/* ── Triage badge（card-row1 用）── */
+.triage-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  border-radius: var(--radius-badge);
+  font-size: 13px;
+  font-weight: 900;
+  font-family: var(--font-num);
+  white-space: nowrap;
+  line-height: 20px;
+  flex-shrink: 0;
+}
+.triage-badge.t1 { background: #CC1111; color: #fff; }
+.triage-badge.t2 { background: #E05C5C; color: #fff; }
+.triage-badge.t3 { background: #E8900A; color: #fff; }
+.triage-badge.t4 { background: #3BAF7A; color: #fff; }
+.triage-badge.t5 { background: #4A8FAE; color: #fff; }
+
+/* ── Badges ── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: var(--radius-badge);
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  line-height: 20px;
+}
+
+/* ICU/W52 共用 13 種 */
+.badge-R    { background: #C62828; color: #fff; }
+.badge-D    { background: #6A1B9A; color: #fff; }
+.badge-接觸 { background: #B71C1C; color: #fff; }
+.badge-飛沫 { background: #AD1457; color: #fff; }
+.badge-空氣 { background: #4A148C; color: #fff; }
+.badge-跌   { background: #E65100; color: #fff; }
+.badge-禁食 { background: #2E7D32; color: #fff; }
+.badge-敏   { background: #BF360C; color: #fff; }
+.badge-禁治 { background: #0D47A1; color: #fff; }
+.badge-保密 { background: #37474F; color: #fff; }
+.badge-C    { background: #E65100; color: #fff; }
+.badge-化療 { background: #880E4F; color: #fff; }
+.badge-氧   { background: #01579B; color: #fff; }
+
+/* ER 專屬 badge */
+.badge-死亡        { background: #37474F; color: #fff; }
+.badge-DNR         { background: #6A1B9A; color: #fff; }
+.badge-住院        { background: #2E7D32; color: #fff; }
+.badge-負壓        { background: #6A1B9A; color: #fff; }
+.badge-留觀        { background: #006064; color: #fff; }
+.badge-待床        { background: #F57F17; color: #fff; }
+.badge-待床-一般   { background: #F57F17; color: #fff; }
+.badge-待床-加護   { background: #E65100; color: #fff; }
+.badge-待床-隔離   { background: #880E4F; color: #fff; }
+.badge-轉出        { background: #455A64; color: #fff; }
+.badge-轉入        { background: #1565C0; color: #fff; }
+.badge-AAD         { background: #4E342E; color: #fff; }
+.badge-MBD         { background: #263238; color: #fff; }
+.badge-查          { background: #1A237E; color: #fff; }
+.badge-會          { background: #004D40; color: #fff; }
+
+/* Deceased bed card */
+.bed-card.deceased {
+  border-left-color: #37474F !important;
+  opacity: 0.65;
+  filter: grayscale(0.4);
+}
+
+/* Filter bar triage badge buttons */
+.badge-T1 { background: #CC1111; color: #fff; }
+.badge-T2 { background: #E05C5C; color: #fff; }
+.badge-T3 { background: #E8900A; color: #fff; }
+.badge-T4 { background: #3BAF7A; color: #fff; }
+.badge-T5 { background: #4A8FAE; color: #fff; }
+
+/* +N more 指示器 */
+.badge-more {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 6px;
+  border-radius: var(--radius-badge);
+  font-size: 12px;
+  font-weight: 700;
+  background: rgba(0,0,0,0.10);
+  color: var(--text-secondary);
+  white-space: nowrap;
+  line-height: 20px;
+}
