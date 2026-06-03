@@ -1,0 +1,144 @@
+/* ── Bed card ── */
+.bed-card {
+  border-radius: var(--radius-card);
+  padding: 8px 12px;
+  border-left: 4px solid transparent;
+  box-shadow: var(--shadow-card);
+  cursor: pointer;
+  position: relative;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  overflow: hidden;
+  transition: transform 0.1s, box-shadow 0.1s;
+  box-sizing: border-box;
+}
+.bed-card:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,0.35); }
+
+/* Status variants */
+.bed-card.occupied  { background: var(--bg-card-occ);  border-left-color: var(--border-occ); }
+.bed-card.isolation { background: var(--bg-card-iso);  border-left-color: var(--border-iso); }
+.bed-card.transfer  { background: var(--bg-card-trans); border-left-color: var(--border-trans); }
+.bed-card.discharge { background: var(--bg-card-dis);  border-left-color: var(--border-dis); }
+.bed-card.empty {
+  background: var(--bg-card-empty);
+  border-left: 2px dashed var(--border-empty);
+  cursor: default;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.6;
+}
+.bed-card.empty:hover { transform: none; box-shadow: var(--shadow-card); }
+
+/* Card rows */
+.card-row1 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.bed-num {
+  font-size: 22px;
+  font-weight: 900;
+  font-family: var(--font-num);
+  color: var(--text-primary);
+  letter-spacing: 0.5px;
+  line-height: 1;
+}
+.card-row2 {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+.patient-name {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1;
+}
+.patient-basic {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1;
+}
+.card-row3 {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: auto;
+}
+.empty-label {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-empty);
+}
+.empty-bed-num {
+  font-size: 18px;
+  font-weight: 900;
+  font-family: var(--font-num);
+  color: var(--text-empty);
+  margin-bottom: 6px;
+}
+
+/* ── Gender name colors ── */
+.gender-m { color: #64B5F6; }
+.gender-f { color: #F48FB1; }
+[data-theme="light"] .gender-m { color: #1565C0; }
+[data-theme="light"] .gender-f { color: #AD1457; }
+
+/* ── Badges ── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: var(--radius-badge);
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  line-height: 20px;
+}
+/* 規格 (1.2) 病人註記 — 依規格書順序，完整文字 */
+.badge-DNR      { background: #6A1B9A; color: #fff; }
+.badge-高危跌   { background: #E65100; color: #fff; }
+.badge-依賴L1   { background: #4527A0; color: #fff; }
+.badge-依賴L2   { background: #4527A0; color: #fff; }
+.badge-依賴L3   { background: #311B92; color: #fff; }
+.badge-隔離     { background: #B71C1C; color: #fff; }
+.badge-保密     { background: #37474F; color: #fff; }
+.badge-禁治療   { background: #0D47A1; color: #fff; }
+.badge-禁食     { background: #2E7D32; color: #fff; }
+.badge-過敏     { background: #BF360C; color: #fff; }
+.badge-RRT      { background: #C62828; color: #fff; }
+.badge-化療     { background: #880E4F; color: #fff; }
+.badge-輪椅     { background: #558B2F; color: #fff; }
+.badge-推床     { background: #4E342E; color: #fff; }
+.badge-氧氣設備 { background: #01579B; color: #fff; }
+.badge-洗腎     { background: #006064; color: #fff; }
+/* +N more 指示器 */
+.badge-more {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 6px;
+  border-radius: var(--radius-badge);
+  font-size: 12px;
+  font-weight: 700;
+  background: rgba(255,255,255,0.18);
+  color: var(--text-secondary);
+  white-space: nowrap;
+  line-height: 20px;
+}
+[data-theme="light"] .badge-more {
+  background: rgba(0,0,0,0.10);
+}
+
+/* ── Status dot (isolation indicator on card) ── */
+.iso-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--accent-red);
+  display: inline-block;
+  margin-left: 2px;
+  flex-shrink: 0;
+}

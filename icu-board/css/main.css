@@ -1,0 +1,380 @@
+/* ── Page layout ── */
+body { flex-direction: column; }
+
+/* ── Header ── */
+.page-header {
+  height: var(--header-h);
+  background: var(--bg-header);
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  gap: 0;
+  flex-shrink: 0;
+  border-bottom: 2px solid var(--accent-green);
+}
+.header-left {
+  font-size: 42px;
+  font-weight: 900;
+  font-family: var(--font-num);
+  color: #FFFFFF;
+  letter-spacing: 2px;
+  width: 120px;
+  text-shadow: none;
+}
+.header-center {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  gap: 60px;
+}
+.staff-block { text-align: center; }
+.staff-label { font-size: 14px; color: var(--text-stats); opacity: 0.75; margin-bottom: 2px; }
+.staff-name  { font-size: 26px; font-weight: 700; color: var(--text-stats); }
+.header-right { text-align: right; width: 220px; }
+.update-label { font-size: 13px; color: var(--text-stats); opacity: 0.75; }
+.clock-date   { font-size: 16px; color: var(--text-stats); opacity: 0.85; }
+.clock-time   { font-size: 30px; font-weight: 700; font-family: var(--font-num); color: var(--text-stats); letter-spacing: 1px; }
+
+/* ── Filter bar ── */
+.filter-bar {
+  height: var(--filter-h);
+  background: var(--bg-filter);
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  gap: 10px;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--divider);
+}
+.filter-label { font-size: 17px; color: var(--text-muted); margin-right: 4px; }
+.filter-btn {
+  padding: 5px 18px;
+  border-radius: var(--radius-pill);
+  font-size: 17px;
+  font-weight: 600;
+  border: 1.5px solid var(--filter-border);
+  color: var(--text-secondary);
+  background: transparent;
+  transition: background 0.15s, color 0.15s;
+}
+.filter-btn.active,
+.filter-btn:hover {
+  background: var(--filter-active-bg);
+  color: var(--filter-active-text);
+}
+
+/* ── Main content area ── */
+.main-content {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  padding: 10px;
+  gap: 10px;
+  min-height: 0;
+}
+
+/* ── Floor sections ── */
+.floor-section {
+  display: grid;
+  grid-template-rows: auto 1fr;   /* title:auto, beds:fill rest */
+  background: rgba(255,255,255,0.02);
+  border: 1px solid var(--floor-border);
+  border-radius: 10px;
+  overflow: hidden;
+  min-height: 0;
+}
+.floor-4f { flex: 4; }
+.floor-3f { flex: 3; min-width: 320px; grid-template-rows: auto auto 1fr; }
+
+/* ── Ward Stats Panel (inside 3F section) ── */
+.ward-stats {
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  padding: 4px 0 6px;
+}
+.ws-row {
+  flex: 1;
+  display: flex;
+  align-items: stretch;
+  margin: 4px 8px;
+  background: var(--bg-card-empty);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.ws-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  padding: 10px 4px;
+}
+.ws-item + .ws-item::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 15%; height: 70%;
+  width: 1px;
+  background: rgba(0,0,0,0.10);
+}
+.ws-value {
+  font-size: 46px;
+  font-weight: 900;
+  font-family: var(--font-num);
+  color: var(--text-primary);
+  line-height: 1;
+}
+.ws-label {
+  font-size: 17px;
+  color: var(--text-secondary);
+  opacity: 1;
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+/* 流量列色彩 */
+.ws-value.ws-surgery { color: #1565C0; }
+.ws-value.ws-exam    { color: #E65100; }
+.ws-value.ws-consult { color: #BF360C; }
+/* 狀態列色彩 */
+.ws-value.ws-sev-a { color: #2E7D32; }
+.ws-value.ws-sev-b { color: #C68000; }
+.ws-value.ws-sev-c { color: #C62828; }
+.ws-value.ws-iso   { color: #AD1457; }
+.ws-value.ws-dnr   { color: #6A1B9A; }
+.ws-value.ws-rrt   { color: #B71C1C; }
+/* 嚴重程度指示點 */
+.sev-dot {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.sev-dot-a { background: #2E7D32; }
+.sev-dot-b { background: #C68000; }
+.sev-dot-c { background: #C62828; }
+/* 管路列色彩 */
+.ws-value.ws-ett   { color: #E65100; }
+.ws-value.ws-ng    { color: #6A1B9A; }
+.ws-value.ws-foley { color: #00838F; }
+.ws-value.ws-cvc   { color: #2E7D32; }
+
+.floor-title {
+  background: var(--bg-floor-label);
+  padding: 6px 14px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--accent-green);
+  letter-spacing: 1px;
+  border-bottom: 1px solid var(--divider);
+}
+
+.floor-beds {
+  padding: 10px;
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* ── 4F Grid layout
+   7 columns: [left-grp 2col] [corridor 0.3fr] [center+right 4col]
+   Rows 1–6 fill available height equally ── */
+.grid-4f {
+  display: grid;
+  grid-template-columns: 1fr 1fr 0.25fr 1fr 1fr 1fr 1fr;
+  grid-template-rows: repeat(6, minmax(0, 1fr));
+  gap: 10px;
+  height: 100%;
+}
+
+/* Group A: top-left */
+.bed-F4-06 { grid-column:1; grid-row:1; }
+.bed-F4-07 { grid-column:2; grid-row:1; }
+.bed-F4-05 { grid-column:1; grid-row:2; }
+.bed-F4-03 { grid-column:2; grid-row:2; }
+.bed-F4-09 { grid-column:1; grid-row:3; }
+.bed-F4-10 { grid-column:2; grid-row:3; }
+
+/* Group B: top-center (cols 4-5) */
+.bed-F4-01 { grid-column:4; grid-row:1; }
+.bed-F4-02 { grid-column:5; grid-row:1; }
+
+/* Group C: mid-left — bed 8 居中於左群組 */
+.bed-F4-08 { grid-column:1 / span 2; grid-row:4; justify-self:center; width:calc(50% - 5px); }
+.bed-F4-12 { grid-column:1; grid-row:5; }
+.bed-F4-11 { grid-column:2; grid-row:5; }
+.bed-F4-15 { grid-column:1; grid-row:6; }
+.bed-F4-13 { grid-column:2; grid-row:6; }
+
+/* Group D+E: bottom-right — 17,19,21 / 16(偏左一格),18,20,22 */
+.bed-F4-17 { grid-column:5; grid-row:5; }
+.bed-F4-19 { grid-column:6; grid-row:5; }
+.bed-F4-21 { grid-column:7; grid-row:5; }
+.bed-F4-16 { grid-column:4; grid-row:6; }
+.bed-F4-18 { grid-column:5; grid-row:6; }
+.bed-F4-20 { grid-column:6; grid-row:6; }
+.bed-F4-22 { grid-column:7; grid-row:6; }
+
+/* ── 3F Grid layout: 5 columns × 2 rows, fills available height ── */
+/* Col layout: [4] [gap] [3] [2] [1], with 5 above 3 */
+.grid-3f {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  height: 100%;
+}
+.bed-F3-05 { grid-column:3; grid-row:1; }   /* 5 above 3 */
+.bed-F3-04 { grid-column:1; grid-row:2; }   /* far left, separated from 3 */
+/* col 2 empty = one-bed gap between 4 and 3 */
+.bed-F3-03 { grid-column:3; grid-row:2; }
+.bed-F3-02 { grid-column:4; grid-row:2; }
+.bed-F3-01 { grid-column:5; grid-row:2; }
+
+/* ── Bottom tabs ── */
+.bottom-tabs {
+  height: var(--tabs-h);
+  background: var(--bg-tabs);
+  display: flex;
+  flex-shrink: 0;
+  border-top: 1px solid var(--divider);
+}
+.tab-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--text-tab);
+  border-right: 1px solid rgba(255,255,255,0.08);
+  position: relative;
+  transition: background 0.15s, color 0.15s;
+}
+.tab-btn:last-child { border-right: none; }
+.tab-btn:hover { background: var(--bg-tab-active); color: var(--text-tab-active); }
+.tab-btn.active {
+  background: #FFFFFF;
+  color: var(--accent-green);
+  font-weight: 800;
+}
+.tab-btn.active::after {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 4px;
+  background: var(--accent-green);
+  border-radius: 0 0 4px 4px;
+}
+
+/* ── Marquee announcement ── */
+.announce-bar {
+  background: #FFF8E1;
+  border-bottom: 1px solid var(--divider);
+  padding: 5px 16px;
+  font-size: 20px;
+  color: #8B6000;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+.announce-bar span { white-space: nowrap; }
+
+/* ── Badge filter buttons in filter bar ── */
+/* 用 .filter-bar 提高 specificity，覆蓋 components.css 的 .badge 規則 */
+.filter-bar .badge-filter {
+  cursor: pointer;
+  font-size: 15px;
+  padding: 6px 14px;
+  line-height: 20px;      /* 6+20+6 = 32px ≈ 全部按鈕高度 */
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+.filter-bar .badge-filter:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.35);
+}
+.filter-bar .badge-filter.active {
+  box-shadow: 0 0 0 2.5px #1A2635, 0 0 0 5px rgba(0,0,0,0.15);
+}
+
+/* ── Clickable stat items ── */
+.ws-item[data-filter] {
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.ws-item[data-filter]:hover {
+  background: rgba(0,0,0,0.04);
+}
+.ws-item[data-filter].active {
+  background: rgba(0,0,0,0.06);
+  box-shadow: inset 0 0 0 2px rgba(0,0,0,0.28);
+}
+
+/* ── Fade filter ── */
+.bed-card.filtered-out { opacity: 0.2; pointer-events: none; }
+
+/* ── Modal ── */
+.modal-overlay {
+  display: none;
+  position: fixed; inset: 0;
+  background: var(--modal-overlay);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+}
+.modal-overlay.show { display: flex; }
+.modal-box {
+  background: var(--bg-modal);
+  border-radius: var(--radius-modal);
+  width: 580px;
+  max-width: 92vw;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: var(--shadow-modal);
+  border: 1px solid var(--floor-border);
+}
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px 12px;
+  border-bottom: 1px solid var(--divider);
+}
+.modal-bed-id   { font-size: 22px; font-weight: 900; color: var(--accent-green); font-family: var(--font-num); }
+.modal-patient  { font-size: 24px; font-weight: 700; color: var(--text-primary); margin-left: 10px; }
+.modal-basic    { font-size: 15px; color: var(--text-secondary); margin-left: 8px; }
+.modal-close    { font-size: 22px; color: var(--text-muted); cursor: pointer; padding: 4px 8px; border-radius: 4px; }
+.modal-close:hover { background: var(--bg-card-empty); }
+.modal-body     { padding: 16px 20px 20px; }
+.modal-row {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.modal-field {
+  flex: 1;
+  background: var(--bg-card-empty);
+  border-radius: 6px;
+  padding: 10px 14px;
+}
+.modal-field.full { flex: none; width: 100%; }
+.field-label { font-size: 12px; color: var(--text-muted); margin-bottom: 3px; }
+.field-value { font-size: 17px; font-weight: 600; color: var(--text-primary); }
+.field-value.diagnosis { font-size: 15px; font-weight: 500; }
+.modal-badges  { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+.modal-footer  { padding: 10px 20px 16px; display: flex; justify-content: flex-end; }
+.btn-close-modal {
+  padding: 8px 28px;
+  border-radius: var(--radius-pill);
+  background: var(--accent-green);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
