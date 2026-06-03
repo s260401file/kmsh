@@ -1,0 +1,183 @@
+/* ════════════════════════════════════════════════════
+   照護團隊 — Care Team
+   §7.1.2 (12) 含科別、職別、姓名、電話/分機
+   樣式對齊連絡電話：24px/800 標題、accent-green 卡片標頭
+   ════════════════════════════════════════════════════ */
+
+/* ── 面板容器 ── */
+.tm-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 16px 20px 12px;
+  gap: 14px;
+}
+
+/* ── 面板標題 ── */
+.tm-title {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.tm-title-bar {
+  display: inline-block;
+  width: 5px;
+  height: 24px;
+  background: #0097A7;
+  border-radius: 3px;
+}
+
+.tm-title-meta {
+  font-size: 15px;
+  font-weight: 400;
+  color: var(--text-muted);
+  margin-left: 4px;
+}
+
+/* ── 群組網格（2 欄）── */
+.tm-grid {
+  flex: 1;
+  overflow-y: auto;
+  touch-action: pan-y;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+  padding-right: 4px;
+  align-content: start;
+}
+.tm-grid::-webkit-scrollbar { width: 6px; }
+.tm-grid::-webkit-scrollbar-thumb { background: var(--divider); border-radius: 3px; }
+
+/* ── 群組卡片 ── */
+.tm-card {
+  background: var(--bg-card-occ);
+  border: 1px solid var(--divider);
+  border-radius: var(--radius-card);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* 群組卡片標頭 — 帶左色條 */
+.tm-card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px 11px;
+  border-bottom: 1px solid var(--divider);
+}
+
+.tm-card-accent {
+  width: 4px;
+  height: 18px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+/* 群組色彩 */
+.tm-accent-leader     { background: #C9A227; }
+.tm-accent-attending  { background: #1565C0; }
+.tm-accent-resident   { background: #1976D2; }
+.tm-accent-specialist { background: #2E7D32; }
+.tm-accent-nurse      { background: #AD1457; }
+.tm-accent-allied     { background: #6A1B9A; }
+
+.tm-card-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.tm-card-count {
+  font-size: 13px;
+  font-weight: 900;
+  color: var(--text-muted);
+  font-family: var(--font-num);
+  margin-left: auto;
+}
+
+/* ── 成員表格 ── */
+.tm-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.tm-table thead tr {
+  background: #E8F4EE;
+}
+
+.tm-table th {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-align: left;
+  padding: 8px 16px;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--divider);
+}
+
+.tm-table tbody tr {
+  border-bottom: 1px solid var(--bg-card-empty);
+}
+.tm-table tbody tr:last-child { border-bottom: none; }
+
+.tm-table td {
+  font-size: 16px;
+  color: var(--text-primary);
+  padding: 10px 16px;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+/* 職別 */
+.tm-td-role {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* 科別/專長 */
+.tm-td-dept {
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+/* 分機 */
+.tm-td-ext {
+  font-size: 15px;
+  font-weight: 700;
+  font-family: var(--font-num);
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+/* 手機 */
+.tm-td-mobile {
+  font-size: 13px;
+  color: var(--text-muted);
+  font-family: var(--font-num);
+}
+
+/* 主管列：強調 */
+.tm-row-leader td {
+  background: #FFF8E1;
+}
+.tm-row-leader .tm-td-role {
+  color: #B7791F;
+  font-weight: 800;
+}
+
+/* ── 空狀態 ── */
+.tm-empty-row td {
+  text-align: center;
+  color: var(--text-muted);
+  padding: 20px 16px;
+  font-size: 15px;
+}

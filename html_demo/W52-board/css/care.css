@@ -1,0 +1,153 @@
+/* ── 照護提醒 面板 ── */
+.care-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 16px 20px 12px;
+  gap: 14px;
+}
+
+/* ── 面板標題 ── */
+.care-title {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+.care-title-bar {
+  display: inline-block;
+  width: 5px;
+  height: 24px;
+  background: var(--accent-green);
+  border-radius: 3px;
+}
+
+/* ── 提醒列表容器 ── */
+.care-list {
+  flex: 1;
+  overflow-y: auto;
+  touch-action: pan-y;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-right: 4px;
+}
+.care-list::-webkit-scrollbar { width: 6px; }
+.care-list::-webkit-scrollbar-track { background: transparent; }
+.care-list::-webkit-scrollbar-thumb { background: var(--divider); border-radius: 3px; }
+
+/* ── 單筆提醒卡片 ── */
+.care-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--bg-card-occ);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  padding: 12px 16px 12px 0;
+  min-height: 62px;
+  flex-shrink: 0;
+}
+
+/* 左側優先度色條 */
+.care-priority-bar {
+  width: 6px;
+  align-self: stretch;
+  border-radius: 8px 0 0 8px;
+  flex-shrink: 0;
+}
+.care-priority-bar.priority-bar-高 { background: var(--accent-red); }
+.care-priority-bar.priority-bar-中 { background: var(--accent-yellow); }
+.care-priority-bar.priority-bar-低 { background: var(--accent-green); }
+
+/* 床號＋病患資訊 區塊 */
+.care-bed-info {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-shrink: 0;
+  min-width: 160px;
+}
+.care-bed {
+  font-size: 22px;
+  font-weight: 900;
+  font-family: var(--font-num);
+  color: var(--text-primary);
+  letter-spacing: 0.5px;
+  line-height: 1;
+}
+.care-patient {
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1;
+}
+.care-gender-m { color: #1565C0; }
+.care-gender-f { color: #AD1457; }
+.care-basic {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1;
+}
+
+/* 類別 badge */
+.care-category {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  flex-shrink: 0;
+  background: #E8ECF2;
+  color: var(--text-secondary);
+}
+.care-category.cat-術後照護 { background: #E3F2FD; color: #1565C0; }
+.care-category.cat-感控     { background: #FCE4EC; color: #AD1457; }
+.care-category.cat-藥物     { background: #FFF8E1; color: #F57F17; }
+.care-category.cat-管路     { background: #EDE7F6; color: #5E35B1; }
+.care-category.cat-跌倒防護 { background: #FFEBEE; color: #B71C1C; }
+.care-category.cat-衛教     { background: #E8F5E9; color: #2E7D32; }
+.care-category.cat-檢查追蹤 { background: #FFF3E0; color: #E65100; }
+.care-category.cat-出院準備 { background: #F3E5F5; color: #7B1FA2; }
+
+/* 提醒內容主文 */
+.care-content {
+  flex: 1;
+  font-size: 19px;
+  font-weight: 500;
+  color: var(--text-primary);
+  line-height: 1.4;
+}
+
+/* 右側時間＋護理師 */
+.care-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  flex-shrink: 0;
+  min-width: 100px;
+}
+.care-time {
+  font-size: 18px;
+  font-weight: 700;
+  font-family: var(--font-num);
+  color: var(--text-secondary);
+}
+.care-nurse {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+/* 錯誤狀態 */
+.care-error {
+  color: var(--accent-red);
+  font-size: 18px;
+  padding: 20px;
+  text-align: center;
+}

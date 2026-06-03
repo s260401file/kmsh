@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>高雄市立民生醫院 W52病房 電子白板 — 醫師資訊</title>
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/reset.css">
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/doctor.css">
+</head>
+<body>
+
+  <!-- ── Header ── -->
+  <header class="page-header">
+    <div class="header-left">
+      W52
+      <span class="ward-sub">一般病房</span>
+    </div>
+    <div class="header-center">
+      <div class="staff-block">
+        <div class="staff-label">病房主任</div>
+        <div class="staff-name" id="ward-director">—</div>
+      </div>
+      <div class="staff-block">
+        <div class="staff-label">單位護理長</div>
+        <div class="staff-name" id="head-nurse">—</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="update-label">資料更新時間：剛剛</div>
+      <div class="clock-date" id="clock-date"></div>
+      <div class="clock-time" id="clock-time"></div>
+    </div>
+  </header>
+
+  <!-- ── Announcement marquee ── -->
+  <div class="announce-bar">
+    <span>◆</span>
+    <span>2026/05/15 院內感染管制週宣導：請確實執行手部衛生，進出隔離病房務必穿戴適當防護裝備。</span>
+  </div>
+
+  <!-- ── Main content ── -->
+  <main class="main-content">
+    <div class="dr-panel">
+
+      <!-- 面板標題 -->
+      <div class="dr-title">
+        <span class="dr-title-bar"></span>
+        醫師資訊
+      </div>
+
+      <!-- 雙欄 -->
+      <div class="dr-columns">
+
+        <!-- 左欄：醫師/專師負責床位 (8.1) -->
+        <div class="dr-card">
+          <div class="dr-card-header">
+            醫師 / 專師負責床位
+            <span class="dr-card-count" id="dr-bed-count"></span>
+          </div>
+          <div class="dr-table-wrap">
+            <table class="dr-table">
+              <thead>
+                <tr>
+                  <th>姓名</th>
+                  <th>職別</th>
+                  <th>專科</th>
+                  <th>分機</th>
+                  <th>負責床位</th>
+                </tr>
+              </thead>
+              <tbody id="doctor-bed-list"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 右欄：查房時間表 (8.2) -->
+        <div class="dr-card">
+          <div class="dr-card-header">查房時間表</div>
+          <div class="dr-table-wrap">
+            <table class="dr-table">
+              <thead>
+                <tr>
+                  <th>日期</th>
+                  <th>姓名</th>
+                  <th>專科</th>
+                  <th>預計時段</th>
+                  <th class="dr-th-center">狀態</th>
+                </tr>
+              </thead>
+              <tbody id="round-list"></tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- ── Bottom tabs ── -->
+  <nav class="bottom-tabs">
+    <a href="index.html"    class="tab-btn">病室動態</a>
+    <a href="care.html"     class="tab-btn">照護提醒</a>
+    <a href="surgery.html"  class="tab-btn">手術資訊</a>
+    <a href="exam.html"     class="tab-btn">檢查/會診</a>
+    <a href="contact.html"  class="tab-btn">連絡電話</a>
+    <a href="schedule.html" class="tab-btn">排班資訊</a>
+    <a href="doctor.html"   class="tab-btn active">醫師資訊</a>
+    <a href="bulletin.html" class="tab-btn">佈告欄</a>
+    <a href="evacuation.html" class="tab-btn">避難圖</a>
+    <a href="handover.html" class="tab-btn">護理交班</a>
+    <a href="team.html" class="tab-btn">照護團隊</a>
+  </nav>
+
+  <script src="js/doctorData.js"></script>
+  <script src="js/doctor.js"></script>
+</body>
+</html>

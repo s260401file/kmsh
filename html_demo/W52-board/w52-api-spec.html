@@ -1,0 +1,1233 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>W52 一般病房 — Demo API 規格對照</title>
+<style>
+  :root {
+    --bg-page:        #F2F5F8;
+    --bg-card:        #FFFFFF;
+    --bg-soft:        #F5F9FC;
+    --bg-th:          #E8F4EE;
+    --bg-code:        #1A2635;
+    --bg-code-line:   #243245;
+    --accent-green:   #2D7A55;
+    --accent-blue:    #1565C0;
+    --accent-red:     #C62828;
+    --accent-orange:  #E65100;
+    --accent-purple:  #6A1B9A;
+    --text-primary:   #1A2635;
+    --text-secondary: #3A5068;
+    --text-muted:     #7A8FA0;
+    --divider:        #D0DBE5;
+    --border:         #B0C8D8;
+    --font-main:      "Microsoft JhengHei UI", "微軟正黑體", "Noto Sans TC", sans-serif;
+    --font-mono:      "JetBrains Mono", "Consolas", "Courier New", monospace;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html, body { background: var(--bg-page); color: var(--text-primary); font-family: var(--font-main); font-size: 15px; line-height: 1.6; }
+
+  /* ── Top bar ── */
+  .topbar {
+    background: var(--accent-green);
+    color: #FFF;
+    padding: 18px 28px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+    position: sticky; top: 0; z-index: 100;
+  }
+  .topbar h1 { font-size: 22px; font-weight: 800; }
+  .topbar .sub { font-size: 13px; opacity: 0.85; margin-top: 4px; }
+  .topbar .meta { font-size: 12px; opacity: 0.75; margin-top: 6px; }
+
+  /* ── Layout ── */
+  .layout { display: flex; gap: 0; min-height: calc(100vh - 88px); }
+  .sidebar {
+    width: 280px;
+    background: var(--bg-card);
+    border-right: 1px solid var(--divider);
+    padding: 20px 18px;
+    position: sticky;
+    top: 88px;
+    height: calc(100vh - 88px);
+    overflow-y: auto;
+    flex-shrink: 0;
+  }
+  .sidebar h2 {
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--divider);
+  }
+  .sidebar ol { list-style: none; }
+  .sidebar li { margin-bottom: 2px; }
+  .sidebar a {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 7px 10px;
+    font-size: 13.5px;
+    color: var(--text-secondary);
+    text-decoration: none;
+    border-radius: 6px;
+    border-left: 3px solid transparent;
+    transition: background 0.12s, color 0.12s, border-color 0.12s;
+  }
+  .sidebar a:hover { background: var(--bg-soft); color: var(--text-primary); }
+  .sidebar a.active { background: #EAF5EF; color: var(--accent-green); border-left-color: var(--accent-green); font-weight: 700; }
+  .sidebar .num {
+    display: inline-block;
+    min-width: 22px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-muted);
+    font-weight: 700;
+  }
+
+  .main {
+    flex: 1;
+    padding: 28px 32px 80px;
+    max-width: 1200px;
+  }
+
+  /* ── Overview ── */
+  .overview {
+    background: var(--bg-card);
+    border: 1px solid var(--divider);
+    border-radius: 10px;
+    padding: 20px 24px;
+    margin-bottom: 28px;
+  }
+  .overview h2 { font-size: 18px; font-weight: 800; color: var(--accent-green); margin-bottom: 10px; }
+  .overview p { color: var(--text-secondary); margin-bottom: 6px; }
+  .overview ul { margin-left: 22px; color: var(--text-secondary); }
+
+  .summary-table {
+    background: var(--bg-card);
+    border: 1px solid var(--divider);
+    border-radius: 10px;
+    padding: 16px 0 0;
+    margin-bottom: 28px;
+    overflow: hidden;
+  }
+  .summary-table h2 { font-size: 18px; font-weight: 800; color: var(--accent-green); padding: 0 24px 12px; }
+  .summary-table table { width: 100%; border-collapse: collapse; }
+  .summary-table th { background: var(--bg-th); font-size: 13px; font-weight: 700; color: var(--text-secondary); text-align: left; padding: 10px 16px; border-bottom: 1px solid var(--divider); }
+  .summary-table td { font-size: 14px; padding: 10px 16px; border-bottom: 1px solid var(--divider); vertical-align: top; }
+  .summary-table tbody tr:last-child td { border-bottom: none; }
+  .summary-table .col-no { width: 38px; font-family: var(--font-mono); font-weight: 800; color: var(--text-muted); }
+  .summary-table .col-tab { width: 100px; font-weight: 700; }
+  .summary-table .col-spec { width: 80px; font-family: var(--font-mono); color: var(--accent-purple); }
+  .summary-table .col-method { width: 60px; }
+  .summary-table .col-path { font-family: var(--font-mono); font-size: 13px; color: var(--accent-blue); }
+  .summary-table tbody tr:hover { background: var(--bg-soft); }
+  .summary-table a { color: inherit; text-decoration: none; }
+
+  /* ── Endpoint section ── */
+  .endpoint {
+    background: var(--bg-card);
+    border: 1px solid var(--divider);
+    border-radius: 10px;
+    margin-bottom: 24px;
+    overflow: hidden;
+    scroll-margin-top: 96px;
+  }
+  .endpoint-header {
+    background: linear-gradient(180deg, #F8FBFC 0%, #FFFFFF 100%);
+    padding: 16px 24px 14px;
+    border-bottom: 1px solid var(--divider);
+  }
+  .endpoint-no {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 800;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+    letter-spacing: 1px;
+  }
+  .endpoint-title {
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .endpoint-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+  }
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .tag-tab { background: #EAF5EF; color: var(--accent-green); }
+  .tag-spec { background: #F3E5F5; color: var(--accent-purple); font-family: var(--font-mono); }
+  .tag-file { background: #ECEFF1; color: var(--text-secondary); font-family: var(--font-mono); }
+  .tag-status-todo { background: #FFEBEE; color: #C62828; }
+  .tag-status-his  { background: #FFF8E1; color: #B7791F; }
+  .tag-status-local{ background: #E3F2FD; color: var(--accent-blue); }
+
+  .method-path {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 8px;
+    padding: 8px 12px;
+    background: var(--bg-code);
+    border-radius: 6px;
+    font-family: var(--font-mono);
+    font-size: 14px;
+    color: #FFF;
+    overflow-x: auto;
+  }
+  .method-get { background: #2E7D32; color: #FFF; padding: 2px 10px; border-radius: 4px; font-size: 12px; font-weight: 800; }
+
+  .endpoint-body { padding: 18px 24px 22px; }
+
+  .endpoint-body h4 {
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin: 16px 0 8px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--divider);
+  }
+  .endpoint-body h4:first-child { margin-top: 0; }
+  .endpoint-body p { color: var(--text-secondary); margin-bottom: 6px; font-size: 14px; }
+  .endpoint-body ul { margin-left: 20px; color: var(--text-secondary); font-size: 14px; }
+  .endpoint-body li { margin-bottom: 3px; }
+
+  /* ── Field table ── */
+  .field-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 6px 0 10px;
+    border: 1px solid var(--divider);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  .field-table th {
+    background: var(--bg-th);
+    font-size: 12.5px;
+    font-weight: 800;
+    color: var(--text-secondary);
+    text-align: left;
+    padding: 7px 12px;
+    border-bottom: 1px solid var(--divider);
+  }
+  .field-table td {
+    font-size: 13.5px;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--bg-soft);
+    vertical-align: top;
+  }
+  .field-table tbody tr:last-child td { border-bottom: none; }
+  .field-table .col-field { width: 200px; font-family: var(--font-mono); font-weight: 700; color: var(--text-primary); }
+  .field-table .col-type  { width: 130px; }
+  .field-table .col-req   { width: 60px; text-align: center; }
+  .field-table .nested { padding-left: 16px; color: var(--text-muted); }
+
+  .type-tag {
+    display: inline-block;
+    padding: 1px 7px;
+    border-radius: 3px;
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    font-weight: 700;
+  }
+  .type-string   { background: #E8F5E9; color: #1B5E20; }
+  .type-int      { background: #E3F2FD; color: #0D47A1; }
+  .type-bool     { background: #FFF3E0; color: #BF360C; }
+  .type-array    { background: #F3E5F5; color: #4A148C; }
+  .type-object   { background: #FFFDE7; color: #827717; }
+  .type-datetime { background: #E0F7FA; color: #006064; }
+  .type-enum     { background: #FCE4EC; color: #880E4F; }
+
+  .req-yes { color: var(--accent-red); font-weight: 800; }
+  .req-no  { color: var(--text-muted); }
+
+  /* ── JSON sample ── */
+  details {
+    border: 1px solid var(--divider);
+    border-radius: 6px;
+    margin: 6px 0;
+    overflow: hidden;
+  }
+  details summary {
+    background: var(--bg-soft);
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    user-select: none;
+  }
+  details summary:hover { background: #EAF5EF; }
+  details[open] summary { border-bottom: 1px solid var(--divider); }
+  pre {
+    background: var(--bg-code);
+    color: #E0E6ED;
+    padding: 14px 16px;
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    line-height: 1.55;
+    overflow-x: auto;
+  }
+  pre .k { color: #80CBC4; }
+  pre .s { color: #C5E1A5; }
+  pre .n { color: #FFCC80; }
+  pre .b { color: #F48FB1; }
+  pre .c { color: #607D8B; font-style: italic; }
+  code {
+    background: #ECEFF1;
+    color: var(--accent-purple);
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+  }
+
+  /* ── Note callouts ── */
+  .note {
+    margin: 10px 0;
+    padding: 10px 14px;
+    background: #FFF8E1;
+    border-left: 4px solid #E8A020;
+    border-radius: 4px;
+    font-size: 13.5px;
+    color: #6D4C00;
+  }
+  .note-info {
+    background: #E3F2FD;
+    border-left-color: var(--accent-blue);
+    color: #0D47A1;
+  }
+  .note strong { font-weight: 800; }
+
+  /* ── Print ── */
+  @media print {
+    .sidebar, .topbar { display: none; }
+    .main { max-width: 100%; padding: 0; }
+    .endpoint { break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+  <!-- ── Top bar ── -->
+  <div class="topbar">
+    <h1>W52 一般病房 — Demo API 規格對照</h1>
+    <div class="sub">本文件為前端 HTML Demo 所預期的後端 API 規格，用以與資訊單位提供之 API 介接清單對照</div>
+    <div class="meta">病房代碼 W52　·　共 12 個 API 端點　·　PascalCase 欄位命名（對應 C# Model）　·　最後更新 2026-06-03</div>
+  </div>
+
+  <div class="layout">
+
+    <!-- ── Sidebar TOC ── -->
+    <nav class="sidebar">
+      <h2>API 端點</h2>
+      <ol>
+        <li><a href="#ep-1"><span class="num">01</span>病房基本資料</a></li>
+        <li><a href="#ep-2"><span class="num">02</span>照護提醒</a></li>
+        <li><a href="#ep-3"><span class="num">03</span>手術資訊</a></li>
+        <li><a href="#ep-4"><span class="num">04</span>檢查／會診</a></li>
+        <li><a href="#ep-5"><span class="num">05</span>連絡電話</a></li>
+        <li><a href="#ep-6"><span class="num">06</span>排班資訊</a></li>
+        <li><a href="#ep-7"><span class="num">07</span>醫師資訊</a></li>
+        <li><a href="#ep-8"><span class="num">08</span>佈告欄</a></li>
+        <li><a href="#ep-9"><span class="num">09</span>避難圖</a></li>
+        <li><a href="#ep-10"><span class="num">10</span>護理交班</a></li>
+        <li><a href="#ep-11"><span class="num">11</span>照護團隊</a></li>
+      </ol>
+      <h2 style="margin-top:24px;">附錄</h2>
+      <ol>
+        <li><a href="#appendix-wrapper"><span class="num">A</span>共通回應格式</a></li>
+        <li><a href="#appendix-source"><span class="num">B</span>資料來源說明</a></li>
+        <li><a href="#appendix-status"><span class="num">C</span>狀態列舉值</a></li>
+      </ol>
+    </nav>
+
+    <!-- ── Main content ── -->
+    <main class="main">
+
+      <!-- ── Overview ── -->
+      <section class="overview">
+        <h2>說明</h2>
+        <p>本規格書由 <code>html_demo/W52-board/</code> 之 11 個 HTML 頁籤與對應之 <code>js/*Data.js</code> mock JSON 反推產生，用於：</p>
+        <ul>
+          <li>與資訊單位提供之 <code>api-spec.html</code>（HIS / TMS / 院內既有 API）對照確認可介接欄位</li>
+          <li>盤點需新建之本地 API 端點（不在 HIS API 範圍內者）</li>
+          <li>作為後續 ASP.NET Core Controller / Service / Model 開發的依據</li>
+        </ul>
+        <p style="margin-top:8px;">所有端點預設以 JWT Bearer Token 認證，回應採 <code>{ Success, Message, Data }</code> 包裝，PascalCase 欄位對應後端 C# Model Property。</p>
+      </section>
+
+      <!-- ── Summary table ── -->
+      <section class="summary-table">
+        <h2>端點總表</h2>
+        <table>
+          <thead>
+            <tr><th class="col-no">#</th><th class="col-tab">頁籤</th><th class="col-spec">規格</th><th class="col-method">方法</th><th class="col-path">路徑</th><th>用途</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="col-no">01</td><td class="col-tab"><a href="#ep-1">病室動態</a></td><td class="col-spec">§7.1.1</td><td class="col-method">GET</td><td class="col-path"><a href="#ep-1">/api/wards/{wardCode}</a></td><td>病房 41 床配置、住院病患明細</td></tr>
+            <tr><td class="col-no">02</td><td class="col-tab"><a href="#ep-2">照護提醒</a></td><td class="col-spec">§7.1.2 (1)</td><td class="col-method">GET</td><td class="col-path"><a href="#ep-2">/api/wards/{wardCode}/care-reminders</a></td><td>照護提醒事項（含分級與時段）</td></tr>
+            <tr><td class="col-no">03</td><td class="col-tab"><a href="#ep-3">手術資訊</a></td><td class="col-spec">§7.1.2 (4)</td><td class="col-method">GET</td><td class="col-path"><a href="#ep-3">/api/wards/{wardCode}/surgery-info?date=</a></td><td>當日手術 12 欄位明細</td></tr>
+            <tr><td class="col-no">04</td><td class="col-tab"><a href="#ep-4">檢查/會診</a></td><td class="col-spec">§7.1.2 (5)</td><td class="col-method">GET</td><td class="col-path"><a href="#ep-4">/api/wards/{wardCode}/exam-consult?date=</a></td><td>檢查清單 + 會診清單</td></tr>
+            <tr><td class="col-no">05</td><td class="col-tab"><a href="#ep-5">連絡電話</a></td><td class="col-spec">§7.1.2 (6)</td><td class="col-method">GET</td><td class="col-path"><a href="#ep-5">/api/wards/{wardCode}/contacts?date=</a></td><td>當日值班 + 常用電話</td></tr>
+            <tr><td class="col-no">06</td><td class="col-tab"><a href="#ep-6">排班資訊</a></td><td class="col-spec">§7.1.2 (7)</td><td class="col-method">GET</td><td class="col-path"><a href="#ep-6">/api/wards/{wardCode}/schedule?date=</a></td><td>三班別護理人員/專師/住院醫師</td></tr>
+            <tr><td class="col-no">07</td><td class="col-tab"><a href="#ep-7">醫師資訊</a></td><td class="col-spec">§7.1.2 (8)</td><td class="col-method">GET</td><td class="col-path"><a href="#ep-7">/api/wards/{wardCode}/doctor-info?date=</a></td><td>負責床位 + 查房時間表</td></tr>
+            <tr><td class="col-no">08</td><td class="col-tab"><a href="#ep-8">佈告欄</a></td><td class="col-spec">§7.1.2 (9)</td><td class="col-method">GET</td><td class="col-path"><a href="#ep-8">/api/wards/{wardCode}/bulletins</a></td><td>護理站公告 + 院方公告</td></tr>
+            <tr><td class="col-no">09</td><td class="col-tab"><a href="#ep-9">避難圖</a></td><td class="col-spec">§7.1.2 (10)</td><td class="col-method">GET</td><td class="col-path"><a href="#ep-9">/api/wards/{wardCode}/evacuation</a></td><td>避難圖 + 設備清單 + 緊急聯絡</td></tr>
+            <tr><td class="col-no">10</td><td class="col-tab"><a href="#ep-10">護理交班</a></td><td class="col-spec">§7.1.2 (11)</td><td class="col-method">GET</td><td class="col-path"><a href="#ep-10">/api/wards/{wardCode}/handover?date=</a></td><td>交班日誌摘要（病患重點交班）</td></tr>
+            <tr><td class="col-no">11</td><td class="col-tab"><a href="#ep-11">照護團隊</a></td><td class="col-spec">§7.1.2 (12)</td><td class="col-method">GET</td><td class="col-path"><a href="#ep-11">/api/wards/{wardCode}/team</a></td><td>多職別團隊成員清單</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- ════════════════════════════════════════════════
+           01 病房基本資料
+           ════════════════════════════════════════════════ -->
+      <article class="endpoint" id="ep-1">
+        <div class="endpoint-header">
+          <div class="endpoint-no">ENDPOINT 01</div>
+          <div class="endpoint-title">病房基本資料（病室動態）</div>
+          <div class="endpoint-tags">
+            <span class="tag tag-tab">頁籤 1 · 病室動態</span>
+            <span class="tag tag-spec">§7.1.1 / §7.1.2 (2)(3)</span>
+            <span class="tag tag-file">index.html · js/mockData.js</span>
+            <span class="tag tag-status-todo">新建端點</span>
+          </div>
+          <div class="method-path">
+            <span class="method-get">GET</span>
+            <span>/api/wards/{wardCode}</span>
+          </div>
+        </div>
+        <div class="endpoint-body">
+          <h4>用途</h4>
+          <p>取得指定病房的醫院基本資訊、床位配置與每床病患明細。對應病室動態主頁顯示之全病房 41 床狀態網格。</p>
+
+          <h4>Path 參數</h4>
+          <table class="field-table">
+            <thead><tr><th class="col-field">欄位</th><th class="col-type">型別</th><th class="col-req">必填</th><th>說明</th></tr></thead>
+            <tbody>
+              <tr><td class="col-field">wardCode</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td>病房代碼，例：<code>W52</code></td></tr>
+            </tbody>
+          </table>
+
+          <h4>Data 結構</h4>
+          <table class="field-table">
+            <thead><tr><th class="col-field">欄位</th><th class="col-type">型別</th><th class="col-req">必填</th><th>說明</th></tr></thead>
+            <tbody>
+              <tr><td class="col-field">HospitalInfo</td><td><span class="type-tag type-object">object</span></td><td class="col-req req-yes">Y</td><td>醫院/病房基本資訊</td></tr>
+              <tr><td class="col-field nested">.HospitalName</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td>「高雄市立民生醫院」</td></tr>
+              <tr><td class="col-field nested">.WardName</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td>「W52病房」</td></tr>
+              <tr><td class="col-field nested">.WardCode</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td>「W52」</td></tr>
+              <tr><td class="col-field nested">.WardDirector</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-no">—</td><td>病房主任姓名（自 TMS getOrgUnit.PE_NO_Leader 取得）</td></tr>
+              <tr><td class="col-field nested">.HeadNurse</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td>單位護理長姓名</td></tr>
+              <tr><td class="col-field">Beds</td><td><span class="type-tag type-array">Bed[]</span></td><td class="col-req req-yes">Y</td><td>床位陣列（41 筆，含空床）</td></tr>
+              <tr><td class="col-field nested">.BedId</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td>床位 ID，格式 <code>W52-XXX</code></td></tr>
+              <tr><td class="col-field nested">.Status</td><td><span class="type-tag type-enum">enum</span></td><td class="col-req req-yes">Y</td><td><code>occupied</code> / <code>isolation</code> / <code>transfer</code> / <code>discharge</code> / <code>empty</code></td></tr>
+              <tr><td class="col-field nested">.Patient</td><td><span class="type-tag type-object">Patient</span></td><td class="col-req req-no">—</td><td>病患資料；空床時為 <code>null</code></td></tr>
+            </tbody>
+          </table>
+
+          <h4>Patient 結構（規格 §7.1.2 (3) 病患詳細資料）</h4>
+          <table class="field-table">
+            <thead><tr><th class="col-field">欄位</th><th class="col-type">型別</th><th class="col-req">必填</th><th>說明</th></tr></thead>
+            <tbody>
+              <tr><td class="col-field">PatientName</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td>姓名（含遮罩，如 林○志）</td></tr>
+              <tr><td class="col-field">Gender</td><td><span class="type-tag type-enum">enum</span></td><td class="col-req req-yes">Y</td><td><code>M</code> / <code>F</code></td></tr>
+              <tr><td class="col-field">Age</td><td><span class="type-tag type-int">int</span></td><td class="col-req req-yes">Y</td><td>年齡</td></tr>
+              <tr><td class="col-field">BirthDate</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-no">—</td><td>出生日期 <code>yyyy/MM/dd</code></td></tr>
+              <tr><td class="col-field">MedicalRecordNo</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td>病歷號</td></tr>
+              <tr><td class="col-field">AdmissionDate</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td>入院日 <code>MM/dd</code></td></tr>
+              <tr><td class="col-field">Diagnosis</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td>主診斷（英文病名）</td></tr>
+              <tr><td class="col-field">Department</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td>科別</td></tr>
+              <tr><td class="col-field">AttendingDoctor</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td>主治醫師</td></tr>
+              <tr><td class="col-field">PrimaryNurse</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td>責任護理師</td></tr>
+              <tr><td class="col-field">Condition</td><td><span class="type-tag type-enum">enum</span></td><td class="col-req req-yes">Y</td><td><code>穩定</code> / <code>重症</code> / <code>危急</code></td></tr>
+              <tr><td class="col-field">Isolation</td><td><span class="type-tag type-enum">enum</span></td><td class="col-req req-yes">Y</td><td><code>無</code> / <code>接觸隔離</code> / <code>飛沫隔離</code> / <code>空氣隔離</code></td></tr>
+              <tr><td class="col-field">Transport</td><td><span class="type-tag type-enum">enum?</span></td><td class="col-req req-no">—</td><td><code>輪椅</code> / <code>推床</code> / <code>null</code></td></tr>
+              <tr><td class="col-field">Dependency</td><td><span class="type-tag type-string">string?</span></td><td class="col-req req-no">—</td><td>依賴度等級</td></tr>
+              <tr><td colspan="4" style="font-size:12px;color:var(--text-muted);padding:6px 12px;background:var(--bg-soft);"><strong>9 項病患註記旗標（皆 <span class="type-tag type-bool">bool</span>）：</strong>
+                Dnr、FallRisk、Confidential、NoTreatment、Npo、Allergy、Rrt、Chemo、Oxygen
+              </td></tr>
+              <tr><td colspan="4" style="font-size:12px;color:var(--text-muted);padding:6px 12px;background:var(--bg-soft);"><strong>3 項待處理旗標（皆 <span class="type-tag type-bool">bool</span>）：</strong>
+                Surgery、Exam、Consult — 用於床位狀態圖示
+              </td></tr>
+              <tr><td class="col-field">Notes</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-no">—</td><td>備註</td></tr>
+            </tbody>
+          </table>
+
+          <h4>Sample JSON</h4>
+          <details>
+            <summary>展開回應範例</summary>
+<pre><span class="k">{</span>
+  <span class="k">"Success"</span>: <span class="b">true</span>,
+  <span class="k">"Message"</span>: <span class="s">""</span>,
+  <span class="k">"Data"</span>: <span class="k">{</span>
+    <span class="k">"HospitalInfo"</span>: <span class="k">{</span>
+      <span class="k">"HospitalName"</span>: <span class="s">"高雄市立民生醫院"</span>,
+      <span class="k">"WardName"</span>: <span class="s">"W52病房"</span>,
+      <span class="k">"WardCode"</span>: <span class="s">"W52"</span>,
+      <span class="k">"WardDirector"</span>: <span class="s">"吳○明"</span>,
+      <span class="k">"HeadNurse"</span>: <span class="s">"林○芳"</span>
+    <span class="k">}</span>,
+    <span class="k">"Beds"</span>: <span class="k">[</span>
+      <span class="k">{</span>
+        <span class="k">"BedId"</span>: <span class="s">"W52-001"</span>,
+        <span class="k">"Status"</span>: <span class="s">"occupied"</span>,
+        <span class="k">"Patient"</span>: <span class="k">{</span>
+          <span class="k">"PatientName"</span>: <span class="s">"林○志"</span>,
+          <span class="k">"Gender"</span>: <span class="s">"M"</span>,
+          <span class="k">"Age"</span>: <span class="n">75</span>,
+          <span class="k">"AdmissionDate"</span>: <span class="s">"05/08"</span>,
+          <span class="k">"Diagnosis"</span>: <span class="s">"Hip fracture, Post-OP Day 3"</span>,
+          <span class="k">"AttendingDoctor"</span>: <span class="s">"張○醫師"</span>,
+          <span class="k">"PrimaryNurse"</span>: <span class="s">"陳○護理師"</span>,
+          <span class="k">"Condition"</span>: <span class="s">"穩定"</span>,
+          <span class="k">"Isolation"</span>: <span class="s">"無"</span>,
+          <span class="k">"Dnr"</span>: <span class="b">true</span>, <span class="k">"FallRisk"</span>: <span class="b">true</span>,
+          <span class="k">"Surgery"</span>: <span class="b">false</span>, <span class="k">"Exam"</span>: <span class="b">false</span>, <span class="k">"Consult"</span>: <span class="b">false</span>
+          <span class="c">/* ... 其餘旗標欄位略 ... */</span>
+        <span class="k">}</span>
+      <span class="k">}</span>
+      <span class="c">/* ... 共 41 筆 ... */</span>
+    <span class="k">]</span>
+  <span class="k">}</span>
+<span class="k">}</span></pre>
+          </details>
+
+          <h4>資料來源</h4>
+          <ul>
+            <li><strong>HIS API：</strong>需自 HIS 取得當下病房住院病患（病歷號、姓名、診斷、入院日、主治醫師）</li>
+            <li><strong>本地 DB：</strong><code>Station</code>（床位配置）、<code>BedNurseAssign</code>（責任護理師）、病患旗標表（DNR/Fall/Iso 等）</li>
+            <li><strong>TMS API：</strong><code>getOrgUnit.PE_NO_Leader</code> 取得護理長 / 病房主任</li>
+          </ul>
+
+          <div class="note">
+            <strong>對照 IT 提供之 API：</strong>HIS 並未提供「整合床位 + 病患旗標」之單一端點，本端點需後端整合多個資料來源後組裝回應。
+          </div>
+        </div>
+      </article>
+
+      <!-- ════════════════════════════════════════════════
+           02 照護提醒
+           ════════════════════════════════════════════════ -->
+      <article class="endpoint" id="ep-2">
+        <div class="endpoint-header">
+          <div class="endpoint-no">ENDPOINT 02</div>
+          <div class="endpoint-title">照護提醒</div>
+          <div class="endpoint-tags">
+            <span class="tag tag-tab">頁籤 2 · 照護提醒</span>
+            <span class="tag tag-spec">§7.1.2 (1)</span>
+            <span class="tag tag-file">care.html · js/careData.js</span>
+            <span class="tag tag-status-local">本地 DB</span>
+          </div>
+          <div class="method-path">
+            <span class="method-get">GET</span>
+            <span>/api/wards/{wardCode}/care-reminders</span>
+          </div>
+        </div>
+        <div class="endpoint-body">
+          <h4>用途</h4>
+          <p>取得病房當前有效之照護提醒事項（含優先度、時段、責任護理師）。</p>
+
+          <h4>Data 結構</h4>
+          <table class="field-table">
+            <thead><tr><th class="col-field">欄位</th><th class="col-type">型別</th><th class="col-req">必填</th><th>說明</th></tr></thead>
+            <tbody>
+              <tr><td class="col-field">WardCode</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td>病房代碼</td></tr>
+              <tr><td class="col-field">QueryTime</td><td><span class="type-tag type-datetime">datetime</span></td><td class="col-req req-yes">Y</td><td>查詢時間 <code>yyyy-MM-ddTHH:mm:ss</code></td></tr>
+              <tr><td class="col-field">Items</td><td><span class="type-tag type-array">CareReminder[]</span></td><td class="col-req req-yes">Y</td><td>提醒清單</td></tr>
+              <tr><td class="col-field nested">.ReminderId</td><td><span class="type-tag type-int">int</span></td><td class="col-req req-yes">Y</td><td>提醒 ID</td></tr>
+              <tr><td class="col-field nested">.BedId</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td>床位 ID <code>W52-XXX</code></td></tr>
+              <tr><td class="col-field nested">.BedNo</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td>床號（純數字 3 碼）</td></tr>
+              <tr><td class="col-field nested">.PatientName</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td>病患姓名</td></tr>
+              <tr><td class="col-field nested">.Gender</td><td><span class="type-tag type-enum">M/F</span></td><td class="col-req req-yes">Y</td><td>性別</td></tr>
+              <tr><td class="col-field nested">.Age</td><td><span class="type-tag type-int">int</span></td><td class="col-req req-yes">Y</td><td>年齡</td></tr>
+              <tr><td class="col-field nested">.Priority</td><td><span class="type-tag type-enum">enum</span></td><td class="col-req req-yes">Y</td><td><code>高</code> / <code>中</code> / <code>低</code></td></tr>
+              <tr><td class="col-field nested">.Category</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td>類別：用藥/感控/術後照護/跌倒…</td></tr>
+              <tr><td class="col-field nested">.Content</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td>提醒內容</td></tr>
+              <tr><td class="col-field nested">.RemindTime</td><td><span class="type-tag type-string">HH:mm</span></td><td class="col-req req-yes">Y</td><td>提醒時間</td></tr>
+              <tr><td class="col-field nested">.PrimaryNurse</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td>責任護理師</td></tr>
+              <tr><td class="col-field nested">.IsDone</td><td><span class="type-tag type-bool">bool</span></td><td class="col-req req-yes">Y</td><td>是否已完成</td></tr>
+            </tbody>
+          </table>
+
+          <h4>資料來源</h4>
+          <ul>
+            <li><strong>本地 DB：</strong><code>CareReminder</code> 表（StationId、HisNum、BedNo、ReminderType、Content、Priority…）</li>
+          </ul>
+
+          <div class="note note-info">
+            <strong>排序規則：</strong>前端依時段（未過 → 已過）→ 優先度（高→中→低）→ 時間升序排列。
+          </div>
+        </div>
+      </article>
+
+      <!-- ════════════════════════════════════════════════
+           03 手術資訊
+           ════════════════════════════════════════════════ -->
+      <article class="endpoint" id="ep-3">
+        <div class="endpoint-header">
+          <div class="endpoint-no">ENDPOINT 03</div>
+          <div class="endpoint-title">手術資訊</div>
+          <div class="endpoint-tags">
+            <span class="tag tag-tab">頁籤 3 · 手術資訊</span>
+            <span class="tag tag-spec">§7.1.2 (4.1)</span>
+            <span class="tag tag-file">surgery.html · js/surgeryData.js</span>
+            <span class="tag tag-status-his">HIS API</span>
+          </div>
+          <div class="method-path">
+            <span class="method-get">GET</span>
+            <span>/api/wards/{wardCode}/surgery-info?date={yyyy-MM-dd}</span>
+          </div>
+        </div>
+        <div class="endpoint-body">
+          <h4>用途</h4>
+          <p>取得指定日期的手術排程明細，欄位完整對應規格書 §7.1.2 (4.1) 共 12 項。</p>
+
+          <h4>Query 參數</h4>
+          <table class="field-table">
+            <thead><tr><th class="col-field">欄位</th><th class="col-type">型別</th><th class="col-req">必填</th><th>說明</th></tr></thead>
+            <tbody>
+              <tr><td class="col-field">date</td><td><span class="type-tag type-string">yyyy-MM-dd</span></td><td class="col-req req-yes">Y</td><td>查詢日期，例：<code>2026-06-03</code></td></tr>
+            </tbody>
+          </table>
+
+          <h4>Data.Items[] 結構（12 欄位完整對應規格書）</h4>
+          <table class="field-table">
+            <thead><tr><th class="col-field">欄位</th><th class="col-type">型別</th><th class="col-req">必填</th><th>說明（規格原文）</th></tr></thead>
+            <tbody>
+              <tr><td class="col-field">SurgeryId</td><td><span class="type-tag type-int">int</span></td><td class="col-req req-yes">Y</td><td>手術 ID</td></tr>
+              <tr><td class="col-field">Date</td><td><span class="type-tag type-string">yyyy-MM-dd</span></td><td class="col-req req-yes">Y</td><td><strong>日期</strong></td></tr>
+              <tr><td class="col-field">OrRoom</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td><strong>手術間</strong>（如 OR-01）</td></tr>
+              <tr><td class="col-field">ScheduledTime</td><td><span class="type-tag type-string">HH:mm</span></td><td class="col-req req-yes">Y</td><td><strong>排程時間</strong></td></tr>
+              <tr><td class="col-field">BedNo</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td><strong>病床號</strong></td></tr>
+              <tr><td class="col-field">PatientName</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td><strong>姓名</strong></td></tr>
+              <tr><td class="col-field">Gender</td><td><span class="type-tag type-enum">M/F</span></td><td class="col-req req-yes">Y</td><td><strong>性別</strong></td></tr>
+              <tr><td class="col-field">Age</td><td><span class="type-tag type-int">int</span></td><td class="col-req req-yes">Y</td><td><strong>年齡</strong></td></tr>
+              <tr><td class="col-field">Procedure</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td><strong>術式</strong></td></tr>
+              <tr><td class="col-field">Diagnosis</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td><strong>診斷</strong></td></tr>
+              <tr><td class="col-field">AnesthesiaMethod</td><td><span class="type-tag type-enum">enum</span></td><td class="col-req req-yes">Y</td><td><strong>麻醉方式</strong>：全身/脊椎/局部/硬膜外</td></tr>
+              <tr><td class="col-field">AttendingSurgeon</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td><strong>主治醫師</strong></td></tr>
+              <tr><td class="col-field">Status</td><td><span class="type-tag type-enum">enum</span></td><td class="col-req req-yes">Y</td><td><strong>手術狀態</strong>：<code>待手術</code> / <code>手術中</code> / <code>已完成</code> / <code>取消</code></td></tr>
+            </tbody>
+          </table>
+
+          <h4>資料來源</h4>
+          <ul>
+            <li><strong>HIS API：</strong>HIS 手術排程系統（待 IT 提供端點，可能來源為 OR 排程主檔）</li>
+            <li><strong>本地 DB：</strong><code>HisSurgery</code>（同步快取表）</li>
+          </ul>
+        </div>
+      </article>
+
+      <!-- ════════════════════════════════════════════════
+           04 檢查 / 會診
+           ════════════════════════════════════════════════ -->
+      <article class="endpoint" id="ep-4">
+        <div class="endpoint-header">
+          <div class="endpoint-no">ENDPOINT 04</div>
+          <div class="endpoint-title">檢查 / 會診</div>
+          <div class="endpoint-tags">
+            <span class="tag tag-tab">頁籤 4 · 檢查/會診</span>
+            <span class="tag tag-spec">§7.1.2 (5.1)(5.2)</span>
+            <span class="tag tag-file">exam.html · js/examData.js</span>
+            <span class="tag tag-status-his">HIS API</span>
+          </div>
+          <div class="method-path">
+            <span class="method-get">GET</span>
+            <span>/api/wards/{wardCode}/exam-consult?date={yyyy-MM-dd}</span>
+          </div>
+        </div>
+        <div class="endpoint-body">
+          <h4>用途</h4>
+          <p>單一端點同時回傳「檢查」與「會診」兩個清單，左右雙表格分別顯示。</p>
+
+          <h4>Data 結構</h4>
+          <table class="field-table">
+            <thead><tr><th class="col-field">欄位</th><th class="col-type">型別</th><th class="col-req">必填</th><th>說明</th></tr></thead>
+            <tbody>
+              <tr><td class="col-field">Examinations</td><td><span class="type-tag type-array">Examination[]</span></td><td class="col-req req-yes">Y</td><td>檢查清單</td></tr>
+              <tr><td class="col-field">Consultations</td><td><span class="type-tag type-array">Consultation[]</span></td><td class="col-req req-yes">Y</td><td>會診清單</td></tr>
+            </tbody>
+          </table>
+
+          <h4>Examination 欄位（§7.1.2 (5.1) 規格 7 欄位）</h4>
+          <table class="field-table">
+            <thead><tr><th class="col-field">欄位</th><th class="col-type">型別</th><th class="col-req">必填</th><th>說明</th></tr></thead>
+            <tbody>
+              <tr><td class="col-field">ExamId</td><td><span class="type-tag type-int">int</span></td><td class="col-req req-yes">Y</td><td>檢查 ID</td></tr>
+              <tr><td class="col-field">BedNo</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td>床號</td></tr>
+              <tr><td class="col-field">PatientName</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td>姓名</td></tr>
+              <tr><td class="col-field">Gender</td><td><span class="type-tag type-enum">M/F</span></td><td class="col-req req-yes">Y</td><td>性別</td></tr>
+              <tr><td class="col-field">Age</td><td><span class="type-tag type-int">int</span></td><td class="col-req req-yes">Y</td><td>年齡</td></tr>
+              <tr><td class="col-field">ExamName</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td>檢查項目</td></tr>
+              <tr><td class="col-field">ScheduledDate</td><td><span class="type-tag type-string">yyyy-MM-dd</span></td><td class="col-req req-yes">Y</td><td>預定日期</td></tr>
+              <tr><td class="col-field">TimeSlot</td><td><span class="type-tag type-enum">enum</span></td><td class="col-req req-yes">Y</td><td><code>上午</code> / <code>下午</code></td></tr>
+              <tr><td class="col-field">ScheduledTime</td><td><span class="type-tag type-string">HH:mm</span></td><td class="col-req req-yes">Y</td><td>排程時間</td></tr>
+              <tr><td class="col-field">Status</td><td><span class="type-tag type-enum">enum</span></td><td class="col-req req-yes">Y</td><td><code>待執行</code> / <code>已完成</code> / <code>預約</code></td></tr>
+              <tr><td class="col-field">Remarks</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-no">—</td><td>備註</td></tr>
+            </tbody>
+          </table>
+
+          <h4>Consultation 欄位（§7.1.2 (5.2) 規格 7 欄位）</h4>
+          <table class="field-table">
+            <thead><tr><th class="col-field">欄位</th><th class="col-type">型別</th><th class="col-req">必填</th><th>說明</th></tr></thead>
+            <tbody>
+              <tr><td class="col-field">ConsultId</td><td><span class="type-tag type-int">int</span></td><td class="col-req req-yes">Y</td><td>會診 ID</td></tr>
+              <tr><td class="col-field">BedNo</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td>床號</td></tr>
+              <tr><td class="col-field">PatientName</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td>姓名</td></tr>
+              <tr><td class="col-field">Gender</td><td><span class="type-tag type-enum">M/F</span></td><td class="col-req req-yes">Y</td><td>性別</td></tr>
+              <tr><td class="col-field">Age</td><td><span class="type-tag type-int">int</span></td><td class="col-req req-yes">Y</td><td>年齡</td></tr>
+              <tr><td class="col-field">ConsultDept</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td>會診科別</td></tr>
+              <tr><td class="col-field">ConsultDoctor</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td>會診醫師</td></tr>
+              <tr><td class="col-field">CompletedAt</td><td><span class="type-tag type-datetime">yyyy-MM-dd HH:mm</span></td><td class="col-req req-no">—</td><td>完成（或預計）時間</td></tr>
+              <tr><td class="col-field">Status</td><td><span class="type-tag type-enum">enum</span></td><td class="col-req req-yes">Y</td><td><code>已完成</code> / <code>進行中</code> / <code>待安排</code></td></tr>
+              <tr><td class="col-field">Remarks</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-no">—</td><td>備註</td></tr>
+            </tbody>
+          </table>
+
+          <h4>資料來源</h4>
+          <ul>
+            <li><strong>HIS API：</strong>API 介接清單 §1 — 未執行檢查及會診清單（高榮 API）</li>
+            <li><strong>本地 DB：</strong><code>HisExam</code> / <code>HisConsult</code> 同步快取表</li>
+          </ul>
+        </div>
+      </article>
+
+      <!-- ════════════════════════════════════════════════
+           05 連絡電話
+           ════════════════════════════════════════════════ -->
+      <article class="endpoint" id="ep-5">
+        <div class="endpoint-header">
+          <div class="endpoint-no">ENDPOINT 05</div>
+          <div class="endpoint-title">連絡電話</div>
+          <div class="endpoint-tags">
+            <span class="tag tag-tab">頁籤 5 · 連絡電話</span>
+            <span class="tag tag-spec">§7.1.2 (6.1)(6.2)</span>
+            <span class="tag tag-file">contact.html · js/contactData.js</span>
+            <span class="tag tag-status-local">本地 DB</span>
+          </div>
+          <div class="method-path">
+            <span class="method-get">GET</span>
+            <span>/api/wards/{wardCode}/contacts?date={yyyy-MM-dd}</span>
+          </div>
+        </div>
+        <div class="endpoint-body">
+          <h4>用途</h4>
+          <p>取得當日值班連絡電話（左欄）與常用連絡電話（右欄）。</p>
+
+          <h4>Data 結構</h4>
+          <table class="field-table">
+            <thead><tr><th class="col-field">欄位</th><th class="col-type">型別</th><th class="col-req">必填</th><th>說明</th></tr></thead>
+            <tbody>
+              <tr><td class="col-field">DutyContacts</td><td><span class="type-tag type-array">DutyContact[]</span></td><td class="col-req req-yes">Y</td><td>當日值班</td></tr>
+              <tr><td class="col-field nested">.ContactId</td><td><span class="type-tag type-int">int</span></td><td class="col-req req-yes">Y</td><td>—</td></tr>
+              <tr><td class="col-field nested">.DutyTitle</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td>職務（值班醫師/護理師/夜間護理長）</td></tr>
+              <tr><td class="col-field nested">.Name</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td>姓名（含職稱）</td></tr>
+              <tr><td class="col-field nested">.Extension</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td>院內分機</td></tr>
+              <tr><td class="col-field nested">.Mobile</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-no">—</td><td>手機（可遮罩，如 0912-345-***）</td></tr>
+              <tr><td class="col-field nested">.TimeSlot</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td>時段，如 <code>08:00–17:00</code></td></tr>
+              <tr><td class="col-field">CommonContacts</td><td><span class="type-tag type-array">CommonContact[]</span></td><td class="col-req req-yes">Y</td><td>常用連絡電話（平面列表）</td></tr>
+              <tr><td class="col-field nested">.ContactId</td><td><span class="type-tag type-int">int</span></td><td class="col-req req-yes">Y</td><td>—</td></tr>
+              <tr><td class="col-field nested">.Name</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td>單位名稱</td></tr>
+              <tr><td class="col-field nested">.Extension</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td>分機（可含斜線多號，如 <code>4400 / 3300</code>）</td></tr>
+            </tbody>
+          </table>
+
+          <h4>資料來源</h4>
+          <ul>
+            <li><strong>本地 DB：</strong>需新建 <code>DutyContact</code> + <code>CommonContact</code> 兩張表，由護理長維護</li>
+          </ul>
+        </div>
+      </article>
+
+      <!-- ════════════════════════════════════════════════
+           06 排班資訊
+           ════════════════════════════════════════════════ -->
+      <article class="endpoint" id="ep-6">
+        <div class="endpoint-header">
+          <div class="endpoint-no">ENDPOINT 06</div>
+          <div class="endpoint-title">排班資訊</div>
+          <div class="endpoint-tags">
+            <span class="tag tag-tab">頁籤 6 · 排班資訊</span>
+            <span class="tag tag-spec">§7.1.2 (7.1)(7.2)(7.3)</span>
+            <span class="tag tag-file">schedule.html · js/scheduleData.js</span>
+            <span class="tag tag-status-his">HIS API + 本地</span>
+          </div>
+          <div class="method-path">
+            <span class="method-get">GET</span>
+            <span>/api/wards/{wardCode}/schedule?date={yyyy-MM-dd}</span>
+          </div>
+        </div>
+        <div class="endpoint-body">
+          <h4>用途</h4>
+          <p>三班別（白班 / 小夜 / 大夜）各自的護理人員、專師、住院醫師清單，含負責床位、緊急應變編組、點班狀態。</p>
+
+          <h4>Data 結構</h4>
+          <table class="field-table">
+            <thead><tr><th class="col-field">欄位</th><th class="col-type">型別</th><th class="col-req">必填</th><th>說明</th></tr></thead>
+            <tbody>
+              <tr><td class="col-field">Shifts</td><td><span class="type-tag type-array">Shift[]</span></td><td class="col-req req-yes">Y</td><td>三班別陣列</td></tr>
+              <tr><td class="col-field nested">.ShiftType</td><td><span class="type-tag type-enum">enum</span></td><td class="col-req req-yes">Y</td><td><code>白班</code> / <code>小夜</code> / <code>大夜</code></td></tr>
+              <tr><td class="col-field nested">.ShiftTime</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td>時段（<code>08:00–16:00</code> 等）</td></tr>
+              <tr><td class="col-field nested">.Nurses</td><td><span class="type-tag type-array">Nurse[]</span></td><td class="col-req req-yes">Y</td><td>(7.1) 護理人員</td></tr>
+              <tr><td class="col-field nested">.Specialists</td><td><span class="type-tag type-array">Specialist[]</span></td><td class="col-req req-yes">Y</td><td>(7.2) 專師</td></tr>
+              <tr><td class="col-field nested">.Residents</td><td><span class="type-tag type-array">Resident[]</span></td><td class="col-req req-yes">Y</td><td>(7.3) 住院醫師</td></tr>
+            </tbody>
+          </table>
+
+          <h4>Nurse 欄位（§7.1.2 (7.1) 完整三項細節）</h4>
+          <table class="field-table">
+            <thead><tr><th class="col-field">欄位</th><th class="col-type">型別</th><th class="col-req">必填</th><th>說明</th></tr></thead>
+            <tbody>
+              <tr><td class="col-field">StaffId</td><td><span class="type-tag type-int">int</span></td><td class="col-req req-yes">Y</td><td>—</td></tr>
+              <tr><td class="col-field">PeNo</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td>員工編號（對應 HRS API <code>PE_NO</code>）</td></tr>
+              <tr><td class="col-field">PeName</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td>員工姓名</td></tr>
+              <tr><td class="col-field">Role</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td>職別：護理長/護理師/學生</td></tr>
+              <tr><td class="col-field">Extension</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td>分機</td></tr>
+              <tr><td class="col-field">BedNos</td><td><span class="type-tag type-array">string[]</span></td><td class="col-req req-yes">Y</td><td><strong>負責床位</strong>，例 <code>["001","002","003","004"]</code></td></tr>
+              <tr><td class="col-field">EmergencyGroup</td><td><span class="type-tag type-string">string?</span></td><td class="col-req req-no">—</td><td><strong>緊急應變編組</strong>（對應 HIS UAS API <code>PE_GROUP</code>），如 <code>指揮</code> / <code>A</code> / <code>B</code></td></tr>
+              <tr><td class="col-field">CheckIn</td><td><span class="type-tag type-bool">bool</span></td><td class="col-req req-yes">Y</td><td><strong>點班</strong>是否完成</td></tr>
+            </tbody>
+          </table>
+
+          <h4>Specialist / Resident 欄位</h4>
+          <table class="field-table">
+            <thead><tr><th class="col-field">欄位</th><th class="col-type">型別</th><th>說明</th></tr></thead>
+            <tbody>
+              <tr><td class="col-field">StaffId / PeNo / PeName / Extension</td><td><span class="type-tag type-string">基本欄位</span></td><td>同上</td></tr>
+              <tr><td class="col-field">Specialty (Specialist)</td><td><span class="type-tag type-string">string</span></td><td>專科領域，如「傷口照護」「糖尿病衛教」</td></tr>
+              <tr><td class="col-field">Department (Resident)</td><td><span class="type-tag type-string">string</span></td><td>科別</td></tr>
+            </tbody>
+          </table>
+
+          <h4>資料來源</h4>
+          <ul>
+            <li><strong>HIS API：</strong>API 介接清單 §4 — 排班作業 <code>/api/UAS?MONTH=&UNITCODE=</code>（含 <code>PE_GROUP</code> 緊急應變編組）</li>
+            <li><strong>本地 DB：</strong><code>HisShift</code>（快取）、<code>ShiftAssign</code>（白板派班，護理長維護 Role）、<code>BedNurseAssign</code>（負責床位）</li>
+            <li><strong>分類依據：</strong>由 <code>TREAT_TITLE</code> 區分：<code>NURSE</code> → Nurses、<code>DRASS</code> → Specialists、<code>DOCTOR</code> → Residents</li>
+          </ul>
+        </div>
+      </article>
+
+      <!-- ════════════════════════════════════════════════
+           07 醫師資訊
+           ════════════════════════════════════════════════ -->
+      <article class="endpoint" id="ep-7">
+        <div class="endpoint-header">
+          <div class="endpoint-no">ENDPOINT 07</div>
+          <div class="endpoint-title">醫師資訊</div>
+          <div class="endpoint-tags">
+            <span class="tag tag-tab">頁籤 7 · 醫師資訊</span>
+            <span class="tag tag-spec">§7.1.2 (8.1)(8.2)</span>
+            <span class="tag tag-file">doctor.html · js/doctorData.js</span>
+            <span class="tag tag-status-local">本地 DB</span>
+          </div>
+          <div class="method-path">
+            <span class="method-get">GET</span>
+            <span>/api/wards/{wardCode}/doctor-info?date={yyyy-MM-dd}</span>
+          </div>
+        </div>
+        <div class="endpoint-body">
+          <h4>用途</h4>
+          <p>左欄醫師/專師負責床位、右欄查房時間表（依日期分組顯示）。</p>
+
+          <h4>Data 結構</h4>
+          <table class="field-table">
+            <thead><tr><th class="col-field">欄位</th><th class="col-type">型別</th><th class="col-req">必填</th><th>說明</th></tr></thead>
+            <tbody>
+              <tr><td class="col-field">DoctorBeds</td><td><span class="type-tag type-array">DoctorBed[]</span></td><td class="col-req req-yes">Y</td><td>(8.1) 負責床位</td></tr>
+              <tr><td class="col-field nested">.DoctorId / .DoctorNo / .DoctorName</td><td><span class="type-tag type-string">基本欄位</span></td><td class="col-req req-yes">Y</td><td>醫師基本</td></tr>
+              <tr><td class="col-field nested">.Role</td><td><span class="type-tag type-enum">enum</span></td><td class="col-req req-yes">Y</td><td><code>主治醫師</code> / <code>專科護理師</code></td></tr>
+              <tr><td class="col-field nested">.Specialty</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td>專科</td></tr>
+              <tr><td class="col-field nested">.Ext</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td>分機</td></tr>
+              <tr><td class="col-field nested">.BedNos</td><td><span class="type-tag type-array">string[]</span></td><td class="col-req req-yes">Y</td><td>負責床位陣列</td></tr>
+              <tr><td class="col-field">RoundSchedule</td><td><span class="type-tag type-array">Round[]</span></td><td class="col-req req-yes">Y</td><td>(8.2) 查房時間表</td></tr>
+              <tr><td class="col-field nested">.RoundId</td><td><span class="type-tag type-int">int</span></td><td class="col-req req-yes">Y</td><td>—</td></tr>
+              <tr><td class="col-field nested">.RoundDate</td><td><span class="type-tag type-string">yyyyMMdd</span></td><td class="col-req req-yes">Y</td><td>巡房日期（前端顯示星期）</td></tr>
+              <tr><td class="col-field nested">.DoctorName / .Specialty</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td>—</td></tr>
+              <tr><td class="col-field nested">.EstimatedTime</td><td><span class="type-tag type-string">HH:mm</span></td><td class="col-req req-yes">Y</td><td>預計時段</td></tr>
+              <tr><td class="col-field nested">.ActualTime</td><td><span class="type-tag type-string">HH:mm?</span></td><td class="col-req req-no">—</td><td>實際時間，未完成為 <code>null</code></td></tr>
+              <tr><td class="col-field nested">.IsCompleted</td><td><span class="type-tag type-bool">bool</span></td><td class="col-req req-yes">Y</td><td>是否已查房</td></tr>
+              <tr><td class="col-field nested">.Remark</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-no">—</td><td>備註</td></tr>
+            </tbody>
+          </table>
+
+          <h4>資料來源</h4>
+          <ul>
+            <li><strong>本地 DB：</strong><code>DoctorInfo</code>（醫師資訊）、<code>DoctorRound</code>（查房排程）</li>
+            <li><strong>待新增：</strong>醫師-床位對照表（規格 8.1 要求，目前 schema 未提供）</li>
+          </ul>
+        </div>
+      </article>
+
+      <!-- ════════════════════════════════════════════════
+           08 佈告欄
+           ════════════════════════════════════════════════ -->
+      <article class="endpoint" id="ep-8">
+        <div class="endpoint-header">
+          <div class="endpoint-no">ENDPOINT 08</div>
+          <div class="endpoint-title">佈告欄</div>
+          <div class="endpoint-tags">
+            <span class="tag tag-tab">頁籤 8 · 佈告欄</span>
+            <span class="tag tag-spec">§7.1.2 (9.1)(9.2)</span>
+            <span class="tag tag-file">bulletin.html · js/bulletinData.js</span>
+            <span class="tag tag-status-local">本地 DB</span>
+          </div>
+          <div class="method-path">
+            <span class="method-get">GET</span>
+            <span>/api/wards/{wardCode}/bulletins</span>
+          </div>
+        </div>
+        <div class="endpoint-body">
+          <h4>用途</h4>
+          <p>取得護理站公告（左欄）與院方公告（右欄）。</p>
+
+          <h4>Data 結構</h4>
+          <table class="field-table">
+            <thead><tr><th class="col-field">欄位</th><th class="col-type">型別</th><th class="col-req">必填</th><th>說明</th></tr></thead>
+            <tbody>
+              <tr><td class="col-field">UnitBulletins</td><td><span class="type-tag type-array">Bulletin[]</span></td><td class="col-req req-yes">Y</td><td>(9.1) 護理站公告</td></tr>
+              <tr><td class="col-field">HospBulletins</td><td><span class="type-tag type-array">Bulletin[]</span></td><td class="col-req req-yes">Y</td><td>(9.2) 院方公告</td></tr>
+            </tbody>
+          </table>
+
+          <h4>Bulletin 欄位</h4>
+          <table class="field-table">
+            <thead><tr><th class="col-field">欄位</th><th class="col-type">型別</th><th class="col-req">必填</th><th>說明</th></tr></thead>
+            <tbody>
+              <tr><td class="col-field">BulletinId</td><td><span class="type-tag type-int">int</span></td><td class="col-req req-yes">Y</td><td>—</td></tr>
+              <tr><td class="col-field">Category</td><td><span class="type-tag type-enum">enum</span></td><td class="col-req req-yes">Y</td><td><code>護理站</code> / <code>院方</code></td></tr>
+              <tr><td class="col-field">Title</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td>公告標題</td></tr>
+              <tr><td class="col-field">Content</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td>公告內容（可含換行）</td></tr>
+              <tr><td class="col-field">Priority</td><td><span class="type-tag type-enum">enum</span></td><td class="col-req req-yes">Y</td><td><code>重要</code> / <code>一般</code></td></tr>
+              <tr><td class="col-field">PostedBy</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td>發布者（含單位/職稱）</td></tr>
+              <tr><td class="col-field">PostedAt</td><td><span class="type-tag type-string">yyyy-MM-dd</span></td><td class="col-req req-yes">Y</td><td>發布日期</td></tr>
+              <tr><td class="col-field">IsActive</td><td><span class="type-tag type-bool">bool</span></td><td class="col-req req-yes">Y</td><td>是否啟用</td></tr>
+            </tbody>
+          </table>
+
+          <h4>資料來源</h4>
+          <ul>
+            <li><strong>本地 DB：</strong>需新建 <code>Bulletin</code> 表（規格要求「可手動新增」，配套後台管理 UI）</li>
+          </ul>
+        </div>
+      </article>
+
+      <!-- ════════════════════════════════════════════════
+           09 避難圖
+           ════════════════════════════════════════════════ -->
+      <article class="endpoint" id="ep-9">
+        <div class="endpoint-header">
+          <div class="endpoint-no">ENDPOINT 09</div>
+          <div class="endpoint-title">避難圖</div>
+          <div class="endpoint-tags">
+            <span class="tag tag-tab">頁籤 9 · 避難圖</span>
+            <span class="tag tag-spec">§7.1.2 (10)</span>
+            <span class="tag tag-file">evacuation.html · js/evacuationData.js</span>
+            <span class="tag tag-status-local">本地 DB</span>
+          </div>
+          <div class="method-path">
+            <span class="method-get">GET</span>
+            <span>/api/wards/{wardCode}/evacuation</span>
+          </div>
+        </div>
+        <div class="endpoint-body">
+          <h4>用途</h4>
+          <p>取得護理站避難圖檔資訊、避難設備清單、緊急聯絡電話。</p>
+
+          <h4>Data 結構</h4>
+          <table class="field-table">
+            <thead><tr><th class="col-field">欄位</th><th class="col-type">型別</th><th class="col-req">必填</th><th>說明</th></tr></thead>
+            <tbody>
+              <tr><td class="col-field">EvacPlan</td><td><span class="type-tag type-object">EvacPlan</span></td><td class="col-req req-yes">Y</td><td>避難圖主資料</td></tr>
+              <tr><td class="col-field nested">.EvacPlanId / .FloorNo / .WardName</td><td><span class="type-tag type-string">基本欄位</span></td><td class="col-req req-yes">Y</td><td>—</td></tr>
+              <tr><td class="col-field nested">.ImagePath</td><td><span class="type-tag type-string">string?</span></td><td class="col-req req-no">—</td><td>圖檔路徑（URL 或檔案系統路徑）</td></tr>
+              <tr><td class="col-field nested">.PdfPath</td><td><span class="type-tag type-string">string?</span></td><td class="col-req req-no">—</td><td>PDF 路徑</td></tr>
+              <tr><td class="col-field nested">.Description</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-no">—</td><td>說明（如逃生方向、集合點）</td></tr>
+              <tr><td class="col-field nested">.UpdatedAt / .LastDrillDate</td><td><span class="type-tag type-string">yyyy-MM-dd</span></td><td class="col-req req-no">—</td><td>更新日 / 上次演練日</td></tr>
+              <tr><td class="col-field">Equipment</td><td><span class="type-tag type-array">Equipment[]</span></td><td class="col-req req-yes">Y</td><td>設備清單</td></tr>
+              <tr><td class="col-field nested">.EquipmentId / .EquipmentName / .Location / .Quantity / .LastCheckDate</td><td><span class="type-tag type-string">基本欄位</span></td><td class="col-req req-yes">Y</td><td>對應 <code>EvacEquipment</code> 表</td></tr>
+              <tr><td class="col-field">EmergencyContacts</td><td><span class="type-tag type-array">Contact[]</span></td><td class="col-req req-yes">Y</td><td>緊急聯絡電話</td></tr>
+              <tr><td class="col-field nested">.ContactId / .Name / .Extension</td><td><span class="type-tag type-string">基本欄位</span></td><td class="col-req req-yes">Y</td><td>保全/RRT/消防</td></tr>
+            </tbody>
+          </table>
+
+          <h4>資料來源</h4>
+          <ul>
+            <li><strong>本地 DB：</strong><code>EvacPlan</code> + <code>EvacEquipment</code>（schema 已建）</li>
+            <li><strong>檔案儲存：</strong><code>/uploads/evacplan/</code> 目錄（待 IT 確認儲存機制）</li>
+          </ul>
+        </div>
+      </article>
+
+      <!-- ════════════════════════════════════════════════
+           10 護理交班
+           ════════════════════════════════════════════════ -->
+      <article class="endpoint" id="ep-10">
+        <div class="endpoint-header">
+          <div class="endpoint-no">ENDPOINT 10</div>
+          <div class="endpoint-title">護理交班</div>
+          <div class="endpoint-tags">
+            <span class="tag tag-tab">頁籤 10 · 護理交班</span>
+            <span class="tag tag-spec">§7.1.2 (11)</span>
+            <span class="tag tag-file">handover.html · js/handoverData.js</span>
+            <span class="tag tag-status-todo">需新建表</span>
+          </div>
+          <div class="method-path">
+            <span class="method-get">GET</span>
+            <span>/api/wards/{wardCode}/handover?date={yyyy-MM-dd}</span>
+          </div>
+        </div>
+        <div class="endpoint-body">
+          <h4>用途</h4>
+          <p>取得交班日誌摘要：班別交接資訊 + 病患重點交班項目（管路/用藥/生命徵象/警示/家屬/待辦）。</p>
+
+          <h4>Data 結構</h4>
+          <table class="field-table">
+            <thead><tr><th class="col-field">欄位</th><th class="col-type">型別</th><th class="col-req">必填</th><th>說明</th></tr></thead>
+            <tbody>
+              <tr><td class="col-field">HandoverInfo</td><td><span class="type-tag type-object">object</span></td><td class="col-req req-yes">Y</td><td>班別交接資訊</td></tr>
+              <tr><td class="col-field nested">.FromShift / .ToShift</td><td><span class="type-tag type-enum">enum</span></td><td class="col-req req-yes">Y</td><td><code>白班</code> / <code>小夜</code> / <code>大夜</code></td></tr>
+              <tr><td class="col-field nested">.FromShiftTime / .ToShiftTime</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td>時段</td></tr>
+              <tr><td class="col-field nested">.HandoverTime</td><td><span class="type-tag type-string">HH:mm</span></td><td class="col-req req-yes">Y</td><td>交班時間</td></tr>
+              <tr><td class="col-field nested">.FromNurses / .ToNurses</td><td><span class="type-tag type-array">string[]</span></td><td class="col-req req-yes">Y</td><td>兩班護理師姓名陣列</td></tr>
+              <tr><td class="col-field">Patients</td><td><span class="type-tag type-array">Patient[]</span></td><td class="col-req req-yes">Y</td><td>交班病患清單</td></tr>
+              <tr><td class="col-field nested">.HandoverId</td><td><span class="type-tag type-int">int</span></td><td class="col-req req-yes">Y</td><td>—</td></tr>
+              <tr><td class="col-field nested">.BedNo / .PatientName / .Gender / .Age / .Diagnosis</td><td><span class="type-tag type-string">基本欄位</span></td><td class="col-req req-yes">Y</td><td>—</td></tr>
+              <tr><td class="col-field nested">.Priority</td><td><span class="type-tag type-enum">enum</span></td><td class="col-req req-yes">Y</td><td><code>高</code> / <code>中</code> / <code>一般</code></td></tr>
+              <tr><td class="col-field nested">.Items</td><td><span class="type-tag type-array">HandoverItem[]</span></td><td class="col-req req-yes">Y</td><td>交班項目</td></tr>
+              <tr><td class="col-field nested">..Category</td><td><span class="type-tag type-enum">enum</span></td><td class="col-req req-yes">Y</td><td><code>管路</code> / <code>用藥</code> / <code>生命徵象</code> / <code>警示</code> / <code>家屬</code> / <code>待辦</code></td></tr>
+              <tr><td class="col-field nested">..Content</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td>交班內容</td></tr>
+            </tbody>
+          </table>
+
+          <h4>資料來源</h4>
+          <ul>
+            <li><strong>本地 DB：</strong>需新建 <code>ShiftHandover</code> + <code>HandoverItem</code> 兩張表（schema 尚未訂定，依規格 §7.1.2 (11)「交班日誌摘要」推導）</li>
+          </ul>
+
+          <div class="note">
+            <strong>規格說明：</strong>原規格僅敘述「交班日誌摘要」，本端點之欄位結構（SBAR 重點交班）由 demo 依實務需求推導，需與護理單位確認後納入 SD 文件。
+          </div>
+        </div>
+      </article>
+
+      <!-- ════════════════════════════════════════════════
+           11 照護團隊
+           ════════════════════════════════════════════════ -->
+      <article class="endpoint" id="ep-11">
+        <div class="endpoint-header">
+          <div class="endpoint-no">ENDPOINT 11</div>
+          <div class="endpoint-title">照護團隊</div>
+          <div class="endpoint-tags">
+            <span class="tag tag-tab">頁籤 11 · 照護團隊</span>
+            <span class="tag tag-spec">§7.1.2 (12)</span>
+            <span class="tag tag-file">team.html · js/teamData.js</span>
+            <span class="tag tag-status-his">HIS API + 本地</span>
+          </div>
+          <div class="method-path">
+            <span class="method-get">GET</span>
+            <span>/api/wards/{wardCode}/team</span>
+          </div>
+        </div>
+        <div class="endpoint-body">
+          <h4>用途</h4>
+          <p>取得照護團隊成員清單（依職別分組）：病房主管、主治醫師、住院醫師、專師、護理師、醫事人員。</p>
+
+          <h4>Data 結構</h4>
+          <table class="field-table">
+            <thead><tr><th class="col-field">欄位</th><th class="col-type">型別</th><th class="col-req">必填</th><th>說明</th></tr></thead>
+            <tbody>
+              <tr><td class="col-field">TeamGroups</td><td><span class="type-tag type-array">TeamGroup[]</span></td><td class="col-req req-yes">Y</td><td>群組陣列</td></tr>
+              <tr><td class="col-field nested">.GroupKey</td><td><span class="type-tag type-enum">enum</span></td><td class="col-req req-yes">Y</td><td><code>leader</code> / <code>attending</code> / <code>resident</code> / <code>specialist</code> / <code>nurse</code> / <code>allied</code></td></tr>
+              <tr><td class="col-field nested">.GroupName</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td>顯示名稱（病房主管/主治醫師…）</td></tr>
+              <tr><td class="col-field nested">.Members</td><td><span class="type-tag type-array">Member[]</span></td><td class="col-req req-yes">Y</td><td>成員陣列</td></tr>
+              <tr><td class="col-field nested">..TeamId</td><td><span class="type-tag type-int">int</span></td><td class="col-req req-yes">Y</td><td>—</td></tr>
+              <tr><td class="col-field nested">..Role</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td><strong>職別</strong>（病房主任/主治/R1/專師/責任護理師/藥師…）</td></tr>
+              <tr><td class="col-field nested">..Name</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td><strong>姓名</strong></td></tr>
+              <tr><td class="col-field nested">..Department</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td><strong>科別</strong>／專長／單位</td></tr>
+              <tr><td class="col-field nested">..Ext</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td><strong>分機</strong></td></tr>
+              <tr><td class="col-field nested">..Mobile</td><td><span class="type-tag type-string">string?</span></td><td class="col-req req-no">—</td><td><strong>手機</strong>（可遮罩）</td></tr>
+            </tbody>
+          </table>
+
+          <h4>資料來源</h4>
+          <ul>
+            <li><strong>HIS API：</strong>API 介接清單 §3 HRS — 在職人事資料（<code>TREAT_TITLE</code> 對照職別）、§6 TMS getOrgStaff（含 <code>DNAME</code> 職稱、<code>UNAME</code> 單位）</li>
+            <li><strong>本地 DB：</strong><code>HisStaff</code>（同步快取）、<code>DoctorInfo</code>（醫師專科）</li>
+            <li><strong>分組依據：</strong>
+              <ul style="margin-top:4px;">
+                <li><code>leader</code> ← TMS <code>getOrgUnit.PE_NO_Leader</code></li>
+                <li><code>attending</code> / <code>resident</code> ← TREAT_TITLE = <code>DOCTOR</code></li>
+                <li><code>specialist</code> ← TREAT_TITLE = <code>DRASS</code></li>
+                <li><code>nurse</code> ← TREAT_TITLE = <code>NURSE</code></li>
+                <li><code>allied</code> ← TREAT_TITLE = <code>PHAR</code> / <code>RESPIR</code> / 其他</li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+      </article>
+
+      <!-- ════════════════════════════════════════════════
+           附錄 A 共通回應格式
+           ════════════════════════════════════════════════ -->
+      <article class="endpoint" id="appendix-wrapper">
+        <div class="endpoint-header">
+          <div class="endpoint-no">APPENDIX A</div>
+          <div class="endpoint-title">共通回應格式</div>
+        </div>
+        <div class="endpoint-body">
+          <p>所有端點皆採用統一回應包裝結構：</p>
+          <table class="field-table">
+            <thead><tr><th class="col-field">欄位</th><th class="col-type">型別</th><th class="col-req">必填</th><th>說明</th></tr></thead>
+            <tbody>
+              <tr><td class="col-field">Success</td><td><span class="type-tag type-bool">bool</span></td><td class="col-req req-yes">Y</td><td>API 呼叫是否成功</td></tr>
+              <tr><td class="col-field">Message</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td>失敗時的錯誤訊息（成功時為空字串）</td></tr>
+              <tr><td class="col-field">Data</td><td><span class="type-tag type-object">object</span></td><td class="col-req req-no">—</td><td>實際資料；失敗時可為 <code>null</code></td></tr>
+            </tbody>
+          </table>
+
+          <h4>HTTP 狀態碼</h4>
+          <table class="field-table">
+            <thead><tr><th class="col-field">代碼</th><th>意義</th></tr></thead>
+            <tbody>
+              <tr><td class="col-field">200</td><td>成功；<code>Success</code> 可能為 <code>true</code>（資料正常）或 <code>false</code>（業務邏輯錯誤，如查無資料）</td></tr>
+              <tr><td class="col-field">401</td><td>JWT 未提供或已過期</td></tr>
+              <tr><td class="col-field">403</td><td>JWT 有效但無存取此病房權限</td></tr>
+              <tr><td class="col-field">404</td><td>病房代碼不存在</td></tr>
+              <tr><td class="col-field">500</td><td>伺服器錯誤；<code>Success: false</code> 並含 <code>Message</code></td></tr>
+            </tbody>
+          </table>
+
+          <h4>認證</h4>
+          <p>所有端點需於 HTTP Header 帶入：</p>
+          <pre><span class="k">Authorization</span>: Bearer &lt;JWT_TOKEN&gt;</pre>
+          <p style="margin-top:6px;">JWT 有效期 6 小時，到期需重新登入。</p>
+        </div>
+      </article>
+
+      <!-- ════════════════════════════════════════════════
+           附錄 B 資料來源說明
+           ════════════════════════════════════════════════ -->
+      <article class="endpoint" id="appendix-source">
+        <div class="endpoint-header">
+          <div class="endpoint-no">APPENDIX B</div>
+          <div class="endpoint-title">資料來源說明</div>
+        </div>
+        <div class="endpoint-body">
+          <h4>外部 API 來源（資訊單位提供）</h4>
+          <table class="field-table">
+            <thead><tr><th class="col-field">API 名稱</th><th>用途</th><th>對應端點</th></tr></thead>
+            <tbody>
+              <tr><td class="col-field">HIS — 檢查/會診</td><td>API 介接清單 §1</td><td>04 檢查/會診</td></tr>
+              <tr><td class="col-field">HIS — 排班 (UAS)</td><td>API 介接清單 §4，含 <code>PE_GROUP</code></td><td>06 排班資訊</td></tr>
+              <tr><td class="col-field">HIS — 人事 (HRS)</td><td>API 介接清單 §3，<code>TREAT_TITLE</code> 分類</td><td>06, 11</td></tr>
+              <tr><td class="col-field">TMS — getOrgStaff</td><td>API 介接清單 §6，含職稱/單位</td><td>11</td></tr>
+              <tr><td class="col-field">TMS — getOrgUnit</td><td>API 介接清單 §7，主管 (<code>PE_NO_Leader</code>)</td><td>01, 11</td></tr>
+              <tr><td class="col-field">HIS — 手術排程</td><td>待 IT 提供（OR 排程主檔）</td><td>03 手術資訊</td></tr>
+            </tbody>
+          </table>
+
+          <h4>本地 DB 表</h4>
+          <table class="field-table">
+            <thead><tr><th class="col-field">表名</th><th>對應端點</th><th>備註</th></tr></thead>
+            <tbody>
+              <tr><td class="col-field">Station / Bed</td><td>01</td><td>床位配置</td></tr>
+              <tr><td class="col-field">CareReminder</td><td>02</td><td>schema 已建</td></tr>
+              <tr><td class="col-field">HisStaff / HisShift / HisSurgery</td><td>03, 06, 11</td><td>HIS 同步快取</td></tr>
+              <tr><td class="col-field">ShiftAssign / BedNurseAssign</td><td>06</td><td>白板派班、負責床位</td></tr>
+              <tr><td class="col-field">DoctorInfo / DoctorRound</td><td>07</td><td>schema 已建</td></tr>
+              <tr><td class="col-field">EvacPlan / EvacEquipment</td><td>09</td><td>schema 已建</td></tr>
+              <tr><td class="col-field">DutyContact / CommonContact</td><td>05</td><td><strong>待新建</strong></td></tr>
+              <tr><td class="col-field">Bulletin</td><td>08</td><td><strong>待新建</strong>（需配套後台管理）</td></tr>
+              <tr><td class="col-field">ShiftHandover / HandoverItem</td><td>10</td><td><strong>待新建</strong>（規格無明列欄位）</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </article>
+
+      <!-- ════════════════════════════════════════════════
+           附錄 C 狀態列舉值
+           ════════════════════════════════════════════════ -->
+      <article class="endpoint" id="appendix-status">
+        <div class="endpoint-header">
+          <div class="endpoint-no">APPENDIX C</div>
+          <div class="endpoint-title">狀態列舉值彙整</div>
+        </div>
+        <div class="endpoint-body">
+          <table class="field-table">
+            <thead><tr><th class="col-field">情境</th><th class="col-type">欄位</th><th>列舉值</th></tr></thead>
+            <tbody>
+              <tr><td class="col-field">床位狀態</td><td><code>Bed.Status</code></td><td><code>occupied</code> / <code>isolation</code> / <code>transfer</code> / <code>discharge</code> / <code>empty</code></td></tr>
+              <tr><td class="col-field">病情</td><td><code>Patient.Condition</code></td><td><code>穩定</code> / <code>重症</code> / <code>危急</code></td></tr>
+              <tr><td class="col-field">隔離</td><td><code>Patient.Isolation</code></td><td><code>無</code> / <code>接觸隔離</code> / <code>飛沫隔離</code> / <code>空氣隔離</code></td></tr>
+              <tr><td class="col-field">運送</td><td><code>Patient.Transport</code></td><td><code>輪椅</code> / <code>推床</code> / <code>null</code></td></tr>
+              <tr><td class="col-field">性別</td><td><code>Gender</code></td><td><code>M</code> / <code>F</code></td></tr>
+              <tr><td class="col-field">優先度（照護/交班）</td><td><code>Priority</code></td><td><code>高</code> / <code>中</code> / <code>低</code> 或 <code>一般</code></td></tr>
+              <tr><td class="col-field">手術狀態</td><td><code>Surgery.Status</code></td><td><code>待手術</code> / <code>手術中</code> / <code>已完成</code> / <code>取消</code></td></tr>
+              <tr><td class="col-field">檢查狀態</td><td><code>Exam.Status</code></td><td><code>待執行</code> / <code>已完成</code> / <code>預約</code></td></tr>
+              <tr><td class="col-field">會診狀態</td><td><code>Consult.Status</code></td><td><code>已完成</code> / <code>進行中</code> / <code>待安排</code></td></tr>
+              <tr><td class="col-field">麻醉方式</td><td><code>Surgery.AnesthesiaMethod</code></td><td><code>全身麻醉</code> / <code>脊椎麻醉</code> / <code>硬膜外麻醉</code> / <code>局部麻醉</code></td></tr>
+              <tr><td class="col-field">時段</td><td><code>Exam.TimeSlot</code></td><td><code>上午</code> / <code>下午</code></td></tr>
+              <tr><td class="col-field">班別</td><td><code>ShiftType</code></td><td><code>白班</code> / <code>小夜</code> / <code>大夜</code></td></tr>
+              <tr><td class="col-field">緊急應變編組</td><td><code>EmergencyGroup</code></td><td><code>指揮</code> / <code>A</code> / <code>B</code></td></tr>
+              <tr><td class="col-field">公告類別</td><td><code>Bulletin.Category</code></td><td><code>護理站</code> / <code>院方</code></td></tr>
+              <tr><td class="col-field">公告優先度</td><td><code>Bulletin.Priority</code></td><td><code>重要</code> / <code>一般</code></td></tr>
+              <tr><td class="col-field">交班項目類別</td><td><code>HandoverItem.Category</code></td><td><code>管路</code> / <code>用藥</code> / <code>生命徵象</code> / <code>警示</code> / <code>家屬</code> / <code>待辦</code></td></tr>
+              <tr><td class="col-field">職別（醫師）</td><td><code>DoctorBed.Role</code></td><td><code>主治醫師</code> / <code>專科護理師</code></td></tr>
+              <tr><td class="col-field">團隊群組</td><td><code>TeamGroup.GroupKey</code></td><td><code>leader</code> / <code>attending</code> / <code>resident</code> / <code>specialist</code> / <code>nurse</code> / <code>allied</code></td></tr>
+              <tr><td class="col-field">TREAT_TITLE</td><td>HRS API</td><td><code>DOCTOR</code> / <code>DRASS</code> / <code>NURSE</code> / <code>RESPIR</code> / <code>PHAR</code> / <code>EMRPN</code> / <code>STAFF</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </article>
+
+    </main>
+  </div>
+
+<script>
+  // Sidebar active link tracking on scroll
+  const links = document.querySelectorAll('.sidebar a');
+  const sections = Array.from(links).map(a => {
+    const id = a.getAttribute('href').slice(1);
+    return { link: a, target: document.getElementById(id) };
+  }).filter(s => s.target);
+
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const id = entry.target.id;
+        links.forEach(l => l.classList.toggle('active', l.getAttribute('href') === '#' + id));
+      }
+    });
+  }, { rootMargin: '-30% 0px -65% 0px', threshold: 0 });
+
+  sections.forEach(s => io.observe(s.target));
+</script>
+
+</body>
+</html>

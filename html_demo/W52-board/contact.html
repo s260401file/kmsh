@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>高雄市立民生醫院 W52病房 電子白板 — 連絡電話</title>
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/reset.css">
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/contact.css">
+</head>
+<body>
+
+  <!-- ── Header ── -->
+  <header class="page-header">
+    <div class="header-left">
+      W52
+      <span class="ward-sub">一般病房</span>
+    </div>
+    <div class="header-center">
+      <div class="staff-block">
+        <div class="staff-label">病房主任</div>
+        <div class="staff-name" id="ward-director">—</div>
+      </div>
+      <div class="staff-block">
+        <div class="staff-label">單位護理長</div>
+        <div class="staff-name" id="head-nurse">—</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="update-label">資料更新時間：剛剛</div>
+      <div class="clock-date" id="clock-date"></div>
+      <div class="clock-time" id="clock-time"></div>
+    </div>
+  </header>
+
+  <!-- ── Announcement marquee ── -->
+  <div class="announce-bar">
+    <span>◆</span>
+    <span>2026/05/15 院內感染管制週宣導：請確實執行手部衛生，進出隔離病房務必穿戴適當防護裝備。</span>
+  </div>
+
+  <!-- ── Main content ── -->
+  <main class="main-content">
+    <div class="ct-panel">
+
+      <!-- 頁面標題 -->
+      <div class="ct-page-title">
+        <span class="ct-title-accent"></span>
+        連絡電話
+        <span class="ct-title-caption">當日值班＋常用</span>
+      </div>
+
+      <!-- 雙欄 -->
+      <div class="ct-columns">
+
+        <!-- 左：當日值班 -->
+        <div class="ct-card ct-card-duty">
+          <div class="ct-card-header">當日值班</div>
+          <div class="ct-table-wrap">
+            <table class="ct-table">
+              <thead>
+                <tr>
+                  <th>職務</th>
+                  <th>姓名</th>
+                  <th>院內分機</th>
+                  <th>手機</th>
+                  <th>時段</th>
+                </tr>
+              </thead>
+              <tbody id="duty-list"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 右：常用連絡電話 -->
+        <div class="ct-card ct-card-common">
+          <div class="ct-card-header">常用連絡電話</div>
+          <div class="ct-table-wrap">
+            <table class="ct-table">
+              <thead>
+                <tr>
+                  <th>單位</th>
+                  <th>分機 / 電話</th>
+                </tr>
+              </thead>
+              <tbody id="common-list"></tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- ── Bottom tabs ── -->
+  <nav class="bottom-tabs">
+    <a href="index.html"   class="tab-btn">病室動態</a>
+    <a href="care.html"    class="tab-btn">照護提醒</a>
+    <a href="surgery.html" class="tab-btn">手術資訊</a>
+    <a href="exam.html"    class="tab-btn">檢查/會診</a>
+    <a href="contact.html" class="tab-btn active">連絡電話</a>
+    <a href="schedule.html" class="tab-btn">排班資訊</a>
+    <a href="doctor.html" class="tab-btn">醫師資訊</a>
+    <a href="bulletin.html" class="tab-btn">佈告欄</a>
+    <a href="evacuation.html" class="tab-btn">避難圖</a>
+    <a href="handover.html" class="tab-btn">護理交班</a>
+    <a href="team.html" class="tab-btn">照護團隊</a>
+  </nav>
+
+  <script src="js/contactData.js"></script>
+  <script src="js/contact.js"></script>
+</body>
+</html>
