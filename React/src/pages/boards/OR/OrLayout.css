@@ -37,7 +37,9 @@
 
 /* ── Announce bar ── */
 .or-board .announce-bar { background:#F1F8F4; border-bottom:1px solid var(--divider); padding:5px 16px; font-size:20px; color:#7A6000; display:flex; align-items:center; gap:8px; flex-shrink:0; overflow:hidden; }
-.or-board .announce-bar span { white-space:nowrap; }
+.or-board .announce-icon { flex-shrink:0; }
+.or-board .announce-track { flex:1; overflow:hidden; }
+.or-board .announce-text { display:inline-block; white-space:nowrap; animation:ticker 50s linear infinite; }
 
 /* ── Main content ── */
 .or-board .main-content { flex:1; display:flex; overflow:hidden; padding:10px; gap:10px; min-height:0; }

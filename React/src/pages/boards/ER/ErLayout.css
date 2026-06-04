@@ -40,7 +40,9 @@
 
 /* ── Announce bar ── */
 .er-board .announce-bar{background:#FFF8E1;border-bottom:1px solid var(--divider);padding:5px 16px;font-size:20px;color:#8B6000;display:flex;align-items:center;gap:8px;flex-shrink:0;overflow:hidden}
-.er-board .announce-bar span{white-space:nowrap}
+.er-board .announce-icon{flex-shrink:0}
+.er-board .announce-track{flex:1;overflow:hidden}
+.er-board .announce-text{display:inline-block;white-space:nowrap;animation:ticker 50s linear infinite}
 
 /* ── Main content ── */
 .er-board .main-content{flex:1;display:flex;overflow:hidden;padding:10px;gap:10px;min-height:0}
@@ -111,7 +113,9 @@
 .er-board .bed-OER01{grid-column:6;grid-row:7}  .er-board .bed-OER02{grid-column:6;grid-row:8}
 .er-board .bed-MER993{grid-column:1;grid-row:8} .er-board .bed-MER992{grid-column:2;grid-row:8}
 .er-board .bed-MER991{grid-column:3;grid-row:8}
-.er-board .nursing-station{grid-column:4;grid-row:5;display:flex;align-items:center;justify-content:center;background:var(--bg-card-empty);border-top:2px solid var(--floor-border);border-left:2px solid var(--floor-border);border-right:2px solid var(--floor-border);border-bottom:none;border-radius:var(--radius-card) var(--radius-card) 0 0;font-size:16px;font-weight:700;color:var(--text-muted);pointer-events:none;letter-spacing:2px}
+.er-board .nursing-station{grid-column:4;grid-row:5;display:flex;align-items:center;justify-content:center;background:var(--bg-card-empty);border-top:2px solid var(--floor-border);border-left:2px solid var(--floor-border);border-right:2px solid var(--floor-border);border-bottom:none;border-radius:var(--radius-card) var(--radius-card) 0 0;font-size:20px;font-weight:700;color:var(--text-muted);pointer-events:none;letter-spacing:2px}
+.er-board .zone-label{display:flex;align-items:center;justify-content:center;background:var(--bg-floor-label);border:1px solid #90CAA6;border-radius:var(--radius-card);font-size:20px;font-weight:700;color:var(--accent-green);pointer-events:none;writing-mode:horizontal-tb}
+.er-board .zone-diag1{grid-column:6;grid-row:2}
 .er-board .bed-card{border-radius:var(--radius-card);padding:8px 12px;border-left:4px solid transparent;box-shadow:var(--shadow-card);cursor:pointer;position:relative;height:100%;display:flex;flex-direction:column;gap:6px;overflow:hidden;transition:transform .1s,box-shadow .1s;box-sizing:border-box}
 .er-board .bed-card:hover{transform:translateY(-2px);box-shadow:0 4px 16px rgba(0,0,0,0.35)}
 .er-board .bed-card.occupied{background:var(--bg-card-occ);border-left-color:var(--border-occ)}

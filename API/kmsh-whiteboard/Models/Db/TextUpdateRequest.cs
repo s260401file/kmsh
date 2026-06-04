@@ -11,6 +11,7 @@ public class TextUpdateRequest
 
     public string? Category { get; set; }
     public string? UnitCode { get; set; }
+    public string? Priority { get; set; }
     public int SortOrder { get; set; } = 0;
     public bool IsActive { get; set; } = true;
 }

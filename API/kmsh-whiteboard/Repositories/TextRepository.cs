@@ -11,12 +11,12 @@ public class TextRepository : ITextRepository
     public TextRepository(DbConnectionFactory db) => _db = db;
 
     public async Task<IEnumerable<TextItem>> GetAllAsync(
-        string? unitCode = null, string? category = null, CancellationToken ct = default)
+        string? unitCode = null, string? category = null, bool includeAll = false, CancellationToken ct = default)
     {
         var sql = """
-            SELECT Id, Title, Content, Category, UnitCode, SortOrder, IsActive, CreatedAt, UpdatedAt
+            SELECT Id, Title, Content, Category, UnitCode, Priority, SortOrder, IsActive, CreatedAt, UpdatedAt
             FROM   [dbo].[Text]
-            WHERE  IsActive = 1
+            WHERE  (@IncludeAll = 1 OR IsActive = 1)
               AND  (@UnitCode  IS NULL OR UnitCode  = @UnitCode)
               AND  (@Category  IS NULL OR Category  = @Category)
             ORDER  BY SortOrder, Id
@@ -24,13 +24,13 @@ public class TextRepository : ITextRepository
 
         using var conn = _db.Create();
         return await conn.QueryAsync<TextItem>(
-            new CommandDefinition(sql, new { UnitCode = unitCode, Category = category }, cancellationToken: ct));
+            new CommandDefinition(sql, new { UnitCode = unitCode, Category = category, IncludeAll = includeAll ? 1 : 0 }, cancellationToken: ct));
     }
 
     public async Task<TextItem?> GetByIdAsync(int id, CancellationToken ct = default)
     {
         var sql = """
-            SELECT Id, Title, Content, Category, UnitCode, SortOrder, IsActive, CreatedAt, UpdatedAt
+            SELECT Id, Title, Content, Category, UnitCode, Priority, SortOrder, IsActive, CreatedAt, UpdatedAt
             FROM   [dbo].[Text]
             WHERE  Id = @Id
             """;
@@ -43,9 +43,9 @@ public class TextRepository : ITextRepository
     public async Task<int> CreateAsync(TextCreateRequest req, CancellationToken ct = default)
     {
         var sql = """
-            INSERT INTO [dbo].[Text] (Title, Content, Category, UnitCode, SortOrder, IsActive, CreatedAt, UpdatedAt)
+            INSERT INTO [dbo].[Text] (Title, Content, Category, UnitCode, Priority, SortOrder, IsActive, CreatedAt, UpdatedAt)
             OUTPUT INSERTED.Id
-            VALUES (@Title, @Content, @Category, @UnitCode, @SortOrder, 1, GETDATE(), GETDATE())
+            VALUES (@Title, @Content, @Category, @UnitCode, @Priority, @SortOrder, 1, GETDATE(), GETDATE())
             """;
 
         using var conn = _db.Create();
@@ -61,6 +61,7 @@ public class TextRepository : ITextRepository
                    Content   = @Content,
                    Category  = @Category,
                    UnitCode  = @UnitCode,
+                   Priority  = @Priority,
                    SortOrder = @SortOrder,
                    IsActive  = @IsActive,
                    UpdatedAt = GETDATE()
@@ -69,7 +70,9 @@ public class TextRepository : ITextRepository
 
         using var conn = _db.Create();
         var rows = await conn.ExecuteAsync(
-            new CommandDefinition(sql, new { req.Title, req.Content, req.Category, req.UnitCode, req.SortOrder, req.IsActive, Id = id }, cancellationToken: ct));
+            new CommandDefinition(sql,
+                new { req.Title, req.Content, req.Category, req.UnitCode, req.Priority, req.SortOrder, req.IsActive, Id = id },
+                cancellationToken: ct));
         return rows > 0;
     }
 

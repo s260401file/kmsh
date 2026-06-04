@@ -11,5 +11,6 @@ public class TextCreateRequest
 
     public string? Category { get; set; }
     public string? UnitCode { get; set; }
+    public string? Priority { get; set; }
     public int SortOrder { get; set; } = 0;
 }

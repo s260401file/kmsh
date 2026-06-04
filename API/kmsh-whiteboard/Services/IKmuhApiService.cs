@@ -1,5 +1,6 @@
 using kmsh_whiteboard.Models.Hr;
 using kmsh_whiteboard.Models.Maintenance;
+using kmsh_whiteboard.Models.Patient;
 using kmsh_whiteboard.Models.Staff;
 
 namespace kmsh_whiteboard.Services;
@@ -20,4 +21,7 @@ public interface IKmuhApiService
 
     // 單位資料查詢
     Task<List<UnitItem>> GetUnitAsync(CancellationToken ct = default);
+
+    // #8-1 KMUH 查床號（GET + XML 回應）
+    Task<CncResult?> GetCncAsync(string chartNo, CancellationToken ct = default);
 }

@@ -11,10 +11,11 @@ async function handleResponse(res) {
   return res.json()
 }
 
-export async function getAll(unitCode = '', category = '') {
+export async function getAll(unitCode = '', category = '', includeAll = false) {
   const params = new URLSearchParams()
-  if (unitCode) params.append('unitCode', unitCode)
-  if (category) params.append('category', category)
+  if (unitCode)   params.append('unitCode', unitCode)
+  if (category)   params.append('category', category)
+  if (includeAll) params.append('includeAll', 'true')
   const res = await fetch(`${BASE}?${params}`)
   return handleResponse(res)
 }

@@ -167,7 +167,25 @@ body { flex-direction: column; }
 .bed-neg1  { grid-column: 1; grid-row: 2; }
 
 /* ── 急救室（R2，C5）── */
-.bed-MER01 { grid-column: 5; grid-row: 2; }
+.bed-MER01  { grid-column: 5; grid-row: 2; }
+
+/* ── 第1診療區 標示（R2，C6）── */
+.zone-diag1 { grid-column: 6; grid-row: 2; }
+
+.zone-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-floor-label);
+  border: 1px solid #90CAA6;
+  border-radius: var(--radius-card);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--accent-green);
+  letter-spacing: 1px;
+  pointer-events: none;
+  writing-mode: horizontal-tb;
+}
 
 /* ── 第一診療區（R3，C7-C11）── */
 .bed-MER02 { grid-column:  7; grid-row: 3; }
@@ -189,7 +207,7 @@ body { flex-direction: column; }
   border-right: 2px solid var(--floor-border);
   border-bottom: none;
   border-radius: var(--radius-card) var(--radius-card) 0 0;
-  font-size: 16px;
+  font-size: 20px;
   font-weight: 700;
   color: var(--text-muted);
   pointer-events: none;

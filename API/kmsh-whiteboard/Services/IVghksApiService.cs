@@ -1,4 +1,5 @@
 using kmsh_whiteboard.Models.Common;
+using kmsh_whiteboard.Models.Lab;
 using kmsh_whiteboard.Models.NonExSchList;
 using kmsh_whiteboard.Models.Patient;
 using kmsh_whiteboard.Models.Ward;
@@ -28,4 +29,16 @@ public interface IVghksApiService
     // 住院病人詳細資料
     Task<AmdrCaseResponse> GetAMPatAsync(
         string hhisnum, string hcaseno, CancellationToken ct = default);
+
+    // #5-5 過敏紀錄（UDSPService）
+    Task<VghksApiResponse<AllergyItem>> GetAllergyAsync(
+        string hhisnum, CancellationToken ct = default);
+
+    // #8-2 病患基本資訊（MAASService，不同主機）
+    Task<MaasPatientResponse> GetPatientInfoAsync(
+        string? hhisnum = null, string? hidno = null, CancellationToken ct = default);
+
+    // #9 依標籤檢核急作（LABService）
+    Task<LabUrgentResponse> IsLabUrgentAsync(
+        string stickrno, CancellationToken ct = default);
 }

@@ -145,10 +145,10 @@ export default function WardTab() {
           <div className="ward-grid">
             <div className="room-grp rg-five"  style={{gridColumn:'1/5',gridRow:'1/3'}}/>
             <div className="room-lbl rl-five"  style={{gridColumn:'2/5',gridRow:'2'}}>五人房</div>
-            <div className="room-grp rg-three" style={{gridColumn:'2/4',gridRow:'3/5'}}/>
-            <div className="room-lbl rl-three" style={{gridColumn:'3',gridRow:'3'}}>三人房</div>
-            <div className="room-grp rg-four"  style={{gridColumn:'2/5',gridRow:'5/7'}}/>
-            <div className="room-lbl rl-four"  style={{gridColumn:'3/5',gridRow:'5'}}>四人房</div>
+            <div className="room-grp rg-three" style={{gridColumn:'1/3',gridRow:'3/5'}}/>
+            <div className="room-lbl rl-three" style={{gridColumn:'2',gridRow:'3'}}>三人房</div>
+            <div className="room-grp rg-four"  style={{gridColumn:'1/4',gridRow:'5/7'}}/>
+            <div className="room-lbl rl-four"  style={{gridColumn:'2/4',gridRow:'5'}}>四人房</div>
 
             <div className="stats-wrap">
               <div className="ws-row">

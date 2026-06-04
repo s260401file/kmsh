@@ -27,10 +27,11 @@ function renderBedCard(bed) {
   const cls = bedClass(bed.BedId);
 
   if (bed.Status === "empty") {
+    const isTemp = !!bed.NoCount;
     return `
-      <div class="bed-card empty bed-${cls}" data-id="${bed.BedId}" data-status="empty">
+      <div class="bed-card empty${isTemp ? ' temp-bed' : ''} bed-${cls}" data-id="${bed.BedId}" data-status="empty">
         <div class="empty-bed-num">${bed.BedId}</div>
-        <div class="empty-label">空床</div>
+        <div class="empty-label">${isTemp ? '暫用' : '空床'}</div>
       </div>`;
   }
 

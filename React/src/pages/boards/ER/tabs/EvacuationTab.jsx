@@ -1,8 +1,20 @@
-import EVACUATION_DATA from '../tabsData/evacuationData'
+import { useState, useEffect } from 'react'
+import { imageUrl, getImageInfo, getEquipment, getContact } from '../../../../services/evacuationApi'
 import '../tabsCss/evacuation.css'
 
+const UNIT = 'ER'
+
 export default function EvacuationTab() {
-  const { EvacPlan, Equipment, EmergencyContacts } = EVACUATION_DATA.Data
+  const [hasImage,  setHasImage]  = useState(false)
+  const [ts,        setTs]        = useState(Date.now())
+  const [equipment, setEquipment] = useState([])
+  const [contacts,  setContacts]  = useState([])
+
+  useEffect(() => {
+    getImageInfo(UNIT).then(i => setHasImage(!!i)).catch(() => setHasImage(false))
+    getEquipment(UNIT).then(d => setEquipment(d ?? [])).catch(() => {})
+    getContact(UNIT).then(d => setContacts(d ?? [])).catch(() => {})
+  }, [])
 
   return (
     <main className="main-content" style={{ padding: 0 }}>
@@ -10,55 +22,27 @@ export default function EvacuationTab() {
         <div className="ev-title">
           <span className="ev-title-bar"></span>
           避難圖
-          <span className="ev-title-meta">{EvacPlan.FloorNo} — {EvacPlan.WardName}</span>
         </div>
         <div className="ev-columns">
-
-          {/* 左欄：急診室平面示意 */}
-          <div className="ev-map-wrap">
-            <div className="ev-floor-plan-title">1F 急診室平面示意</div>
-            <div className="ev-floor-plan">
-              <div className="ev-floor-label">急診室（19 床）</div>
-              <div className="ev-er-grid">
-                <div className="ev-er-zone ev-zone-station">
-                  護理站 / 分診台
-                  <span className="ev-zone-sub">Nursing Station</span>
+          <div className="ev-map-wrap" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            {hasImage
+              ? <img src={`${imageUrl(UNIT)}?t=${ts}`} alt="避難圖" style={{ width: '100%', height: '100%', objectFit: 'contain' }} onError={() => setHasImage(false)} />
+              : <div style={{ textAlign: 'center', color: 'var(--text-muted)' }}>
+                  <div style={{ fontSize: '48px', marginBottom: '12px' }}>🖼️</div>
+                  <div style={{ fontSize: '16px', fontWeight: '700', marginBottom: '6px' }}>避難圖尚未上傳</div>
+                  <div style={{ fontSize: '13px' }}>請由管理後台上傳</div>
                 </div>
-                <div className="ev-er-zone">急救區<span className="ev-zone-sub">1床</span></div>
-                <div className="ev-er-zone">負壓隔離<span className="ev-zone-sub">2床</span></div>
-                <div className="ev-er-zone ev-zone-exit">東側出口<span className="ev-zone-sub">急救入口</span></div>
-                <div className="ev-er-zone">第一診療<span className="ev-zone-sub">5床</span></div>
-                <div className="ev-er-zone">第二診療<span className="ev-zone-sub">6床</span></div>
-                <div className="ev-er-zone ev-zone-exit">西側出口<span className="ev-zone-sub">一般出口</span></div>
-                <div className="ev-er-zone">留觀區<span className="ev-zone-sub">2床</span></div>
-                <div className="ev-er-zone">待床區<span className="ev-zone-sub">3床</span></div>
-                <div className="ev-er-zone ev-zone-exit">集合點<span className="ev-zone-sub">院門前廣場</span></div>
-              </div>
-              <div className="ev-exit-arrow">
-                <span className="ev-arrow">↓</span>
-                <span className="ev-arrow-label">避難方向 → 院門前廣場</span>
-              </div>
-            </div>
-            <div className="ev-legend">
-              <div className="ev-legend-item"><span className="ev-legend-dot dot-zone"></span>診療區</div>
-              <div className="ev-legend-item"><span className="ev-legend-dot dot-station"></span>護理站</div>
-              <div className="ev-legend-item"><span className="ev-legend-dot dot-exit"></span>出口 / 集合點</div>
-            </div>
+            }
           </div>
-
-          {/* 右欄：設備 + 緊急聯絡 */}
           <div className="ev-side">
             <div className="ev-card">
-              <div className="ev-card-header">
-                避難設備清單
-                <span className="ev-card-count">{Equipment.length} 項</span>
-              </div>
+              <div className="ev-card-header">避難設備清單<span className="ev-card-count">{equipment.length} 項</span></div>
               <div className="ev-equip-list">
-                {Equipment.map(e => (
-                  <div key={e.EquipmentId} className="ev-equip-row">
-                    <span className="ev-equip-name">{e.EquipmentName}</span>
-                    <span className="ev-equip-loc">{e.Location}</span>
-                    {e.Quantity > 1 && <span className="ev-equip-qty">×{e.Quantity}</span>}
+                {equipment.map(e => (
+                  <div key={e.id} className="ev-equip-row">
+                    <span className="ev-equip-name">{e.equipmentName}</span>
+                    <span className="ev-equip-loc">{e.location}</span>
+                    {e.quantity > 1 && <span className="ev-equip-qty">×{e.quantity}</span>}
                   </div>
                 ))}
               </div>
@@ -66,16 +50,15 @@ export default function EvacuationTab() {
             <div className="ev-card">
               <div className="ev-card-header">緊急聯絡</div>
               <div className="ev-contacts">
-                {EmergencyContacts.map(c => (
-                  <div key={c.ContactId} className="ev-contact-row">
-                    <span className="ev-contact-name">{c.Name}</span>
-                    <span className="ev-contact-ext">{c.Extension}</span>
+                {contacts.map(c => (
+                  <div key={c.id} className="ev-contact-row">
+                    <span className="ev-contact-name">{c.name}</span>
+                    <span className="ev-contact-ext">{c.extension}</span>
                   </div>
                 ))}
               </div>
             </div>
           </div>
-
         </div>
       </div>
     </main>

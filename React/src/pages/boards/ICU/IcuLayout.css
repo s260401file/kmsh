@@ -36,7 +36,9 @@
 
 /* ── Announce bar ── */
 .icu-board .announce-bar{background:#FFF8E1;border-bottom:1px solid var(--divider);padding:5px 16px;font-size:20px;color:#8B6000;display:flex;align-items:center;gap:8px;flex-shrink:0;overflow:hidden}
-.icu-board .announce-bar span{white-space:nowrap}
+.icu-board .announce-icon{flex-shrink:0}
+.icu-board .announce-track{flex:1;overflow:hidden}
+.icu-board .announce-text{display:inline-block;white-space:nowrap;animation:ticker 50s linear infinite}
 
 /* ── Filter bar ── */
 .icu-board .filter-bar{height:var(--filter-h);background:var(--bg-filter);display:flex;align-items:center;padding:0 16px;gap:10px;flex-shrink:0;border-bottom:1px solid var(--divider)}

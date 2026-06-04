@@ -189,19 +189,19 @@ body { flex-direction: column; }
 .bed-W52-055 { grid-column: 3; grid-row: 1; }
 .bed-W52-056 { grid-column: 4; grid-row: 1; }
 .bed-W52-051 { grid-column: 1; grid-row: 2; }
-.bed-W52-050 { grid-column: 2; grid-row: 3; }
+.bed-W52-050 { grid-column: 1; grid-row: 3; }
 
 /* ── 左翼中上段（R4-R5）── */
-.bed-W52-039 { grid-column: 2; grid-row: 4; }
-.bed-W52-038 { grid-column: 3; grid-row: 4; }
-.bed-W52-037 { grid-column: 2; grid-row: 5; }
+.bed-W52-039 { grid-column: 1; grid-row: 4; }
+.bed-W52-038 { grid-column: 2; grid-row: 4; }
+.bed-W52-037 { grid-column: 1; grid-row: 5; }
 
 /* ── 左翼中段（R6-R7）── */
-.bed-W52-036 { grid-column: 2; grid-row: 6; }
-.bed-W52-035 { grid-column: 3; grid-row: 6; }
-.bed-W52-033 { grid-column: 4; grid-row: 6; }
-.bed-W52-032 { grid-column: 2; grid-row: 7; }
-.bed-W52-031 { grid-column: 3; grid-row: 7; }
+.bed-W52-036 { grid-column: 1; grid-row: 6; }
+.bed-W52-035 { grid-column: 2; grid-row: 6; }
+.bed-W52-033 { grid-column: 3; grid-row: 6; }
+.bed-W52-032 { grid-column: 1; grid-row: 7; }
+.bed-W52-031 { grid-column: 2; grid-row: 7; }
 
 /* ── 右側雙排 上排（R7，靠窗側）── */
 .bed-W52-002 { grid-column:  8; grid-row: 7; }
@@ -222,10 +222,10 @@ body { flex-direction: column; }
 .bed-W52-015 { grid-column: 14; grid-row: 8; }
 
 /* ── 左翼下段（R9-R10）── */
-.bed-W52-030 { grid-column: 2; grid-row: 9; }
-.bed-W52-029 { grid-column: 3; grid-row: 9; }
-.bed-W52-028 { grid-column: 2; grid-row: 10; }
-.bed-W52-027 { grid-column: 3; grid-row: 10; }
+.bed-W52-030 { grid-column: 1; grid-row: 9; }
+.bed-W52-029 { grid-column: 2; grid-row: 9; }
+.bed-W52-028 { grid-column: 1; grid-row: 10; }
+.bed-W52-027 { grid-column: 2; grid-row: 10; }
 
 /* ── 底排（R11，走廊底端，C6-C14）── */
 /* ── 底排（R11，走廊底端，C6-C14）── */

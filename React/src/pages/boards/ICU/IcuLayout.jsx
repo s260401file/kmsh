@@ -35,8 +35,10 @@ export default function IcuLayout() {
       </header>
 
       <div className="announce-bar">
-        <span>◆</span>
-        <span>{marquee}</span>
+        <span className="announce-icon">⚠️</span>
+        <div className="announce-track">
+          <span className="announce-text">{marquee}</span>
+        </div>
       </div>
 
       <Outlet />

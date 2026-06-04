@@ -151,7 +151,8 @@ export default function WardTab() {
         <div className="beds-panel">
           <div className="ward-title">▌ 急診室　共 19 床（負壓 2＋急救 1＋第一診療 5＋第二診療 6＋留觀 2＋待床 3）</div>
           <div className="ward-grid">
-            <div className="nursing-station">櫃檯</div>
+            <div className="nursing-station">護理站</div>
+            <div className="zone-label zone-diag1">第1診療區</div>
             {MOCK_DATA.Beds.map(bed => (
               <BedCard
                 key={bed.BedId}

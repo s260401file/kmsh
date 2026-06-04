@@ -7,7 +7,10 @@ export function useMarquee(unitCode, fallback = '') {
   useEffect(() => {
     getActive(unitCode)
       .then(data => {
-        if (data?.length) setText(data[0].content)
+        if (data?.length) {
+          // 多筆時以分隔符串接，讓所有訊息都在跑馬燈上顯示
+          setText(data.map(d => d.content).join('　◆　'))
+        }
       })
       .catch(() => {})
   }, [unitCode])
