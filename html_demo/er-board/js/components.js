@@ -50,6 +50,19 @@ function renderLegendShapes() {
   });
 }
 
+// 三班醫護人員（資料來自 MOCK_DATA.ShiftStaff，屆時改 API）
+function renderStaffShifts(shifts) {
+  const body = document.getElementById("ss-body");
+  if (!body || !shifts) return;
+  body.innerHTML = shifts.map(s => `
+    <div class="ss-col">
+      <div class="ss-shift">${s.Shift} <span class="ss-time">${s.Time}</span></div>
+      <div class="ss-doctor">醫師　${s.Doctor || "—"}</div>
+      <div class="ss-charge">護理　${s.ChargeNurse || "—"}</div>
+      <div class="ss-count">在班 <b>${s.NurseCount ?? "—"}</b> 人</div>
+    </div>`).join("");
+}
+
 /* BedId → 合法 CSS class 名稱（轉換「負」字） */
 function bedClass(bedId) {
   return bedId.replace("負", "neg");

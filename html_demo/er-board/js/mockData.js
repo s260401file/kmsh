@@ -258,6 +258,13 @@ const MOCK_DATA = {
                 Aad:false, Mbd:false,
                 FallRisk:false, Allergy:false, Exam:true, Consult:false,
                 Notes:"Salbutamol 吸入、全身性類固醇治療中，一般病房待床中" } }
+  ],
+
+  // 三班醫護人員（示意資料；屆時改由 API 提供）
+  ShiftStaff: [
+    { Shift: "白班", Time: "07:00–15:00", Doctor: "張○哲醫師", ChargeNurse: "王○琳護理師", NurseCount: 6 },
+    { Shift: "小夜", Time: "15:00–23:00", Doctor: "林○泰醫師", ChargeNurse: "李○婷護理師", NurseCount: 4 },
+    { Shift: "大夜", Time: "23:00–07:00", Doctor: "黃○誠醫師", ChargeNurse: "陳○華護理師", NurseCount: 3 }
   ]
 };
 

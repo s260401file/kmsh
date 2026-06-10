@@ -22,6 +22,13 @@ const MOCK_DATA = {
     { BedId:"MER993", Zone:"待床區",   Status:"empty",       Patient:null },
     { BedId:"MER992", Zone:"待床區",   Status:"transfer",    Patient:{ PatientName:"周○強", Gender:"M", Age:39, ArrivalDate:"05/24", ArrivalTime:"09:00", Diagnosis:"Minor head injury, GCS 15, No ICH on CT", Doctor:"黃○誠醫師", Nurse:"周○娟護理師", Department:"神經外科", MedRecord:"O601234581", BirthDate:"1987/11/13", Triage:3, Dnr:false, Isolation:"無", Observation:false, Awaiting:false, AwaitingType:null, TransferOut:true, TransferIn:false, TransferHospital:"聖馬爾定醫院", Aad:false, Mbd:false, FallRisk:false, Allergy:false, Exam:true, Consult:false, Notes:"安排轉至聖馬爾定醫院" } },
     { BedId:"MER991", Zone:"待床區",   Status:"awaiting",    Patient:{ PatientName:"鄭○成", Gender:"M", Age:67, ArrivalDate:"05/24", ArrivalTime:"06:00", Diagnosis:"COPD exacerbation, SpO2 88% on room air", Doctor:"陳○科醫師", Nurse:"李○婷護理師", Department:"胸腔內科", MedRecord:"P701234582", BirthDate:"1959/07/29", Triage:4, Dnr:false, Isolation:"無", Observation:false, Awaiting:true, AwaitingType:"一般", TransferOut:false, TransferIn:false, Aad:false, Mbd:false, FallRisk:false, Allergy:false, Exam:true, Consult:false, Notes:"一般病房待床中" } },
+  ],
+
+  // 三班醫護人員（示意資料；屆時改由 API 提供）
+  ShiftStaff: [
+    { Shift:"白班", Time:"07:00–15:00", Doctor:"張○哲醫師", ChargeNurse:"王○琳護理師", NurseCount:6 },
+    { Shift:"小夜", Time:"15:00–23:00", Doctor:"林○泰醫師", ChargeNurse:"李○婷護理師", NurseCount:4 },
+    { Shift:"大夜", Time:"23:00–07:00", Doctor:"黃○誠醫師", ChargeNurse:"陳○華護理師", NurseCount:3 }
   ]
 }
 

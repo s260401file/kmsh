@@ -175,6 +175,22 @@ export default function WardTab() {
             <div className="zone-name" style={{gridColumn:'5',gridRow:'5'}}>第二留觀區</div>
             <div className="zone-name" style={{gridColumn:'5/6',gridRow:'7/9'}}>急診手術室</div>
             <div className="zone-name" style={{gridColumn:'1/4',gridRow:'7'}}>急救室</div>
+
+            {/* 三班醫護人員（右上空區，資料來自 MOCK_DATA.ShiftStaff）*/}
+            <div className="staff-shifts" style={{gridColumn:'7/12',gridRow:'1/3'}}>
+              <div className="ss-title">三班醫護人員</div>
+              <div className="ss-body">
+                {MOCK_DATA.ShiftStaff.map(s => (
+                  <div className="ss-col" key={s.Shift}>
+                    <div className="ss-shift">{s.Shift} <span className="ss-time">{s.Time}</span></div>
+                    <div className="ss-doctor">醫師　{s.Doctor || '—'}</div>
+                    <div className="ss-charge">護理　{s.ChargeNurse || '—'}</div>
+                    <div className="ss-count">在班 <b>{s.NurseCount ?? '—'}</b> 人</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
             {MOCK_DATA.Beds.map(bed => (
               <BedCard
                 key={bed.BedId}

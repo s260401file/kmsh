@@ -60,6 +60,7 @@ document.addEventListener("DOMContentLoaded", () => {
   renderStats(MOCK_DATA.Beds);
   renderAllBeds(MOCK_DATA.Beds);
   renderLegendShapes();
+  renderStaffShifts(MOCK_DATA.ShiftStaff);
 
   updateClock();
   setInterval(updateClock, 1000);

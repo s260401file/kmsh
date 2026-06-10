@@ -192,7 +192,62 @@ body { flex-direction: column; }
 
 /* ── 第1、2診療區 標示（R2，C6、C7）── */
 .zone-diag1 { grid-column: 6; grid-row: 2; }
-.zone-diag2 { grid-column: 7; grid-row: 2; }
+.zone-diag2 { grid-column: 5; grid-row: 3; }   /* 移到 MER01 下方，空出右上區放三班人員 */
+
+/* ── 三班護理人員面板（右上空區）── */
+.staff-shifts {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-card-occ);
+  border: 1px solid var(--divider);
+  border-radius: var(--radius-card);
+  overflow: hidden;
+  min-height: 0;
+}
+.staff-shifts .ss-title {
+  background: var(--bg-floor-label);
+  color: var(--accent-red);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  padding: 5px 12px;
+  border-bottom: 1px solid var(--divider);
+  flex-shrink: 0;
+}
+.staff-shifts .ss-body {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  min-height: 0;
+}
+.staff-shifts .ss-col {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  padding: 8px 10px;
+  border-right: 1px solid var(--divider);
+}
+.staff-shifts .ss-col:last-child { border-right: none; }
+.staff-shifts .ss-shift {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text-primary);
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+.staff-shifts .ss-time {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  font-family: var(--font-num);
+}
+.staff-shifts .ss-doctor { font-size: 15px; color: var(--accent-blue, #1565C0); font-weight: 600; }
+.staff-shifts .ss-charge { font-size: 15px; color: var(--text-secondary); }
+.staff-shifts .ss-count  { font-size: 14px; color: var(--text-secondary); }
+.staff-shifts .ss-count b { font-size: 20px; font-family: var(--font-num); color: var(--accent-red); }
 .zone-label {
   display: flex;
   align-items: center;
