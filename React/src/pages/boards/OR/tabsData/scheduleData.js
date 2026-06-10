@@ -19,10 +19,10 @@ const SCHEDULE_DATA = {
           { RoomId: "OR-01", ScrubNurse: "張○惠護理師", CircNurse: "李○婷護理師", Extension: "5501" },
           { RoomId: "OR-02", ScrubNurse: "周○娟護理師", CircNurse: "王○珊護理師", Extension: "5502" },
           { RoomId: "OR-03", ScrubNurse: "張○惠護理師", CircNurse: "吳○華護理師", Extension: "5503" },
-          { RoomId: "OR-04", ScrubNurse: "周○娟護理師", CircNurse: "張○惠護理師", Extension: "5504" },
-          { RoomId: "OR-05", ScrubNurse: "李○婷護理師", CircNurse: "周○娟護理師", Extension: "5505" },
-          { RoomId: "OR-06", ScrubNurse: "王○珊護理師", CircNurse: "李○婷護理師", Extension: "5506" },
-          { RoomId: "OR-07", ScrubNurse: "張○惠護理師", CircNurse: "周○娟護理師", Extension: "5507" }
+          { RoomId: "OR-05", ScrubNurse: "周○娟護理師", CircNurse: "張○惠護理師", Extension: "5504" },
+          { RoomId: "OR-06", ScrubNurse: "李○婷護理師", CircNurse: "周○娟護理師", Extension: "5505" },
+          { RoomId: "OR-07", ScrubNurse: "王○珊護理師", CircNurse: "李○婷護理師", Extension: "5506" },
+          { RoomId: "OR-08", ScrubNurse: "張○惠護理師", CircNurse: "周○娟護理師", Extension: "5507" }
         ]
       },
       {
@@ -38,10 +38,10 @@ const SCHEDULE_DATA = {
           { RoomId: "OR-01", ScrubNurse: "陳○儀護理師", CircNurse: "黃○芸護理師", Extension: "5501" },
           { RoomId: "OR-02", ScrubNurse: "蔡○穎護理師", CircNurse: "陳○儀護理師", Extension: "5502" },
           { RoomId: "OR-03", ScrubNurse: "黃○芸護理師", CircNurse: "蔡○穎護理師", Extension: "5503" },
-          { RoomId: "OR-04", ScrubNurse: "陳○儀護理師", CircNurse: "黃○芸護理師", Extension: "5504" },
-          { RoomId: "OR-05", ScrubNurse: "蔡○穎護理師", CircNurse: "陳○儀護理師", Extension: "5505" },
-          { RoomId: "OR-06", ScrubNurse: null, CircNurse: null, Extension: "5506" },
-          { RoomId: "OR-07", ScrubNurse: null, CircNurse: null, Extension: "5507" }
+          { RoomId: "OR-05", ScrubNurse: "陳○儀護理師", CircNurse: "黃○芸護理師", Extension: "5504" },
+          { RoomId: "OR-06", ScrubNurse: "蔡○穎護理師", CircNurse: "陳○儀護理師", Extension: "5505" },
+          { RoomId: "OR-07", ScrubNurse: null, CircNurse: null, Extension: "5506" },
+          { RoomId: "OR-08", ScrubNurse: null, CircNurse: null, Extension: "5507" }
         ]
       },
       {
@@ -56,10 +56,10 @@ const SCHEDULE_DATA = {
           { RoomId: "OR-01", ScrubNurse: "林○心護理師", CircNurse: "方○婷護理師", Extension: "5501" },
           { RoomId: "OR-02", ScrubNurse: "方○婷護理師", CircNurse: "林○心護理師", Extension: "5502" },
           { RoomId: "OR-03", ScrubNurse: "林○心護理師", CircNurse: "方○婷護理師", Extension: "5503" },
-          { RoomId: "OR-04", ScrubNurse: null, CircNurse: null, Extension: "5504" },
-          { RoomId: "OR-05", ScrubNurse: null, CircNurse: null, Extension: "5505" },
-          { RoomId: "OR-06", ScrubNurse: null, CircNurse: null, Extension: "5506" },
-          { RoomId: "OR-07", ScrubNurse: null, CircNurse: null, Extension: "5507" }
+          { RoomId: "OR-05", ScrubNurse: null, CircNurse: null, Extension: "5504" },
+          { RoomId: "OR-06", ScrubNurse: null, CircNurse: null, Extension: "5505" },
+          { RoomId: "OR-07", ScrubNurse: null, CircNurse: null, Extension: "5506" },
+          { RoomId: "OR-08", ScrubNurse: null, CircNurse: null, Extension: "5507" }
         ]
       }
     ]

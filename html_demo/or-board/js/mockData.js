@@ -55,8 +55,8 @@ const MOCK_DATA = {
       }
     },
 
-    // OR-04: 住院刀, 準備中
-    { RoomId: "OR-04", Status: "prep",
+    // OR-05: 住院刀, 準備中
+    { RoomId: "OR-05", Status: "prep",
       Patient: {
         PatientName: "吳○秀", Gender: "F", Age: 58,
         MedRecord: "D501234604", BirthDate: "1968/09/30",
@@ -71,8 +71,8 @@ const MOCK_DATA = {
       }
     },
 
-    // OR-05: 住院刀, 手術中
-    { RoomId: "OR-05", Status: "in-surgery",
+    // OR-06: 住院刀, 手術中
+    { RoomId: "OR-06", Status: "in-surgery",
       Patient: {
         PatientName: "劉○明", Gender: "M", Age: 72,
         MedRecord: "E601234605", BirthDate: "1954/01/11",
@@ -87,8 +87,8 @@ const MOCK_DATA = {
       }
     },
 
-    // OR-06: 門診刀, 已完成
-    { RoomId: "OR-06", Status: "completed",
+    // OR-07: 門診刀, 已完成
+    { RoomId: "OR-07", Status: "completed",
       Patient: {
         PatientName: "林○雯", Gender: "F", Age: 29,
         MedRecord: "F701234606", BirthDate: "1997/05/16",
@@ -103,8 +103,8 @@ const MOCK_DATA = {
       }
     },
 
-    // OR-07: 急診刀, 手術中
-    { RoomId: "OR-07", Status: "in-surgery",
+    // OR-08: 急診刀, 手術中
+    { RoomId: "OR-08", Status: "in-surgery",
       Patient: {
         PatientName: "許○宏", Gender: "M", Age: 48,
         MedRecord: "G801234607", BirthDate: "1978/12/03",

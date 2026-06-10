@@ -52,7 +52,13 @@
       "PowerShell(try { Import-Module WebAdministration -ErrorAction Stop; Get-Website | Select-Object Name, ID, State, PhysicalPath, @{n='Bindings';e={\\($_.bindings.Collection | ForEach-Object { $_.protocol + ' ' + $_.bindingInformation }\\) -join '; '}} | Format-List } catch { Write-Output \"WebAdministration/IIS not available: $\\($_.Exception.Message\\)\" })",
       "Bash(node --check \"html_demo/er-board/js/mass-casualty.js\")",
       "Bash(grep -rn \"TRIAGE_LABELS\\\\|triage-1\\\\|triage-2\\\\|triage-3\\\\|triage-4\\\\|triage-5\\\\|mc-stat-critical\\\\|mc-stat-moderate\\\\|一級\\\\|五級\" html_demo/er-board/js html_demo/er-board/mass-casualty.html React/src/pages/boards/ER)",
-      "Bash(git commit *)"
+      "Bash(git commit *)",
+      "Bash(node --check js/mockData.js)",
+      "Bash(node --check js/scheduleData.js)",
+      "Bash(node --check js/handoverData.js)",
+      "Bash(node --check js/bulletinData.js)",
+      "Bash(start \"\" \"html_demo/or-board/index.html\")",
+      "Bash(start \"\" \"html_demo/or-board/evacuation.html\")"
     ],
     "additionalDirectories": [
       "\\mnt\\c\\WorkDir\\Nursing Whiteboard\\React\\src\\pages"

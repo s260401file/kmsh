@@ -12,7 +12,7 @@ const BULLETIN_DATA = {
     QueryDate: "2026-06-03",
     UnitBulletins: [
       { BulletinId: 1, Category: "手術室", Title: "單孔腹腔鏡器械清潔流程更新", Content: "即日起，單孔腹腔鏡（SILS）器械術後清潔須依新版 SOP（2026年5月版）執行，請各刷手護理師完成閱讀後於流程表簽名，如有疑問洽護理長。", Priority: "重要", PostedBy: "陳○雅護理長", PostedAt: "2026-06-01", IsActive: true },
-      { BulletinId: 2, Category: "手術室", Title: "心臟手術體外循環安全核查表啟用", Content: "OR-04 心臟手術起，術前須完成新版體外循環（CPB）安全核查表（含術前 Team Briefing、手術開始前 Time-Out），由主刀醫師主導執行，並留存紀錄。", Priority: "重要", PostedBy: "林○泰醫師", PostedAt: "2026-05-28", IsActive: true },
+      { BulletinId: 2, Category: "手術室", Title: "心臟手術體外循環安全核查表啟用", Content: "OR-05 心臟手術起，術前須完成新版體外循環（CPB）安全核查表（含術前 Team Briefing、手術開始前 Time-Out），由主刀醫師主導執行，並留存紀錄。", Priority: "重要", PostedBy: "林○泰醫師", PostedAt: "2026-05-28", IsActive: true },
       { BulletinId: 3, Category: "手術室", Title: "器械借用申請流程提醒", Content: "需向他院借用特殊器械時，請提前 48 小時透過護理長向供應室申請，急診緊急借用聯繫分機 5550。", Priority: "一般", PostedBy: "陳○雅護理長", PostedAt: "2026-05-25", IsActive: true },
       { BulletinId: 4, Category: "手術室", Title: "7 月排班意願收集", Content: "7 月份排班意願表請於 6/10 前交回護理長辦公室，逾期視同無特殊需求。", Priority: "一般", PostedBy: "陳○雅護理長", PostedAt: "2026-05-27", IsActive: true }
     ],

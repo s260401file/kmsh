@@ -15,7 +15,7 @@ const TABS = [
 
 export default function OrLayout() {
   const { date, time } = useClock()
-  const marquee = useMarquee('OR', '2026/05/24 手術室公告：今日共安排 7 台手術，OR-04 MVR 預計 13:00 完成，ICU 床位已預留。')
+  const marquee = useMarquee('OR', '2026/05/24 手術室公告：今日共安排 7 台手術，OR-05 MVR 預計 13:00 完成，ICU 床位已預留。')
 
   return (
     <div className="or-board">

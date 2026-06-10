@@ -105,7 +105,7 @@
 <div class="topbar">
   <h1>手術室（OR）— Demo API 規格對照</h1>
   <div class="sub">本文件為前端 HTML Demo 所預期的後端 API 規格，用以與資訊單位提供之 API 介接清單對照</div>
-  <div class="meta">病房代碼 OR　·　刀房 OR-01 ～ OR-07 共 7 間　·　共 6 個 API 端點　·　<strong>PascalCase</strong> 欄位命名　·　最後更新 2026-06-03</div>
+  <div class="meta">病房代碼 OR　·　刀房 OR-01～03、OR-05～08 共 7 間　·　共 6 個 API 端點　·　<strong>PascalCase</strong> 欄位命名　·　最後更新 2026-06-03</div>
 </div>
 
 <div class="layout">
@@ -187,7 +187,7 @@
             <tr><td class="col-field nested">.WardDirector</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-no">—</td><td>手術室主任姓名（含職稱）</td></tr>
             <tr><td class="col-field nested">.HeadNurse</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td>護理長姓名（含職稱）</td></tr>
             <tr><td class="col-field">Rooms</td><td><span class="type-tag type-array">Room[]</span></td><td class="col-req req-yes">Y</td><td>刀房陣列（7 筆，含空房）</td></tr>
-            <tr><td class="col-field nested">.RoomId</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td>刀房 ID，格式 <code>OR-0X</code>（OR-01 ～ OR-07）</td></tr>
+            <tr><td class="col-field nested">.RoomId</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td>刀房 ID，格式 <code>OR-0X</code>（OR-01～03、OR-05～08）</td></tr>
             <tr><td class="col-field nested">.Status</td><td><span class="type-tag type-enum">enum</span></td><td class="col-req req-yes">Y</td><td><code>in-surgery</code> / <code>prep</code> / <code>completed</code> / <code>empty</code></td></tr>
             <tr><td class="col-field nested">.Patient</td><td><span class="type-tag type-object">object|null</span></td><td class="col-req req-no">—</td><td>空房時為 <code>null</code></td></tr>
             <tr><td class="col-field nested" style="padding-left:32px">.PatientName</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td>病患姓名（匿名化）</td></tr>
@@ -218,10 +218,10 @@
           <li>OR-01：住院刀，手術中（腹腔鏡膽囊切除術）</li>
           <li>OR-02：急診刀，手術中（急性盲腸炎）</li>
           <li>OR-03：急診刀，手術中（股骨骨折）</li>
-          <li>OR-04：住院刀，手術中（心臟瓣膜置換）</li>
-          <li>OR-05：門診刀，準備中（膝關節置換）</li>
-          <li>OR-06：門診刀，已完成（攣縮疤痕植皮）</li>
-          <li>OR-07：空房</li>
+          <li>OR-05：住院刀，手術中（心臟瓣膜置換）</li>
+          <li>OR-06：門診刀，準備中（膝關節置換）</li>
+          <li>OR-07：門診刀，已完成（攣縮疤痕植皮）</li>
+          <li>OR-08：空房</li>
         </ul>
       </div>
     </article>
@@ -267,7 +267,7 @@
             <tr><td class="col-field nested" style="padding-left:32px">.Extension</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td>院內分機</td></tr>
             <tr><td class="col-field nested">.CircTech</td><td><span class="type-tag type-object">object|null</span></td><td class="col-req req-no">—</td><td>體外循環技師（白班有、小夜/大夜 null）</td></tr>
             <tr><td class="col-field nested">.Rooms</td><td><span class="type-tag type-array">RoomAssign[]</span></td><td class="col-req req-yes">Y</td><td>7 筆，每刀房護理師派班</td></tr>
-            <tr><td class="col-field nested" style="padding-left:32px">.RoomId</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td><code>OR-01</code> ～ <code>OR-07</code></td></tr>
+            <tr><td class="col-field nested" style="padding-left:32px">.RoomId</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td><code>OR-01～03</code>、<code>OR-05～08</code></td></tr>
             <tr><td class="col-field nested" style="padding-left:32px">.Extension</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td>刀房分機</td></tr>
             <tr><td class="col-field nested" style="padding-left:32px">.ScrubNurse</td><td><span class="type-tag type-string">string|null</span></td><td class="col-req req-no">—</td><td>刷手護理師（未排班時 null）</td></tr>
             <tr><td class="col-field nested" style="padding-left:32px">.CircNurse</td><td><span class="type-tag type-string">string|null</span></td><td class="col-req req-no">—</td><td>流動護理師（未排班時 null）</td></tr>
@@ -299,7 +299,7 @@
           <tbody>
             <tr><td class="col-field">Items</td><td><span class="type-tag type-array">HandoverItem[]</span></td><td class="col-req req-yes">Y</td><td>交班項目（空陣列 = 今日無交班）</td></tr>
             <tr><td class="col-field nested">.HandoverId</td><td><span class="type-tag type-int">int</span></td><td class="col-req req-yes">Y</td><td>交班記錄 ID</td></tr>
-            <tr><td class="col-field nested">.RoomId</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td>來源刀房（如 <code>OR-06</code>）</td></tr>
+            <tr><td class="col-field nested">.RoomId</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td>來源刀房（如 <code>OR-07</code>）</td></tr>
             <tr><td class="col-field nested">.PatientName</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td>病患姓名（匿名化）</td></tr>
             <tr><td class="col-field nested">.Gender</td><td><span class="type-tag type-enum">enum</span></td><td class="col-req req-yes">Y</td><td><code>M</code> / <code>F</code></td></tr>
             <tr><td class="col-field nested">.Age</td><td><span class="type-tag type-int">int</span></td><td class="col-req req-yes">Y</td><td>年齡</td></tr>

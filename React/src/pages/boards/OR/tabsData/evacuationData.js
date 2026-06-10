@@ -7,7 +7,7 @@ const EVACUATION_DATA = {
     EvacPlan: {
       EvacPlanId: 1,
       FloorNo: "5F",
-      WardName: "手術室（OR-01 ～ OR-07）",
+      WardName: "手術室（OR-01～03、OR-05～08）",
       Description: "手術室位於 5 樓，共設 7 間刀房。主要逃生出口為東西兩側防火門通往樓梯間，集合點為 1F 停車場入口廣場。術中病患由麻醉科與護理人員協助推床疏散。",
       UpdatedAt: "2026-05-01",
       LastDrillDate: "2026-04-15"

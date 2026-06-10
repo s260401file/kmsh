@@ -126,7 +126,7 @@ export default function WardTab() {
     <>
       <main className="main-content">
         <div className="or-panel">
-          <div className="ward-title">▌ 手術室　共 7 間（OR-01 ～ OR-07）</div>
+          <div className="ward-title">▌ 手術室　共 7 間（OR-01～03、OR-05～08）</div>
           <div className="or-grid">
             {MOCK_DATA.Rooms.map(room => (
               <RoomCard

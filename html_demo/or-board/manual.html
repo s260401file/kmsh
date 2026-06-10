@@ -275,7 +275,7 @@
     <div class="sub">高雄市立民生醫院 — 護理科電子白板系統 HTML Demo</div>
     <div class="cover-meta">
       <div class="cover-meta-item"><strong>版本</strong><br>v1.0 Demo</div>
-      <div class="cover-meta-item"><strong>刀房數</strong><br>7 間（OR-01 ～ OR-07）</div>
+      <div class="cover-meta-item"><strong>刀房數</strong><br>7 間（OR-01～03、OR-05～08）</div>
       <div class="cover-meta-item"><strong>布局</strong><br>4 列 × 2 行，自動流排</div>
       <div class="cover-meta-item"><strong>識別色</strong><br>手術室深綠 #27C46A</div>
     </div>
@@ -333,7 +333,7 @@
         <tr>
           <td><strong>依平面位置圖設置刀房號</strong><br><span class="spec-ref">§ 7.1.2.3 標題</span></td>
           <td><span class="s-warn">待確認</span></td>
-          <td>Demo 使用 OR-01～OR-07 順序編號；正式版需對照 3F 平面圖確認刀房號碼與排列</td>
+          <td>Demo 使用 OR-01～03、OR-05～08 編號（無 OR-04）；正式版需對照 3F 平面圖確認刀房號碼與排列</td>
         </tr>
       </tbody>
     </table>
@@ -342,7 +342,7 @@
   <!-- ── 2. 版面說明 ── -->
   <div class="section">
     <div class="section-title">2. 版面說明</div>
-    <p>OR 白板採用 <strong>4 列 × 2 行</strong>的等比例格線，共 7 間刀房（第 8 格空白）。刀房依序 OR-01～OR-07 由左至右、由上至下自動排列，無需根據平面圖做偏移定位（正式版視需求調整）。</p>
+    <p>OR 白板採用 <strong>4 列 × 2 行</strong>的等比例格線，共 7 間刀房（第 8 格空白）。刀房依序 OR-01～03、OR-05～08 由左至右、由上至下自動排列，無需根據平面圖做偏移定位（正式版視需求調整）。</p>
     <div class="note">
       <strong>與病房白板的差異：</strong>OR 白板以「刀房間」為單位，而非「病床」。每張卡片代表一間手術室的即時狀態，不顯示護理區帶或走廊隔間。
     </div>
@@ -379,7 +379,7 @@
         </div>
         <div class="mock-room prep src-inp">
           <div style="display:flex;gap:4px;flex-wrap:wrap;">
-            <span class="mock-room-num">OR-04</span>
+            <span class="mock-room-num">OR-05</span>
             <span class="mock-src-badge inp">住院刀</span>
             <span class="mock-status-badge prep">準備中</span>
           </div>
@@ -388,7 +388,7 @@
         </div>
         <div class="mock-room in-surgery src-inp">
           <div style="display:flex;gap:4px;flex-wrap:wrap;">
-            <span class="mock-room-num">OR-05</span>
+            <span class="mock-room-num">OR-06</span>
             <span class="mock-src-badge inp">住院刀</span>
             <span class="mock-status-badge busy">手術中</span>
           </div>
@@ -398,7 +398,7 @@
         <!-- Row 2 -->
         <div class="mock-room completed src-op">
           <div style="display:flex;gap:4px;flex-wrap:wrap;">
-            <span class="mock-room-num">OR-06</span>
+            <span class="mock-room-num">OR-07</span>
             <span class="mock-src-badge op">門診刀</span>
             <span class="mock-status-badge done">已完成</span>
           </div>
@@ -407,7 +407,7 @@
         </div>
         <div class="mock-room in-surgery src-er">
           <div style="display:flex;gap:4px;flex-wrap:wrap;">
-            <span class="mock-room-num">OR-07</span>
+            <span class="mock-room-num">OR-08</span>
             <span class="mock-src-badge er">急診刀</span>
             <span class="mock-status-badge busy">手術中</span>
           </div>
@@ -585,7 +585,7 @@
       <table class="spec-table">
         <thead><tr><th>欄位</th><th>型別</th><th>說明</th></tr></thead>
         <tbody>
-          <tr><td>RoomId</td><td>string</td><td>"OR-01" ～ "OR-07"（依平面圖編號）</td></tr>
+          <tr><td>RoomId</td><td>string</td><td>OR-01～03、OR-05～08（依平面圖編號）</td></tr>
           <tr><td>Status</td><td>string</td><td>"in-surgery" | "prep" | "completed" | "empty"</td></tr>
           <tr><td>Patient</td><td>object | null</td><td>null 時卡片顯示空房</td></tr>
           <tr><td>Patient.SurgerySource</td><td>string</td><td>"急診刀" | "門診刀" | "住院刀"</td></tr>
