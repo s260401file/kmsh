@@ -1,29 +1,51 @@
-import BULLETIN_DATA from '../tabsData/bulletinData'
+import { useState, useEffect } from 'react'
+import * as textApi from '../../../../services/textApi'
 import '../tabsCss/bulletin.css'
 
-function BulletinList({ items, barFn, badgeFn }) {
-  return items.map(b => (
-    <div key={b.bulletinId} className="bl-card">
-      <div className={`bl-priority-bar ${barFn(b.priority)}`} />
+function fmtDate(isoStr) {
+  if (!isoStr) return ''
+  const d = isoStr.slice(0, 10)
+  return `${d.slice(5, 7)}/${d.slice(8, 10)}`
+}
+
+function sortItems(items) {
+  return [...items].sort((a, b) => {
+    if (a.priority !== b.priority) return a.priority === '重要' ? -1 : 1
+    return (b.createdAt ?? '').localeCompare(a.createdAt ?? '')
+  })
+}
+
+function BulletinCard({ item, isHosp }) {
+  const barClass   = item.priority === '重要' ? 'bl-bar-重要' : (isHosp ? 'bl-bar-院方' : 'bl-bar-一般')
+  const badgeClass = item.priority === '重要' ? 'bl-badge-重要' : (isHosp ? 'bl-badge-院方' : 'bl-badge-一般')
+  return (
+    <div className="bl-card">
+      <div className={`bl-priority-bar ${barClass}`} />
       <div className="bl-card-body">
         <div className="bl-card-top">
-          <span className={`bl-badge ${badgeFn(b.priority)}`}>{b.priority}</span>
-          <span className="bl-card-title">{b.title}</span>
+          <span className={`bl-badge ${badgeClass}`}>{item.priority ?? '一般'}</span>
+          <span className="bl-card-title">{item.title}</span>
         </div>
-        <div className="bl-card-content">{b.content}</div>
+        <div className="bl-card-content">{item.content}</div>
         <div className="bl-card-meta">
-          <span className="bl-meta-date">{b.postedAt}</span>
-          <span className="bl-meta-author">{b.postedBy}</span>
+          <span className="bl-meta-date">{fmtDate(item.createdAt)}</span>
         </div>
       </div>
     </div>
-  ))
+  )
 }
 
 export default function BulletinTab() {
-  const { unitBulletins, hospBulletins } = BULLETIN_DATA.data
+  const [unitItems, setUnitItems] = useState([])
+  const [hospItems, setHospItems] = useState([])
+
+  useEffect(() => {
+    textApi.getAll('ICU', 'bulletin_unit').then(d => setUnitItems(sortItems(d ?? []))).catch(() => {})
+    textApi.getAll('ALL', 'bulletin_hosp').then(d => setHospItems(sortItems(d ?? []))).catch(() => {})
+  }, [])
+
   return (
-    <main className="main-content">
+    <main className="main-content" style={{ padding: 0 }}>
       <div className="bl-panel">
         <div className="bl-title">
           <span className="bl-title-bar"></span>
@@ -32,26 +54,26 @@ export default function BulletinTab() {
         <div className="bl-columns">
           <div className="bl-col">
             <div className="bl-col-header">
-              護理站公告 <span className="bl-col-count">{unitBulletins.length} 則</span>
+              護理站公告
+              <span className="bl-col-count">{unitItems.length ? `${unitItems.length} 則` : ''}</span>
             </div>
             <div className="bl-list">
-              <BulletinList
-                items={unitBulletins}
-                barFn={p => p === '重要' ? 'bl-bar-重要' : 'bl-bar-一般'}
-                badgeFn={p => p === '重要' ? 'bl-badge-重要' : 'bl-badge-一般'}
-              />
+              {unitItems.length === 0
+                ? <div className="bl-empty">目前無護理站公告</div>
+                : unitItems.map(b => <BulletinCard key={b.id} item={b} isHosp={false} />)
+              }
             </div>
           </div>
           <div className="bl-col">
             <div className="bl-col-header">
-              院方公告 <span className="bl-col-count">{hospBulletins.length} 則</span>
+              院方公告
+              <span className="bl-col-count">{hospItems.length ? `${hospItems.length} 則` : ''}</span>
             </div>
             <div className="bl-list">
-              <BulletinList
-                items={hospBulletins}
-                barFn={p => p === '重要' ? 'bl-bar-重要' : 'bl-bar-院方'}
-                badgeFn={p => p === '重要' ? 'bl-badge-重要' : 'bl-badge-院方'}
-              />
+              {hospItems.length === 0
+                ? <div className="bl-empty">目前無院方公告</div>
+                : hospItems.map(b => <BulletinCard key={b.id} item={b} isHosp={true} />)
+              }
             </div>
           </div>
         </div>

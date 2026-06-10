@@ -1,6 +1,9 @@
 import MOCK_DATA from '../mockData'
 import '../tabsCss/mass-casualty.css'
 
+// 檢傷分級：Triage 1-5 → A/B/C 三級（A 重症 1-2、B 中症 3、C 輕症 4-5）
+const triageGrade = t => (t <= 2 ? 'A' : (t === 3 ? 'B' : 'C'))
+
 function buildFlags(p) {
   const flags = []
   if (p.Deceased)    flags.push(<span key="死亡" className="flag-badge flag-死亡">死亡</span>)
@@ -20,8 +23,9 @@ export default function MassCasualtyTab() {
     .map(b => ({ ...b.Patient, BedId: b.BedId }))
     .sort((a, b) => a.Triage - b.Triage)
 
-  const critical  = patients.filter(p => p.Triage <= 2).length
-  const moderate  = patients.filter(p => p.Triage >= 3).length
+  const sevA  = patients.filter(p => p.Triage <= 2).length
+  const sevB  = patients.filter(p => p.Triage === 3).length
+  const sevC  = patients.filter(p => p.Triage >= 4).length
   const dead      = patients.filter(p => p.Deceased).length
   const transfer  = patients.filter(p => p.TransferOut).length
 
@@ -36,12 +40,16 @@ export default function MassCasualtyTab() {
             <div className="mc-stat-lbl">病患總數</div>
           </div>
           <div className="mc-stat-card">
-            <div className="mc-stat-val val-critical">{critical}</div>
-            <div className="mc-stat-lbl">重症（1–2級）</div>
+            <div className="mc-stat-val val-critical">{sevA}</div>
+            <div className="mc-stat-lbl">A級 重症</div>
           </div>
           <div className="mc-stat-card">
-            <div className="mc-stat-val val-moderate">{moderate}</div>
-            <div className="mc-stat-lbl">輕中症（3–5級）</div>
+            <div className="mc-stat-val val-mid">{sevB}</div>
+            <div className="mc-stat-lbl">B級 中症</div>
+          </div>
+          <div className="mc-stat-card">
+            <div className="mc-stat-val val-moderate">{sevC}</div>
+            <div className="mc-stat-lbl">C級 輕症</div>
           </div>
           <div className="mc-stat-card">
             <div className="mc-stat-val val-dead">{dead}</div>
@@ -79,7 +87,7 @@ export default function MassCasualtyTab() {
                     <div className="mc-basic">{p.Gender}/{p.Age}</div>
                   </td>
                   <td style={{ fontFamily: 'var(--font-num)', fontSize: '14px', color: 'var(--text-muted)' }}>{p.MedRecord || '—'}</td>
-                  <td><span className={`triage-badge triage-${p.Triage}`}>{p.Triage}</span></td>
+                  <td><span className={`triage-badge tg-${triageGrade(p.Triage).toLowerCase()}`}>{triageGrade(p.Triage)}</span></td>
                   <td>{p.Department || '—'}</td>
                   <td>{p.Diagnosis  || '—'}</td>
                   <td>{p.ArrivalTime || '—'}</td>

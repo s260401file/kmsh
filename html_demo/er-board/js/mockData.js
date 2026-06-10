@@ -269,12 +269,13 @@ function getStats(beds) {
   const observation  = occupied.filter(b => b.Patient?.Observation).length;
   const transferIn   = occupied.filter(b => b.Patient?.TransferIn).length;
   const transferOut  = occupied.filter(b => b.Patient?.TransferOut).length;
-  const critical     = occupied.filter(b => b.Patient?.Triage <= 2).length;
-  const moderate     = occupied.filter(b => b.Patient?.Triage >= 3).length;
+  const sevA         = occupied.filter(b => b.Patient?.Triage <= 2).length;   // A 重症（1-2級）
+  const sevB         = occupied.filter(b => b.Patient?.Triage === 3).length;  // B 中症（3級）
+  const sevC         = occupied.filter(b => b.Patient?.Triage >= 4).length;   // C 輕症（4-5級）
   const dnr          = occupied.filter(b => b.Patient?.Dnr).length;
   const admitted     = occupied.filter(b => b.Patient?.Admitted).length;
   const awaitGen     = occupied.filter(b => b.Patient?.Awaiting && b.Patient?.AwaitingType === "一般").length;
   const awaitIcu     = occupied.filter(b => b.Patient?.Awaiting && b.Patient?.AwaitingType === "加護").length;
   const awaitIso     = occupied.filter(b => b.Patient?.Awaiting && b.Patient?.AwaitingType === "隔離").length;
-  return { total, attending, observation, transferIn, transferOut, critical, moderate, dnr, admitted, awaitGen, awaitIcu, awaitIso };
+  return { total, attending, observation, transferIn, transferOut, sevA, sevB, sevC, dnr, admitted, awaitGen, awaitIcu, awaitIso };
 }

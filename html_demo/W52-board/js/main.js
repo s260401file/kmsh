@@ -63,6 +63,9 @@ document.addEventListener("DOMContentLoaded", () => {
   renderStats(MOCK_DATA.Beds);
   renderAllBeds(MOCK_DATA.Beds);
 
+  // 圖例標記 SVG
+  renderLegendShapes();
+
   // 時鐘
   updateClock();
   setInterval(updateClock, 1000);

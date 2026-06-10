@@ -1,5 +1,8 @@
 import { useState, useMemo } from 'react'
 import MOCK_DATA, { getStats } from '../mockData'
+import { FlagDot, makeFlagStyle } from '../../../../utils/flagShapes'
+
+const CONDITION_LABEL = { '穩定': 'C級', '重症': 'B級', '危急': 'A級' }
 
 function buildBadges(patient) {
   if (!patient) return []
@@ -53,8 +56,6 @@ function BedCard({ bed, filteredOut, onClick }) {
   }
   const p = bed.patient
   const allBadges = buildBadges(p)
-  const cardBadges = allBadges.slice(0, 3)
-  const extra = allBadges.length - cardBadges.length
   return (
     <div
       className={`bed-card ${bed.status} bed-${bed.id}${filteredOut ? ' filtered-out' : ''}`}
@@ -65,9 +66,8 @@ function BedCard({ bed, filteredOut, onClick }) {
         <span className={`patient-name ${p.gender === 'M' ? 'gender-m' : 'gender-f'}`}>{p.name}</span>
         <span className="patient-basic">{p.gender}/{p.age}</span>
       </div>
-      <div className="card-row3">
-        {cardBadges.map(b => <span key={b} className={`badge badge-${b}`}>{b}</span>)}
-        {extra > 0 && <span className="badge-more">+{extra}</span>}
+      <div className="dots-row">
+        {allBadges.map(b => <FlagDot key={b} k={b} flagStyle={FLAG_STYLE} />)}
       </div>
     </div>
   )
@@ -88,7 +88,7 @@ function BedModal({ bed, onClose }) {
             <span className="modal-bed-id">{bedLabel}</span>
             <span className="modal-patient">{p.name}</span>
             <span className="modal-basic">{p.gender === 'M' ? '男' : '女'} / {p.age}歲</span>
-            <div className="modal-badges">{allBadges.map(b => <span key={b} className={`badge badge-${b}`}>{b}</span>)}</div>
+            <div className="modal-badges">{allBadges.map(b => <span key={b} className="badge"><FlagDot k={b} flagStyle={FLAG_STYLE} title={false} />{b}</span>)}</div>
           </div>
           <button className="modal-close" onClick={onClose}>✕</button>
         </div>
@@ -106,7 +106,7 @@ function BedModal({ bed, onClose }) {
           <div className="modal-row">
             <div className="modal-field"><div className="field-label">入院日期</div><div className="field-value">2026/{p.admission}</div></div>
             <div className="modal-field"><div className="field-label">住院天數</div><div className="field-value">{daysSince >= 0 ? daysSince + ' 天' : '—'}</div></div>
-            <div className="modal-field"><div className="field-label">病況等級</div><div className="field-value">{p.condition}</div></div>
+            <div className="modal-field"><div className="field-label">病況等級</div><div className="field-value">{CONDITION_LABEL[p.condition] || p.condition}</div></div>
           </div>
           <div className="modal-row">
             <div className="modal-field"><div className="field-label">隔離狀態</div><div className="field-value">{p.isolation || '無'}</div></div>
@@ -135,6 +135,7 @@ const FILTER_BADGES = [
   {f:'輪椅',cls:'badge-輪椅',label:'輪椅'},{f:'推床',cls:'badge-推床',label:'推床'},
   {f:'氧氣設備',cls:'badge-氧氣設備',label:'氧氣設備'},{f:'洗腎',cls:'badge-洗腎',label:'洗腎'},
 ]
+const FLAG_STYLE = makeFlagStyle(FILTER_BADGES.map(x => x.f))
 
 export default function WardTab() {
   const [filter, setFilter] = useState('all')
@@ -179,9 +180,9 @@ export default function WardTab() {
               <div className={`ws-item${filter==='consult'?' active':''}`} data-filter="consult" onClick={()=>handleFilter('consult')}><div className="ws-value ws-consult">{stats.consult}</div><div className="ws-label">會診</div></div>
             </div>
             <div className="ws-row">
-              <div className={`ws-item${filter==='cond-a'?' active':''}`} data-filter="cond-a" onClick={()=>handleFilter('cond-a')}><div className="ws-value ws-sev-a">{stats.sevA}</div><div className="ws-label"><span className="sev-dot sev-dot-a"/>穩定</div></div>
-              <div className={`ws-item${filter==='cond-b'?' active':''}`} data-filter="cond-b" onClick={()=>handleFilter('cond-b')}><div className="ws-value ws-sev-b">{stats.sevB}</div><div className="ws-label"><span className="sev-dot sev-dot-b"/>重症</div></div>
-              <div className={`ws-item${filter==='cond-c'?' active':''}`} data-filter="cond-c" onClick={()=>handleFilter('cond-c')}><div className="ws-value ws-sev-c">{stats.sevC}</div><div className="ws-label"><span className="sev-dot sev-dot-c"/>危急</div></div>
+              <div className={`ws-item${filter==='cond-a'?' active':''}`} data-filter="cond-a" onClick={()=>handleFilter('cond-a')}><div className="ws-value ws-sev-a">{stats.sevA}</div><div className="ws-label"><span className="sev-dot sev-dot-a"/>C級</div></div>
+              <div className={`ws-item${filter==='cond-b'?' active':''}`} data-filter="cond-b" onClick={()=>handleFilter('cond-b')}><div className="ws-value ws-sev-b">{stats.sevB}</div><div className="ws-label"><span className="sev-dot sev-dot-b"/>B級</div></div>
+              <div className={`ws-item${filter==='cond-c'?' active':''}`} data-filter="cond-c" onClick={()=>handleFilter('cond-c')}><div className="ws-value ws-sev-c">{stats.sevC}</div><div className="ws-label"><span className="sev-dot sev-dot-c"/>A級</div></div>
               <div className={`ws-item${filter==='iso'?' active':''}`} data-filter="iso" onClick={()=>handleFilter('iso')}><div className="ws-value ws-iso">{stats.isolation}</div><div className="ws-label">隔離</div></div>
               <div className={`ws-item${filter==='DNR'?' active':''}`} data-filter="DNR" onClick={()=>handleFilter('DNR')}><div className="ws-value ws-dnr">{stats.dnr}</div><div className="ws-label">DNR</div></div>
               <div className={`ws-item${filter==='RRT'?' active':''}`} data-filter="RRT" onClick={()=>handleFilter('RRT')}><div className="ws-value ws-rrt">{stats.rrt}</div><div className="ws-label">RRT</div></div>
@@ -197,10 +198,11 @@ export default function WardTab() {
       </main>
 
       <div className="filter-bar">
-        <span className="filter-label">圖例 / 過濾：</span>
         <button className={`filter-btn${filter==='all'?' active':''}`} onClick={()=>handleFilter('all')}>全部</button>
-        {FILTER_BADGES.map(({f,cls,label}) => (
-          <button key={f} className={`badge badge-filter ${cls}${filter===f?' active':''}`} onClick={()=>handleFilter(f)}>{label}</button>
+        {FILTER_BADGES.map(({f,label}) => (
+          <button key={f} className={`badge badge-filter${filter===f?' active':''}`} onClick={()=>handleFilter(f)}>
+            <FlagDot k={f} flagStyle={FLAG_STYLE} title={false} />{label}
+          </button>
         ))}
       </div>
 

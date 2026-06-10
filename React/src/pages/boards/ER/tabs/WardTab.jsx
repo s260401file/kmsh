@@ -1,7 +1,10 @@
 import { useState, useMemo } from 'react'
 import MOCK_DATA, { getStats } from '../mockData'
+import { FlagDot, makeFlagStyle } from '../../../../utils/flagShapes'
 
-const TRIAGE_LABELS = {1:'一級 復甦急救',2:'二級 重症',3:'三級 緊急',4:'四級 次緊急',5:'五級 非緊急'}
+// 檢傷分級：Triage 1-5 → A/B/C 三級（A 重症 1-2、B 中症 3、C 輕症 4-5）
+const triageGrade = t => (t <= 2 ? 'A' : (t === 3 ? 'B' : 'C'))
+const GRADE_LABEL = { A: 'A級 重症', B: 'B級 中症', C: 'C級 輕症' }
 
 function bedClass(bedId) { return bedId.replace('負', 'neg') }
 
@@ -24,8 +27,9 @@ function isBedVisible(bed, filter) {
   const p = bed.Patient
   const badges = buildBadges(p)
   switch (filter) {
-    case 'critical':  return p?.Triage <= 2
-    case 'moderate':  return p?.Triage >= 3
+    case 'sev-a':     return p?.Triage <= 2
+    case 'sev-b':     return p?.Triage === 3
+    case 'sev-c':     return p?.Triage >= 4
     case 'obs':       return !!p?.Observation
     case 'transfer':  return !!(p?.TransferOut || p?.TransferIn)
     case 'await-gen': return p?.Awaiting && p?.AwaitingType === '一般'
@@ -50,25 +54,22 @@ function BedCard({ bed, filteredOut, onClick }) {
   const negIsoCls = p.Isolation === '負壓隔離' ? 'neg-iso' : ''
   const deceasedCls = p.Deceased ? 'deceased' : ''
   const allBadges = buildBadges(p)
-  const cardBadges = allBadges.slice(0, 3)
-  const extra = allBadges.length - cardBadges.length
-  const triageLabels = ['','一級','二級','三級','四級','五級']
+  const tg = triageGrade(p.Triage)
   return (
     <div
       className={`bed-card ${bed.Status} ${triageCls} ${negIsoCls} ${deceasedCls} bed-${cls}${filteredOut ? ' filtered-out' : ''}`}
       onClick={onClick}
     >
       <div className="card-row1">
-        <span className={`triage-badge t${p.Triage}`}>{triageLabels[p.Triage] || p.Triage + '級'}</span>
+        <span className={`triage-badge tg-${tg.toLowerCase()}`}>{tg}級</span>
         <span className="bed-num">{bed.BedId}</span>
       </div>
       <div className="card-row2">
         <span className={`patient-name ${p.Gender === 'M' ? 'gender-m' : 'gender-f'}`}>{p.PatientName}</span>
         <span className="patient-basic">{p.Gender}/{p.Age}</span>
       </div>
-      <div className="card-row3">
-        {cardBadges.map(b => <span key={b} className={`badge badge-${b}`}>{b}</span>)}
-        {extra > 0 && <span className="badge-more">+{extra}</span>}
+      <div className="dots-row">
+        {allBadges.map(b => <FlagDot key={b} k={b} flagStyle={FLAG_STYLE} />)}
       </div>
     </div>
   )
@@ -91,6 +92,7 @@ function BedModal({ bed, onClose }) {
   if (p.Mbd)         erStatuses.push('MBD')
   if (p.Admitted)    erStatuses.push(p.AdmBedNo ? `住院（${p.AdmBedNo}）` : '住院')
   const allBadges = buildBadges(p)
+  const tg = triageGrade(p.Triage)
   return (
     <div className="modal-overlay show" onClick={e => e.target === e.currentTarget && onClose()}>
       <div className="modal-box">
@@ -99,7 +101,7 @@ function BedModal({ bed, onClose }) {
             <span className="modal-bed-id">{bed.BedId}</span>
             <span className="modal-patient">{p.PatientName}</span>
             <span className="modal-basic">{p.Gender === 'M' ? '男' : '女'} / {p.Age}歲</span>
-            <div className="modal-badges">{allBadges.map(b => <span key={b} className={`badge badge-${b}`}>{b}</span>)}</div>
+            <div className="modal-badges">{allBadges.map(b => <span key={b} className="badge"><FlagDot k={b} flagStyle={FLAG_STYLE} title={false} />{b}</span>)}</div>
           </div>
           <button className="modal-close" onClick={onClose}>✕</button>
         </div>
@@ -117,7 +119,7 @@ function BedModal({ bed, onClose }) {
           <div className="modal-row">
             <div className="modal-field"><div className="field-label">到院時間</div><div className="field-value">2026/{p.ArrivalDate} {p.ArrivalTime}</div></div>
             <div className="modal-field"><div className="field-label">留觀時間</div><div className="field-value">{stayStr}</div></div>
-            <div className="modal-field"><div className="field-label">檢傷分級</div><div className={`field-value triage-val t${p.Triage}`}>{TRIAGE_LABELS[p.Triage] || '—'}</div></div>
+            <div className="modal-field"><div className="field-label">檢傷分級</div><div className={`field-value triage-val tg-${tg.toLowerCase()}`}>{GRADE_LABEL[tg] || '—'}</div></div>
           </div>
           <div className="modal-row">
             <div className="modal-field"><div className="field-label">隔離狀態</div><div className="field-value">{p.Isolation || '無'}</div></div>
@@ -138,6 +140,7 @@ const FILTER_BADGES = [
   { f: '轉入', cls: 'badge-轉入', label: '轉入' }, { f: 'DNR', cls: 'badge-DNR', label: 'DNR' },
   { f: 'obs',  cls: 'badge-留觀', label: '留觀'  }, { f: '住院', cls: 'badge-住院', label: '住院' },
 ]
+const FLAG_STYLE = makeFlagStyle(FILTER_BADGES.map(x => x.label))
 
 export default function WardTab() {
   const [filter, setFilter] = useState('all')
@@ -149,10 +152,29 @@ export default function WardTab() {
     <>
       <main className="main-content">
         <div className="beds-panel">
-          <div className="ward-title">▌ 急診室　共 19 床（負壓 2＋急救 1＋第一診療 5＋第二診療 6＋留觀 2＋待床 3）</div>
+          <div className="ward-title">▌ 急診室　共 19 床（負壓 2＋兒科留觀 1＋第一留觀 5＋第二留觀 6＋急診手術 2＋急救 3）</div>
           <div className="ward-grid">
             <div className="nursing-station">護理站</div>
+
+            {/* 區帶背景（鋪在床位後方）*/}
+            <div className="zone-band" style={{gridColumn:'1/3',gridRow:'1/3'}}/>
+            <div className="zone-band" style={{gridColumn:'4/6',gridRow:'2/3'}}/>
+            <div className="zone-band" style={{gridColumn:'6/12',gridRow:'3/4'}}/>
+            <div className="zone-band" style={{gridColumn:'5/12',gridRow:'5/6'}}/>
+            <div className="zone-band" style={{gridColumn:'5/7',gridRow:'7/9'}}/>
+            <div className="zone-band" style={{gridColumn:'1/4',gridRow:'7/9'}}/>
+
+            {/* 診療區標示（R2，C6、C7）*/}
             <div className="zone-label zone-diag1">第1診療區</div>
+            <div className="zone-label zone-diag2">第2診療區</div>
+
+            {/* 區名（放在相鄰空格，疊在區帶上方）*/}
+            <div className="zone-name" style={{gridColumn:'2',gridRow:'1/3'}}>負壓隔離室</div>
+            <div className="zone-name" style={{gridColumn:'4/5',gridRow:'2'}}>兒科留觀區</div>
+            <div className="zone-name" style={{gridColumn:'6',gridRow:'3'}}>第一留觀區</div>
+            <div className="zone-name" style={{gridColumn:'5',gridRow:'5'}}>第二留觀區</div>
+            <div className="zone-name" style={{gridColumn:'5/6',gridRow:'7/9'}}>急診手術室</div>
+            <div className="zone-name" style={{gridColumn:'1/4',gridRow:'7'}}>急救室</div>
             {MOCK_DATA.Beds.map(bed => (
               <BedCard
                 key={bed.BedId}
@@ -182,8 +204,9 @@ export default function WardTab() {
               <div className={`ws-item${filter==='await-iso'?' active':''}`} data-filter="await-iso" onClick={() => handleFilter('await-iso')}><div className="ws-value ws-await-iso">{stats.awaitIso}</div><div className="ws-label">待床 隔離</div></div>
             </div>
             <div className="ws-row">
-              <div className={`ws-item${filter==='critical'?' active':''}`} data-filter="critical" onClick={() => handleFilter('critical')}><div className="ws-value ws-crit">{stats.critical}</div><div className="ws-label">一二級 重症</div></div>
-              <div className={`ws-item${filter==='moderate'?' active':''}`} data-filter="moderate" onClick={() => handleFilter('moderate')}><div className="ws-value ws-mod">{stats.moderate}</div><div className="ws-label">三~五級 輕中症</div></div>
+              <div className={`ws-item${filter==='sev-a'?' active':''}`} data-filter="sev-a" onClick={() => handleFilter('sev-a')}><div className="ws-value ws-crit">{stats.sevA}</div><div className="ws-label">A級 重症</div></div>
+              <div className={`ws-item${filter==='sev-b'?' active':''}`} data-filter="sev-b" onClick={() => handleFilter('sev-b')}><div className="ws-value ws-mid">{stats.sevB}</div><div className="ws-label">B級 中症</div></div>
+              <div className={`ws-item${filter==='sev-c'?' active':''}`} data-filter="sev-c" onClick={() => handleFilter('sev-c')}><div className="ws-value ws-mod">{stats.sevC}</div><div className="ws-label">C級 輕症</div></div>
             </div>
             <div className="ws-row">
               <div className={`ws-item${filter==='DNR'?' active':''}`} data-filter="DNR" onClick={() => handleFilter('DNR')}><div className="ws-value ws-dnr">{stats.dnr}</div><div className="ws-label">DNR</div></div>
@@ -194,10 +217,11 @@ export default function WardTab() {
       </main>
 
       <div className="filter-bar">
-        <span className="filter-label">圖例 / 過濾：</span>
         <button className={`filter-btn${filter==='all'?' active':''}`} onClick={() => handleFilter('all')}>全部</button>
-        {FILTER_BADGES.map(({ f, cls, label }) => (
-          <button key={f} className={`badge badge-filter ${cls}${filter===f?' active':''}`} onClick={() => handleFilter(f)}>{label}</button>
+        {FILTER_BADGES.map(({ f, label }) => (
+          <button key={f} className={`badge badge-filter${filter===f?' active':''}`} onClick={() => handleFilter(f)}>
+            <FlagDot k={label} flagStyle={FLAG_STYLE} title={false} />{label}
+          </button>
         ))}
       </div>
 

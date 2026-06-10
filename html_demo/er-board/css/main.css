@@ -169,9 +169,30 @@ body { flex-direction: column; }
 /* ── 急救室（R2，C5）── */
 .bed-MER01  { grid-column: 5; grid-row: 2; }
 
-/* ── 第1診療區 標示（R2，C6）── */
-.zone-diag1 { grid-column: 6; grid-row: 2; }
+/* ── 分區標示（區帶背景 + 區名，鋪在床位後方）── */
+.zone-band {
+  background: var(--bg-floor-label);
+  border: 1px solid #9FD3B9;
+  border-radius: var(--radius-card);
+  pointer-events: none;
+}
+.zone-name {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--accent-green);
+  letter-spacing: 1px;
+  line-height: 1.2;
+  padding: 2px;
+  pointer-events: none;
+}
 
+/* ── 第1、2診療區 標示（R2，C6、C7）── */
+.zone-diag1 { grid-column: 6; grid-row: 2; }
+.zone-diag2 { grid-column: 7; grid-row: 2; }
 .zone-label {
   display: flex;
   align-items: center;
@@ -179,7 +200,7 @@ body { flex-direction: column; }
   background: var(--bg-floor-label);
   border: 1px solid #90CAA6;
   border-radius: var(--radius-card);
-  font-size: 20px;
+  font-size: 14px;
   font-weight: 700;
   color: var(--accent-green);
   letter-spacing: 1px;
@@ -304,6 +325,7 @@ body { flex-direction: column; }
 /* ER 統計數值色彩 */
 .ws-value.ws-obs          { color: #00838F; }
 .ws-value.ws-crit         { color: #B71C1C; }
+.ws-value.ws-mid          { color: #E65100; }
 .ws-value.ws-mod          { color: #1B5E20; }
 .ws-value.ws-dnr          { color: #6A1B9A; }
 .ws-value.ws-transfer-in  { color: #1565C0; }
@@ -415,11 +437,9 @@ body { flex-direction: column; }
 .field-value { font-size: 17px; font-weight: 600; color: var(--text-primary); }
 .field-value.diagnosis { font-size: 15px; font-weight: 500; }
 .field-value.triage-val { font-size: 17px; font-weight: 800; }
-.field-value.triage-val.t1 { color: #B71C1C; }
-.field-value.triage-val.t2 { color: #D32F2F; }
-.field-value.triage-val.t3 { color: #E65100; }
-.field-value.triage-val.t4 { color: #2D7A55; }
-.field-value.triage-val.t5 { color: #1565C0; }
+.field-value.triage-val.tg-a { color: #C62828; }
+.field-value.triage-val.tg-b { color: #E65100; }
+.field-value.triage-val.tg-c { color: #2E7D32; }
 .modal-badges  { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
 .modal-footer  { padding: 10px 20px 16px; display: flex; justify-content: flex-end; }
 .btn-close-modal {

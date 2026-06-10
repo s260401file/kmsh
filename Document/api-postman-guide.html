@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>院方 API 介接說明 — Postman 測試指南</title>
+<style>
+  :root {
+    --bg:#F4F6F9; --bg-card:#FFF; --bg-nav:#1a2332; --bg-code:#1e293b;
+    --green:#2D7A55; --blue:#1565C0; --red:#C62828; --orange:#E65100;
+    --yellow:#B7791F; --purple:#6A1B9A;
+    --text:#1A2635; --muted:#64748b; --divider:#E2E8F0;
+    --font:"Microsoft JhengHei UI","Segoe UI",sans-serif;
+    --mono:"Consolas","JetBrains Mono","Courier New",monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:15px;line-height:1.6}
+
+  /* ─── Navbar ─── */
+  .nav{background:var(--bg-nav);color:#e2e8f0;padding:0 28px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+  .nav-logo{font-size:18px;font-weight:800}
+  .nav-sub{font-size:13px;opacity:.7}
+  .nav-badge{background:var(--green);color:#fff;padding:3px 10px;border-radius:10px;font-size:12px;font-weight:700}
+
+  /* ─── Layout ─── */
+  .layout{display:flex;min-height:calc(100vh - 56px)}
+  .sidebar{width:260px;background:#fff;border-right:1px solid var(--divider);padding:20px 14px;position:sticky;top:56px;height:calc(100vh - 56px);overflow-y:auto;flex-shrink:0}
+  .main{flex:1;padding:28px 32px 80px;max-width:1100px}
+
+  /* ─── Sidebar ─── */
+  .sb-title{font-size:11px;font-weight:800;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--divider)}
+  .sb-item{display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:6px;font-size:13px;color:var(--muted);text-decoration:none;transition:.12s;border-left:3px solid transparent}
+  .sb-item:hover{background:#f0fdf4;color:var(--green)}
+  .sb-item.active{background:#e8f5ee;color:var(--green);border-left-color:var(--green);font-weight:700}
+  .sb-num{font-family:var(--mono);font-size:11px;min-width:20px;opacity:.6}
+
+  /* ─── Overview ─── */
+  .overview{background:#fff;border:1px solid var(--divider);border-radius:10px;padding:20px 24px;margin-bottom:24px}
+  .overview h2{font-size:17px;font-weight:800;color:var(--green);margin-bottom:10px}
+  .overview p{color:var(--muted);font-size:14px;margin-bottom:6px}
+  .arch-table{width:100%;border-collapse:collapse;font-size:13px;margin-top:12px}
+  .arch-table th{background:#e8f5ee;padding:8px 12px;text-align:left;font-weight:700;color:var(--green);border-bottom:1px solid var(--divider)}
+  .arch-table td{padding:8px 12px;border-bottom:1px solid var(--divider);vertical-align:top}
+  .arch-table tr:last-child td{border-bottom:none}
+
+  /* ─── API Card ─── */
+  .api-card{background:#fff;border:1px solid var(--divider);border-radius:10px;margin-bottom:20px;overflow:hidden;scroll-margin-top:72px}
+  .api-header{background:linear-gradient(180deg,#f8fbfc 0%,#fff 100%);padding:14px 20px 12px;border-bottom:1px solid var(--divider)}
+  .api-no{font-size:11px;font-weight:800;color:var(--muted);letter-spacing:1px;margin-bottom:4px;font-family:var(--mono)}
+  .api-title{font-size:19px;font-weight:800;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .api-desc{font-size:13px;color:var(--muted);margin-top:6px}
+  .api-tags{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+  .tag{display:inline-flex;align-items:center;padding:2px 9px;border-radius:10px;font-size:11px;font-weight:700;white-space:nowrap}
+  .tag-local{background:#e8f5ee;color:var(--green)}
+  .tag-vghks{background:#e3f2fd;color:var(--blue)}
+  .tag-kmuh{background:#fff3e0;color:var(--orange)}
+  .tag-db{background:#f3e5f5;color:var(--purple)}
+
+  /* ─── Route block ─── */
+  .route-block{display:flex;align-items:center;gap:10px;padding:9px 14px;background:var(--bg-code);border-radius:6px;font-family:var(--mono);font-size:13px;color:#e2e8f0;margin-top:10px;position:relative}
+  .method{padding:2px 9px;border-radius:4px;font-size:11px;font-weight:800;flex-shrink:0}
+  .get{background:#2e7d32;color:#fff}
+  .post{background:#1565c0;color:#fff}
+  .route-url{flex:1;overflow-x:auto;white-space:nowrap}
+  .copy-btn{background:rgba(255,255,255,.12);border:none;color:#94a3b8;padding:3px 8px;border-radius:4px;cursor:pointer;font-size:11px;flex-shrink:0;font-family:var(--font)}
+  .copy-btn:hover{background:rgba(255,255,255,.2);color:#fff}
+
+  /* ─── Body ─── */
+  .api-body{padding:16px 20px 18px}
+  .section-title{font-size:12px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);margin:14px 0 8px;padding-bottom:4px;border-bottom:1px solid var(--divider)}
+  .section-title:first-child{margin-top:0}
+  .params-table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:8px}
+  .params-table th{background:#f8fafc;font-weight:700;color:var(--muted);text-align:left;padding:6px 10px;border-bottom:1px solid var(--divider);font-size:12px}
+  .params-table td{padding:7px 10px;border-bottom:1px solid var(--divider);vertical-align:top}
+  .params-table tr:last-child td{border-bottom:none}
+  .param-name{font-family:var(--mono);font-weight:700;color:var(--text)}
+  .req-y{color:var(--red);font-weight:800}
+  .req-n{color:var(--muted)}
+
+  /* ─── Code block ─── */
+  pre{background:var(--bg-code);color:#e2e8f0;padding:14px 16px;border-radius:8px;font-family:var(--mono);font-size:12px;line-height:1.6;overflow-x:auto;margin:6px 0;position:relative}
+  pre .k{color:#80cbc4} pre .s{color:#c5e1a5} pre .n{color:#ffcc80} pre .c{color:#607d8b;font-style:italic}
+  .copy-pre{position:absolute;top:8px;right:8px;background:rgba(255,255,255,.1);border:none;color:#94a3b8;padding:3px 8px;border-radius:4px;cursor:pointer;font-size:11px;font-family:var(--font)}
+  .copy-pre:hover{background:rgba(255,255,255,.2);color:#fff}
+
+  /* ─── Note ─── */
+  .note{margin:10px 0;padding:10px 14px;background:#fff8e1;border-left:4px solid #e8a020;border-radius:4px;font-size:13px;color:#6d4c00}
+  .note-blue{background:#e3f2fd;border-left-color:var(--blue);color:#0d47a1}
+  .note strong{font-weight:800}
+
+  /* ─── Response sample ─── */
+  .res-sample{background:#f8fafc;border:1px solid var(--divider);border-radius:6px;padding:10px 14px;font-family:var(--mono);font-size:12px;color:#374151;overflow-x:auto;white-space:pre;margin:6px 0}
+
+  /* ─── Toast ─── */
+  #toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:#1a2332;color:#fff;padding:8px 20px;border-radius:20px;font-size:13px;display:none;z-index:9999}
+</style>
+</head>
+<body>
+
+<!-- ── Navbar ── -->
+<nav class="nav">
+  <div>
+    <div class="nav-logo">🏥 高雄市立民生醫院 — 院方 API 介接說明</div>
+    <div class="nav-sub">Postman 測試指南 · 本地 API 包覆版</div>
+  </div>
+  <span class="nav-badge">共 14 個端點</span>
+</nav>
+
+<div class="layout">
+
+<!-- ── Sidebar ── -->
+<nav class="sidebar">
+  <div class="sb-title">端點導覽</div>
+  <a href="#overview"  class="sb-item"><span class="sb-num">ℹ</span>架構說明</a>
+  <a href="#ep-1"  class="sb-item"><span class="sb-num">01</span>未執行檢查及會診</a>
+  <a href="#ep-2"  class="sb-item"><span class="sb-num">02</span>維修單</a>
+  <a href="#ep-3"  class="sb-item"><span class="sb-num">03</span>在職人事資料</a>
+  <a href="#ep-4"  class="sb-item"><span class="sb-num">04</span>排班作業</a>
+  <a href="#ep-51" class="sb-item"><span class="sb-num">05-1</span>急診病房清單</a>
+  <a href="#ep-52" class="sb-item"><span class="sb-num">05-2</span>床位病人清單</a>
+  <a href="#ep-53" class="sb-item"><span class="sb-num">05-3</span>急診病人詳細</a>
+  <a href="#ep-54" class="sb-item"><span class="sb-num">05-4</span>住院病人詳細</a>
+  <a href="#ep-55" class="sb-item"><span class="sb-num">05-5</span>過敏紀錄</a>
+  <a href="#ep-6"  class="sb-item"><span class="sb-num">06</span>人員清單 TMS</a>
+  <a href="#ep-7"  class="sb-item"><span class="sb-num">07</span>單位資料</a>
+  <a href="#ep-81" class="sb-item"><span class="sb-num">08-1</span>查床號（KMUH CNC）</a>
+  <a href="#ep-82" class="sb-item"><span class="sb-num">08-2</span>病患資訊（MAASService）</a>
+  <a href="#ep-9"  class="sb-item"><span class="sb-num">09</span>依標籤檢核急作</a>
+</nav>
+
+<!-- ── Main ── -->
+<main class="main">
+
+  <!-- Overview -->
+  <section class="overview" id="overview">
+    <h2>架構說明</h2>
+    <p>本專案 ASP.NET Core API（本地端）作為<strong>代理層（Proxy）</strong>，封裝了院方（高榮 VGHKS + 高醫 KMUH）提供的所有 HIS API。</p>
+    <p>測試時只需呼叫本地 API（<code>http://localhost:5100</code>），不需直接存取院方系統，也不需帶入 KeyId、hid、apid 等認證參數。</p>
+    <table class="arch-table">
+      <thead><tr><th>來源系統</th><th>本地 Base URL</th><th>說明</th></tr></thead>
+      <tbody>
+        <tr><td>高榮 VGHKS（AMDRService / UDSPService / LABService）</td><td rowspan="3"><code>http://localhost:5100</code></td><td>透過 IIS ARR 亦可用 <code>http://localhost/api/...</code></td></tr>
+        <tr><td>高榮 VGHKS（MAASService）</td><td>需設定 <code>VghksApi:MaasBaseUrl</code></td></tr>
+        <tr><td>高醫 KMUH（HRS / UAS / ERS / TMS / UNIT / CNC）</td><td>包含 GET + XML 的 CNC 查床號</td></tr>
+        <tr><td>本地 DB（Whiteboard）</td><td><code>http://localhost:5100</code></td><td>跑馬燈 / 佈告欄等自建資料，不轉發院方</td></tr>
+      </tbody>
+    </table>
+    <div class="note note-blue" style="margin-top:12px"><strong>Postman 設定提醒：</strong>在 Postman 中建立 Environment 變數 <code>base_url = http://localhost:5100</code>，各請求使用 <code>{{base_url}}/api/...</code> 即可。</div>
+  </section>
+
+  <!-- EP 01 -->
+  <article class="api-card" id="ep-1">
+    <div class="api-header">
+      <div class="api-no">ENDPOINT 01</div>
+      <div class="api-title">未執行檢查及會診清單</div>
+      <div class="api-desc">查詢病患尚未執行的檢查（CHK）、會診（CON）、手術（OP）清單。僅顯示已排定時間的項目。</div>
+      <div class="api-tags">
+        <span class="tag tag-vghks">高榮 AMDRService</span>
+        <span class="tag tag-local">本地端點</span>
+      </div>
+      <div class="route-block">
+        <span class="method get">GET</span>
+        <span class="route-url" id="url-1">http://localhost:5100/api/NonExSchList?hhisnum=19000136&hcasetyp=A</span>
+        <button class="copy-btn" onclick="copy('url-1')">複製</button>
+      </div>
+    </div>
+    <div class="api-body">
+      <div class="section-title">Query 參數</div>
+      <table class="params-table">
+        <thead><tr><th>參數</th><th>型別</th><th>必填</th><th>說明</th><th>範例值</th></tr></thead>
+        <tbody>
+          <tr><td class="param-name">hhisnum</td><td>string</td><td class="req-y">Y</td><td>病歷號</td><td>19000136</td></tr>
+          <tr><td class="param-name">hcasetyp</td><td>string</td><td class="req-n">N</td><td>就醫類型：A=住院、E=急診</td><td>A</td></tr>
+        </tbody>
+      </table>
+      <div class="section-title">cURL（院方直接測試用）</div>
+<pre><button class="copy-pre" onclick="copyPre(this)">複製</button><span class="c"># 直接呼叫院方測試環境</span>
+curl --location '<span class="s">https://zwmc01t.vghks.gov.tw:4431/AMDRService/amdr/ord/qrynonexschlist</span>' \
+--header '<span class="n">Content-Type: application/json</span>' \
+--data '{
+  <span class="k">"KeyId"</span>: <span class="s">"08be7b58-78d6-4ae7-9129-0577e04a4c17"</span>,
+  <span class="k">"hid"</span>: <span class="s">"4A0"</span>,
+  <span class="k">"apid"</span>: <span class="s">"APEBOARD"</span>,
+  <span class="k">"hhisnum"</span>: <span class="s">"19000136"</span>,
+  <span class="k">"hcasetyp"</span>: <span class="s">"A"</span>
+}'</pre>
+      <div class="section-title">回傳欄位（resultList[]）</div>
+      <table class="params-table">
+        <thead><tr><th>欄位</th><th>說明</th></tr></thead>
+        <tbody>
+          <tr><td class="param-name">chktype</td><td>類別：CHK=檢查、CON=會診、OP=手術</td></tr>
+          <tr><td class="param-name">hnamec</td><td>病患姓名</td></tr>
+          <tr><td class="param-name">orproced</td><td>檢查/會診項目名稱</td></tr>
+          <tr><td class="param-name">orschdt / orschtm</td><td>排程日期 / 時間</td></tr>
+          <tr><td class="param-name">orstatuschn</td><td>狀態（中文）</td></tr>
+          <tr><td class="param-name">hnursta / hbed</td><td>病房 / 床號</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </article>
+
+  <!-- EP 02 -->
+  <article class="api-card" id="ep-2">
+    <div class="api-header">
+      <div class="api-no">ENDPOINT 02</div>
+      <div class="api-title">查詢維修單</div>
+      <div class="api-desc">查詢單位未結案維修單（FLAG &lt;&gt; '6' AND PRO_TYPE='1'）。</div>
+      <div class="api-tags"><span class="tag tag-kmuh">高醫 KMUH</span><span class="tag tag-local">本地端點</span></div>
+      <div class="route-block">
+        <span class="method get">GET</span>
+        <span class="route-url" id="url-2">http://localhost:5100/api/Maintenance?unitcode=31304</span>
+        <button class="copy-btn" onclick="copy('url-2')">複製</button>
+      </div>
+    </div>
+    <div class="api-body">
+      <div class="section-title">Query 參數</div>
+      <table class="params-table">
+        <thead><tr><th>參數</th><th>必填</th><th>說明</th><th>範例值</th></tr></thead>
+        <tbody><tr><td class="param-name">unitcode</td><td class="req-y">Y</td><td>單位代號（5碼）</td><td>31304</td></tr></tbody>
+      </table>
+      <div class="section-title">回傳欄位</div>
+      <table class="params-table">
+        <thead><tr><th>欄位</th><th>說明</th></tr></thead>
+        <tbody>
+          <tr><td class="param-name">ERS_NO</td><td>維修單單號</td></tr>
+          <tr><td class="param-name">PRO_NAME</td><td>財產編號（含名稱）</td></tr>
+          <tr><td class="param-name">REP_PERSON</td><td>維修人員</td></tr>
+          <tr><td class="param-name">EXP_DATE</td><td>預計完成日期</td></tr>
+          <tr><td class="param-name">FLAG</td><td>流程狀態：0=申請中、3=處理中、5=完成未結案</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </article>
+
+  <!-- EP 03 -->
+  <article class="api-card" id="ep-3">
+    <div class="api-header">
+      <div class="api-no">ENDPOINT 03</div>
+      <div class="api-title">查詢在職人事資料</div>
+      <div class="api-desc">查詢指定單位在職人員資料，含 VPN 及院內分機。</div>
+      <div class="api-tags"><span class="tag tag-kmuh">高醫 KMUH</span><span class="tag tag-local">本地端點</span></div>
+      <div class="route-block">
+        <span class="method get">GET</span>
+        <span class="route-url" id="url-3">http://localhost:5100/api/Hr/hrs?unitcode=31002</span>
+        <button class="copy-btn" onclick="copy('url-3')">複製</button>
+      </div>
+    </div>
+    <div class="api-body">
+      <div class="section-title">Query 參數</div>
+      <table class="params-table">
+        <thead><tr><th>參數</th><th>必填</th><th>說明</th><th>範例值</th></tr></thead>
+        <tbody><tr><td class="param-name">unitcode</td><td class="req-y">Y</td><td>單位代號</td><td>31002</td></tr></tbody>
+      </table>
+      <div class="section-title">回傳欄位</div>
+      <table class="params-table">
+        <thead><tr><th>欄位</th><th>說明</th></tr></thead>
+        <tbody>
+          <tr><td class="param-name">PE_NO / PE_NAME</td><td>員工編號 / 姓名</td></tr>
+          <tr><td class="param-name">MVPN / EXT</td><td>公務電話 / 院內分機</td></tr>
+          <tr><td class="param-name">TREAT_TITLE</td><td>職稱：1=醫師、6=護理師</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </article>
+
+  <!-- EP 04 -->
+  <article class="api-card" id="ep-4">
+    <div class="api-header">
+      <div class="api-no">ENDPOINT 04</div>
+      <div class="api-title">查詢排班作業</div>
+      <div class="api-desc">查詢指定單位指定月份的護理人員排班資料（班別、上下班時間）。</div>
+      <div class="api-tags"><span class="tag tag-kmuh">高醫 KMUH</span><span class="tag tag-local">本地端點</span></div>
+      <div class="route-block">
+        <span class="method get">GET</span>
+        <span class="route-url" id="url-4">http://localhost:5100/api/Hr/uas?unitcode=31307&month=2026-06-01</span>
+        <button class="copy-btn" onclick="copy('url-4')">複製</button>
+      </div>
+    </div>
+    <div class="api-body">
+      <div class="section-title">Query 參數</div>
+      <table class="params-table">
+        <thead><tr><th>參數</th><th>必填</th><th>說明</th><th>範例值</th></tr></thead>
+        <tbody>
+          <tr><td class="param-name">unitcode</td><td class="req-y">Y</td><td>單位代號</td><td>31307</td></tr>
+          <tr><td class="param-name">month</td><td class="req-y">Y</td><td>排班月份（YYYY-MM-DD）</td><td>2026-06-01</td></tr>
+        </tbody>
+      </table>
+      <div class="section-title">回傳欄位</div>
+      <table class="params-table">
+        <thead><tr><th>欄位</th><th>說明</th></tr></thead>
+        <tbody>
+          <tr><td class="param-name">PE_NAME</td><td>員工姓名</td></tr>
+          <tr><td class="param-name">DATE1</td><td>排班日期（YYYY-MM-DD）</td></tr>
+          <tr><td class="param-name">CNO / NAME</td><td>班別代號 / 名稱</td></tr>
+          <tr><td class="param-name">ON_TIME1 / OFF_TIME1</td><td>上班 / 下班時間</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </article>
+
+  <!-- EP 5-1 -->
+  <article class="api-card" id="ep-51">
+    <div class="api-header">
+      <div class="api-no">ENDPOINT 05-1</div>
+      <div class="api-title">取得急診 / 住院病房清單</div>
+      <div class="api-desc">查詢可用的病房代號與名稱清單，用於後續 getBedList 呼叫。</div>
+      <div class="api-tags"><span class="tag tag-vghks">高榮 AMDRService</span><span class="tag tag-local">本地端點</span></div>
+      <div class="route-block">
+        <span class="method get">GET</span>
+        <span class="route-url" id="url-51">http://localhost:5100/api/Ward/hnursta-list?hcsetyp=E</span>
+        <button class="copy-btn" onclick="copy('url-51')">複製</button>
+      </div>
+    </div>
+    <div class="api-body">
+      <div class="section-title">Query 參數</div>
+      <table class="params-table">
+        <thead><tr><th>參數</th><th>必填</th><th>說明</th><th>範例值</th></tr></thead>
+        <tbody><tr><td class="param-name">hcsetyp</td><td class="req-n">N</td><td>E=急診（預設）、A=住院</td><td>E</td></tr></tbody>
+      </table>
+      <div class="section-title">回傳欄位（resultList[]）</div>
+      <table class="params-table">
+        <thead><tr><th>欄位</th><th>說明</th></tr></thead>
+        <tbody>
+          <tr><td class="param-name">hnursta</td><td>病房代號</td></tr>
+          <tr><td class="param-name">hnnsname</td><td>病房名稱</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </article>
+
+  <!-- EP 5-2 -->
+  <article class="api-card" id="ep-52">
+    <div class="api-header">
+      <div class="api-no">ENDPOINT 05-2</div>
+      <div class="api-title">取得病房床位 / 病人清單</div>
+      <div class="api-desc">查詢指定病房的所有床位與在床病人清單（含 DNR、主治醫師）。</div>
+      <div class="api-tags"><span class="tag tag-vghks">高榮 AMDRService</span><span class="tag tag-local">本地端點</span></div>
+      <div class="route-block">
+        <span class="method get">GET</span>
+        <span class="route-url" id="url-52">http://localhost:5100/api/Ward/bed-list?hnursta=MER&hcasetyp=E</span>
+        <button class="copy-btn" onclick="copy('url-52')">複製</button>
+      </div>
+    </div>
+    <div class="api-body">
+      <div class="section-title">Query 參數</div>
+      <table class="params-table">
+        <thead><tr><th>參數</th><th>必填</th><th>說明</th><th>範例值</th></tr></thead>
+        <tbody>
+          <tr><td class="param-name">hnursta</td><td class="req-y">Y</td><td>病房代號（由 05-1 取得）</td><td>MER</td></tr>
+          <tr><td class="param-name">hcasetyp</td><td class="req-n">N</td><td>E=急診（預設）、A=住院</td><td>E</td></tr>
+        </tbody>
+      </table>
+      <div class="section-title">回傳欄位（hbedList[]）</div>
+      <table class="params-table">
+        <thead><tr><th>欄位</th><th>說明</th></tr></thead>
+        <tbody>
+          <tr><td class="param-name">hbedno</td><td>床位號</td></tr>
+          <tr><td class="param-name">hhisnum / hnamec</td><td>病歷號 / 姓名</td></tr>
+          <tr><td class="param-name">hsex / hbirthdt</td><td>性別 / 生日</td></tr>
+          <tr><td class="param-name">hpatstat</td><td>動向代碼</td></tr>
+          <tr><td class="param-name">emgtyp</td><td>檢傷分類</td></tr>
+          <tr><td class="param-name">doctor.hdocnamc</td><td>主治醫師姓名</td></tr>
+          <tr><td class="param-name">patflag.dnr</td><td>DNR 旗標</td></tr>
+          <tr><td class="param-name">hcaseno</td><td>就醫序號（用於 05-3/05-4）</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </article>
+
+  <!-- EP 5-3 -->
+  <article class="api-card" id="ep-53">
+    <div class="api-header">
+      <div class="api-no">ENDPOINT 05-3</div>
+      <div class="api-title">急診病人詳細資料</div>
+      <div class="api-desc">依病歷號與就醫序號查詢急診病人完整明細（診斷、護理師、DNR、滯留時間等）。</div>
+      <div class="api-tags"><span class="tag tag-vghks">高榮 AMDRService</span><span class="tag tag-local">本地端點</span></div>
+      <div class="route-block">
+        <span class="method get">GET</span>
+        <span class="route-url" id="url-53">http://localhost:5100/api/Patient/er?hhisnum=19000136&hcaseno=E20260001</span>
+        <button class="copy-btn" onclick="copy('url-53')">複製</button>
+      </div>
+    </div>
+    <div class="api-body">
+      <div class="section-title">Query 參數</div>
+      <table class="params-table">
+        <thead><tr><th>參數</th><th>必填</th><th>說明</th></tr></thead>
+        <tbody>
+          <tr><td class="param-name">hhisnum</td><td class="req-y">Y</td><td>病歷號</td></tr>
+          <tr><td class="param-name">hcaseno</td><td class="req-y">Y</td><td>就醫序號（由 05-2 取得）</td></tr>
+          <tr><td class="param-name">hnursta</td><td class="req-n">N</td><td>急診病房代碼（MER/SER/PER）</td></tr>
+          <tr><td class="param-name">hbedno</td><td class="req-n">N</td><td>床號</td></tr>
+        </tbody>
+      </table>
+      <div class="section-title">主要回傳欄位（amdrCase）</div>
+      <table class="params-table">
+        <thead><tr><th>路徑</th><th>說明</th></tr></thead>
+        <tbody>
+          <tr><td class="param-name">amdrCase.hpbasic.hnamec</td><td>姓名</td></tr>
+          <tr><td class="param-name">amdrCase.drName / nurseNo</td><td>負責醫師 / 主責護理師</td></tr>
+          <tr><td class="param-name">amdrCase.hemgtype</td><td>檢傷等級（1–5）</td></tr>
+          <tr><td class="param-name">amdrCase.amdays</td><td>滯留時間（分鐘）</td></tr>
+          <tr><td class="param-name">amdrCase.patflag.hicmap.dnr</td><td>DNR</td></tr>
+          <tr><td class="param-name">amdrCase.diagnos.icd10lst</td><td>診斷碼清單</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </article>
+
+  <!-- EP 5-4 -->
+  <article class="api-card" id="ep-54">
+    <div class="api-header">
+      <div class="api-no">ENDPOINT 05-4</div>
+      <div class="api-title">住院病人詳細資料</div>
+      <div class="api-desc">依病歷號與就醫序號查詢住院病人完整明細（同 05-3，另含入院類型）。</div>
+      <div class="api-tags"><span class="tag tag-vghks">高榮 AMDRService</span><span class="tag tag-local">本地端點</span></div>
+      <div class="route-block">
+        <span class="method get">GET</span>
+        <span class="route-url" id="url-54">http://localhost:5100/api/Patient/am?hhisnum=19000136&hcaseno=A20260001</span>
+        <button class="copy-btn" onclick="copy('url-54')">複製</button>
+      </div>
+    </div>
+    <div class="api-body">
+      <div class="section-title">Query 參數</div>
+      <table class="params-table">
+        <thead><tr><th>參數</th><th>必填</th><th>說明</th></tr></thead>
+        <tbody>
+          <tr><td class="param-name">hhisnum</td><td class="req-y">Y</td><td>病歷號</td></tr>
+          <tr><td class="param-name">hcaseno</td><td class="req-y">Y</td><td>就醫序號</td></tr>
+        </tbody>
+      </table>
+      <div class="note">額外回傳 <code>aCase.hinptype</code>（入院類型：O=門診、E=急診）</div>
+    </div>
+  </article>
+
+  <!-- EP 5-5 -->
+  <article class="api-card" id="ep-55">
+    <div class="api-header">
+      <div class="api-no">ENDPOINT 05-5</div>
+      <div class="api-title">過敏紀錄</div>
+      <div class="api-desc">查詢病患藥物過敏及 ADR 不良反應紀錄。</div>
+      <div class="api-tags"><span class="tag tag-vghks">高榮 UDSPService</span><span class="tag tag-local">本地端點</span></div>
+      <div class="route-block">
+        <span class="method get">GET</span>
+        <span class="route-url" id="url-55">http://localhost:5100/api/Patient/allergy?hhisnum=19000136</span>
+        <button class="copy-btn" onclick="copy('url-55')">複製</button>
+      </div>
+    </div>
+    <div class="api-body">
+      <div class="section-title">Query 參數</div>
+      <table class="params-table">
+        <thead><tr><th>參數</th><th>必填</th><th>說明</th></tr></thead>
+        <tbody><tr><td class="param-name">hhisnum</td><td class="req-y">Y</td><td>病歷號</td></tr></tbody>
+      </table>
+      <div class="section-title">回傳欄位（resultList[]）</div>
+      <table class="params-table">
+        <thead><tr><th>欄位</th><th>說明</th></tr></thead>
+        <tbody>
+          <tr><td class="param-name">type</td><td>過敏類別</td></tr>
+          <tr><td class="param-name">description</td><td>簡述說明（中文）</td></tr>
+          <tr><td class="param-name">descriptione</td><td>簡述說明（英文）</td></tr>
+          <tr><td class="param-name">dilation</td><td>詳述</td></tr>
+          <tr><td class="param-name">adr_desc</td><td>ADR 不良反應簡述</td></tr>
+          <tr><td class="param-name">adr_dilation</td><td>ADR 不良反應詳述</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </article>
+
+  <!-- EP 06 -->
+  <article class="api-card" id="ep-6">
+    <div class="api-header">
+      <div class="api-no">ENDPOINT 06</div>
+      <div class="api-title">人員清單（TMS）</div>
+      <div class="api-desc">查詢近一年在職及離職人員清單（含聯絡資訊）。</div>
+      <div class="api-tags"><span class="tag tag-kmuh">高醫 KMUH</span><span class="tag tag-local">本地端點</span></div>
+      <div class="route-block">
+        <span class="method get">GET</span>
+        <span class="route-url" id="url-6">http://localhost:5100/api/Staff/tms</span>
+        <button class="copy-btn" onclick="copy('url-6')">複製</button>
+      </div>
+    </div>
+    <div class="api-body">
+      <div class="note note-blue">此端點無需傳入參數，回傳全院人員清單（較大）。</div>
+      <div class="section-title">回傳欄位</div>
+      <table class="params-table">
+        <thead><tr><th>欄位</th><th>說明</th></tr></thead>
+        <tbody>
+          <tr><td class="param-name">PE_NO / PE_NAME</td><td>員工編號 / 姓名</td></tr>
+          <tr><td class="param-name">EMAIL / TEL</td><td>信箱 / 電話</td></tr>
+          <tr><td class="param-name">IN_DATE / OUT_DATE</td><td>到職 / 離職日期</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </article>
+
+  <!-- EP 07 -->
+  <article class="api-card" id="ep-7">
+    <div class="api-header">
+      <div class="api-no">ENDPOINT 07</div>
+      <div class="api-title">單位資料</div>
+      <div class="api-desc">查詢全院單位代碼與名稱（含上層單位、單位主管）。</div>
+      <div class="api-tags"><span class="tag tag-kmuh">高醫 KMUH</span><span class="tag tag-local">本地端點</span></div>
+      <div class="route-block">
+        <span class="method get">GET</span>
+        <span class="route-url" id="url-7">http://localhost:5100/api/Staff/unit</span>
+        <button class="copy-btn" onclick="copy('url-7')">複製</button>
+      </div>
+    </div>
+    <div class="api-body">
+      <div class="section-title">回傳欄位</div>
+      <table class="params-table">
+        <thead><tr><th>欄位</th><th>說明</th></tr></thead>
+        <tbody>
+          <tr><td class="param-name">UNITCODE / UNITNAME</td><td>單位代碼 / 名稱</td></tr>
+          <tr><td class="param-name">PARENT_CODE</td><td>上層單位代碼</td></tr>
+          <tr><td class="param-name">CHIEF_ACCOUNT</td><td>單位主管帳號</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </article>
+
+  <!-- EP 8-1 -->
+  <article class="api-card" id="ep-81">
+    <div class="api-header">
+      <div class="api-no">ENDPOINT 08-1</div>
+      <div class="api-title">查床號（KMUH CNC）</div>
+      <div class="api-desc">依病歷號查詢目前床號、生日、身分證號等基本資訊。院方回傳 XML，本地 API 已轉換為 JSON。</div>
+      <div class="api-tags"><span class="tag tag-kmuh">高醫 KMUH CNC</span><span class="tag tag-local">本地端點（XML→JSON）</span></div>
+      <div class="route-block">
+        <span class="method get">GET</span>
+        <span class="route-url" id="url-81">http://localhost:5100/api/Patient/cnc?chartNo=19000136</span>
+        <button class="copy-btn" onclick="copy('url-81')">複製</button>
+      </div>
+    </div>
+    <div class="api-body">
+      <div class="section-title">Query 參數</div>
+      <table class="params-table">
+        <thead><tr><th>參數</th><th>必填</th><th>說明</th></tr></thead>
+        <tbody><tr><td class="param-name">chartNo</td><td class="req-y">Y</td><td>病歷號</td></tr></tbody>
+      </table>
+      <div class="section-title">回傳欄位（JSON，院方原始為 XML）</div>
+      <table class="params-table">
+        <thead><tr><th>欄位</th><th>說明</th></tr></thead>
+        <tbody>
+          <tr><td class="param-name">bedNo</td><td>床號（XML: Bed_No）</td></tr>
+          <tr><td class="param-name">birthDate</td><td>生日（XML: Birth_Date）</td></tr>
+          <tr><td class="param-name">chartNo</td><td>病歷號（XML: Chart_No）</td></tr>
+          <tr><td class="param-name">idno</td><td>身分證字號（XML: Idno）</td></tr>
+          <tr><td class="param-name">patientName</td><td>姓名（XML: Patient_Name）</td></tr>
+          <tr><td class="param-name">sexId</td><td>性別（XML: Sex_Id）</td></tr>
+        </tbody>
+      </table>
+      <div class="note">查無資料時回傳 404。</div>
+    </div>
+  </article>
+
+  <!-- EP 8-2 -->
+  <article class="api-card" id="ep-82">
+    <div class="api-header">
+      <div class="api-no">ENDPOINT 08-2</div>
+      <div class="api-title">查詢病患資訊（MAASService）</div>
+      <div class="api-desc">依病歷號或身分證字號查詢病患基本資訊（目前病房、床號、生日、性別）。若查無病患回傳 success: N。</div>
+      <div class="api-tags"><span class="tag tag-vghks">高榮 MAASService</span><span class="tag tag-local">本地端點</span></div>
+      <div class="route-block">
+        <span class="method get">GET</span>
+        <span class="route-url" id="url-82">http://localhost:5100/api/Patient/info?hhisnum=19000136</span>
+        <button class="copy-btn" onclick="copy('url-82')">複製</button>
+      </div>
+    </div>
+    <div class="api-body">
+      <div class="section-title">Query 參數（擇一填入）</div>
+      <table class="params-table">
+        <thead><tr><th>參數</th><th>必填</th><th>說明</th></tr></thead>
+        <tbody>
+          <tr><td class="param-name">hhisnum</td><td class="req-n">擇一</td><td>病歷號</td></tr>
+          <tr><td class="param-name">hidno</td><td class="req-n">擇一</td><td>身分證字號 / 居留證號</td></tr>
+        </tbody>
+      </table>
+      <div class="section-title">回傳欄位</div>
+      <table class="params-table">
+        <thead><tr><th>欄位</th><th>說明</th></tr></thead>
+        <tbody>
+          <tr><td class="param-name">success / msg</td><td>Y=成功，N=查無病患</td></tr>
+          <tr><td class="param-name">hhisnum / hnamec</td><td>病歷號 / 姓名</td></tr>
+          <tr><td class="param-name">hidno</td><td>身分證字號</td></tr>
+          <tr><td class="param-name">hbirthdt.dts</td><td>出生日期</td></tr>
+          <tr><td class="param-name">hsex / hsexc</td><td>性別代碼 / 中文</td></tr>
+          <tr><td class="param-name">hnursta / hbedno</td><td>病房 / 床號</td></tr>
+        </tbody>
+      </table>
+      <div class="note"><strong>注意：</strong>MAASService 使用不同主機（wac01），需在 appsettings 設定 <code>VghksApi:MaasBaseUrl</code>。</div>
+    </div>
+  </article>
+
+  <!-- EP 09 -->
+  <article class="api-card" id="ep-9">
+    <div class="api-header">
+      <div class="api-no">ENDPOINT 09</div>
+      <div class="api-title">依標籤檢核急作</div>
+      <div class="api-desc">輸入檢驗標籤號碼，查詢該標本是否為急作（urgent: Y/N）。</div>
+      <div class="api-tags"><span class="tag tag-vghks">高榮 LABService</span><span class="tag tag-local">本地端點</span></div>
+      <div class="route-block">
+        <span class="method get">GET</span>
+        <span class="route-url" id="url-9">http://localhost:5100/api/Lab/urgent?stickrno=1012642002</span>
+        <button class="copy-btn" onclick="copy('url-9')">複製</button>
+      </div>
+    </div>
+    <div class="api-body">
+      <div class="section-title">Query 參數</div>
+      <table class="params-table">
+        <thead><tr><th>參數</th><th>必填</th><th>說明</th></tr></thead>
+        <tbody><tr><td class="param-name">stickrno</td><td class="req-y">Y</td><td>標籤號碼</td></tr></tbody>
+      </table>
+      <div class="section-title">回傳欄位</div>
+      <table class="params-table">
+        <thead><tr><th>欄位</th><th>說明</th></tr></thead>
+        <tbody>
+          <tr><td class="param-name">success</td><td>Y=成功、N=失敗</td></tr>
+          <tr><td class="param-name">msg</td><td>錯誤訊息（成功時為空）</td></tr>
+          <tr><td class="param-name">urgent</td><td><strong>Y=急作、N=非急作</strong></td></tr>
+        </tbody>
+      </table>
+      <div class="section-title">回傳範例</div>
+      <div class="res-sample">{"success": "Y", "msg": "", "urgent": "N"}</div>
+    </div>
+  </article>
+
+</main>
+</div>
+
+<div id="toast">✓ 已複製到剪貼簿</div>
+
+<script>
+function copy(id) {
+  const text = document.getElementById(id).textContent
+  navigator.clipboard.writeText(text).then(() => showToast())
+}
+function copyPre(btn) {
+  const text = btn.parentElement.innerText.replace(/^複製\n/, '')
+  navigator.clipboard.writeText(text).then(() => showToast())
+}
+function showToast() {
+  const t = document.getElementById('toast')
+  t.style.display = 'block'
+  setTimeout(() => t.style.display = 'none', 2000)
+}
+
+// Sidebar active on scroll
+const cards = document.querySelectorAll('.api-card, #overview')
+const links  = document.querySelectorAll('.sb-item')
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      links.forEach(l => l.classList.remove('active'))
+      const a = document.querySelector(`.sb-item[href="#${e.target.id}"]`)
+      if (a) a.classList.add('active')
+    }
+  })
+}, { rootMargin: '-20% 0px -60% 0px' })
+cards.forEach(c => obs.observe(c))
+</script>
+</body>
+</html>

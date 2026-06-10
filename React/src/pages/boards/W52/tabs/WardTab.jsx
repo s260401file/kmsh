@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react'
 import MOCK_DATA, { getStats } from '../mockData'
+import { FlagDot, makeFlagStyle } from '../../../../utils/flagShapes'
 
 function buildBadges(patient, bedStatus = '') {
   if (!patient) return []
@@ -64,7 +65,7 @@ function BedCard({ bed, filteredOut, onClick }) {
         <span className="patient-basic">{p.Gender}/{p.Age}</span>
       </div>
       <div className="dots-row">
-        {allBadges.map(b => <span key={b} className={`flag-dot flag-dot-${b}`} title={b} />)}
+        {allBadges.map(b => <FlagDot key={b} k={b} flagStyle={FLAG_STYLE} />)}
       </div>
     </div>
   )
@@ -88,7 +89,7 @@ function BedModal({ bed, onClose }) {
             <div className="modal-badges">
               {allBadges.map(b => (
                 <span key={b} className="legend-item modal-flag">
-                  <span className={`flag-dot flag-dot-${b}`} />
+                  <FlagDot k={b} flagStyle={FLAG_STYLE} title={false} />
                   <span>{b}</span>
                 </span>
               ))}
@@ -130,6 +131,7 @@ const FILTER_BADGES = [
   '禁食','過敏','RRT','化療','輪椅','推床','氧氣設備','洗腎',
   '待轉入','待轉出','待出院',
 ]
+const FLAG_STYLE = makeFlagStyle(FILTER_BADGES)
 
 export default function WardTab() {
   const [filter, setFilter] = useState('all')
@@ -188,7 +190,7 @@ export default function WardTab() {
         <button className={`filter-btn${filter==='all'?' active':''}`} onClick={()=>handleFilter('all')}>全部</button>
         {FILTER_BADGES.map(f => (
           <button key={f} className={`legend-item${filter===f?' active':''}`} onClick={()=>handleFilter(f)}>
-            <span className={`flag-dot flag-dot-${f}`} />
+            <FlagDot k={f} flagStyle={FLAG_STYLE} title={false} />
             <span>{f}</span>
           </button>
         ))}

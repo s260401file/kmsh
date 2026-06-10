@@ -88,34 +88,57 @@
 [data-theme="light"] .gender-m { color: #1565C0; }
 [data-theme="light"] .gender-f { color: #AD1457; }
 
-/* ── Badges ── */
+/* ── Badges（病人註記：圓點 + 文字，與 W52 一致）── */
 .badge {
   display: inline-flex;
   align-items: center;
-  padding: 2px 8px;
-  border-radius: var(--radius-badge);
+  gap: 5px;
+  padding: 2px 8px 2px 6px;
+  border-radius: var(--radius-pill);
   font-size: 13px;
   font-weight: 700;
   white-space: nowrap;
   line-height: 20px;
+  background: var(--bg-card-occ);
+  color: var(--text-primary);
+  border: 1px solid var(--divider);
 }
-/* 規格 (1.2) 病人註記 — 依規格書順序，完整文字 */
-.badge-DNR      { background: #6A1B9A; color: #fff; }
-.badge-高危跌   { background: #E65100; color: #fff; }
-.badge-依賴L1   { background: #4527A0; color: #fff; }
-.badge-依賴L2   { background: #4527A0; color: #fff; }
-.badge-依賴L3   { background: #311B92; color: #fff; }
-.badge-隔離     { background: #B71C1C; color: #fff; }
-.badge-保密     { background: #37474F; color: #fff; }
-.badge-禁治療   { background: #0D47A1; color: #fff; }
-.badge-禁食     { background: #2E7D32; color: #fff; }
-.badge-過敏     { background: #BF360C; color: #fff; }
-.badge-RRT      { background: #C62828; color: #fff; }
-.badge-化療     { background: #880E4F; color: #fff; }
-.badge-輪椅     { background: #558B2F; color: #fff; }
-.badge-推床     { background: #4E342E; color: #fff; }
-.badge-氧氣設備 { background: #01579B; color: #fff; }
-.badge-洗腎     { background: #006064; color: #fff; }
+
+/* 旗標標記（SVG 形狀，沿用 --c 上色，與 W52 同一套）*/
+.flag-dot {
+  --c: #888;
+  display: inline-flex;
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  color: var(--c);          /* SVG 以 currentColor 取色 */
+}
+.flag-dot svg { width: 100%; height: 100%; display: block; }
+/* 病床卡標記列（全部顯示、自動換行，比照 W52） */
+.dots-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  align-items: center;
+  margin-top: auto;
+  min-height: 16px;
+}
+.flag-dot-DNR      { --c: #6A1B9A; }
+.flag-dot-高危跌   { --c: #E65100; }
+.flag-dot-依賴L1   { --c: #4527A0; }
+.flag-dot-依賴L2   { --c: #4527A0; }
+.flag-dot-依賴L3   { --c: #311B92; }
+.flag-dot-隔離     { --c: #B71C1C; }
+.flag-dot-保密     { --c: #37474F; }
+.flag-dot-禁治療   { --c: #0D47A1; }
+.flag-dot-禁食     { --c: #2E7D32; }
+.flag-dot-過敏     { --c: #BF360C; }
+.flag-dot-RRT      { --c: #C62828; }
+.flag-dot-化療     { --c: #880E4F; }
+.flag-dot-輪椅     { --c: #558B2F; }
+.flag-dot-推床     { --c: #4E342E; }
+.flag-dot-氧氣設備 { --c: #01579B; }
+.flag-dot-洗腎     { --c: #006064; }
 /* +N more 指示器 */
 .badge-more {
   display: inline-flex;

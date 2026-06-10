@@ -3,8 +3,9 @@
 .er-board .mc-stats-row { display: flex; gap: 10px; flex-shrink: 0; }
 .er-board .mc-stat-card { flex: 1; background: var(--bg-card-occ); border: 1px solid var(--divider); border-radius: 8px; padding: 10px; text-align: center; }
 .er-board .mc-stat-val { font-size: 30px; font-weight: 900; font-family: var(--font-num); line-height: 1; }
-.er-board .mc-stat-val.val-critical { color: var(--accent-red); }
-.er-board .mc-stat-val.val-moderate { color: #E8A020; }
+.er-board .mc-stat-val.val-critical { color: #C62828; }
+.er-board .mc-stat-val.val-mid      { color: #E65100; }
+.er-board .mc-stat-val.val-moderate { color: #2E7D32; }
 .er-board .mc-stat-val.val-total    { color: var(--accent-green); }
 .er-board .mc-stat-val.val-dead     { color: var(--text-muted); }
 .er-board .mc-stat-val.val-transfer { color: #1565C0; }
@@ -21,11 +22,9 @@
 .er-board .mc-patient { font-weight: 700; }
 .er-board .mc-basic { font-size: 12px; color: var(--text-muted); }
 .er-board .triage-badge { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; font-weight: 900; font-size: 14px; font-family: var(--font-num); }
-.er-board .triage-1 { background: #B71C1C; color: #fff; }
-.er-board .triage-2 { background: var(--accent-red); color: #fff; }
-.er-board .triage-3 { background: #E8A020; color: #fff; }
-.er-board .triage-4 { background: var(--accent-green); color: #fff; }
-.er-board .triage-5 { background: var(--bg-card-empty); color: var(--text-secondary); border: 1px solid var(--divider); }
+.er-board .tg-a { background: #C62828; color: #fff; }
+.er-board .tg-b { background: #E65100; color: #fff; }
+.er-board .tg-c { background: #2E7D32; color: #fff; }
 .er-board .flag-badges { display: flex; flex-wrap: wrap; gap: 3px; }
 .er-board .flag-badge { display: inline-block; padding: 1px 6px; border-radius: 3px; font-size: 11px; font-weight: 700; white-space: nowrap; }
 .er-board .flag-死亡 { background: #1A2635; color: #fff; }

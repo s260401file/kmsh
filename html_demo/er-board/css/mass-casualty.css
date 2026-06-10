@@ -59,8 +59,9 @@
   font-family: var(--font-num);
   line-height: 1;
 }
-.mc-stat-val.val-critical { color: var(--accent-red); }
-.mc-stat-val.val-moderate { color: var(--accent-yellow); }
+.mc-stat-val.val-critical { color: #C62828; }
+.mc-stat-val.val-mid      { color: #E65100; }
+.mc-stat-val.val-moderate { color: #2E7D32; }
 .mc-stat-val.val-total    { color: var(--accent-green); }
 .mc-stat-val.val-dead     { color: var(--text-muted); }
 .mc-stat-val.val-transfer { color: var(--accent-blue); }
@@ -121,11 +122,9 @@
   font-size: 14px;
   font-family: var(--font-num);
 }
-.triage-1 { background: #B71C1C; color: #fff; }
-.triage-2 { background: var(--accent-red); color: #fff; }
-.triage-3 { background: var(--accent-yellow); color: #fff; }
-.triage-4 { background: var(--accent-green); color: #fff; }
-.triage-5 { background: var(--bg-card-empty); color: var(--text-secondary); border: 1px solid var(--divider); }
+.tg-a { background: #C62828; color: #fff; }
+.tg-b { background: #E65100; color: #fff; }
+.tg-c { background: #2E7D32; color: #fff; }
 
 /* 旗標 badges */
 .flag-badges { display: flex; flex-wrap: wrap; gap: 3px; }

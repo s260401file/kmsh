@@ -179,9 +179,9 @@ body { flex-direction: column; }
 .ward-grid .patient-basic { font-size: 11px; }
 .ward-grid .empty-label  { font-size: 16px; }
 .ward-grid .empty-bed-num { font-size: 12px; margin-bottom: 2px; }
-/* 緊湊網格內圓點再小一點 */
-.ward-grid .bed-card .flag-dot { width: 8px; height: 8px; }
-.ward-grid .dots-row { gap: 3px; min-height: 10px; }
+/* 緊湊網格內標記尺寸（形狀需稍大才看得清角）*/
+.ward-grid .bed-card .flag-dot { width: 14px; height: 14px; }
+.ward-grid .dots-row { gap: 3px; min-height: 16px; }
 
 /* ── 左翼上段（R1-R3）── */
 .bed-W52-052 { grid-column: 1; grid-row: 1; }

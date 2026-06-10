@@ -79,34 +79,37 @@
 .gender-m { color: #1565C0; }
 .gender-f { color: #AD1457; }
 
-/* ── 旗標圓點 ── */
+/* ── 旗標標記（SVG 形狀，沿用 --c 上色）── */
 .flag-dot {
-  display: inline-block;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
+  --c: #888;
+  display: inline-flex;
+  width: 14px;
+  height: 14px;
   flex-shrink: 0;
+  color: var(--c);          /* SVG 以 currentColor 取色 */
 }
-/* 卡片內圓點略小 */
-.bed-card .flag-dot { width: 9px; height: 9px; }
+/* 卡片內標記 */
+.bed-card .flag-dot { width: 14px; height: 14px; }
+/* SVG 填滿外框（大小/對齊由 viewBox 決定，完全一致）*/
+.flag-dot svg { width: 100%; height: 100%; display: block; }
 
-/* 圓點色碼（規格 13 種 + 運動/氧氣/洗腎 + 3 種流量狀態） */
-.flag-dot-DNR      { background: #6A1B9A; }
-.flag-dot-高危跌   { background: #E65100; }
-.flag-dot-依賴L1   { background: #4527A0; }
-.flag-dot-依賴L2   { background: #4527A0; }
-.flag-dot-依賴L3   { background: #311B92; }
-.flag-dot-隔離     { background: #B71C1C; }
-.flag-dot-保密     { background: #37474F; }
-.flag-dot-禁治療   { background: #0D47A1; }
-.flag-dot-禁食     { background: #2E7D32; }
-.flag-dot-過敏     { background: #BF360C; }
-.flag-dot-RRT      { background: #C62828; }
-.flag-dot-化療     { background: #880E4F; }
-.flag-dot-輪椅     { background: #558B2F; }
-.flag-dot-推床     { background: #4E342E; }
-.flag-dot-氧氣設備 { background: #01579B; }
-.flag-dot-洗腎     { background: #006064; }
-.flag-dot-待轉入   { background: #1565C0; }
-.flag-dot-待轉出   { background: #E65100; }
-.flag-dot-待出院   { background: #2E7D32; }
+/* 標記色碼（規格 13 種 + 運動/氧氣/洗腎 + 3 種流量狀態）→ 以 --c 提供，供實心/線框共用 */
+.flag-dot-DNR      { --c: #6A1B9A; }
+.flag-dot-高危跌   { --c: #E65100; }
+.flag-dot-依賴L1   { --c: #4527A0; }
+.flag-dot-依賴L2   { --c: #4527A0; }
+.flag-dot-依賴L3   { --c: #311B92; }
+.flag-dot-隔離     { --c: #B71C1C; }
+.flag-dot-保密     { --c: #37474F; }
+.flag-dot-禁治療   { --c: #0D47A1; }
+.flag-dot-禁食     { --c: #2E7D32; }
+.flag-dot-過敏     { --c: #BF360C; }
+.flag-dot-RRT      { --c: #C62828; }
+.flag-dot-化療     { --c: #880E4F; }
+.flag-dot-輪椅     { --c: #558B2F; }
+.flag-dot-推床     { --c: #4E342E; }
+.flag-dot-氧氣設備 { --c: #01579B; }
+.flag-dot-洗腎     { --c: #006064; }
+.flag-dot-待轉入   { --c: #1565C0; }
+.flag-dot-待轉出   { --c: #E65100; }
+.flag-dot-待出院   { --c: #2E7D32; }

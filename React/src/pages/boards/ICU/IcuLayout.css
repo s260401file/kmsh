@@ -150,7 +150,7 @@
 .icu-board .gender-m{color:#1565C0} .icu-board .gender-f{color:#AD1457}
 
 /* ── Badges ── */
-.icu-board .badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:var(--radius-badge);font-size:13px;font-weight:700;white-space:nowrap;line-height:20px}
+.icu-board .badge{display:inline-flex;align-items:center;gap:5px;padding:2px 8px 2px 6px;border-radius:var(--radius-pill);font-size:13px;font-weight:700;white-space:nowrap;line-height:20px;background:var(--bg-card-occ);color:var(--text-primary);border:1px solid var(--divider)}
 .icu-board .badge-DNR{background:#6A1B9A;color:#fff} .icu-board .badge-高危跌{background:#E65100;color:#fff}
 .icu-board .badge-依賴L1{background:#4527A0;color:#fff} .icu-board .badge-依賴L2{background:#4527A0;color:#fff}
 .icu-board .badge-依賴L3{background:#311B92;color:#fff} .icu-board .badge-隔離{background:#B71C1C;color:#fff}
@@ -160,6 +160,19 @@
 .icu-board .badge-輪椅{background:#558B2F;color:#fff} .icu-board .badge-推床{background:#4E342E;color:#fff}
 .icu-board .badge-氧氣設備{background:#01579B;color:#fff} .icu-board .badge-洗腎{background:#006064;color:#fff}
 .icu-board .badge-more{display:inline-flex;align-items:center;padding:2px 6px;border-radius:var(--radius-badge);font-size:12px;font-weight:700;background:rgba(0,0,0,0.10);color:var(--text-secondary);white-space:nowrap;line-height:20px}
+
+/* ── 旗標標記（SVG 形狀，與 W52 同一套）── */
+.icu-board .flag-dot{--c:#888;display:inline-flex;width:14px;height:14px;flex-shrink:0;color:var(--c)}
+.icu-board .flag-dot svg{width:100%;height:100%;display:block}
+.icu-board .dots-row{display:flex;flex-wrap:wrap;gap:3px;align-items:center;margin-top:auto;min-height:16px}
+.icu-board .flag-dot-DNR{--c:#6A1B9A} .icu-board .flag-dot-高危跌{--c:#E65100}
+.icu-board .flag-dot-依賴L1{--c:#4527A0} .icu-board .flag-dot-依賴L2{--c:#4527A0}
+.icu-board .flag-dot-依賴L3{--c:#311B92} .icu-board .flag-dot-隔離{--c:#B71C1C}
+.icu-board .flag-dot-保密{--c:#37474F} .icu-board .flag-dot-禁治療{--c:#0D47A1}
+.icu-board .flag-dot-禁食{--c:#2E7D32} .icu-board .flag-dot-過敏{--c:#BF360C}
+.icu-board .flag-dot-RRT{--c:#C62828} .icu-board .flag-dot-化療{--c:#880E4F}
+.icu-board .flag-dot-輪椅{--c:#558B2F} .icu-board .flag-dot-推床{--c:#4E342E}
+.icu-board .flag-dot-氧氣設備{--c:#01579B} .icu-board .flag-dot-洗腎{--c:#006064}
 
 /* ══════════════════════════════════════════════
    抗生素 Tab 額外樣式（AntibioticTab 共用）

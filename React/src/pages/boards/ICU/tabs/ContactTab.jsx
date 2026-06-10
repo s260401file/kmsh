@@ -1,8 +1,16 @@
-import CONTACT_DATA from '../tabsData/contactData'
+import { useState, useEffect } from 'react'
+import { getDuty, getCommon } from '../../../../services/contactApi'
 import '../tabsCss/contact.css'
 
 export default function ContactTab() {
-  const { dutyContacts, commonContacts } = CONTACT_DATA.data
+  const [duty,   setDuty]   = useState([])
+  const [common, setCommon] = useState([])
+
+  useEffect(() => {
+    getDuty('ICU').then(d => setDuty(d ?? [])).catch(() => {})
+    getCommon('ICU').then(d => setCommon(d ?? [])).catch(() => {})
+  }, [])
+
   return (
     <main className="main-content">
       <div className="ct-panel">
@@ -18,15 +26,18 @@ export default function ContactTab() {
               <table className="ct-table">
                 <thead><tr><th>職務</th><th>姓名</th><th>院內分機</th><th>手機</th><th>時段</th></tr></thead>
                 <tbody>
-                  {dutyContacts.map(c => (
-                    <tr key={c.contactId}>
-                      <td>{c.dutyTitle}</td>
-                      <td>{c.name}</td>
-                      <td className="ct-ext">{c.extension}</td>
-                      <td className="ct-mobile">{c.mobile}</td>
-                      <td className="ct-slot">{c.timeSlot}</td>
-                    </tr>
-                  ))}
+                  {duty.length === 0
+                    ? <tr className="ct-empty-row"><td colSpan={5}>尚無值班資料</td></tr>
+                    : duty.map(c => (
+                      <tr key={c.id}>
+                        <td>{c.dutyTitle}</td>
+                        <td>{c.name}</td>
+                        <td className="ct-ext">{c.extension || '—'}</td>
+                        <td className="ct-mobile">{c.mobile || '—'}</td>
+                        <td className="ct-slot">{c.timeSlot || '—'}</td>
+                      </tr>
+                    ))
+                  }
                 </tbody>
               </table>
             </div>
@@ -37,12 +48,15 @@ export default function ContactTab() {
               <table className="ct-table">
                 <thead><tr><th>單位</th><th className="ct-col-ext">分機 / 電話</th></tr></thead>
                 <tbody>
-                  {commonContacts.map(c => (
-                    <tr key={c.contactId}>
-                      <td>{c.name}</td>
-                      <td className="ct-col-ext ct-ext">{c.extension}</td>
-                    </tr>
-                  ))}
+                  {common.length === 0
+                    ? <tr className="ct-empty-row"><td colSpan={2}>尚無常用電話</td></tr>
+                    : common.map(c => (
+                      <tr key={c.id}>
+                        <td>{c.name}</td>
+                        <td className="ct-col-ext ct-ext">{c.extension}</td>
+                      </tr>
+                    ))
+                  }
                 </tbody>
               </table>
             </div>

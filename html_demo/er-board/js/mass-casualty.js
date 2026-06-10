@@ -5,6 +5,9 @@ function updateClock() {
   document.getElementById("clock-time").textContent = `${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")}:${String(now.getSeconds()).padStart(2,"0")}`;
 }
 
+// 檢傷分級：Triage 1-5 → A/B/C 三級（A 重症 1-2、B 中症 3、C 輕症 4-5）
+function triageGrade(t) { return t <= 2 ? "A" : (t === 3 ? "B" : "C"); }
+
 function buildFlags(p) {
   const flags = [];
   if (p.Deceased)    flags.push('<span class="flag-badge flag-死亡">死亡</span>');
@@ -28,13 +31,15 @@ document.addEventListener("DOMContentLoaded", () => {
     .map(b => ({ ...b.Patient, BedId: b.BedId }))
     .sort((a, b) => a.Triage - b.Triage);
 
-  const critical  = patients.filter(p => p.Triage <= 2).length;
-  const moderate  = patients.filter(p => p.Triage >= 3).length;
+  const sevA      = patients.filter(p => p.Triage <= 2).length;
+  const sevB      = patients.filter(p => p.Triage === 3).length;
+  const sevC      = patients.filter(p => p.Triage >= 4).length;
   const dead      = patients.filter(p => p.Deceased).length;
   const transfer  = patients.filter(p => p.TransferOut).length;
   document.getElementById("mc-stat-total").textContent    = patients.length;
-  document.getElementById("mc-stat-critical").textContent  = critical;
-  document.getElementById("mc-stat-moderate").textContent  = moderate;
+  document.getElementById("mc-stat-sev-a").textContent  = sevA;
+  document.getElementById("mc-stat-sev-b").textContent  = sevB;
+  document.getElementById("mc-stat-sev-c").textContent  = sevC;
   document.getElementById("mc-stat-dead").textContent      = dead;
   document.getElementById("mc-stat-transfer").textContent  = transfer;
 
@@ -51,7 +56,7 @@ document.addEventListener("DOMContentLoaded", () => {
         <div class="mc-basic">${p.Gender}/${p.Age}</div>
       </td>
       <td style="font-family:var(--font-num);font-size:14px;color:var(--text-muted)">${p.MedRecord || "—"}</td>
-      <td><span class="triage-badge triage-${p.Triage}">${p.Triage}</span></td>
+      <td><span class="triage-badge tg-${triageGrade(p.Triage).toLowerCase()}">${triageGrade(p.Triage)}</span></td>
       <td>${p.Department || "—"}</td>
       <td>${p.Diagnosis  || "—"}</td>
       <td>${p.ArrivalTime || "—"}</td>

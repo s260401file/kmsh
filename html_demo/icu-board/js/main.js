@@ -76,6 +76,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // Render
   renderStats(MOCK_DATA.beds);
   renderAllBeds(MOCK_DATA.beds);
+  renderLegendShapes();
 
   // Clock
   updateClock();

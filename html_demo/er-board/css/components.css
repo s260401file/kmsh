@@ -33,11 +33,12 @@
 .bed-card.empty:hover { transform: none; box-shadow: var(--shadow-card); }
 
 /* ── Triage border overrides（must come after status variants）── */
-.bed-card.triage-1 { background: var(--bg-card-triage1); border-left-color: #CC1111; }
-.bed-card.triage-2 { border-left-color: #E05C5C; }
-.bed-card.triage-3 { border-left-color: #E8900A; }
-.bed-card.triage-4 { border-left-color: var(--border-occ); }
-.bed-card.triage-5 { border-left-color: #4A8FAE; }
+/* 床卡左側邊框依 A/B/C 三級（1-2=A 紅、3=B 橙、4-5=C 綠）*/
+.bed-card.triage-1 { background: var(--bg-card-triage1); border-left-color: #C62828; }
+.bed-card.triage-2 { border-left-color: #C62828; }
+.bed-card.triage-3 { border-left-color: #E65100; }
+.bed-card.triage-4 { border-left-color: #2E7D32; }
+.bed-card.triage-5 { border-left-color: #2E7D32; }
 .bed-card.neg-iso  { background: var(--bg-card-neg-iso); border-left-color: #9B59B6; }
 
 /* ── Card rows ── */
@@ -108,23 +109,53 @@
   line-height: 20px;
   flex-shrink: 0;
 }
-.triage-badge.t1 { background: #CC1111; color: #fff; }
-.triage-badge.t2 { background: #E05C5C; color: #fff; }
-.triage-badge.t3 { background: #E8900A; color: #fff; }
-.triage-badge.t4 { background: #3BAF7A; color: #fff; }
-.triage-badge.t5 { background: #4A8FAE; color: #fff; }
+.triage-badge.tg-a { background: #C62828; color: #fff; } /* A 重症 */
+.triage-badge.tg-b { background: #E65100; color: #fff; } /* B 中症 */
+.triage-badge.tg-c { background: #2E7D32; color: #fff; } /* C 輕症 */
 
-/* ── Badges ── */
+/* ── Badges（病人註記：圓點 + 文字，與 W52 一致）── */
 .badge {
   display: inline-flex;
   align-items: center;
-  padding: 2px 8px;
-  border-radius: var(--radius-badge);
+  gap: 5px;
+  padding: 2px 8px 2px 6px;
+  border-radius: var(--radius-pill);
   font-size: 13px;
   font-weight: 700;
   white-space: nowrap;
   line-height: 20px;
+  background: var(--bg-card-occ);
+  color: var(--text-primary);
+  border: 1px solid var(--divider);
 }
+
+/* 旗標標記（SVG 形狀，沿用 --c 上色，與 W52 同一套）*/
+.flag-dot {
+  --c: #888;
+  display: inline-flex;
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  color: var(--c);          /* SVG 以 currentColor 取色 */
+}
+.flag-dot svg { width: 100%; height: 100%; display: block; }
+/* 病床卡標記列（全部顯示、自動換行，比照 W52） */
+.dots-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  align-items: center;
+  margin-top: auto;
+  min-height: 16px;
+}
+.flag-dot-死亡 { --c: #37474F; }
+.flag-dot-MBD  { --c: #263238; }
+.flag-dot-AAD  { --c: #4E342E; }
+.flag-dot-轉出 { --c: #455A64; }
+.flag-dot-轉入 { --c: #1565C0; }
+.flag-dot-DNR  { --c: #6A1B9A; }
+.flag-dot-留觀 { --c: #006064; }
+.flag-dot-住院 { --c: #2E7D32; }
 
 /* ICU/W52 共用 13 種 */
 .badge-R    { background: #C62828; color: #fff; }
