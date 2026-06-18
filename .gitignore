@@ -18,5 +18,12 @@ Thumbs.db
 *.user
 .vs/
 
+# ── 建置產物 ──
+React.zip
+
+# ── Obsidian（App 執行階段檔，會被開啟中的程式鎖住、且為機器個人狀態）──
+Obsidian/kmsh/.obsidian/workspace.json
+Obsidian/kmsh/.obsidian/workspace-mobile.json
+
 # ── 敏感設定（正式環境請勿提交）──
 # API/**/appsettings.Production.json
