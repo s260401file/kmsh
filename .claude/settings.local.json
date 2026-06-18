@@ -60,7 +60,21 @@
       "Bash(start \"\" \"html_demo/or-board/index.html\")",
       "Bash(start \"\" \"html_demo/or-board/evacuation.html\")",
       "WebFetch(domain:github.com)",
-      "PowerShell(claude *)"
+      "PowerShell(claude *)",
+      "Bash(npx eslint *)",
+      "Bash(dotnet build *)",
+      "Bash(sqlcmd -S \".\\\\sqlexpress\" -U sa -P \"KmshX54883958\" -d Whiteboard -C -b -i \"migration_text_startat_endat.sql\")",
+      "Bash(sqlcmd -S \".\\\\sqlexpress\" -U sa -P \"KmshX54883958\" -d Whiteboard -C -b -f 65001 -i \"migration_text_startat_endat.sql\")",
+      "Bash(sqlcmd -S \".\\\\sqlexpress\" -U sa -P \"KmshX54883958\" -d Whiteboard -C -h -1 -W -Q \"SELECT name + ' ' + TYPE_NAME\\(system_type_id\\) + CASE WHEN is_nullable=1 THEN ' NULL' ELSE ' NOT NULL' END FROM sys.columns WHERE object_id=OBJECT_ID\\('dbo.Text'\\) AND name IN \\('StartAt','EndAt'\\);\")",
+      "Bash(rm -rf ./bin/publish)",
+      "Bash(dotnet publish *)",
+      "Bash(curl -s \"http://localhost:5100/api/Text?unitCode=ER&category=bulletin_unit&includeAll=true\")",
+      "Bash(curl -s -o /dev/null -w \"HTTP %{http_code}\\\\n\" \"http://localhost/\")",
+      "Bash(curl -s \"http://localhost/\")",
+      "Bash(curl -s -o /dev/null -w \"HTTP %{http_code}\\\\n\" \"http://localhost/assets/index-Cq4NwZRU.js\")",
+      "Bash(curl -s -o /dev/null -w \"HTTP %{http_code}\\\\n\" \"http://localhost:5100/api/Text?unitCode=ALL&category=bulletin_hosp&includeAll=true\")",
+      "Read(//c/inetpub/wwwroot/kmsh-api/uploads/evac/**)",
+      "Bash(git check-ignore *)"
     ],
     "additionalDirectories": [
       "\\mnt\\c\\WorkDir\\Nursing Whiteboard\\React\\src\\pages"

@@ -14,6 +14,8 @@ public class TextItem
     public string? Priority { get; set; }             // 優先度（如一般/重要）
     public int SortOrder { get; set; }                // 顯示排序
     public bool IsActive { get; set; }                // 是否啟用
+    public DateTime? StartAt { get; set; }            // 顯示起始時間（null=不限）；白板僅顯示「現在落在 [StartAt, EndAt] 內」者
+    public DateTime? EndAt { get; set; }              // 顯示截止時間（null=不限）
     public DateTime CreatedAt { get; set; }           // 建立時間
     public DateTime UpdatedAt { get; set; }           // 最後更新時間
 }

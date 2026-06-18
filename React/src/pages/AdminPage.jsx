@@ -420,7 +420,19 @@ function CommonManager({ units }) {
 // ── 佈告欄管理 ─────────────────────────────────────────────
 // 佈告欄資料存於 /api/Text，以 category 區分「科內公告(bulletin_unit)」與
 // 「院方公告(bulletin_hosp)」，故 BulletinSection 以 category 參數泛用化。
-const emptyBulletinForm = { title: '', content: '', priority: '一般', sortOrder: 0, isActive: true }
+const emptyBulletinForm = { title: '', content: '', priority: '一般', sortOrder: 0, isActive: true, startAt: '', endAt: '' }
+
+// ISO 字串 → <input type="datetime-local"> 可用值（yyyy-MM-ddTHH:mm）；無值回空字串
+const toLocalInput = iso => (iso ? iso.slice(0, 16) : '')
+// 顯示用：ISO → MM/DD HH:mm；無值回空字串
+const fmtDateTime = iso => {
+  if (!iso) return ''
+  const d = iso.slice(0, 16)
+  return `${d.slice(5, 7)}/${d.slice(8, 10)} ${d.slice(11, 16)}`
+}
+// 顯示期間文字（起~迄；任一端不限以「—」表示；皆無回「不限」）
+const fmtRange = (startAt, endAt) =>
+  (!startAt && !endAt) ? '不限' : `${fmtDateTime(startAt) || '—'} ~ ${fmtDateTime(endAt) || '—'}`
 
 // 單一 category 的公告 CRUD：category 決定資料分類，sectionTitle 為區塊標題
 function BulletinSection({ unitCode, category, sectionTitle }) {
@@ -443,7 +455,8 @@ function BulletinSection({ unitCode, category, sectionTitle }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    const payload = { ...form, unitCode, category }
+    // 起迄空字串轉 null（不限）
+    const payload = { ...form, unitCode, category, startAt: form.startAt || null, endAt: form.endAt || null }
     try {
       if (editId) {
         await textApi.update(editId, payload)
@@ -456,7 +469,7 @@ function BulletinSection({ unitCode, category, sectionTitle }) {
     } catch { showMsg('操作失敗', true) }
   }
 
-  const handleEdit   = item => { setEditId(item.id); setForm({ title: item.title ?? '', content: item.content, priority: item.priority ?? '一般', sortOrder: item.sortOrder, isActive: item.isActive }) }
+  const handleEdit   = item => { setEditId(item.id); setForm({ title: item.title ?? '', content: item.content, priority: item.priority ?? '一般', sortOrder: item.sortOrder, isActive: item.isActive, startAt: toLocalInput(item.startAt), endAt: toLocalInput(item.endAt) }) }
   const handleDelete = async id => {
     if (!window.confirm('確定刪除？')) return
     try { await textApi.remove(id); showMsg('刪除成功'); load() }
@@ -505,6 +518,25 @@ function BulletinSection({ unitCode, category, sectionTitle }) {
               啟用
             </label>
           </div>
+          <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'center', marginTop: '4px' }}>
+            <div style={s.formRow}>
+              <label style={s.label}>顯示起始（選填，空＝立即）</label>
+              <input type="datetime-local" style={{ ...s.input, width: 'auto' }} value={form.startAt}
+                onChange={e => setForm(f => ({ ...f, startAt: e.target.value }))} />
+            </div>
+            <div style={s.formRow}>
+              <label style={s.label}>顯示截止（選填，空＝不限）</label>
+              <input type="datetime-local" style={{ ...s.input, width: 'auto' }} value={form.endAt}
+                onChange={e => setForm(f => ({ ...f, endAt: e.target.value }))} />
+            </div>
+            {(form.startAt || form.endAt) && (
+              <button type="button" style={{ ...s.btnSecondary, padding: '6px 12px' }}
+                onClick={() => setForm(f => ({ ...f, startAt: '', endAt: '' }))}>清除期間</button>
+            )}
+          </div>
+          <div style={{ fontSize: '12px', color: '#9ca3af', marginTop: '2px' }}>
+            白板只在「現在時間」落在此區間內才顯示此公告；兩端皆空＝永遠顯示。後台清單仍會列出全部。
+          </div>
           <div style={{ marginTop: '16px', display: 'flex', gap: '8px' }}>
             <button type="submit" style={s.btnPrimary}>{editId ? '儲存修改' : '+ 新增'}</button>
             {editId && <button type="button" style={s.btnSecondary} onClick={() => { setForm(emptyBulletinForm); setEditId(null) }}>取消</button>}
@@ -518,7 +550,7 @@ function BulletinSection({ unitCode, category, sectionTitle }) {
         {list.length === 0 ? <p style={{ color: '#9ca3af', fontSize: '14px' }}>尚無公告，請新增</p> : (
           <table style={s.table}>
             <thead>
-              <tr>{['ID','標題','內容','優先度','排序','啟用','操作'].map(h => <th key={h} style={s.th}>{h}</th>)}</tr>
+              <tr>{['ID','標題','內容','優先度','排序','顯示期間','啟用','操作'].map(h => <th key={h} style={s.th}>{h}</th>)}</tr>
             </thead>
             <tbody>
               {list.map((item, i) => (
@@ -532,6 +564,7 @@ function BulletinSection({ unitCode, category, sectionTitle }) {
                     </span>
                   </td>
                   <td style={s.td}>{item.sortOrder}</td>
+                  <td style={{ ...s.td, fontSize: '12px', color: (item.startAt || item.endAt) ? '#374151' : '#9ca3af' }}>{fmtRange(item.startAt, item.endAt)}</td>
                   <td style={s.td}>
                     <button onClick={() => handleToggle(item)} style={{ ...s.badge, background: item.isActive ? '#d1fae5' : '#f3f4f6', color: item.isActive ? '#065f46' : '#6b7280' }}>
                       {item.isActive ? '✓ 啟用' : '停用'}

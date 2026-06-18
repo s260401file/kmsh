@@ -17,4 +17,6 @@ public class TextCreateRequest
     public string? UnitCode { get; set; }             // 所屬單位代碼（可選，全院公告可空）
     public string? Priority { get; set; }             // 優先度（如一般/重要）
     public int SortOrder { get; set; } = 0;           // 顯示排序，預設 0
+    public DateTime? StartAt { get; set; }            // 顯示起始時間（選填，null=不限）
+    public DateTime? EndAt { get; set; }              // 顯示截止時間（選填，null=不限）
 }

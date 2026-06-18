@@ -18,4 +18,6 @@ public class TextUpdateRequest
     public string? Priority { get; set; }             // 優先度（如一般/重要）
     public int SortOrder { get; set; } = 0;           // 顯示排序，預設 0
     public bool IsActive { get; set; } = true;        // 是否啟用，預設啟用
+    public DateTime? StartAt { get; set; }            // 顯示起始時間（選填，null=不限）
+    public DateTime? EndAt { get; set; }              // 顯示截止時間（選填，null=不限）
 }

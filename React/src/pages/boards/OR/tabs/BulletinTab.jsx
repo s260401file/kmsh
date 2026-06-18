@@ -1,8 +1,7 @@
 // BulletinTab：OR 手術室站「佈告欄」分頁
 // 雙欄呈現「手術室公告」（單位）與「院方公告」（全院）；重要公告優先排序、樣式加強。
-// 資料透過 textApi 由後端 API 取得（非 mockData），分別查 OR/bulletin_unit 與 ALL/bulletin_hosp。
-import { useState, useEffect } from 'react'
-import * as textApi from '../../../../services/textApi'
+// 資料透過 useBulletin 由後端 API 取得（非 mockData）；定時輪詢、免 F5 自動更新。
+import { useBulletin } from '../../../../hooks/useBulletin'
 import '../tabsCss/bulletin.css'
 
 // 將 ISO 日期字串格式化為 MM/DD
@@ -10,14 +9,6 @@ function fmtDate(isoStr) {
   if (!isoStr) return ''
   const d = isoStr.slice(0, 10)
   return `${d.slice(5, 7)}/${d.slice(8, 10)}`
-}
-
-// 公告排序：重要優先，其次依建立時間新到舊
-function sortItems(items) {
-  return [...items].sort((a, b) => {
-    if (a.priority !== b.priority) return a.priority === '重要' ? -1 : 1
-    return (b.createdAt ?? '').localeCompare(a.createdAt ?? '')
-  })
 }
 
 // 單則公告卡片：依重要/院方/一般決定左側色條與徽章樣式
@@ -42,14 +33,8 @@ function BulletinCard({ item, isHosp }) {
 }
 
 export default function BulletinTab() {
-  const [unitItems, setUnitItems] = useState([])  // 手術室公告
-  const [hospItems, setHospItems] = useState([])  // 院方公告
-
-  // 載入時向 API 取得兩類公告，取回後排序
-  useEffect(() => {
-    textApi.getAll('OR', 'bulletin_unit').then(d => setUnitItems(sortItems(d ?? []))).catch(() => {})
-    textApi.getAll('ALL', 'bulletin_hosp').then(d => setHospItems(sortItems(d ?? []))).catch(() => {})
-  }, [])
+  // 定時輪詢手術室公告（OR / bulletin_unit）與院方公告（ALL / bulletin_hosp）；免 F5 自動更新
+  const { unitItems, hospItems } = useBulletin('OR')
 
   return (
     <main className="main-content" style={{ padding: 0 }}>

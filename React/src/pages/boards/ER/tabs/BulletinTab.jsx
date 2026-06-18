@@ -1,8 +1,7 @@
 // BulletinTab：ER 急診站「佈告欄」分頁。
-// 左欄為本單位（急診室）公告、右欄為院方公告，兩者皆透過 textApi 由後端取得（非假資料）。
-// 公告依「重要 → 一般」及建立時間新到舊排序。
-import { useState, useEffect } from 'react'
-import * as textApi from '../../../../services/textApi'
+// 左欄為本單位（急診室）公告、右欄為院方公告，兩者皆透過 useBulletin 由後端取得（非假資料）。
+// 公告依「重要 → 一般」及建立時間新到舊排序；定時輪詢、免 F5 自動更新。
+import { useBulletin } from '../../../../hooks/useBulletin'
 import '../tabsCss/bulletin.css'
 
 // 將 ISO 日期字串轉為 MM/DD 顯示
@@ -10,14 +9,6 @@ function fmtDate(isoStr) {
   if (!isoStr) return ''
   const d = isoStr.slice(0, 10)
   return `${d.slice(5, 7)}/${d.slice(8, 10)}`
-}
-
-// 公告排序：重要優先，其次依建立時間由新到舊
-function sortItems(items) {
-  return [...items].sort((a, b) => {
-    if (a.priority !== b.priority) return a.priority === '重要' ? -1 : 1
-    return (b.createdAt ?? '').localeCompare(a.createdAt ?? '')
-  })
 }
 
 // 單張公告卡：依優先度與來源（院方/單位）決定左側色條與徽章樣式
@@ -42,14 +33,8 @@ function BulletinCard({ item, isHosp }) {
 }
 
 export default function BulletinTab() {
-  const [unitItems, setUnitItems] = useState([])
-  const [hospItems, setHospItems] = useState([])
-
-  // 載入時抓取：ER 單位公告（bulletin_unit）與全院公告（ALL / bulletin_hosp）
-  useEffect(() => {
-    textApi.getAll('ER', 'bulletin_unit').then(d => setUnitItems(sortItems(d ?? []))).catch(() => {})
-    textApi.getAll('ALL', 'bulletin_hosp').then(d => setHospItems(sortItems(d ?? []))).catch(() => {})
-  }, [])
+  // 定時輪詢急診室公告（bulletin_unit）與全院公告（ALL / bulletin_hosp）；免 F5 自動更新
+  const { unitItems, hospItems } = useBulletin('ER')
 
   return (
     <main className="main-content" style={{ padding: 0 }}>

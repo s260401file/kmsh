@@ -23,7 +23,7 @@ public class TextRepository : ITextRepository
         string? unitCode = null, string? category = null, bool includeAll = false, CancellationToken ct = default)
     {
         var sql = """
-            SELECT Id, Title, Content, Category, UnitCode, Priority, SortOrder, IsActive, CreatedAt, UpdatedAt
+            SELECT Id, Title, Content, Category, UnitCode, Priority, SortOrder, IsActive, StartAt, EndAt, CreatedAt, UpdatedAt
             FROM   [dbo].[Text]
             WHERE  (@IncludeAll = 1 OR IsActive = 1)
               AND  (@UnitCode  IS NULL OR UnitCode  = @UnitCode)
@@ -40,7 +40,7 @@ public class TextRepository : ITextRepository
     public async Task<TextItem?> GetByIdAsync(int id, CancellationToken ct = default)
     {
         var sql = """
-            SELECT Id, Title, Content, Category, UnitCode, Priority, SortOrder, IsActive, CreatedAt, UpdatedAt
+            SELECT Id, Title, Content, Category, UnitCode, Priority, SortOrder, IsActive, StartAt, EndAt, CreatedAt, UpdatedAt
             FROM   [dbo].[Text]
             WHERE  Id = @Id
             """;
@@ -57,9 +57,9 @@ public class TextRepository : ITextRepository
     public async Task<int> CreateAsync(TextCreateRequest req, CancellationToken ct = default)
     {
         var sql = """
-            INSERT INTO [dbo].[Text] (Title, Content, Category, UnitCode, Priority, SortOrder, IsActive, CreatedAt, UpdatedAt)
+            INSERT INTO [dbo].[Text] (Title, Content, Category, UnitCode, Priority, SortOrder, IsActive, StartAt, EndAt, CreatedAt, UpdatedAt)
             OUTPUT INSERTED.Id
-            VALUES (@Title, @Content, @Category, @UnitCode, @Priority, @SortOrder, 1, GETDATE(), GETDATE())
+            VALUES (@Title, @Content, @Category, @UnitCode, @Priority, @SortOrder, 1, @StartAt, @EndAt, GETDATE(), GETDATE())
             """;
 
         using var conn = _db.Create();
@@ -82,6 +82,8 @@ public class TextRepository : ITextRepository
                    Priority  = @Priority,
                    SortOrder = @SortOrder,
                    IsActive  = @IsActive,
+                   StartAt   = @StartAt,
+                   EndAt     = @EndAt,
                    UpdatedAt = GETDATE()
             WHERE  Id = @Id
             """;
@@ -89,7 +91,7 @@ public class TextRepository : ITextRepository
         using var conn = _db.Create();
         var rows = await conn.ExecuteAsync(
             new CommandDefinition(sql,
-                new { req.Title, req.Content, req.Category, req.UnitCode, req.Priority, req.SortOrder, req.IsActive, Id = id },
+                new { req.Title, req.Content, req.Category, req.UnitCode, req.Priority, req.SortOrder, req.IsActive, req.StartAt, req.EndAt, Id = id },
                 cancellationToken: ct));
         return rows > 0;
     }
