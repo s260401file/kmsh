@@ -1,6 +1,12 @@
+// WardTab：OR 手術室站「刀房狀態地圖」分頁
+// 以卡片地圖呈現 7 間刀房（OR-01～03、OR-05～08，已移除 OR-04）的即時狀態，
+// 每張卡片顯示術式、主刀醫師、麻醉、手術狀態、來源（急診/門診/住院刀）等。
+// 右側為手術統計面板，下方為來源/狀態篩選列，點卡片可開啟病患詳情 Modal。
+// 資料來源為 mockData（假資料，待接 API）。OR 站病患標記維持中文字（非 SVG 形狀）。
 import { useState, useMemo } from 'react'
 import MOCK_DATA, { getStats } from '../mockData'
 
+// 依手術來源回傳對應的 CSS class（急診/門診/住院刀）
 function sourceClass(source) {
   if (source === '急診刀') return 'src-er'
   if (source === '門診刀') return 'src-op'
@@ -8,6 +14,7 @@ function sourceClass(source) {
   return ''
 }
 
+// 判斷某刀房在目前篩選條件下是否應「亮起」（空房與 all 一律顯示）
 function isRoomVisible(room, filter) {
   if (filter === 'all' || room.Status === 'empty') return true
   const p = room.Patient
@@ -22,6 +29,7 @@ function isRoomVisible(room, filter) {
   }
 }
 
+// 計算手術時長：有結束時間取區間，無結束時間以現在時刻推算「進行中」
 function calcDuration(startTime, endTime) {
   if (!startTime) return '—'
   const [sh, sm] = startTime.split(':').map(Number)
@@ -36,6 +44,7 @@ function calcDuration(startTime, endTime) {
   return elapsed > 0 ? `${Math.floor(elapsed / 60)}h ${elapsed % 60}m（進行中）` : '—'
 }
 
+// 單一刀房卡片：空房顯示房號與「空房」字樣；有病患則顯示來源/狀態/病患/術式/主刀
 function RoomCard({ room, filteredOut, onClick }) {
   if (room.Status === 'empty') {
     return (
@@ -66,6 +75,7 @@ function RoomCard({ room, filteredOut, onClick }) {
   )
 }
 
+// 點擊刀房卡片後彈出的病患詳情視窗（診斷、術式、派班、麻醉、時間、備註等）
 function RoomModal({ room, onClose }) {
   const p = room.Patient
   const duration = calcDuration(p.StartTime, p.EndTime)
@@ -117,9 +127,10 @@ function RoomModal({ room, onClose }) {
 }
 
 export default function WardTab() {
-  const [filter, setFilter] = useState('all')
-  const [selectedRoom, setSelectedRoom] = useState(null)
-  const stats = useMemo(() => getStats(MOCK_DATA.Rooms), [])
+  const [filter, setFilter] = useState('all')          // 目前篩選條件（all/er/op/inp/busy/prep/done）
+  const [selectedRoom, setSelectedRoom] = useState(null) // 目前開啟詳情的刀房
+  const stats = useMemo(() => getStats(MOCK_DATA.Rooms), []) // 由刀房資料彙總統計數字
+  // 點同一篩選鈕再點一次即取消（回到 all）；all 本身不切換
   const handleFilter = f => setFilter(prev => (prev === f && f !== 'all') ? 'all' : f)
 
   return (

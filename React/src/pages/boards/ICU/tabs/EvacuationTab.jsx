@@ -1,13 +1,16 @@
+// EvacuationTab.jsx — ICU 避難圖分頁
+// 角色：顯示由管理後台上傳的避難圖；尚未上傳時顯示佔位提示。
 import { useState, useEffect } from 'react'
 import { imageUrl, getImageInfo } from '../../../../services/evacuationApi'
 import '../tabsCss/evacuation.css'
 
-const UNIT = 'ICU'
+const UNIT = 'ICU' // 本分頁固定查 ICU 單位的避難圖
 
 export default function EvacuationTab() {
-  const [hasImage, setHasImage] = useState(false)
-  const [ts,       setTs]       = useState(Date.now())
+  const [hasImage, setHasImage] = useState(false)  // 是否已有避難圖可顯示
+  const [ts,       setTs]       = useState(Date.now()) // 時間戳，附在圖片網址後避免快取
 
+  // 掛載時查詢是否有上傳避難圖；查無或失敗則設為 false 顯示佔位
   useEffect(() => {
     getImageInfo(UNIT).then(i => setHasImage(!!i)).catch(() => setHasImage(false))
   }, [])

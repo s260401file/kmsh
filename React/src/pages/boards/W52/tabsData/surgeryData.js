@@ -1,3 +1,8 @@
+// surgeryData：手術資訊假資料（待接 API）
+// 結構：Data.Items=當日手術陣列；每筆欄位：
+//   SurgeryId/Date/OrRoom 刀房/ScheduledTime 排程時間/BedNo/病人(Name/Gender/Age)/
+//   Procedure 術式/Diagnosis 診斷/AnesthesiaMethod 麻醉方式/AttendingSurgeon 主治醫師/
+//   Status 狀態(手術中/待手術/已完成/取消)
 const SURGERY_DATA = {
   "Success": true, "Message": "",
   "Data": {

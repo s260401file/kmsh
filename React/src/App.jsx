@@ -1,3 +1,9 @@
+/*
+ * App.jsx — 應用程式路由總表
+ * 高雄民生醫院護理電子白板：定義 4 站白板（/w52 /icu /or /er）的巢狀路由，
+ * 以及首頁 /、測試頁 /test、登入頁 /login，與受保護的後台 /admin。
+ * 各站皆為「Layout + 多個 Tab 子頁」的巢狀結構，由 Layout 內的 <Outlet> 渲染子分頁。
+ */
 import { Navigate, Routes, Route } from 'react-router-dom'
 import { useAuth } from './context/AuthContext'
 import Home from './pages/Home'
@@ -49,6 +55,9 @@ import ErContactTab from './pages/boards/ER/tabs/ContactTab'
 import ErBulletinTab from './pages/boards/ER/tabs/BulletinTab'
 import ErEvacuationTab from './pages/boards/ER/tabs/EvacuationTab'
 
+// ProtectedRoute：受保護路由包裝元件
+// 透過 useAuth 取得目前登入角色 role；未登入（role 為空）時導向 /login，
+// 已登入則渲染傳入的子元件。目前僅 /admin 後台套用。
 function ProtectedRoute({ children }) {
   const { role } = useAuth()
   return role ? children : <Navigate to="/login" replace />
@@ -57,13 +66,16 @@ function ProtectedRoute({ children }) {
 function App() {
   return (
     <Routes>
+      {/* 一般頁面：首頁、測試頁、登入頁 */}
       <Route path="/" element={<Home />} />
       <Route path="/test" element={<TestPage />} />
       <Route path="/login" element={<LoginPage />} />
+      {/* 後台：以 ProtectedRoute 包裝，需登入才能進入 */}
       <Route path="/admin" element={<ProtectedRoute><AdminPage /></ProtectedRoute>} />
 
-      {/* W52 巢狀路由 */}
+      {/* W52 巢狀路由：父路由套 W52Layout，子分頁由 Layout 內的 <Outlet> 渲染 */}
       <Route path="/w52" element={<W52Layout />}>
+        {/* index：進入 /w52 時預設導向 ward 分頁 */}
         <Route index element={<Navigate to="ward" replace />} />
         <Route path="ward"       element={<W52WardTab />} />
         <Route path="care"       element={<CareTab />} />

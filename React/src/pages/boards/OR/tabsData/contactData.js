@@ -1,3 +1,10 @@
+// contactData：OR 手術室站「連絡電話」假資料（待接 API）
+// 模擬後端 API 回應結構：Success/Message/Data。
+// 註：實際 ContactTab 改用 contactApi 由 API 取資料，本檔為備援/參考用的假資料。
+// 欄位說明：
+//   DutyContacts 當日值班：ContactId 編號、DutyTitle 職務、Name 姓名、
+//                Extension 院內分機、Mobile 手機（部分遮罩）、TimeSlot 值班時段
+//   CommonContacts 常用電話：ContactId 編號、Name 單位/科室、Extension 分機/電話
 const CONTACT_DATA = {
   Success: true,
   Message: "",

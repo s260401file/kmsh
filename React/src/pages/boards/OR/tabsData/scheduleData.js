@@ -1,3 +1,12 @@
+// scheduleData：OR 手術室站「手術排程 / 派班」假資料（待接 API）
+// 模擬後端 API 回應結構：Success/Message/Data，供 ScheduleTab 顯示。
+// Shifts 為三班（白班/小夜/大夜）陣列，每班欄位說明：
+//   ShiftType 班別、ShiftTime 時段
+//   Charge 值班護理長（Name 姓名、Extension 分機）
+//   Anesthesia 麻醉科人員：StaffId/Name/Role 職稱/Extension
+//   CircTech 體外循環技師（null 表該班無）
+//   Rooms 各刀房派班：RoomId 刀房、ScrubNurse 刷手護理師、CircNurse 流動護理師、Extension 分機
+//                     （ScrubNurse/CircNurse 為 null 表該班該房未派班）
 const SCHEDULE_DATA = {
   Success: true,
   Message: "",

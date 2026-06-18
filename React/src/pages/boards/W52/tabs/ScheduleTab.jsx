@@ -1,11 +1,14 @@
+// ScheduleTab：排班資訊分頁
+// 角色：上方切換班別（白班/小夜/大夜，第一個視為當前班 is-current）；
+//       下方左欄為護理人員（職別/分機/負責床位/緊急編組/點班狀態），右欄為專科護理師與住院醫師。
 import { useState } from 'react'
-import SCHEDULE_DATA from '../tabsData/scheduleData'
+import SCHEDULE_DATA from '../tabsData/scheduleData'   // 排班假資料，待接 API
 import '../tabsCss/schedule.css'
 
 export default function ScheduleTab() {
   const shifts = SCHEDULE_DATA.Data.Shifts
-  const [activeIdx, setActiveIdx] = useState(0)
-  const shift = shifts[activeIdx]
+  const [activeIdx, setActiveIdx] = useState(0)        // 目前檢視的班別索引（預設第一個＝當前班）
+  const shift = shifts[activeIdx]                       // 目前班別資料
 
   return (
     <main className="main-content">

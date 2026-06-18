@@ -1,3 +1,8 @@
+// careData：照護提醒假資料（待接 API）
+// 結構：Data.Items 為提醒陣列；每筆欄位：
+//   ReminderId 編號、BedId/BedNo 床位、PatientName/Gender/Age 病人、
+//   Priority 優先序(高/中/低)、Category 類別(術後照護/感控/管路/跌倒防護…)、
+//   Content 提醒內容、RemindTime 提醒時間、PrimaryNurse 責任護理師、IsDone 是否完成
 const CARE_DATA = {
   "Success": true, "Message": "",
   "Data": {

@@ -1,3 +1,8 @@
+// handoverData：護理交班假資料（待接 API）
+// 結構：Data.HandoverInfo=交班資訊（FromShift/ToShift 交→接班別、各班時間、HandoverTime、
+//         FromNurses/ToNurses 交/接班護理師陣列）、
+//       Data.Patients=各病患交班卡（HandoverId/BedNo/病人/Diagnosis 診斷/Priority 優先序(高/中/一般)/
+//         Items=交班事項陣列，每項 Category 類別(管路/用藥/生命徵象/警示/家屬/待辦) + Content 內容）
 const HANDOVER_DATA = {
   "Success": true, "Message": "",
   "Data": {

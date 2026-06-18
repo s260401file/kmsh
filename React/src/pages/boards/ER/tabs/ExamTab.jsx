@@ -1,7 +1,11 @@
+// ExamTab：ER 急診站「檢查 / 會診」分頁。
+// 左欄列出檢查清單（X光、CT、超音波等及其狀態），右欄列出會診清單（科別、會診醫師、回覆狀態）。
+// 資料來源：tabsData/examData.js（假資料，待接 API）。
 import EXAM_DATA from '../tabsData/examData'
 import '../tabsCss/exam.css'
 
 export default function ExamTab() {
+  // 從假資料取出檢查（Exams）與會診（Consults）兩份清單
   const { Exams, Consults } = EXAM_DATA.Data
 
   return (

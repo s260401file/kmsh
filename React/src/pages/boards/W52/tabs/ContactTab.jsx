@@ -1,11 +1,15 @@
+// ContactTab：連絡資訊分頁
+// 角色：左欄為當日值班（職務/姓名/分機/手機/時段），右欄為常用連絡電話。
+//       此分頁實接後台 contactApi（非假資料）。
 import { useState, useEffect } from 'react'
-import { getDuty, getCommon } from '../../../../services/contactApi'
+import { getDuty, getCommon } from '../../../../services/contactApi'   // 值班/常用電話 API
 import '../tabsCss/contact.css'
 
 export default function ContactTab() {
-  const [duty,   setDuty]   = useState([])
-  const [common, setCommon] = useState([])
+  const [duty,   setDuty]   = useState([])   // 當日值班清單
+  const [common, setCommon] = useState([])   // 常用連絡電話清單
 
+  // 掛載時撈取 W52 的值班與常用電話；失敗則靜默
   useEffect(() => {
     getDuty('W52').then(d => setDuty(d ?? [])).catch(() => {})
     getCommon('W52').then(d => setCommon(d ?? [])).catch(() => {})

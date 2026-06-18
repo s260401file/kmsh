@@ -1,12 +1,17 @@
+// TubeTab.jsx — ICU 管路分頁
+// 角色：以表格逐床列出各類管路使用狀態，每欄打勾(✓)或槓號(—)；底部彙整各管路使用人數。
+//   管路類別：呼吸器(ETT 氣管內管)、鼻胃管(NG)、導尿管(Foley)、中心靜脈導管(CVC)、CRRT(連續性腎臟替代療法)。
 import { useMemo } from 'react'
 import MOCK_DATA from '../mockData'
 
 export default function TubeTab() {
+  // 取出所有非空床且有病人的床位（資料固定，只算一次）
   const patients = useMemo(() =>
     MOCK_DATA.beds.filter(b => b.status !== 'empty' && b.patient),
     []
   )
 
+  // 各管路使用人數統計，供底部彙總列顯示
   const stats = useMemo(() => ({
     ett:   patients.filter(b => b.patient.ventilator).length,
     ng:    patients.filter(b => b.patient.ng).length,
@@ -15,6 +20,7 @@ export default function TubeTab() {
     crrt:  patients.filter(b => b.patient.crrt).length,
   }), [patients])
 
+  // 表格中表示「有/無」的小元件
   const Check = () => <span className="tb-check">✓</span>
   const None  = () => <span className="tb-none">—</span>
 
@@ -39,6 +45,7 @@ export default function TubeTab() {
               </tr>
             </thead>
             <tbody>
+              {/* 逐床一列；姓名依性別著色（男藍、女桃紅） */}
               {patients.map(bed => {
                 const p = bed.patient
                 const bedLabel = `${bed.floor}F-${String(bed.num).padStart(2,'0')}`
@@ -61,6 +68,7 @@ export default function TubeTab() {
           </table>
         </div>
 
+        {/* 底部彙總：各管路目前使用人數 */}
         <div className="tb-stats">
           <div className="tb-stat-item tb-stat-ett">
             <span className="tb-stat-label">呼吸器</span>

@@ -1,15 +1,19 @@
 namespace kmsh_whiteboard.Models.Db;
 
+/// <summary>
+/// 自建 SQL Server「文字公告/佈告」資料表的一筆資料列。
+/// 用於白板公告、跑馬燈或佈告欄文字的顯示與管理。
+/// </summary>
 public class TextItem
 {
-    public int Id { get; set; }
-    public string? Title { get; set; }
-    public string Content { get; set; } = "";
-    public string? Category { get; set; }
-    public string? UnitCode { get; set; }
-    public string? Priority { get; set; }
-    public int SortOrder { get; set; }
-    public bool IsActive { get; set; }
-    public DateTime CreatedAt { get; set; }
-    public DateTime UpdatedAt { get; set; }
+    public int Id { get; set; }                       // 主鍵（流水號）
+    public string? Title { get; set; }                // 標題
+    public string Content { get; set; } = "";         // 內文
+    public string? Category { get; set; }             // 分類（如公告/跑馬燈/佈告欄）
+    public string? UnitCode { get; set; }             // 所屬單位代碼（全院公告可空）
+    public string? Priority { get; set; }             // 優先度（如一般/重要）
+    public int SortOrder { get; set; }                // 顯示排序
+    public bool IsActive { get; set; }                // 是否啟用
+    public DateTime CreatedAt { get; set; }           // 建立時間
+    public DateTime UpdatedAt { get; set; }           // 最後更新時間
 }

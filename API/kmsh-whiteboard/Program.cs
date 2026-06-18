@@ -3,6 +3,7 @@ using kmsh_whiteboard.Repositories;
 using kmsh_whiteboard.Services;
 using kmsh_whiteboard.Settings;
 
+// ── 建立 WebApplication Builder 與註冊 MVC Controllers ──────────
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
@@ -20,6 +21,7 @@ builder.Services.AddScoped<ITextRepository, TextRepository>();
 builder.Services.AddScoped<IContactRepository, ContactRepository>();
 builder.Services.AddScoped<IEvacRepository, EvacRepository>();
 builder.Services.AddEndpointsApiExplorer();
+// ── Swagger / OpenAPI 文件（含 XML 註解）───────────────────────
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new()
@@ -90,6 +92,7 @@ app.UseSwaggerUI(c =>
     c.DocumentTitle = "護理白板 API — Swagger";
 });
 
+// ── Middleware Pipeline（順序：HTTPS 轉址 → CORS → 授權 → 路由至 Controller）──
 app.UseHttpsRedirection();
 app.UseCors();
 app.UseAuthorization();

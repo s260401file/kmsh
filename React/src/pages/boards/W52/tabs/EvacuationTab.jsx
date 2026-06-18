@@ -1,13 +1,16 @@
+// EvacuationTab：避難圖分頁
+// 角色：顯示由後台上傳的本站避難圖（evacuationApi）；尚未上傳時顯示提示佔位。
 import { useState, useEffect } from 'react'
-import { imageUrl, getImageInfo } from '../../../../services/evacuationApi'
+import { imageUrl, getImageInfo } from '../../../../services/evacuationApi'   // 避難圖 API
 import '../tabsCss/evacuation.css'
 
-const UNIT = 'W52'
+const UNIT = 'W52'   // 本站代碼
 
 export default function EvacuationTab() {
-  const [hasImage, setHasImage] = useState(false)
-  const [ts,       setTs]       = useState(Date.now())
+  const [hasImage, setHasImage] = useState(false)   // 是否已上傳避難圖
+  const [ts,       setTs]       = useState(Date.now()) // 時間戳記，附在圖片 URL 後避免快取
 
+  // 掛載時查詢是否有避難圖；查無或失敗則視為未上傳
   useEffect(() => {
     getImageInfo(UNIT).then(i => setHasImage(!!i)).catch(() => setHasImage(false))
   }, [])

@@ -1,3 +1,12 @@
+// AdminPage.jsx — 護理白板管理後台主頁（需登入，受路由保護）
+// 角色：單一頁面整合所有後台維護功能，左側 Sidebar 選單切換不同管理區塊：
+//   ・公告管理：跑馬燈(MarqueeManager) / 佈告欄(BulletinManager)
+//   ・連絡資訊：值班人員(DutyManager) / 常用電話(CommonManager)
+//   ・避難圖：圖片＋設備清單＋緊急聯絡(EvacManager)
+// 每個 Manager 內含「單位切換 tab」（依登入身份可管理的 unitCodes 動態產生），
+// 各 Section 為單一單位的 CRUD 表單＋清單，透過對應的 *Api 服務存取後端。
+// 多數 Section 共用模式：list/form/editId/msg 四個 state，load() 讀取資料，
+// useEffect 依 unitCode 變動重新載入，handleSubmit/Edit/Delete/Toggle 處理增改刪與啟用切換。
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
@@ -6,9 +15,12 @@ import * as textApi from '../services/textApi'
 import * as contactApi from '../services/contactApi'
 import * as evacuationApi from '../services/evacuationApi'
 
+// 單位代碼 → 顯示名稱對照（用於各 Manager 的單位切換 tab）
 const UNIT_LABELS = { W52: 'W52 病房', ICU: 'ICU 加護', OR: 'OR 手術室', ER: 'ER 急診室' }
 
 // ── Menu 設定（新增功能只改這裡）──────────────────────────
+// Sidebar 選單結構：上層分組 + 下層 leaf；available=false 會顯示「預計」且不可點。
+// renderContent() 依 leaf 的 id 決定要渲染哪個 Manager。
 const MENU_CONFIG = [
   {
     id: 'announcement', label: '公告管理',
@@ -38,24 +50,29 @@ const DEFAULT_MENU = 'marquee'
 // ── 跑馬燈管理 ─────────────────────────────────────────────
 const emptyForm = { title: '', content: '', sortOrder: 0, isActive: true }
 
+// 單一單位的跑馬燈 CRUD：表單新增/編輯 + 清單顯示，呼叫 marqueeApi
 function MarqueeTab({ unitCode }) {
-  const [list, setList]   = useState([])
-  const [form, setForm]   = useState(emptyForm)
-  const [editId, setEditId] = useState(null)
-  const [msg, setMsg]     = useState({ text: '', error: false })
+  const [list, setList]   = useState([])          // 清單資料
+  const [form, setForm]   = useState(emptyForm)    // 新增/編輯表單欄位
+  const [editId, setEditId] = useState(null)       // null=新增模式，有值=編輯該 id
+  const [msg, setMsg]     = useState({ text: '', error: false })  // 操作提示訊息
 
+  // 顯示提示訊息，3 秒後自動清除
   const showMsg = (text, error = false) => {
     setMsg({ text, error })
     setTimeout(() => setMsg({ text: '', error: false }), 3000)
   }
 
+  // 讀取此單位的跑馬燈清單（unitCode 改變時 callback 會重建）
   const load = useCallback(async () => {
     try   { setList((await marqueeApi.getAll(unitCode)) ?? []) }
     catch { showMsg('讀取失敗', true) }
   }, [unitCode])
 
+  // 載入 / 切換單位時重新取得資料
   useEffect(() => { load() }, [load])
 
+  // 送出表單：有 editId 走更新，否則新增；成功後清空表單並重新載入
   const handleSubmit = async (e) => {
     e.preventDefault()
     try {
@@ -70,12 +87,15 @@ function MarqueeTab({ unitCode }) {
     } catch { showMsg('操作失敗', true) }
   }
 
+  // 將清單某筆帶入表單進入編輯模式
   const handleEdit   = item  => { setEditId(item.id); setForm({ title: item.title ?? '', content: item.content, sortOrder: item.sortOrder, isActive: item.isActive }) }
+  // 刪除（先二次確認）
   const handleDelete = async id => {
     if (!window.confirm('確定刪除？')) return
     try { await marqueeApi.remove(id); showMsg('刪除成功'); load() }
     catch { showMsg('刪除失敗', true) }
   }
+  // 切換啟用/停用狀態
   const handleToggle = async item => {
     try { await marqueeApi.update(item.id, { ...item, isActive: !item.isActive, unitCode, category: 'marquee' }); load() }
     catch { showMsg('操作失敗', true) }
@@ -146,7 +166,8 @@ function MarqueeTab({ unitCode }) {
   )
 }
 
-// 跑馬燈 Manager（含單位切換）
+// 跑馬燈 Manager（含單位切換）：以 activeUnit 控制要管理哪個單位，
+// 切換時用 key={activeUnit} 強制重建 MarqueeTab 以重設其內部 state
 function MarqueeManager({ units }) {
   const [activeUnit, setActiveUnit] = useState(units[0] ?? 'W52')
   return (
@@ -165,11 +186,14 @@ function MarqueeManager({ units }) {
 }
 
 // ── 連絡資訊管理 ───────────────────────────────────────────────
+// 分兩種：值班人員(Duty，含職務/班別/時段/分機/手機) 與 常用電話(Common)，皆呼叫 contactApi
 const emptyDutyForm  = { dutyTitle: '', name: '', shiftType: '', timeSlot: '', extension: '', mobile: '', sortOrder: 0, isActive: true }
 const emptyCommonForm = { name: '', extension: '', sortOrder: 0, isActive: true }
 
+// 班別選項（空字串代表不分班；ER 才需要分班）
 const SHIFT_OPTS = ['', '白班', '小夜', '大夜']
 
+// 單一單位的值班人員 CRUD（讀取時 includeAll=true，後台需顯示停用資料）
 function DutySection({ unitCode }) {
   const [list, setList]     = useState([])
   const [form, setForm]     = useState(emptyDutyForm)
@@ -278,6 +302,7 @@ function DutySection({ unitCode }) {
   )
 }
 
+// 值班人員 Manager（含單位切換）
 function DutyManager({ units }) {
   const [activeUnit, setActiveUnit] = useState(units[0] ?? 'W52')
   return (
@@ -290,6 +315,7 @@ function DutyManager({ units }) {
   )
 }
 
+// 單一單位的常用電話 CRUD（讀取時 includeAll=true）
 function CommonSection({ unitCode }) {
   const [list, setList]     = useState([])
   const [form, setForm]     = useState(emptyCommonForm)
@@ -378,6 +404,7 @@ function CommonSection({ unitCode }) {
   )
 }
 
+// 常用電話 Manager（含單位切換）
 function CommonManager({ units }) {
   const [activeUnit, setActiveUnit] = useState(units[0] ?? 'W52')
   return (
@@ -391,8 +418,11 @@ function CommonManager({ units }) {
 }
 
 // ── 佈告欄管理 ─────────────────────────────────────────────
+// 佈告欄資料存於 /api/Text，以 category 區分「科內公告(bulletin_unit)」與
+// 「院方公告(bulletin_hosp)」，故 BulletinSection 以 category 參數泛用化。
 const emptyBulletinForm = { title: '', content: '', priority: '一般', sortOrder: 0, isActive: true }
 
+// 單一 category 的公告 CRUD：category 決定資料分類，sectionTitle 為區塊標題
 function BulletinSection({ unitCode, category, sectionTitle }) {
   const [list, setList]     = useState([])
   const [form, setForm]     = useState(emptyBulletinForm)
@@ -521,6 +551,7 @@ function BulletinSection({ unitCode, category, sectionTitle }) {
   )
 }
 
+// 佈告欄 Manager：上方依單位顯示「科內公告」，下方固定顯示全院共用的「院方公告」
 function BulletinManager({ units }) {
   const [activeUnit, setActiveUnit] = useState(units[0] ?? 'W52')
   return (
@@ -533,34 +564,41 @@ function BulletinManager({ units }) {
           </button>
         ))}
       </div>
+      {/* 科內公告：隨選定單位變動（bulletin_unit） */}
       <BulletinSection key={`unit-${activeUnit}`} unitCode={activeUnit} category="bulletin_unit" sectionTitle={`科內公告（${UNIT_LABELS[activeUnit]}）`} />
+      {/* 院方公告：全院共用、固定 unitCode="ALL"（bulletin_hosp） */}
       <BulletinSection key="hosp" unitCode="ALL" category="bulletin_hosp" sectionTitle="院方公告（全院共用）" />
     </div>
   )
 }
 
 // ── 避難圖管理 ─────────────────────────────────────────────────
-
+// 三個子區塊：避難圖圖片(EvacImageSection)、避難設備清單(EvacEquipSection)、
+// 緊急聯絡(EvacContactSection)，皆呼叫 evacuationApi。
 const emptyEvacEquipForm = { equipmentName: '', location: '', quantity: 1, sortOrder: 0, isActive: true }
 const emptyEvacContactForm = { name: '', extension: '', sortOrder: 0, isActive: true }
 
+// 避難圖圖片上傳/預覽/刪除（圖片以單位為單位，一單位一張）
 function EvacImageSection({ unitCode }) {
-  const [info, setInfo]         = useState(null)   // EvacImageItem | null
-  const [file, setFile]         = useState(null)
-  const [preview, setPreview]   = useState(null)
+  const [info, setInfo]         = useState(null)   // 後端圖片中繼資料 EvacImageItem | null
+  const [file, setFile]         = useState(null)    // 使用者選取、待上傳的檔案
+  const [preview, setPreview]   = useState(null)    // 本機預覽用的 objectURL
   const [msg, setMsg]           = useState({ text: '', error: false })
   const imgTs = useState(Date.now())[0]   // cache-busting (reload after upload)
-  const [ts, setTs]             = useState(Date.now())
+  const [ts, setTs]             = useState(Date.now())   // 上傳/刪除後更新此值以破壞圖片快取
 
   const showMsg = (text, error = false) => { setMsg({ text, error }); setTimeout(() => setMsg({ text: '', error: false }), 3000) }
 
+  // 讀取目前單位是否已有上傳的避難圖
   const loadInfo = useCallback(async () => {
     const i = await evacuationApi.getImageInfo(unitCode).catch(() => null)
     setInfo(i)
   }, [unitCode])
 
+  // 切換單位時重新讀取圖片資訊並清掉待上傳檔案/預覽
   useEffect(() => { loadInfo(); setFile(null); setPreview(null) }, [loadInfo])
 
+  // 選檔後產生本機預覽
   const handleFile = e => {
     const f = e.target.files?.[0]
     if (!f) return
@@ -568,6 +606,7 @@ function EvacImageSection({ unitCode }) {
     setPreview(URL.createObjectURL(f))
   }
 
+  // 上傳選定檔案，成功後更新時間戳以重新載入（避開瀏覽器快取）
   const handleUpload = async () => {
     if (!file) return
     try {
@@ -579,6 +618,7 @@ function EvacImageSection({ unitCode }) {
     } catch { showMsg('上傳失敗', true) }
   }
 
+  // 刪除現有圖片（先二次確認）
   const handleDelete = async () => {
     if (!window.confirm('確定刪除圖片？')) return
     try {
@@ -627,6 +667,7 @@ function EvacImageSection({ unitCode }) {
   )
 }
 
+// 單一單位的避難設備清單 CRUD（名稱/位置/數量）
 function EvacEquipSection({ unitCode }) {
   const [list, setList]     = useState([])
   const [form, setForm]     = useState(emptyEvacEquipForm)
@@ -693,6 +734,7 @@ function EvacEquipSection({ unitCode }) {
   )
 }
 
+// 單一單位的緊急聯絡 CRUD（名稱/分機）
 function EvacContactSection({ unitCode }) {
   const [list, setList]     = useState([])
   const [form, setForm]     = useState(emptyEvacContactForm)
@@ -756,6 +798,7 @@ function EvacContactSection({ unitCode }) {
   )
 }
 
+// 避難圖 Manager（含單位切換）：依序呈現圖片、設備清單、緊急聯絡三區塊
 function EvacManager({ units }) {
   const [activeUnit, setActiveUnit] = useState(units[0] ?? 'W52')
   return (
@@ -785,9 +828,12 @@ function ComingSoon({ label }) {
 }
 
 // ── 左側 Sidebar ─────────────────────────────────────────────
+// 依 MENU_CONFIG 渲染可展開分組；selectedMenu 為目前選中的 leaf id，
+// onSelect 通知父層切換內容區。expanded 記錄哪些分組為展開狀態。
 function Sidebar({ selectedMenu, onSelect }) {
   const [expanded, setExpanded] = useState(new Set(['announcement']))
 
+  // 切換某分組的展開/收合
   const toggle = id => setExpanded(prev => {
     const next = new Set(prev)
     next.has(id) ? next.delete(id) : next.add(id)
@@ -836,12 +882,15 @@ function Sidebar({ selectedMenu, onSelect }) {
 }
 
 // ── AdminPage ────────────────────────────────────────────────
+// 後台主元件：組合上方導覽列、左側 Sidebar 與右側內容區。
+// 可管理的單位(units) 由登入身份(roleInfo.unitCodes) 決定。
 export default function AdminPage() {
-  const { role, roleInfo, logout } = useAuth()
+  const { role, roleInfo, logout } = useAuth()      // 登入身份資訊與登出方法
   const navigate = useNavigate()
-  const units = roleInfo?.unitCodes ?? []
-  const [selectedMenu, setSelectedMenu] = useState(DEFAULT_MENU)
+  const units = roleInfo?.unitCodes ?? []           // 此身份可管理的單位清單
+  const [selectedMenu, setSelectedMenu] = useState(DEFAULT_MENU)  // 目前選中的選單 leaf
 
+  // 登出後導回登入頁
   const handleLogout = () => { logout(); navigate('/login') }
 
   // 取得目前選中的 label（顯示麵包屑）

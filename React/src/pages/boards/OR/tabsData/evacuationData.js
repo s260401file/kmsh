@@ -1,3 +1,11 @@
+// evacuationData：OR 手術室站「避難圖 / 防災」假資料（待接 API）
+// 模擬後端 API 回應結構：Success/Message/Data。
+// 註：實際 EvacuationTab 改用 evacuationApi 取避難圖圖片，本檔為參考用的假資料。
+// 欄位說明：
+//   EvacPlan 避難計畫：FloorNo 樓層、WardName 單位名稱、Description 疏散說明、
+//            UpdatedAt 更新日、LastDrillDate 最近演練日
+//   Equipment 防災設備：EquipmentName 名稱、Location 位置、Quantity 數量
+//   EmergencyContacts 緊急聯絡：Name 單位、Extension 分機/外線
 const EVACUATION_DATA = {
   Success: true,
   Message: "",

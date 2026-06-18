@@ -1,9 +1,13 @@
+// OrLayout.jsx ── OR 手術室站的版面外框（Layout）
+// 角色：負責整站共用的頁首（站別/主任/護理長/時鐘）、跑馬燈公告、底部分頁列，
+//       並透過 React Router 的 <Outlet /> 巢狀渲染各分頁內容。
 import { NavLink, Outlet } from 'react-router-dom'
-import { useClock } from '../../../hooks/useClock'
-import { useMarquee } from '../../../hooks/useMarquee'
+import { useClock } from '../../../hooks/useClock'      // 即時日期/時間
+import { useMarquee } from '../../../hooks/useMarquee'   // 跑馬燈公告文字
 import MOCK_DATA from './mockData'
 import './OrLayout.css'
 
+// 底部分頁設定：path 對應路由、label 為按鈕顯示文字
 const TABS = [
   { path: 'ward',       label: '手術動態' },
   { path: 'schedule',   label: '手術派班' },

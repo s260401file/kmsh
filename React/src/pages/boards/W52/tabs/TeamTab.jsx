@@ -1,8 +1,11 @@
-import TEAM_DATA from '../tabsData/teamData'
+// TeamTab：照護團隊分頁
+// 角色：依角色分組（病房主管/主治/住院醫師/專師/護理師/醫事人員）以卡片＋表格列出成員與分機。
+import TEAM_DATA from '../tabsData/teamData'   // 團隊名冊假資料，待接 API
 import '../tabsCss/team.css'
 
 export default function TeamTab() {
   const { TeamGroups } = TEAM_DATA.Data
+  // 加總各組人數，顯示於標題（共 N 人）
   const totalMembers = TeamGroups.reduce((sum, g) => sum + g.Members.length, 0)
   return (
     <main className="main-content">

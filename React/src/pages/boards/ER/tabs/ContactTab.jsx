@@ -1,8 +1,10 @@
+// ContactTab：ER 急診站「連絡電話」分頁。
+// 左欄為當日值班（依白班/小夜/大夜分組），右欄為常用連絡電話；皆透過 contactApi 取得（非假資料）。
 import { useState, useEffect } from 'react'
 import { getDuty, getCommon } from '../../../../services/contactApi'
 import '../tabsCss/contact.css'
 
-// ER 板按班別（shiftType）分組顯示
+// ER 板按班別（shiftType）分組顯示；先依白/小夜/大夜固定順序，其餘班別接在後面
 function groupByShift(duty) {
   const order = ['白班', '小夜', '大夜']
   const groups = {}
@@ -19,11 +21,13 @@ export default function ContactTab() {
   const [duty,   setDuty]   = useState([])
   const [common, setCommon] = useState([])
 
+  // 載入時抓取 ER 的值班名單與常用電話
   useEffect(() => {
     getDuty('ER').then(d => setDuty(d ?? [])).catch(() => {})
     getCommon('ER').then(d => setCommon(d ?? [])).catch(() => {})
   }, [])
 
+  // 值班名單依班別分組後渲染（每組一列班別標題＋成員列）
   const shiftGroups = groupByShift(duty)
 
   return (

@@ -1,13 +1,17 @@
+// EvacuationTab：OR 手術室站「避難圖」分頁
+// 顯示由管理後台上傳的避難圖圖片；尚未上傳時顯示佔位提示。
+// 圖片透過 evacuationApi 由後端 API 取得（非 mockData），以單位代碼 OR 查詢。
 import { useState, useEffect } from 'react'
 import { imageUrl, getImageInfo } from '../../../../services/evacuationApi'
 import '../tabsCss/evacuation.css'
 
-const UNIT = 'OR'
+const UNIT = 'OR'   // 本分頁固定查詢的單位代碼
 
 export default function EvacuationTab() {
-  const [hasImage, setHasImage] = useState(false)
-  const [ts,       setTs]       = useState(Date.now())
+  const [hasImage, setHasImage] = useState(false)  // 是否已有避難圖
+  const [ts,       setTs]       = useState(Date.now()) // 時間戳，用於圖片網址避免快取
 
+  // 載入時查詢避難圖資訊以判斷是否存在
   useEffect(() => {
     getImageInfo(UNIT).then(i => setHasImage(!!i)).catch(() => setHasImage(false))
   }, [])

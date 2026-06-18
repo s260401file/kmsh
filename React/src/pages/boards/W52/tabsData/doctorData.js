@@ -1,3 +1,7 @@
+// doctorData：醫師資訊假資料（待接 API）
+// 結構：Data.DoctorBeds=醫師/專師負責床位（DoctorId/DoctorNo/DoctorName/Role 職別/Specialty 專科/Ext 分機/BedNos 負責床位陣列）、
+//       Data.RoundSchedule=查房時間表（RoundId/RoundDate yyyyMMdd/DoctorName/Specialty/
+//         EstimatedTime 預計時段/ActualTime 實際時間(未到為 null)/IsCompleted 是否完成/Remark 備註）
 const DOCTOR_DATA = {
   "Success": true, "Message": "",
   "Data": {

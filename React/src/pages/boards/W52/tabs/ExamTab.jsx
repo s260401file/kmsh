@@ -1,7 +1,10 @@
-import EXAM_DATA from '../tabsData/examData'
+// ExamTab：檢查／會診分頁
+// 角色：左欄列出檢查排程（項目/預定日期/時段/狀態/備註），右欄列出會診（科別/醫師/完成時間/狀態）。
+import EXAM_DATA from '../tabsData/examData'   // 檢查/會診假資料，待接 API
 import '../tabsCss/exam.css'
 
 export default function ExamTab() {
+  // 解構並改名：Examinations→exams（檢查）、Consultations→consults（會診）
   const { Examinations: exams, Consultations: consults } = EXAM_DATA.Data
   return (
     <main className="main-content">

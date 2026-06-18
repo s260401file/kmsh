@@ -1,7 +1,12 @@
+// textApi.js — 文字資料 API 客戶端
+// 角色：封裝後端共用文字端點 /api/Text 的 CRUD。此端點以 category 區分用途
+//       （如 marquee 跑馬燈、bulletin_unit 科內公告、bulletin_hosp 院方公告），
+//       由佈告欄管理與 TestPage 等共用。
 const BASE = '/api/Text'
 
 const headers = { 'Content-Type': 'application/json' }
 
+// 統一處理回應：204 回傳 null；非 2xx 取錯誤訊息丟出；其餘解析 JSON
 async function handleResponse(res) {
   if (res.status === 204) return null
   if (!res.ok) {
@@ -11,6 +16,7 @@ async function handleResponse(res) {
   return res.json()
 }
 
+// GET /api/Text?unitCode=&category=&includeAll= → 依條件查詢文字清單（空字串參數不帶上）
 export async function getAll(unitCode = '', category = '', includeAll = false) {
   const params = new URLSearchParams()
   if (unitCode)   params.append('unitCode', unitCode)
@@ -20,11 +26,13 @@ export async function getAll(unitCode = '', category = '', includeAll = false) {
   return handleResponse(res)
 }
 
+// GET /api/Text/{id} → 取得單筆文字資料
 export async function getById(id) {
   const res = await fetch(`${BASE}/${id}`)
   return handleResponse(res)
 }
 
+// POST /api/Text → 新增文字資料（data 須含 category / unitCode 等欄位）
 export async function create(data) {
   const res = await fetch(BASE, {
     method: 'POST',
@@ -34,6 +42,7 @@ export async function create(data) {
   return handleResponse(res)
 }
 
+// PUT /api/Text/{id} → 更新指定文字資料
 export async function update(id, data) {
   const res = await fetch(`${BASE}/${id}`, {
     method: 'PUT',
@@ -43,6 +52,7 @@ export async function update(id, data) {
   return handleResponse(res)
 }
 
+// DELETE /api/Text/{id} → 刪除指定文字資料
 export async function remove(id) {
   const res = await fetch(`${BASE}/${id}`, { method: 'DELETE' })
   return handleResponse(res)

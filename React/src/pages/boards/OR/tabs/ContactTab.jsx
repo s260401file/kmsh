@@ -1,11 +1,15 @@
+// ContactTab：OR 手術室站「連絡電話」分頁
+// 雙欄呈現「當日值班」（職務/姓名/分機/手機/時段）與「常用連絡電話」。
+// 資料透過 contactApi 由後端 API 取得（非 mockData），以單位代碼 OR 查詢。
 import { useState, useEffect } from 'react'
 import { getDuty, getCommon } from '../../../../services/contactApi'
 import '../tabsCss/contact.css'
 
 export default function ContactTab() {
-  const [duty,   setDuty]   = useState([])
-  const [common, setCommon] = useState([])
+  const [duty,   setDuty]   = useState([])  // 當日值班名單
+  const [common, setCommon] = useState([])  // 常用連絡電話
 
+  // 載入時向 API 取得值班與常用電話
   useEffect(() => {
     getDuty('OR').then(d => setDuty(d ?? [])).catch(() => {})
     getCommon('OR').then(d => setCommon(d ?? [])).catch(() => {})

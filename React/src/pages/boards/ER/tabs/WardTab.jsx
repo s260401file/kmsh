@@ -1,13 +1,21 @@
+// WardTab：ER 急診站「病室動態」主分頁。
+// 內容：以網格繪出急診室平面圖（分區帶 zone-band + 區名 zone-name），
+//   每張床卡顯示檢傷 A/B/C 徽章與病人狀態旗標；點床卡開啟病人詳情 Modal。
+//   右上角有「三班醫護人員」面板；下方統計面板可點選做床位篩選。
+// 資料來源：MOCK_DATA（假資料，待接 API；床位、三班人員、統計皆由此推導）。
 import { useState, useMemo } from 'react'
 import MOCK_DATA, { getStats } from '../mockData'
 import { FlagDot, makeFlagStyle } from '../../../../utils/flagShapes'
 
 // 檢傷分級：Triage 1-5 → A/B/C 三級（A 重症 1-2、B 中症 3、C 輕症 4-5）
 const triageGrade = t => (t <= 2 ? 'A' : (t === 3 ? 'B' : 'C'))
+// 各級對應的完整中文標籤（用於 Modal 顯示）
 const GRADE_LABEL = { A: 'A級 重症', B: 'B級 中症', C: 'C級 輕症' }
 
+// 將床號轉成可用於 CSS class 的字串（中文「負」→ neg，例：負壓床）
 function bedClass(bedId) { return bedId.replace('負', 'neg') }
 
+// 依病人各布林欄位組出要顯示的狀態旗標標籤陣列（死亡 / MBD / AAD / 轉出入 / DNR / 留觀 / 住院）
 function buildBadges(patient) {
   if (!patient) return []
   const b = []
@@ -22,6 +30,8 @@ function buildBadges(patient) {
   return b
 }
 
+// 判斷某床在目前篩選條件下是否應「正常顯示」（false 會被加上 filtered-out 變淡）
+// 篩選類別：檢傷 A/B/C、留觀、轉床、各類待床、以及各狀態旗標
 function isBedVisible(bed, filter) {
   if (filter === 'all' || bed.Status === 'empty') return true
   const p = bed.Patient
@@ -39,6 +49,7 @@ function isBedVisible(bed, filter) {
   }
 }
 
+// 單張床卡：空床顯示床號＋「空床」；佔床顯示檢傷級徽章、床號、姓名性別年齡、狀態旗標
 function BedCard({ bed, filteredOut, onClick }) {
   const cls = bedClass(bed.BedId)
   if (bed.Status === 'empty') {
@@ -50,7 +61,7 @@ function BedCard({ bed, filteredOut, onClick }) {
     )
   }
   const p = bed.Patient
-  const triageCls = `triage-${p.Triage}`
+  const triageCls = `triage-${p.Triage}`           // 仍以原始 1-5 級套色（CSS 配色）
   const negIsoCls = p.Isolation === '負壓隔離' ? 'neg-iso' : ''
   const deceasedCls = p.Deceased ? 'deceased' : ''
   const allBadges = buildBadges(p)
@@ -61,6 +72,7 @@ function BedCard({ bed, filteredOut, onClick }) {
       onClick={onClick}
     >
       <div className="card-row1">
+        {/* 檢傷 A/B/C 徽章，tg-a / tg-b / tg-c 決定配色 */}
         <span className={`triage-badge tg-${tg.toLowerCase()}`}>{tg}級</span>
         <span className="bed-num">{bed.BedId}</span>
       </div>
@@ -75,13 +87,16 @@ function BedCard({ bed, filteredOut, onClick }) {
   )
 }
 
+// 點選床卡後彈出的病人詳情視窗（基本資料、診斷、檢傷分級、急診狀態、備註等）
 function BedModal({ bed, onClose }) {
   const p = bed.Patient
+  // 由到院日期＋時間推算目前留觀時長（stayStr）
   const arrStr = `2026-${p.ArrivalDate.replace('/', '-')}T${p.ArrivalTime}:00`
   const diff = new Date() - new Date(arrStr)
   const stayH = Math.floor(diff / 3600000)
   const stayM = Math.floor((diff % 3600000) / 60000)
   const stayStr = diff > 0 ? (stayH > 0 ? `${stayH}h ${stayM}m` : `${stayM}m`) : '—'
+  // 組合急診狀態文字（死亡 / 留觀 / 待床 / 轉出入 / AAD / MBD / 住院）供 Modal 顯示
   const erStatuses = []
   if (p.Deceased)    erStatuses.push('死亡')
   if (p.Observation) erStatuses.push('留觀')
@@ -134,6 +149,7 @@ function BedModal({ bed, onClose }) {
   )
 }
 
+// 底部篩選列要顯示的旗標按鈕清單（f 為篩選 key，label 為顯示文字）
 const FILTER_BADGES = [
   { f: '死亡', cls: 'badge-死亡', label: '死亡' }, { f: 'MBD', cls: 'badge-MBD', label: 'MBD' },
   { f: 'AAD',  cls: 'badge-AAD',  label: 'AAD'  }, { f: '轉出', cls: 'badge-轉出', label: '轉出' },
@@ -143,9 +159,10 @@ const FILTER_BADGES = [
 const FLAG_STYLE = makeFlagStyle(FILTER_BADGES.map(x => x.label))
 
 export default function WardTab() {
-  const [filter, setFilter] = useState('all')
-  const [selectedBed, setSelectedBed] = useState(null)
-  const stats = useMemo(() => getStats(MOCK_DATA.Beds), [])
+  const [filter, setFilter] = useState('all')          // 目前選取的篩選類別
+  const [selectedBed, setSelectedBed] = useState(null)  // 目前開啟詳情的床位
+  const stats = useMemo(() => getStats(MOCK_DATA.Beds), [])  // 統計面板數值（由床位推導）
+  // 再次點同一篩選即取消（回到 all）；點 all 維持 all
   const handleFilter = f => setFilter(prev => (prev === f && f !== 'all') ? 'all' : f)
 
   return (
@@ -153,10 +170,11 @@ export default function WardTab() {
       <main className="main-content">
         <div className="beds-panel">
           <div className="ward-title">▌ 急診室　共 19 床（負壓 2＋兒科留觀 1＋第一留觀 5＋第二留觀 6＋急診手術 2＋急救 3）</div>
+          {/* 病室動態地圖：以 CSS grid 對位排出急診室平面 */}
           <div className="ward-grid">
             <div className="nursing-station">護理站</div>
 
-            {/* 區帶背景（鋪在床位後方）*/}
+            {/* 區帶背景（鋪在床位後方）：以網格座標圈出各分區色帶 */}
             <div className="zone-band" style={{gridColumn:'1/3',gridRow:'1/3'}}/>
             <div className="zone-band" style={{gridColumn:'4/6',gridRow:'2/3'}}/>
             <div className="zone-band" style={{gridColumn:'6/12',gridRow:'3/4'}}/>
@@ -176,7 +194,7 @@ export default function WardTab() {
             <div className="zone-name" style={{gridColumn:'5/6',gridRow:'7/9'}}>急診手術室</div>
             <div className="zone-name" style={{gridColumn:'1/4',gridRow:'7'}}>急救室</div>
 
-            {/* 三班醫護人員（右上空區，資料來自 MOCK_DATA.ShiftStaff）*/}
+            {/* 三班醫護人員面板（右上空區）：列出白/小夜/大夜各班醫師、值班護理長、在班人數 */}
             <div className="staff-shifts" style={{gridColumn:'7/12',gridRow:'1/3'}}>
               <div className="ss-title">三班醫護人員</div>
               <div className="ss-body">
@@ -191,6 +209,7 @@ export default function WardTab() {
               </div>
             </div>
 
+            {/* 依序鋪上所有床卡；空床不可點，佔床點擊開啟詳情 Modal */}
             {MOCK_DATA.Beds.map(bed => (
               <BedCard
                 key={bed.BedId}
@@ -202,6 +221,7 @@ export default function WardTab() {
           </div>
         </div>
 
+        {/* 右側急診統計面板：各數字可點，等同套用對應床位篩選 */}
         <div className="stats-panel">
           <div className="stats-title">▌ 急診統計</div>
           <div className="stats-body">
@@ -232,6 +252,7 @@ export default function WardTab() {
         </div>
       </main>
 
+      {/* 底部旗標篩選列：點旗標只反白符合該狀態的床位 */}
       <div className="filter-bar">
         <button className={`filter-btn${filter==='all'?' active':''}`} onClick={() => handleFilter('all')}>全部</button>
         {FILTER_BADGES.map(({ f, label }) => (

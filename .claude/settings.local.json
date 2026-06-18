@@ -58,7 +58,9 @@
       "Bash(node --check js/handoverData.js)",
       "Bash(node --check js/bulletinData.js)",
       "Bash(start \"\" \"html_demo/or-board/index.html\")",
-      "Bash(start \"\" \"html_demo/or-board/evacuation.html\")"
+      "Bash(start \"\" \"html_demo/or-board/evacuation.html\")",
+      "WebFetch(domain:github.com)",
+      "PowerShell(claude *)"
     ],
     "additionalDirectories": [
       "\\mnt\\c\\WorkDir\\Nursing Whiteboard\\React\\src\\pages"

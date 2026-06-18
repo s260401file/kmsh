@@ -1,9 +1,17 @@
+// WardTab.jsx — ICU 病室動態分頁
+// 角色：以 4F/3F 樓層格狀床位圖呈現加護病房各床狀態；點擊床位開啟病人詳情 Modal。
+//   - 病況等級：資料層用「穩定/重症/危急」，畫面一律轉成 C/B/A 級顯示
+//     （配色 A 紅最重、B 黃、C 綠最輕，於 CSS 的 sev-dot-a/b/c 等定義）。
+//   - 病人註記：以 FlagDot（SVG 形狀旗標）呈現 DNR、跌倒、隔離、管路等屬性。
+//   - 底部統計面板 + 下方 filter-bar 可依屬性篩選床位（被篩掉者加 filtered-out 變淡）。
 import { useState, useMemo } from 'react'
 import MOCK_DATA, { getStats } from '../mockData'
 import { FlagDot, makeFlagStyle } from '../../../../utils/flagShapes'
 
+// 病況等級顯示對照：資料值 → 畫面徽章文字（穩定=C、重症=B、危急=A）
 const CONDITION_LABEL = { '穩定': 'C級', '重症': 'B級', '危急': 'A級' }
 
+// 依病人各屬性組出要顯示的註記徽章字串陣列（順序即顯示順序）
 function buildBadges(patient) {
   if (!patient) return []
   const b = []
@@ -24,6 +32,8 @@ function buildBadges(patient) {
   return b
 }
 
+// 判斷某床在目前篩選條件下是否仍可見（空床與「全部」恆顯示）
+// 註：cond-a/b/c 對應的是資料值穩定/重症/危急，與畫面 C/B/A 徽章方向相反，勿混淆
 function isBedVisible(bed, filter) {
   if (filter === 'all' || bed.status === 'empty') return true
   const p = bed.patient
@@ -44,8 +54,10 @@ function isBedVisible(bed, filter) {
   }
 }
 
+// 單張床位卡片。props：bed 床資料、filteredOut 是否被篩選淡化、onClick 點擊（空床不傳）
 function BedCard({ bed, filteredOut, onClick }) {
   const bedLabel = `${bed.floor}F-${String(bed.num).padStart(2, '0')}`
+  // 空床：只顯示床號與「空床」字樣，不可點擊
   if (bed.status === 'empty') {
     return (
       <div className={`bed-card empty bed-${bed.id}`}>
@@ -66,6 +78,7 @@ function BedCard({ bed, filteredOut, onClick }) {
         <span className={`patient-name ${p.gender === 'M' ? 'gender-m' : 'gender-f'}`}>{p.name}</span>
         <span className="patient-basic">{p.gender}/{p.age}</span>
       </div>
+      {/* 病人註記區：每個徽章對應一個 SVG 形狀旗標 */}
       <div className="dots-row">
         {allBadges.map(b => <FlagDot key={b} k={b} flagStyle={FLAG_STYLE} />)}
       </div>
@@ -73,10 +86,13 @@ function BedCard({ bed, filteredOut, onClick }) {
   )
 }
 
+// 點擊床位後的病人詳情彈窗。props：bed 該床資料、onClose 關閉回呼
 function BedModal({ bed, onClose }) {
   const p = bed.patient
   const bedLabel = `${bed.floor}F-${String(bed.num).padStart(2, '0')}`
+  // 由入院日期推算住院天數（mock 資料僅有月日，故補上 2026 年）
   const daysSince = Math.floor((new Date() - new Date('2026/' + p.admission)) / 86400000)
+  // 管路欄位鍵 → 中文名稱對照，過濾出該病人實際使用中的管路
   const tubeMap = [['ventilator','氣管內管'],['ng','鼻胃管'],['foley','導尿管'],['cvc','中心靜脈導管']]
   const tubes = tubeMap.filter(([k]) => p[k]).map(([,v]) => v)
   const allBadges = buildBadges(p)
@@ -125,6 +141,7 @@ function BedModal({ bed, onClose }) {
   )
 }
 
+// 底部 filter-bar 可點選的篩選徽章清單（f=篩選鍵、cls=樣式、label=顯示文字）
 const FILTER_BADGES = [
   {f:'DNR',cls:'badge-DNR',label:'DNR'},{f:'高危跌',cls:'badge-高危跌',label:'高危跌'},
   {f:'依賴L1',cls:'badge-依賴L1',label:'依賴L1'},{f:'依賴L2',cls:'badge-依賴L2',label:'依賴L2'},
@@ -135,14 +152,17 @@ const FILTER_BADGES = [
   {f:'輪椅',cls:'badge-輪椅',label:'輪椅'},{f:'推床',cls:'badge-推床',label:'推床'},
   {f:'氧氣設備',cls:'badge-氧氣設備',label:'氧氣設備'},{f:'洗腎',cls:'badge-洗腎',label:'洗腎'},
 ]
+// 依篩選鍵集合預先產生各徽章對應的 SVG 形狀樣式
 const FLAG_STYLE = makeFlagStyle(FILTER_BADGES.map(x => x.f))
 
 export default function WardTab() {
-  const [filter, setFilter] = useState('all')
-  const [selectedBed, setSelectedBed] = useState(null)
-  const stats = useMemo(() => getStats(MOCK_DATA.beds), [])
+  const [filter, setFilter] = useState('all')          // 目前篩選條件
+  const [selectedBed, setSelectedBed] = useState(null)  // 目前開啟詳情的床（null=未開）
+  const stats = useMemo(() => getStats(MOCK_DATA.beds), []) // 統計面板數據（資料固定，只算一次）
+  // 點同一篩選鍵再按 → 取消回到 all；「全部」不可被反選
   const handleFilter = f => setFilter(prev => (prev === f && f !== 'all') ? 'all' : f)
 
+  // 依樓層分組（ICU 分 4F、3F 兩區）
   const f4beds = MOCK_DATA.beds.filter(b => b.floor === 4)
   const f3beds = MOCK_DATA.beds.filter(b => b.floor === 3)
 
@@ -179,6 +199,8 @@ export default function WardTab() {
               <div className={`ws-item${filter==='exam'?' active':''}`} data-filter="exam" onClick={()=>handleFilter('exam')}><div className="ws-value ws-exam">{stats.exam}</div><div className="ws-label">檢查</div></div>
               <div className={`ws-item${filter==='consult'?' active':''}`} data-filter="consult" onClick={()=>handleFilter('consult')}><div className="ws-value ws-consult">{stats.consult}</div><div className="ws-label">會診</div></div>
             </div>
+            {/* 第二列：病況等級（C/B/A）與其他屬性統計，點擊即套用對應篩選 */}
+            {/* 注意 sevA 對應綠點顯示 C 級、sevC 對應紅點顯示 A 級，資料與標籤方向相反 */}
             <div className="ws-row">
               <div className={`ws-item${filter==='cond-a'?' active':''}`} data-filter="cond-a" onClick={()=>handleFilter('cond-a')}><div className="ws-value ws-sev-a">{stats.sevA}</div><div className="ws-label"><span className="sev-dot sev-dot-a"/>C級</div></div>
               <div className={`ws-item${filter==='cond-b'?' active':''}`} data-filter="cond-b" onClick={()=>handleFilter('cond-b')}><div className="ws-value ws-sev-b">{stats.sevB}</div><div className="ws-label"><span className="sev-dot sev-dot-b"/>B級</div></div>
@@ -197,6 +219,7 @@ export default function WardTab() {
         </div>
       </main>
 
+      {/* 底部篩選列：全部 + 各屬性徽章，點擊切換 filter */}
       <div className="filter-bar">
         <button className={`filter-btn${filter==='all'?' active':''}`} onClick={()=>handleFilter('all')}>全部</button>
         {FILTER_BADGES.map(({f,label}) => (
@@ -206,6 +229,7 @@ export default function WardTab() {
         ))}
       </div>
 
+      {/* 有選取床位時才渲染病人詳情彈窗 */}
       {selectedBed && <BedModal bed={selectedBed} onClose={()=>setSelectedBed(null)} />}
     </>
   )

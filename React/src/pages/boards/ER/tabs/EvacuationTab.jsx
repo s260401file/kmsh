@@ -1,13 +1,16 @@
+// EvacuationTab：ER 急診站「避難圖」分頁。
+// 透過 evacuationApi 顯示後台上傳的避難圖（非假資料）；無圖時顯示提示。
 import { useState, useEffect } from 'react'
 import { imageUrl, getImageInfo } from '../../../../services/evacuationApi'
 import '../tabsCss/evacuation.css'
 
-const UNIT = 'ER'
+const UNIT = 'ER'   // 本分頁固定對應急診站
 
 export default function EvacuationTab() {
-  const [hasImage, setHasImage] = useState(false)
-  const [ts,       setTs]       = useState(Date.now())
+  const [hasImage, setHasImage] = useState(false)  // 是否已有上傳的避難圖
+  const [ts,       setTs]       = useState(Date.now())  // 時間戳，用於圖片 URL 防快取
 
+  // 載入時查詢是否已有避難圖
   useEffect(() => {
     getImageInfo(UNIT).then(i => setHasImage(!!i)).catch(() => setHasImage(false))
   }, [])

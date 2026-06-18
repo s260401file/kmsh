@@ -1,3 +1,12 @@
+// handoverData：OR 手術室站「術後特殊交班」假資料（待接 API）
+// 模擬後端 API 回應結構：Success/Message/Data，供 HandoverTab 表格顯示。
+// 每筆交班（Items）欄位說明：
+//   HandoverId 編號、RoomId 刀房、SurgerySource 來源（急診/門診/住院刀）
+//   PatientName/Gender/Age/MedRecord 病患基本資料
+//   SurgeryName 術式、SurgeonName 主刀醫師
+//   DestWard/DestBed 術後轉往病房 / 床號、EndTime 結束時間（null 表進行中）
+//   BloodLoss 出血量(mL)、BloodTransfusion 輸血量(單位)
+//   DrainDetails 引流管說明、SpecialNotes 術後特殊照護注意事項
 const HANDOVER_DATA = {
   Success: true,
   Message: "",

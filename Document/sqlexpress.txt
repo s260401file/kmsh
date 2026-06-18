@@ -1,3 +1,6 @@
+Microsoft SQL Server Express (64-bit)
+16.0.1000.6
+
 .\sqlexpress
 sa
 KmshX54883958

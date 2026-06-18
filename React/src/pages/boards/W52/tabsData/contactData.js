@@ -1,3 +1,6 @@
+// contactData：連絡資訊假資料（待接 API；實際畫面 ContactTab 已改用 contactApi，此檔為參考結構）
+// 結構：Data.DutyContacts=當日值班（ContactId/DutyTitle 職務/Name/Extension 分機/Mobile 手機/TimeSlot 時段）、
+//       Data.CommonContacts=常用電話（ContactId/Name 單位/Extension 分機或電話）
 const CONTACT_DATA = {
   "Success": true, "Message": "",
   "Data": {

@@ -1,17 +1,23 @@
+// ScheduleTab：OR 手術室站「手術排程 / 派班」分頁
+// 左側顯示所選班別的值班護理長、麻醉科人員、體外循環技師與統計；
+// 右側為各刀房的刷手護理師、流動護理師派班一覽。
+// 支援白班 / 小夜 / 大夜三班切換。資料來源為 scheduleData（假資料，待接 API）。
 import { useState } from 'react'
 import SCHEDULE_DATA from '../tabsData/scheduleData'
 import '../tabsCss/schedule.css'
 
 export default function ScheduleTab() {
-  const shifts = SCHEDULE_DATA.Data.Shifts
-  const [currentIdx, setCurrentIdx] = useState(0)
+  const shifts = SCHEDULE_DATA.Data.Shifts   // 三班（白班/小夜/大夜）派班資料
+  const [currentIdx, setCurrentIdx] = useState(0) // 目前選取的班別索引（預設白班）
   const shift = shifts[currentIdx]
 
+  // 統計本班實際出勤的護理師人數（刷手＋流動去重）
   const activeNurses = new Set()
   shift.Rooms.forEach(r => {
     if (r.ScrubNurse) activeNurses.add(r.ScrubNurse)
     if (r.CircNurse) activeNurses.add(r.CircNurse)
   })
+  // 本班有派刷手護理師（即有開刀）的刀房數
   const activeRooms = shift.Rooms.filter(r => r.ScrubNurse).length
 
   return (

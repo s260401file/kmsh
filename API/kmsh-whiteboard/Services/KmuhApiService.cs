@@ -9,8 +9,14 @@ using Microsoft.Extensions.Options;
 
 namespace kmsh_whiteboard.Services;
 
+/// <summary>
+/// 高醫（KMUH）HIS API 代理實作：透過具名 HttpClient（BaseAddress 由 DI 設定）呼叫院方端點。
+/// JSON 反序列化採大小寫不敏感（PropertyNameCaseInsensitive）。多數端點為 POST JSON 並回傳清單，
+/// api/CNC 為 GET 且回應為 XML。
+/// </summary>
 public class KmuhApiService : IKmuhApiService
 {
+    // JSON 反序列化選項：屬性名稱大小寫不敏感，以容忍院方回應欄位大小寫差異
     private static readonly JsonSerializerOptions _jsonOptions = new()
     {
         PropertyNameCaseInsensitive = true
@@ -19,36 +25,42 @@ public class KmuhApiService : IKmuhApiService
     private readonly HttpClient _http;
     private readonly ILogger<KmuhApiService> _logger;
 
+    /// <summary>建構子：注入具名 HttpClient 與 Logger；KmuhApiOptions 僅供 DI 設定 BaseAddress，此處不直接使用。</summary>
     public KmuhApiService(HttpClient http, IOptions<KmuhApiOptions> _, ILogger<KmuhApiService> logger)
     {
         _http = http;
         _logger = logger;
     }
 
+    /// <summary>呼叫高醫 api/HRS（POST JSON，帶 UNITCODE）查詢在職人事資料，回傳人事清單。</summary>
     public async Task<List<HrsItem>> GetHrsAsync(string unitcode, CancellationToken ct = default)
     {
         var rawJson = await PostRawAsync("api/HRS", new { UNITCODE = unitcode }, ct);
         return ParseList<HrsItem>(rawJson);
     }
 
+    /// <summary>呼叫高醫 api/UAS（POST JSON，帶 UNITCODE、MONTH）查詢該單位該月排班作業，回傳排班清單。</summary>
     public async Task<List<UasItem>> GetUasAsync(string unitcode, string month, CancellationToken ct = default)
     {
         var rawJson = await PostRawAsync("api/UAS", new { UNITCODE = unitcode, MONTH = month }, ct);
         return ParseList<UasItem>(rawJson);
     }
 
+    /// <summary>呼叫高醫 api/ERS（POST JSON，帶 UNITCODE）查詢該單位維修單，回傳維修單清單。</summary>
     public async Task<List<ErsItem>> GetErsAsync(string unitcode, CancellationToken ct = default)
     {
         var rawJson = await PostRawAsync("api/ERS", new { UNITCODE = unitcode }, ct);
         return ParseList<ErsItem>(rawJson);
     }
 
+    /// <summary>呼叫高醫 api/TMS（POST JSON，無參數）查詢近一年在職＋離職人員清單，回傳人員清單。</summary>
     public async Task<List<TmsItem>> GetTmsAsync(CancellationToken ct = default)
     {
         var rawJson = await PostRawAsync("api/TMS", new { }, ct);
         return ParseList<TmsItem>(rawJson);
     }
 
+    /// <summary>呼叫高醫 api/UNIT（POST JSON，無參數）查詢所有單位資料，回傳單位清單。</summary>
     public async Task<List<UnitItem>> GetUnitAsync(CancellationToken ct = default)
     {
         var rawJson = await PostRawAsync("api/UNIT", new { }, ct);
@@ -56,6 +68,10 @@ public class KmuhApiService : IKmuhApiService
     }
 
     // ── #8-1 KMUH 查床號（GET + XML 回應）────────────────────────
+    /// <summary>
+    /// 呼叫高醫 api/CNC（GET，回應為 XML），依病歷號 chartNo 查詢床號與病患基本資料。
+    /// 將回應 XML 解析為 CncResult；回應為空字串或 XML 解析失敗時回傳 null（解析失敗會記錄警告）。
+    /// </summary>
     public async Task<CncResult?> GetCncAsync(string chartNo, CancellationToken ct = default)
     {
         var path = $"api/CNC?ChartNO={Uri.EscapeDataString(chartNo)}";
@@ -92,6 +108,7 @@ public class KmuhApiService : IKmuhApiService
 
     // ── 私有輔助方法 ───────────────────────────────────────────────
 
+    /// <summary>以 POST JSON 呼叫指定相對路徑（path），確認 HTTP 成功後回傳原始 JSON 字串；過程寫入 Info/Debug 記錄。</summary>
     private async Task<string> PostRawAsync(string path, object body, CancellationToken ct)
     {
         _logger.LogInformation("呼叫 kmuh {Path}", path);
@@ -102,6 +119,10 @@ public class KmuhApiService : IKmuhApiService
         return rawJson;
     }
 
+    /// <summary>
+    /// 將院方回應 JSON 解析為 List&lt;T&gt;：根節點若為陣列直接反序列化；
+    /// 若為物件則取其第一個為陣列的屬性反序列化；皆無則回傳空清單。
+    /// </summary>
     private List<T> ParseList<T>(string rawJson)
     {
         using var doc = JsonDocument.Parse(rawJson);

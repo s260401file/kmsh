@@ -1,9 +1,17 @@
+// ER 急診站「避難 / 防災」假資料（待接 API）。
+// Data 內含：EvacPlan 避難計畫、Equipment 防災設備清單、EmergencyContacts 緊急連絡電話。
+// EvacPlan 欄位：樓層 FloorNo、病房名稱 WardName、說明 Description、
+//   更新日 UpdatedAt、最近演練日 LastDrillDate。
+// Equipment 欄位：EquipmentName 設備名稱、Location 位置、Quantity 數量。
+// EmergencyContacts 欄位：Name 名稱、Extension 分機/電話。
+// 註：實際 EvacuationTab 改為顯示後台上傳的避難圖（evacuationApi），此檔為早期假資料樣本。
 const EVACUATION_DATA = {
   Success: true,
   Message: "",
   Data: {
     WardCode: "ER",
     QueryDate: "2026-06-03",
+    // 避難計畫總述
     EvacPlan: {
       EvacPlanId: 1,
       FloorNo: "1F",
@@ -12,6 +20,7 @@ const EVACUATION_DATA = {
       UpdatedAt: "2026-05-01",
       LastDrillDate: "2026-04-10"
     },
+    // 防災 / 急救設備清單（含集合點）
     Equipment: [
       { EquipmentId: 1, EquipmentName: "滅火器",   Location: "護理站旁",           Quantity: 2 },
       { EquipmentId: 2, EquipmentName: "滅火器",   Location: "急救區走廊",         Quantity: 2 },
@@ -22,6 +31,7 @@ const EVACUATION_DATA = {
       { EquipmentId: 7, EquipmentName: "氧氣鋼瓶", Location: "急救區牆側",         Quantity: 4 },
       { EquipmentId: 8, EquipmentName: "集合點",   Location: "院門前廣場",         Quantity: 1 }
     ],
+    // 緊急連絡電話（保全、院內急救、消防外線）
     EmergencyContacts: [
       { ContactId: 1, Name: "院內保全",       Extension: "9119" },
       { ContactId: 2, Name: "院內急救 RRT",   Extension: "1199" },

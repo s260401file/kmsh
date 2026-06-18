@@ -1,3 +1,9 @@
+// scheduleData：排班資訊假資料（待接 API）
+// 結構：Data.Shifts=班別陣列（白班/小夜/大夜），每班含 ShiftType/ShiftTime 與三類人員：
+//   Nurses 護理人員（StaffId/PeNo/PeName/Role 職別/Extension 分機/BedNos 負責床位/
+//     EmergencyGroup 緊急編組(指揮/A/B)/CheckIn 是否點班）、
+//   Specialists 專科護理師（PeName/Specialty 專科/Extension）、
+//   Residents 住院醫師（PeName/Department 科別/Extension）
 const SCHEDULE_DATA = {
   "Success": true, "Message": "",
   "Data": {

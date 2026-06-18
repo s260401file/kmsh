@@ -1,7 +1,20 @@
+// mockData.js ── ER 急診站的假資料來源（目前全為 mock，待接 HIS / API）
+// 角色：提供急診白板各分頁所需的醫院資訊、床位/病人資料、三班醫護名單，
+//       並匯出 getStats() 計算急診統計面板的各項數字。
+//
 // 急診室 Mock Data ── 19 床
-// Status: "occupied" | "isolation" | "observation" | "awaiting" | "transfer" | "empty"
+// Status（床位狀態）："occupied" 看診中 | "isolation" 隔離 | "observation" 留觀
+//                    | "awaiting" 待床 | "transfer" 轉出 | "empty" 空床
 const MOCK_DATA = {
+  // 醫院/單位基本資訊：頁首顯示急診主任(WardDirector)、護理長(HeadNurse)
   HospitalInfo: { HospitalName:"高雄市立民生醫院", WardName:"急診室", WardCode:"ER", WardDirector:"黃○誠", HeadNurse:"吳○珊" },
+
+  // Beds：每張床一筆。BedId 床號、Zone 所屬分區（負壓隔離室/急救室/各診療區/留觀區/待床區）、
+  //   Status 床位狀態，Patient 為病人資料（空床為 null）。
+  // Patient 主要欄位：Triage 檢傷分級(1-5，於畫面換算為 A/B/C 三級)、Isolation 隔離方式、
+  //   Observation 留觀、Awaiting 待床 + AwaitingType 待床型態(一般/加護/隔離)、
+  //   TransferIn/TransferOut 轉入/轉出(+TransferHospital)、Admitted 已住院(+AdmBedNo)、
+  //   Dnr/Aad/Mbd/FallRisk/Allergy/Exam/Consult/Deceased 等註記旗標、Notes 備註。
   Beds: [
     { BedId:"負2",   Zone:"負壓隔離室", Status:"isolation",   Patient:{ PatientName:"陳○文", Gender:"M", Age:58, ArrivalDate:"05/24", ArrivalTime:"06:40", Diagnosis:"Pulmonary TB suspected, Hemoptysis", Doctor:"林○泰醫師", Nurse:"周○娟護理師", Department:"胸腔內科", MedRecord:"A201234567", BirthDate:"1968/03/12", Triage:2, Dnr:false, Isolation:"負壓隔離", Observation:false, Awaiting:true, AwaitingType:"隔離", TransferOut:false, TransferIn:false, Aad:false, Mbd:false, FallRisk:false, Allergy:false, Exam:false, Consult:true, Notes:"疑似肺結核，需感染科會診確認" } },
     { BedId:"負1",   Zone:"負壓隔離室", Status:"isolation",   Patient:{ PatientName:"劉○婷", Gender:"F", Age:44, ArrivalDate:"05/24", ArrivalTime:"09:15", Diagnosis:"COVID-19 suspected, Fever, Cough", Doctor:"陳○科醫師", Nurse:"李○婷護理師", Department:"感染科", MedRecord:"B301234568", BirthDate:"1982/07/28", Triage:3, Dnr:false, Isolation:"負壓隔離", Observation:true, Awaiting:false, AwaitingType:null, TransferOut:false, TransferIn:false, Aad:false, Mbd:false, FallRisk:false, Allergy:false, Exam:true, Consult:false, Notes:"COVID-19 快篩陽性，PCR送驗中" } },
@@ -25,6 +38,8 @@ const MOCK_DATA = {
   ],
 
   // 三班醫護人員（示意資料；屆時改由 API 提供）
+  // 每筆代表一個班別：Shift 班別、Time 時段、Doctor 值班醫師、
+  //   ChargeNurse 負責/Leader 護理師、NurseCount 在班護理師人數。供右上面板顯示。
   ShiftStaff: [
     { Shift:"白班", Time:"07:00–15:00", Doctor:"張○哲醫師", ChargeNurse:"王○琳護理師", NurseCount:6 },
     { Shift:"小夜", Time:"15:00–23:00", Doctor:"林○泰醫師", ChargeNurse:"李○婷護理師", NurseCount:4 },

@@ -1,3 +1,6 @@
+// TestPage.jsx — Text API 連線測試頁
+// 角色：開發用工具頁，對 /api/Text 做完整 CRUD（查/增/改/刪），
+//       用來驗證前後端串接與資料欄位是否正確，非正式對外功能。
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import * as textApi from '../services/textApi'

@@ -1,3 +1,6 @@
+// teamData：照護團隊假資料（待接 API）
+// 結構：Data.TeamGroups=角色分組陣列；每組 GroupKey(leader/attending/resident/specialist/nurse/allied)、
+//   GroupName 中文組名、Members 成員陣列（TeamId/Role 職別/Name/Department 科別或專長/Ext 分機/Mobile 手機）
 const TEAM_DATA = {
   "Success": true, "Message": "",
   "Data": {

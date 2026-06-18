@@ -1,10 +1,14 @@
+// SurgeryTab.jsx — ICU 手術分頁
+// 角色：頂部日期列（今天前後各 3 天共 7 天）可切換，下方表格列出該日手術排程。
+//       依手術狀態排序（手術中 → 待手術 → 已完成 → 取消），取消列加刪除線樣式。
 import { useState, useMemo } from 'react'
 import SURGERY_DATA from '../tabsData/surgeryData'
 import '../tabsCss/surgery.css'
 
-const DAYS = ['日','一','二','三','四','五','六']
-const STATUS_ORDER = ['手術中','待手術','已完成','取消']
+const DAYS = ['日','一','二','三','四','五','六']            // 星期顯示字
+const STATUS_ORDER = ['手術中','待手術','已完成','取消']      // 表格列排序優先序
 
+// 產生以 2026-06-03 為「今天」、前後各 3 天的日期列資料
 function buildDateRange() {
   const today = new Date('2026-06-03')
   const dates = []
@@ -18,9 +22,10 @@ function buildDateRange() {
 }
 
 export default function SurgeryTab() {
-  const dates = useMemo(() => buildDateRange(), [])
-  const [activeDate, setActiveDate] = useState('2026-06-03')
+  const dates = useMemo(() => buildDateRange(), [])          // 日期列（只算一次）
+  const [activeDate, setActiveDate] = useState('2026-06-03') // 目前選取日期，預設今天
 
+  // 取出選取日期的手術並依狀態排序；隨 activeDate 變動重算
   const items = useMemo(() => {
     const filtered = SURGERY_DATA.data.items.filter(i => i.date === activeDate)
     return [...filtered].sort((a, b) => STATUS_ORDER.indexOf(a.status) - STATUS_ORDER.indexOf(b.status))
@@ -34,6 +39,7 @@ export default function SurgeryTab() {
           手術資訊
         </div>
 
+        {/* 日期切換列；is-today 標示今天、active 標示目前選取 */}
         <div className="sr-date-bar">
           {dates.map(d => (
             <button
@@ -50,6 +56,7 @@ export default function SurgeryTab() {
         <div className="surg-card">
           <div className="surg-card-header">
             當日手術
+            {/* 台數計算排除「取消」 */}
             <span className="surg-card-count">{items.filter(i => i.status !== '取消').length} 台</span>
           </div>
           <div className="surg-table-wrap">
@@ -62,6 +69,7 @@ export default function SurgeryTab() {
                 </tr>
               </thead>
               <tbody>
+                {/* 無排程時顯示佔位列；取消的手術整列套用刪除線樣式 */}
                 {items.length === 0
                   ? <tr className="surg-empty-row"><td colSpan="9">本日無手術排程</td></tr>
                   : items.map(item => (

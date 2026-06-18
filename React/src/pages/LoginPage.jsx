@@ -1,6 +1,10 @@
+// LoginPage.jsx — 管理後台登入頁
+// 角色：列出可登入身份（admin / 各站），點選即透過 AuthContext 登入並導向 /admin。
+//       目前為開發模式（點擊直接登入），正式環境將改為需密碼驗證。
 import { useNavigate } from 'react-router-dom'
 import { useAuth, ROLES } from '../context/AuthContext'
 
+// 各身份按鈕的代表色
 const ROLE_COLORS = {
   admin: '#2D7A55',
   w52:   '#1565C0',

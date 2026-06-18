@@ -1,3 +1,7 @@
+// bulletinData：佈告欄假資料（待接 API；實際畫面 BulletinTab 已改用 textApi，此檔為備援/參考結構）
+// 結構：Data.UnitBulletins=護理站公告、HospBulletins=院方公告；
+//   每則欄位：BulletinId 編號、Category 分類、Title 標題、Content 內文、
+//   Priority 優先序(重要/一般)、PostedBy 發布者、PostedAt 發布日、IsActive 是否啟用
 const BULLETIN_DATA = {
   "Success": true, "Message": "",
   "Data": {

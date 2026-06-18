@@ -1,11 +1,15 @@
+// AntibioticTab.jsx — ICU 抗生素分頁
+// 角色：床位格狀圖標示哪些病人正使用抗生素（有用藥者床卡加紅框並顯示筆數徽章），
+//       點擊床位開啟該病人的抗生素清單彈窗；底部為各類抗生素統計面板。
 import { useState, useMemo } from 'react'
 import MOCK_DATA from '../mockData'
 import { getAbxByBedId, getAbxStats } from '../tabsData/antibioticData'
 
+// 單張床位卡片。props：bed 床資料、onClick 點擊（空床不傳）
 function BedCard({ bed, onClick }) {
   const bedLabel = `${bed.floor}F-${String(bed.num).padStart(2, '0')}`
-  const abxList = getAbxByBedId(bed.id)
-  const hasAbx = abxList.length > 0
+  const abxList = getAbxByBedId(bed.id) // 該床的抗生素紀錄
+  const hasAbx = abxList.length > 0     // 是否有用藥（決定紅框與筆數徽章）
 
   if (bed.status === 'empty') {
     return (
@@ -33,10 +37,11 @@ function BedCard({ bed, onClick }) {
   )
 }
 
+// 抗生素清單彈窗。props：bed 該床資料、onClose 關閉回呼
 function AbxModal({ bed, onClose }) {
   const bedLabel = `${bed.floor}F-${String(bed.num).padStart(2, '0')}`
   const p = bed.patient
-  const abxList = getAbxByBedId(bed.id)
+  const abxList = getAbxByBedId(bed.id) // 表格列出每筆藥品的起訖與首次給藥時間
   return (
     <div className="ab-modal-overlay show" onClick={e => e.target === e.currentTarget && onClose()}>
       <div className="ab-modal-box">
@@ -79,10 +84,10 @@ function AbxModal({ bed, onClose }) {
 }
 
 export default function AntibioticTab() {
-  const [selectedBed, setSelectedBed] = useState(null)
-  const stats = useMemo(() => getAbxStats(), [])
-  const f4beds = MOCK_DATA.beds.filter(b => b.floor === 4)
-  const f3beds = MOCK_DATA.beds.filter(b => b.floor === 3)
+  const [selectedBed, setSelectedBed] = useState(null)   // 目前開啟清單的床（null=未開）
+  const stats = useMemo(() => getAbxStats(), [])          // 抗生素統計（資料固定，只算一次）
+  const f4beds = MOCK_DATA.beds.filter(b => b.floor === 4) // 4F 床位
+  const f3beds = MOCK_DATA.beds.filter(b => b.floor === 3) // 3F 床位
 
   return (
     <main className="main-content">
@@ -125,6 +130,7 @@ export default function AntibioticTab() {
         </div>
       </div>
 
+      {/* 有選取床位時才渲染抗生素清單彈窗 */}
       {selectedBed && <AbxModal bed={selectedBed} onClose={() => setSelectedBed(null)} />}
     </main>
   )

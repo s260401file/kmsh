@@ -1,8 +1,12 @@
-import HANDOVER_DATA from '../tabsData/handoverData'
+// HandoverTab：護理交班分頁
+// 角色：頂部橫條顯示交班→接班的班別、時間與交/接班護理師；
+//       下方為各病患交班卡，依優先序（高/中/一般）標示色條，逐項列出交班事項（管路/用藥/警示…）。
+import HANDOVER_DATA from '../tabsData/handoverData'   // 交班假資料，待接 API
 import '../tabsCss/handover.css'
 
 export default function HandoverTab() {
   const { HandoverInfo, Patients } = HANDOVER_DATA.Data
+  // 依交/接班別組出色票 class（ho-pill-白班 等）
   const fromPill = `ho-pill-${HandoverInfo.FromShift}`
   const toPill   = `ho-pill-${HandoverInfo.ToShift}`
   return (

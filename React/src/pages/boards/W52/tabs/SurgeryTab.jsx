@@ -1,9 +1,14 @@
-import SURGERY_DATA from '../tabsData/surgeryData'
+// SurgeryTab：手術資訊分頁
+// 角色：以表格列出當日手術排程（床號、病人、時間、刀房、術式、診斷、麻醉、主治、狀態）；
+//       依狀態優先序排序，狀態以色票標示，「取消」整列淡化、不計入台數。
+import SURGERY_DATA from '../tabsData/surgeryData'   // 手術假資料，待接 API
 import '../tabsCss/surgery.css'
 
+// 列表排序依據：手術中 → 待手術 → 已完成 → 取消
 const STATUS_ORDER = ['手術中','待手術','已完成','取消']
 
 export default function SurgeryTab() {
+  // 複製後依 STATUS_ORDER 排序（不直接改動原始資料）
   const items = [...SURGERY_DATA.Data.Items].sort(
     (a, b) => STATUS_ORDER.indexOf(a.Status) - STATUS_ORDER.indexOf(b.Status)
   )

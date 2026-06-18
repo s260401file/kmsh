@@ -1,8 +1,12 @@
-import DOCTOR_DATA from '../tabsData/doctorData'
+// DoctorTab：醫師資訊分頁
+// 角色：左欄列出醫師/專師各自負責的床位與分機；右欄為當日起的查房時間表（依日期分組）。
+import DOCTOR_DATA from '../tabsData/doctorData'   // 醫師/查房假資料，待接 API
 import '../tabsCss/doctor.css'
 
+// 星期數字 → 中文（用於查房日期標頭）
 const DAY_MAP = { '0':'日', '1':'一', '2':'二', '3':'三', '4':'四', '5':'五', '6':'六' }
 
+// 將 yyyyMMdd 字串轉成 { label:'MM/DD (週幾)', isToday } 供日期分隔列使用
 function formatDate(d) {
   const s = String(d)
   const dt = new Date(`${s.slice(0,4)}-${s.slice(4,6)}-${s.slice(6,8)}`)
@@ -13,7 +17,7 @@ function formatDate(d) {
 export default function DoctorTab() {
   const { DoctorBeds, RoundSchedule } = DOCTOR_DATA.Data
 
-  // group rounds by date
+  // 將查房排程依日期（RoundDate）分組，方便畫面用日期當分隔列
   const roundsByDate = RoundSchedule.reduce((acc, r) => {
     if (!acc[r.RoundDate]) acc[r.RoundDate] = []
     acc[r.RoundDate].push(r)

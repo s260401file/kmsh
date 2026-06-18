@@ -1,11 +1,15 @@
+// ContactTab.jsx — ICU 連絡電話分頁
+// 角色：左欄顯示「當日值班」人員（職務/姓名/分機/手機/時段），右欄顯示「常用連絡電話」；
+//       資料皆由 contactApi 依 ICU 單位取得。
 import { useState, useEffect } from 'react'
 import { getDuty, getCommon } from '../../../../services/contactApi'
 import '../tabsCss/contact.css'
 
 export default function ContactTab() {
-  const [duty,   setDuty]   = useState([])
-  const [common, setCommon] = useState([])
+  const [duty,   setDuty]   = useState([]) // 當日值班清單
+  const [common, setCommon] = useState([]) // 常用連絡電話清單
 
+  // 掛載時各取一次資料，失敗則靜默保持空陣列
   useEffect(() => {
     getDuty('ICU').then(d => setDuty(d ?? [])).catch(() => {})
     getCommon('ICU').then(d => setCommon(d ?? [])).catch(() => {})

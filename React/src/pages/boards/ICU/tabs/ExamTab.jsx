@@ -1,7 +1,10 @@
+// ExamTab.jsx — ICU 檢查／會診分頁
+// 角色：左右雙欄並列，左欄為待執行「檢查」清單、右欄為「會診」清單，各以表格呈現。
 import EXAM_DATA from '../tabsData/examData'
 import '../tabsCss/exam.css'
 
 export default function ExamTab() {
+  // 由資料層取出檢查與會診兩組清單（重新命名為 exams / consults）
   const { examinations: exams, consultations: consults } = EXAM_DATA.data
   return (
     <main className="main-content">
@@ -11,6 +14,7 @@ export default function ExamTab() {
           檢查／會診
         </div>
         <div className="ec-columns">
+          {/* 左欄：檢查清單 */}
           <div className="ec-card">
             <div className="ec-card-header">
               檢查 <span className="ec-card-count">{exams.length} 筆</span>
@@ -37,6 +41,7 @@ export default function ExamTab() {
               </table>
             </div>
           </div>
+          {/* 右欄：會診清單 */}
           <div className="ec-card">
             <div className="ec-card-header">
               會診 <span className="ec-card-count">{consults.length} 筆</span>

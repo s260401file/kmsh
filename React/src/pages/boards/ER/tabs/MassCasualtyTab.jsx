@@ -1,9 +1,14 @@
+// MassCasualtyTab：ER 急診站「大量傷患」分頁。
+// 將目前所有佔床病人攤平成一張總表，依檢傷級別排序，並於上方顯示各級人數統計，
+// 供大量傷患（MCI）情境快速掌握全院急診收治狀況。
+// 資料來源：MOCK_DATA.Beds（假資料，待接 API）。
 import MOCK_DATA from '../mockData'
 import '../tabsCss/mass-casualty.css'
 
 // 檢傷分級：Triage 1-5 → A/B/C 三級（A 重症 1-2、B 中症 3、C 輕症 4-5）
 const triageGrade = t => (t <= 2 ? 'A' : (t === 3 ? 'B' : 'C'))
 
+// 依病人狀態產生「病人註記」旗標元素陣列（死亡 / MBD / AAD / DNR / 留觀 / 住院 / 轉出入）
 function buildFlags(p) {
   const flags = []
   if (p.Deceased)    flags.push(<span key="死亡" className="flag-badge flag-死亡">死亡</span>)
@@ -18,11 +23,13 @@ function buildFlags(p) {
 }
 
 export default function MassCasualtyTab() {
+  // 取出所有佔床病人，攤平為含床號的病人陣列，並依檢傷級別（數字小=重）排序
   const patients = MOCK_DATA.Beds
     .filter(b => b.Status !== 'empty' && b.Patient)
     .map(b => ({ ...b.Patient, BedId: b.BedId }))
     .sort((a, b) => a.Triage - b.Triage)
 
+  // 各統計數：A 重症、B 中症、C 輕症、死亡、轉出
   const sevA  = patients.filter(p => p.Triage <= 2).length
   const sevB  = patients.filter(p => p.Triage === 3).length
   const sevC  = patients.filter(p => p.Triage >= 4).length

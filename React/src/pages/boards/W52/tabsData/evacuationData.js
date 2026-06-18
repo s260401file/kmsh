@@ -1,3 +1,7 @@
+// evacuationData：避難圖相關假資料（待接 API；實際畫面 EvacuationTab 改用 evacuationApi 顯示圖片，此檔為參考結構）
+// 結構：Data.EvacPlan=避難計畫（樓層/病房名/圖檔路徑/說明/最近演練日）、
+//       Data.Equipment=消防/避難設備清單（名稱/位置/數量/最近檢查日）、
+//       Data.EmergencyContacts=緊急連絡（保全/RRT/消防隊…）
 const EVACUATION_DATA = {
   "Success": true, "Message": "",
   "Data": {

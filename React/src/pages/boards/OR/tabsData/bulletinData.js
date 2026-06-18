@@ -1,3 +1,11 @@
+// bulletinData：OR 手術室站「佈告欄」假資料（待接 API）
+// 模擬後端 API 回應結構：Success/Message/Data。
+// 註：實際 BulletinTab 改用 textApi 由 API 取資料，本檔為備援/參考用的假資料。
+// 欄位說明：
+//   WardCode 單位代碼、QueryDate 查詢日期
+//   UnitBulletins 手術室（單位）公告、HospBulletins 院方（全院）公告
+//   每則公告：BulletinId 編號、Category 分類、Title 標題、Content 內容、
+//             Priority 重要性（重要/一般）、PostedBy 發佈者、PostedAt 發佈日、IsActive 是否啟用
 const BULLETIN_DATA = {
   Success: true,
   Message: "",

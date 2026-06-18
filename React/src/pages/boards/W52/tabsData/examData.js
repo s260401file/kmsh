@@ -1,3 +1,8 @@
+// examData：檢查／會診假資料（待接 API）
+// 結構：Data.Examinations=檢查（ExamId/BedNo/病人/ExamName 項目/ScheduledDate/TimeSlot 時段/
+//         ScheduledTime/Status 狀態(待執行/已完成/預約)/Remarks 備註）、
+//       Data.Consultations=會診（ConsultId/BedNo/病人/ConsultDept 科別/ConsultDoctor 醫師/
+//         CompletedAt 完成時間/Status 狀態/Remarks 備註）
 const EXAM_DATA = {
   "Success": true, "Message": "",
   "Data": {
