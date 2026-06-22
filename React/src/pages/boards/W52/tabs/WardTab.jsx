@@ -5,7 +5,8 @@
 // 形狀指派：FILTER_BADGES 的順序決定每個註記對應哪個 SVG 形狀，由 makeFlagStyle 依固定
 //           順序循環指派（圓/三角/方/愛心…，實心/空心交替）；上色由 CSS class flag-dot-KEY 控制。
 import { useState, useMemo } from 'react'
-import MOCK_DATA, { getStats } from '../mockData'                 // 床位假資料 + 統計函式，待接 API
+import { getStats } from '../mockData'                            // 統計函式（mockData 保留備援）
+import { useWard } from '../../../../hooks/useWard'               // 病室動態：Board_bed 真實在床＋自建臨床，輪詢
 import { FlagDot, makeFlagStyle } from '../../../../utils/flagShapes' // 共用 SVG 旗標形狀系統
 
 // 由病人資料 + 床位狀態組出該床要顯示的註記字串陣列（順序即顯示順序）
@@ -116,6 +117,7 @@ function BedModal({ bed, onClose }) {
           <div className="modal-row"><div className="modal-field full"><div className="field-label">診斷</div><div className="field-value diagnosis">{p.Diagnosis}</div></div></div>
           <div className="modal-row">
             <div className="modal-field"><div className="field-label">病歷號</div><div className="field-value">{p.MedicalRecordNo || '—'}</div></div>
+            <div className="modal-field"><div className="field-label">身分證</div><div className="field-value">{p.IdNo || '—'}</div></div>
             <div className="modal-field"><div className="field-label">生日</div><div className="field-value">{p.BirthDate || '—'}</div></div>
             <div className="modal-field"><div className="field-label">科別</div><div className="field-value">{p.Department || '—'}</div></div>
           </div>
@@ -153,7 +155,8 @@ const FLAG_STYLE = makeFlagStyle(FILTER_BADGES)
 export default function WardTab() {
   const [filter, setFilter] = useState('all')          // 目前篩選的註記，'all' 為不篩選
   const [selectedBed, setSelectedBed] = useState(null) // 目前開啟詳情的床位，null 為未開啟
-  const stats = useMemo(() => getStats(MOCK_DATA.Beds), []) // 統計面板數值（總床/住院/各類別計數）
+  const { beds } = useWard('W52')                       // 後端聚合看板（真實在床＋自建臨床），定時輪詢
+  const stats = useMemo(() => getStats(beds), [beds])   // 統計面板數值（總床/住院/各類別計數）
   // 點同一篩選鈕再按一次可取消（回到 all）；'all' 鈕本身不切回
   const handleFilter = f => setFilter(prev => (prev === f && f !== 'all') ? 'all' : f)
 
@@ -200,7 +203,7 @@ export default function WardTab() {
             </div>
 
             {/* 逐床渲染床卡；不符篩選者變暗，非空床點擊開啟詳情 modal */}
-            {MOCK_DATA.Beds.map(bed => (
+            {beds.map(bed => (
               <BedCard key={bed.BedId} bed={bed} filteredOut={!isBedVisible(bed, filter)}
                 onClick={bed.Status !== 'empty' ? () => setSelectedBed(bed) : undefined} />
             ))}

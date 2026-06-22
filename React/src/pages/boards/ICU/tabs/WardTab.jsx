@@ -5,7 +5,8 @@
 //   - 病人註記：以 FlagDot（SVG 形狀旗標）呈現 DNR、跌倒、隔離、管路等屬性。
 //   - 底部統計面板 + 下方 filter-bar 可依屬性篩選床位（被篩掉者加 filtered-out 變淡）。
 import { useState, useMemo } from 'react'
-import MOCK_DATA, { getStats } from '../mockData'
+import { getStats } from '../mockData'                          // 統計函式（mockData 保留備援）
+import { useIcuWard } from '../../../../hooks/useIcuWard'        // 病室動態：Board_bed(AICU/CICU) 真實在床＋自建臨床，輪詢
 import { FlagDot, makeFlagStyle } from '../../../../utils/flagShapes'
 
 // 病況等級顯示對照：資料值 → 畫面徽章文字（穩定=C、重症=B、危急=A）
@@ -112,6 +113,7 @@ function BedModal({ bed, onClose }) {
           <div className="modal-row"><div className="modal-field full"><div className="field-label">診斷</div><div className="field-value diagnosis">{p.diagnosis}</div></div></div>
           <div className="modal-row">
             <div className="modal-field"><div className="field-label">病歷號</div><div className="field-value">{p.medRecord || '—'}</div></div>
+            <div className="modal-field"><div className="field-label">身分證</div><div className="field-value">{p.idNo || '—'}</div></div>
             <div className="modal-field"><div className="field-label">生日</div><div className="field-value">{p.birthDate || '—'}</div></div>
             <div className="modal-field"><div className="field-label">科別</div><div className="field-value">{p.department || '—'}</div></div>
           </div>
@@ -158,13 +160,14 @@ const FLAG_STYLE = makeFlagStyle(FILTER_BADGES.map(x => x.f))
 export default function WardTab() {
   const [filter, setFilter] = useState('all')          // 目前篩選條件
   const [selectedBed, setSelectedBed] = useState(null)  // 目前開啟詳情的床（null=未開）
-  const stats = useMemo(() => getStats(MOCK_DATA.beds), []) // 統計面板數據（資料固定，只算一次）
+  const { beds } = useIcuWard('ICU')                    // 後端聚合看板（真實在床＋自建臨床），定時輪詢
+  const stats = useMemo(() => getStats(beds), [beds])   // 統計面板數據
   // 點同一篩選鍵再按 → 取消回到 all；「全部」不可被反選
   const handleFilter = f => setFilter(prev => (prev === f && f !== 'all') ? 'all' : f)
 
   // 依樓層分組（ICU 分 4F、3F 兩區）
-  const f4beds = MOCK_DATA.beds.filter(b => b.floor === 4)
-  const f3beds = MOCK_DATA.beds.filter(b => b.floor === 3)
+  const f4beds = beds.filter(b => b.floor === 4)
+  const f3beds = beds.filter(b => b.floor === 3)
 
   return (
     <>

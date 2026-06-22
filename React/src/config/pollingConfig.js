@@ -5,7 +5,7 @@
 
 export const MARQUEE_MS = 30000   // 跑馬燈：30s
 export const BULLETIN_MS = 60000  // 佈告欄/公告：60s（變動少）
+export const CENSUS_MS = 20000    // 病床動態 / 病人註記：15–30s
 
 // 未來模組建議值（待對應功能開發時啟用）：
-// export const CENSUS_MS = 20000   // 病床動態 / 病人註記：15–30s
 // export const TRIAGE_MS = 12000   // 急診檢傷 / 大量傷患：10–15s

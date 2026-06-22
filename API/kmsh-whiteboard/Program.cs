@@ -20,6 +20,7 @@ builder.Services.AddSingleton<DbConnectionFactory>();
 builder.Services.AddScoped<ITextRepository, TextRepository>();
 builder.Services.AddScoped<IContactRepository, ContactRepository>();
 builder.Services.AddScoped<IEvacRepository, EvacRepository>();
+builder.Services.AddScoped<IWardRepository, WardRepository>();
 builder.Services.AddEndpointsApiExplorer();
 // ── Swagger / OpenAPI 文件（含 XML 註解）───────────────────────
 builder.Services.AddSwaggerGen(c =>
@@ -77,6 +78,27 @@ builder.Services
     .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
     {
         ServerCertificateCustomValidationCallback = kmuhOptions.IgnoreSslErrors
+            ? HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+            : null
+    });
+
+// ── 院方 Board API（住院在床 Board_bed / 急診 Board_ER；主機 10.20.111.84:8088）──
+builder.Services.Configure<BoardApiOptions>(
+    builder.Configuration.GetSection(BoardApiOptions.Section));
+
+var boardOptions = builder.Configuration
+    .GetSection(BoardApiOptions.Section)
+    .Get<BoardApiOptions>() ?? new BoardApiOptions();
+
+builder.Services
+    .AddHttpClient<IBoardApiService, BoardApiService>(client =>
+    {
+        if (!string.IsNullOrWhiteSpace(boardOptions.BaseUrl))
+            client.BaseAddress = new Uri(boardOptions.BaseUrl.TrimEnd('/') + "/");
+    })
+    .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+    {
+        ServerCertificateCustomValidationCallback = boardOptions.IgnoreSslErrors
             ? HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
             : null
     });

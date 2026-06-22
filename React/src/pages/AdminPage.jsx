@@ -14,6 +14,7 @@ import * as marqueeApi from '../services/marqueeApi'
 import * as textApi from '../services/textApi'
 import * as contactApi from '../services/contactApi'
 import * as evacuationApi from '../services/evacuationApi'
+import * as wardApi from '../services/wardApi'
 
 // 單位代碼 → 顯示名稱對照（用於各 Manager 的單位切換 tab）
 const UNIT_LABELS = { W52: 'W52 病房', ICU: 'ICU 加護', OR: 'OR 手術室', ER: 'ER 急診室' }
@@ -40,6 +41,12 @@ const MENU_CONFIG = [
     id: 'evacuation', label: '避難圖',
     children: [
       { id: 'evac-image', label: '圖片管理', available: true  },  // Phase 3
+    ]
+  },
+  {
+    id: 'ward', label: '病室動態',
+    children: [
+      { id: 'ward-ext', label: '病人臨床補充', available: true  },  // 補 Board_bed 不足欄位
     ]
   },
 ]
@@ -849,6 +856,169 @@ function EvacManager({ units }) {
   )
 }
 
+// ── 病室動態：病人臨床補充層（WardPatientExt）─────────────────────
+// 補 Board_bed 不足的臨床欄位（科別/主治/責護/診斷/病況/狀態/各註記旗標/管路…），
+// 以病歷號(Hhisnum)識別病人；看板以病歷號把本表疊到 Board_bed 真實在床病人上。
+const emptyWardExtForm = {
+  hhisnum: '', department: '', attendingDoctor: '', primaryNurse: '', diagnosis: '',
+  condition: '', bedStatus: '', admissionDate: '', isolation: '', dependency: '', transport: '', notes: '',
+  dnr: false, fallRisk: false, confidential: false, noTreatment: false, npo: false, allergy: false,
+  rrt: false, chemo: false, oxygen: false, renal: false,
+  portCath: false, dlvc: false, foley: false, cvc: false, cardiacCath: false,
+  ventilator: false, crrt: false, ng: false,
+  surgery: false, exam: false, consult: false, isActive: true,
+}
+// 旗標欄位（key→中文），以 checkbox 呈現
+const WARD_BOOLS = [
+  ['dnr','DNR'],['fallRisk','高危跌'],['confidential','保密'],['noTreatment','禁治療'],['npo','禁食'],
+  ['allergy','過敏'],['rrt','RRT'],['chemo','化療'],['oxygen','氧氣'],['renal','洗腎'],
+  ['portCath','人工血管'],['dlvc','雙腔靜脈'],['foley','導尿管'],['cvc','中心靜脈'],['cardiacCath','心導管'],
+  ['ventilator','呼吸器'],['crrt','CRRT'],['ng','鼻胃管'],
+  ['surgery','手術'],['exam','檢查'],['consult','會診'],
+]
+const COND_OPTS = ['', '穩定', '重症', '危急']
+const BEDSTATUS_OPTS = ['', 'occupied', 'isolation', 'transfer', 'transfer-in', 'discharge']
+const ISO_OPTS = ['', '無', '接觸隔離', '飛沫隔離', '空氣隔離']
+const DEP_OPTS = ['', 'L1', 'L2', 'L3']
+const TRANSPORT_OPTS = ['', '輪椅', '推床']
+
+// 單一單位的臨床補充 CRUD（讀取 includeAll=true，後台含停用）
+function WardExtSection({ unitCode }) {
+  const [list, setList]     = useState([])
+  const [occ, setOcc]       = useState({})   // 病歷號 → 目前床號（在床對照）
+  const [form, setForm]     = useState(emptyWardExtForm)
+  const [editId, setEditId] = useState(null)
+  const [msg, setMsg]       = useState({ text: '', error: false })
+
+  const showMsg = (text, error = false) => { setMsg({ text, error }); setTimeout(() => setMsg({ text: '', error: false }), 3000) }
+  const load = useCallback(async () => {
+    try {
+      const [rows, occList] = await Promise.all([
+        wardApi.getExt(unitCode, true),
+        wardApi.getOccupancy(unitCode).catch(() => []),   // 在床對照失敗不影響清單
+      ])
+      setList(rows ?? [])
+      const m = {}; (occList ?? []).forEach(o => { if (o.hhisnum) m[o.hhisnum.trim()] = o.bed })
+      setOcc(m)
+    } catch { showMsg('讀取失敗', true) }
+  }, [unitCode])
+  useEffect(() => { load() }, [load])
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    const payload = { ...form, unitCode }
+    try {
+      if (editId) { await wardApi.updateExt(editId, payload); showMsg('修改成功') }
+      else        { await wardApi.createExt(payload); showMsg('新增成功') }
+      setForm(emptyWardExtForm); setEditId(null); load()
+    } catch { showMsg('操作失敗（病歷號是否重複？）', true) }
+  }
+  const handleEdit = item => {
+    setEditId(item.id)
+    setForm({
+      hhisnum: item.hhisnum ?? '', department: item.department ?? '', attendingDoctor: item.attendingDoctor ?? '',
+      primaryNurse: item.primaryNurse ?? '', diagnosis: item.diagnosis ?? '', condition: item.condition ?? '',
+      bedStatus: item.bedStatus ?? '', admissionDate: item.admissionDate ?? '', isolation: item.isolation ?? '',
+      dependency: item.dependency ?? '', transport: item.transport ?? '', notes: item.notes ?? '',
+      dnr: !!item.dnr, fallRisk: !!item.fallRisk, confidential: !!item.confidential, noTreatment: !!item.noTreatment,
+      npo: !!item.npo, allergy: !!item.allergy, rrt: !!item.rrt, chemo: !!item.chemo, oxygen: !!item.oxygen,
+      renal: !!item.renal, portCath: !!item.portCath, dlvc: !!item.dlvc, foley: !!item.foley, cvc: !!item.cvc,
+      cardiacCath: !!item.cardiacCath, ventilator: !!item.ventilator, crrt: !!item.crrt, ng: !!item.ng,
+      surgery: !!item.surgery, exam: !!item.exam, consult: !!item.consult,
+      isActive: !!item.isActive,
+    })
+  }
+  const handleDelete = async id => { if (!window.confirm('確定刪除？')) return; try { await wardApi.removeExt(id); showMsg('刪除成功'); load() } catch { showMsg('刪除失敗', true) } }
+
+  const setF = (k, v) => setForm(f => ({ ...f, [k]: v }))
+
+  return (
+    <div>
+      {msg.text && <div style={{ ...s.msg, background: msg.error ? '#fee2e2' : '#d1fae5', color: msg.error ? '#991b1b' : '#065f46' }}>{msg.text}</div>}
+      <div style={s.formCard}>
+        <h4 style={s.formTitle}>{editId ? `修改臨床補充 (ID: ${editId})` : '新增臨床補充'}</h4>
+        <div style={{ fontSize: '12px', color: '#9ca3af', marginBottom: '10px' }}>
+          以「病歷號」對應 Board_bed 真實在床病人。基本（姓名/性別/生日/床）由院方 API 提供，此處只補臨床欄位。
+        </div>
+        <form onSubmit={handleSubmit}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0 16px' }}>
+            <div style={s.formRow}><label style={s.label}>病歷號 *</label><input style={s.input} value={form.hhisnum} required onChange={e => setF('hhisnum', e.target.value)} placeholder="19021524" /></div>
+            <div style={s.formRow}><label style={s.label}>科別</label><input style={s.input} value={form.department} onChange={e => setF('department', e.target.value)} /></div>
+            <div style={s.formRow}><label style={s.label}>主治醫師</label><input style={s.input} value={form.attendingDoctor} onChange={e => setF('attendingDoctor', e.target.value)} /></div>
+            <div style={s.formRow}><label style={s.label}>責任護理師</label><input style={s.input} value={form.primaryNurse} onChange={e => setF('primaryNurse', e.target.value)} /></div>
+            <div style={s.formRow}><label style={s.label}>入院日(MM/DD)</label><input style={s.input} value={form.admissionDate} onChange={e => setF('admissionDate', e.target.value)} placeholder="06/18" /></div>
+            <div style={s.formRow}><label style={s.label}>病況等級</label><select style={s.input} value={form.condition} onChange={e => setF('condition', e.target.value)}>{COND_OPTS.map(o => <option key={o} value={o}>{o || '（無）'}</option>)}</select></div>
+            <div style={s.formRow}><label style={s.label}>床位狀態</label><select style={s.input} value={form.bedStatus} onChange={e => setF('bedStatus', e.target.value)}>{BEDSTATUS_OPTS.map(o => <option key={o} value={o}>{o || '（占床 occupied）'}</option>)}</select></div>
+            <div style={s.formRow}><label style={s.label}>隔離</label><select style={s.input} value={form.isolation} onChange={e => setF('isolation', e.target.value)}>{ISO_OPTS.map(o => <option key={o} value={o}>{o || '（無）'}</option>)}</select></div>
+            <div style={s.formRow}><label style={s.label}>運送</label><select style={s.input} value={form.transport} onChange={e => setF('transport', e.target.value)}>{TRANSPORT_OPTS.map(o => <option key={o} value={o}>{o || '（無）'}</option>)}</select></div>
+            <div style={s.formRow}><label style={s.label}>依賴度</label><select style={s.input} value={form.dependency} onChange={e => setF('dependency', e.target.value)}>{DEP_OPTS.map(o => <option key={o} value={o}>{o || '（無）'}</option>)}</select></div>
+          </div>
+          <div style={s.formRow}><label style={s.label}>診斷</label><input style={s.input} value={form.diagnosis} onChange={e => setF('diagnosis', e.target.value)} /></div>
+          <div style={s.formRow}><label style={s.label}>備註</label><textarea style={{ ...s.input, height: '52px', resize: 'vertical' }} value={form.notes} onChange={e => setF('notes', e.target.value)} /></div>
+          <label style={s.label}>註記旗標</label>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px 16px', margin: '4px 0 12px' }}>
+            {WARD_BOOLS.map(([k, lbl]) => (
+              <label key={k} style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px', cursor: 'pointer' }}>
+                <input type="checkbox" checked={form[k]} onChange={e => setF(k, e.target.checked)} />{lbl}
+              </label>
+            ))}
+          </div>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '14px', cursor: 'pointer' }}>
+            <input type="checkbox" checked={form.isActive} onChange={e => setF('isActive', e.target.checked)} />啟用
+          </label>
+          <div style={{ marginTop: '14px', display: 'flex', gap: '8px' }}>
+            <button type="submit" style={s.btnPrimary}>{editId ? '儲存修改' : '+ 新增'}</button>
+            {editId && <button type="button" style={s.btnSecondary} onClick={() => { setForm(emptyWardExtForm); setEditId(null) }}>取消</button>}
+          </div>
+        </form>
+      </div>
+      <div style={s.listCard}>
+        <h4 style={s.formTitle}>臨床補充清單（共 {list.length} 筆）</h4>
+        {list.length === 0 ? <p style={{ color: '#9ca3af', fontSize: '14px' }}>尚無資料，請新增（病歷號需對應 Board_bed 在床病人才會顯示在白板）</p> : (
+          <table style={s.table}>
+            <thead><tr>{['病歷號','床號','科別','主治','責護','病況','狀態','旗標','啟用','操作'].map(h => <th key={h} style={s.th}>{h}</th>)}</tr></thead>
+            <tbody>
+              {list.map((item, i) => {
+                const flags = WARD_BOOLS.filter(([k]) => item[k]).map(([, l]) => l)
+                  .concat(item.isolation && item.isolation !== '無' ? ['隔離'] : [])
+                return (
+                  <tr key={item.id} style={{ background: editId === item.id ? '#fef9c3' : i % 2 ? '#f9fafb' : '#fff' }}>
+                    <td style={s.td}>{item.hhisnum}</td>
+                    <td style={s.td}>{occ[item.hhisnum?.trim()]
+                      ? <span style={{ ...s.badge, background: '#dbeafe', color: '#1e40af' }}>{occ[item.hhisnum.trim()]}</span>
+                      : <span style={{ color: '#9ca3af', fontSize: '12px' }}>已離床</span>}</td>
+                    <td style={s.td}>{item.department || '—'}</td>
+                    <td style={s.td}>{item.attendingDoctor || '—'}</td>
+                    <td style={s.td}>{item.primaryNurse || '—'}</td>
+                    <td style={s.td}>{item.condition || '—'}</td>
+                    <td style={s.td}>{item.bedStatus || 'occupied'}</td>
+                    <td style={{ ...s.td, maxWidth: '220px', fontSize: '12px' }}>{flags.join('、') || '—'}</td>
+                    <td style={s.td}><span style={{ ...s.badge, background: item.isActive ? '#d1fae5' : '#f3f4f6', color: item.isActive ? '#065f46' : '#6b7280' }}>{item.isActive ? '✓ 啟用' : '停用'}</span></td>
+                    <td style={s.td}><button style={s.btnEdit} onClick={() => handleEdit(item)}>編輯</button><button style={s.btnDel} onClick={() => handleDelete(item.id)}>刪除</button></td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// 病室動態臨床補充 Manager（含單位切換）
+function WardExtManager({ units }) {
+  const [activeUnit, setActiveUnit] = useState(units[0] ?? 'W52')
+  return (
+    <div>
+      <div style={s.unitTabs}>
+        {units.map(u => <button key={u} style={{ ...s.unitTab, ...(activeUnit === u ? s.unitTabActive : {}) }} onClick={() => setActiveUnit(u)}>{UNIT_LABELS[u]}</button>)}
+      </div>
+      <WardExtSection key={activeUnit} unitCode={activeUnit} />
+    </div>
+  )
+}
+
 // 佔位元件（Phase 2/3 預留）
 function ComingSoon({ label }) {
   return (
@@ -939,6 +1109,7 @@ export default function AdminPage() {
       case 'duty-contact':   return <DutyManager units={units} />
       case 'common-contact': return <CommonManager units={units} />
       case 'evac-image':     return <EvacManager units={units} />
+      case 'ward-ext':       return <WardExtManager units={units} />
       // bulletin is now handled above
       // duty-contact and common-contact handled above
       case 'evac-image':    return <ComingSoon label="避難圖管理" />

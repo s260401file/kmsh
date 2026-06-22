@@ -1,0 +1,13 @@
+using kmsh_whiteboard.Models.Board;
+
+namespace kmsh_whiteboard.Services;
+
+/// <summary>
+/// 院方 Board API 代理介面（主機 http://10.20.111.84:8088）。
+/// 目前實作 Board_bed（住院在床清單）；Board_ER 之後可加。
+/// </summary>
+public interface IBoardApiService
+{
+    /// <summary>呼叫 Board_bed 取得指定病房（HNURSTA，如 W52 / AICU）的在床病人清單；字串已 trim。</summary>
+    Task<List<BoardBedItem>> GetBedListAsync(string ward, CancellationToken ct = default);
+}
