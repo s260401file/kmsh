@@ -49,10 +49,12 @@ tags: [kmsh, 技術, 資料庫]
 > 病人主檔同理：`PatientCensus.Source` + 合併鍵 `(UnitCode,Hbed)`，HIS 通了人工列自動退居備援。
 > 註記種子預設值見 DDL 內 `MERGE`（待院方逐項確認後微調）。
 
+> ⚠ **欄位級合併（因應「有欄位但空值」，院方 2026-06-22）**：整列 `Source` 不足以處理「同病人部分欄位有值、部分空值」。改採**逐欄合併**：`顯示值 = HIS 值非空白 ? HIS : 自建`。所有 `HIS_THEN_MANUAL`／`MarkerTypeDef.SourceMode` 的「HIS 有」判定一律含 **`非 null 且非空字串`**（空值不可蓋掉自建值）。病人核心欄位另以 `FieldSourceMap`（欄位→來源模式）驅動；確認空值的欄位設 `MANUAL_ONLY`。設計與待填清單見 [[欄位資料實況]]。
+
 ## 索引/鍵重點
 - `PatientCensus`：唯一過濾索引 `(UnitCode,Hbed) WHERE IsActive=1`（一床一活躍）；`Hhisnum` 索引。
 - `PatientMarker`：FK → `MarkerTypeDef.Code`；`Hhisnum`/`(UnitCode,Hbed)`/`MarkerCode` 索引。
 - `NurseBedAssignment`：唯一鍵 `(UnitCode,DutyDate,ShiftType,Hbed)`。
 - 各日期型表：`(UnitCode,DutyDate[,ShiftType])` 索引。
 
-相關：[[系統架構]]、[[後台總覽]]、[[護理排班]]、[[資料項對照表]]、[[_院方API總覽]]、[[HIS資料字典-可用資源]]、[[00-總覽]]
+相關：[[系統架構]]、[[後台總覽]]、[[護理排班]]、[[資料項對照表]]、[[W52病室動態-JSON與組裝]]、[[_院方API總覽]]、[[HIS資料字典-可用資源]]、[[00-總覽]]

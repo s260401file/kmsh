@@ -1,0 +1,20 @@
+---
+tags: [kmsh, 技術, ICU, 索引]
+---
+# ICU — JSON 設計索引
+
+> ICU 加護病房各功能的 JSON 設計（試作）。方法共通：後端聚合 BFF＋逐欄合併（HIS 非空優先，否則自建）＋快取＋詳情 lazy，見 [[ICU病室動態-JSON與組裝]]。
+> 來源/狀態依 [[資料項對照表]]、[[欄位資料實況]]；自建表 [[資料庫Schema]]。
+
+| 功能 | 文件 | 主要來源 | 現可上線 |
+|---|---|---|---|
+| 病室動態 | [[ICU病室動態-JSON與組裝]] | HIS 清單＋自建（管路/病況/主護） | 待 AMDR 開放/先自建 |
+| 抗生素 | [[抗生素-JSON]] | HIS `UD.UDORDER`（UDANTFLG） | 待開放 |
+| 管路 | [[管路-JSON]] | 自建（`PatientMarker` LINE）★核心 | ✅ 可自建 |
+| 手術資訊 | [[手術資訊-JSON]] | HIS `OR.OPORDER` | 待開放 |
+| 檢查／會診 | [[檢查會診-JSON]] | HIS `OR.ORDER`/`RESULT`（會診待確認） | 待開放 |
+
+## 其餘 ICU 待辦（多含於病室動態）
+- 首頁主治醫師、會診醫師區（自建 `ConsultDutyDaily`）、3F/4F 分頁（`floor`）、策略病人（`PatientMarker` STRATEGIC）。見 [[ICU病室動態-JSON與組裝]]、[[待辦清單]]。
+
+相關：[[ICU]] · [[資料庫Schema]] · [[00-總覽]]
