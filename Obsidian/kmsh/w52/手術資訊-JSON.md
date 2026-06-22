@@ -9,6 +9,12 @@ tags: [kmsh, 技術, W52, 手術資訊, 試作]
 ## ⚠ 實測更新（2026-06-22）
 ✅ `OR.OPORDER` 核心**可用**（刀房/術式/主刀/助手/麻醉/狀態/來源/起始時間）；鍵＝**`ORHISNUM`**。⚠ NPO `ORNPODT/ORNPOTM` 異常、`ORDIAG`(診斷)/`OREMRFG`(急刀)/`ORBIO`(抗生素) 部分空。詳 [[欄位資料實況]]。
 
+## 名單來源（與 OR 板同源 OPORDER，篩選不同）
+手術資料同 `OR.OPORDER`（base SQL 見 [[OR手術動態-JSON與組裝]]），但**篩選對象不同**：
+- OR 板：以**刀房** ＋ `ORBGNDT >= 今日`。
+- 本頁（W52 手術頁）：以**該病房在床病人**的手術 → `OPORDER.ORHISNUM IN (W52 在床病人病歷號)`，日期可取前後數日 `ORBGNDT`。
+- 鍵 `ORHISNUM`；join `HPBASIC` 補基本；診斷 `ORDIAG` 部分空。6/22 實測 OPORDER 核心可用。
+
 ## 試作 JSON
 ```json
 {

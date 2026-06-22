@@ -8,6 +8,26 @@ tags: [kmsh, 技術, OR, 手術動態, 試作]
 ## ⚠ 實測更新（2026-06-22）
 ✅ `OR.OPORDER` 核心**可用**（刀房 OROPROOM/術式 OROPNM1/主刀 ORDOCNM/助手/麻醉/狀態 ORSTATUS/來源 ORCASETP/起始時間 ORBGNDT-TM）；鍵＝**`ORHISNUM`**。⚠ NPO `ORNPODT/ORNPOTM` 異常、`ORDIAG`/`OREMRFG`/`ORBIO` 部分空。刷手/流動/特殊交班仍自建。詳 [[欄位資料實況]]。
 
+## OPORDER 名單來源（base SQL，★含日期過濾）
+OR 名單＝`OR.OPORDER` 以 **`ORBGNDT`(預定手術日) ＋ `ORHISNUM`(病歷號)** 兜出，**必加日期過濾排除過去刀單**（OPORDER 累積所有歷史刀單，不濾會全撈）：
+```sql
+SELECT
+    op.OROPROOM AS 刀房, op.ORHISNUM AS 病歷號,
+    b.HNAMEC, b.HSEX, b.HBIRTHDT,
+    op.OROPNM1  AS 術式, op.ORDOCNM AS 主刀,
+    op.ORADRNM1, op.ORADRNM2, op.ORADRNM3, op.ORADRNM4, op.ORADRNM5,
+    op.OROPAMED AS 麻醉, op.ORCASETP AS 來源, op.ORSTATUS AS 狀態,
+    op.ORBGNDT, op.ORBGNTM AS 排定, op.ORDIAG AS 診斷   -- 診斷部分空
+FROM [DB2_DUMP].[OR].[OPORDER_4A0] op
+LEFT JOIN [DB2_DUMP].[AM].[HPBASIC_4A0] b ON op.ORHISNUM = b.HHISNUM
+WHERE op.ORBGNDT >= CONVERT(char(8), GETDATE(), 112)   -- ★排除當日以前（格式以實際 ORBGNDT 為準）
+ORDER BY op.OROPROOM, op.ORBGNTM;
+```
+- ★ **日期過濾必加**：`ORBGNDT >= 今日`（排除過去）；若只要「純今日刀表」改 `= 今日`。
+- `ORBGNDT` 型別/格式需對齊（字元 `yyyymmdd` 用上式；日期型改 `CAST(GETDATE() AS date)`）。
+- 一手術若多列 → 用 `ROW_NUMBER()` 取最新去重（**勿用 MAX 詞典序**，會取錯）。
+- 取消刀（ORSTATUS=取消）依需求決定顯示與否；科別/實際進出刀時間另議（見下）。
+
 ## 一、試作 JSON（貼合前端 `mockData`，PascalCase）
 ```json
 {
@@ -52,7 +72,7 @@ tags: [kmsh, 技術, OR, 手術動態, 試作]
 | 隔離/測謀（由病房帶入） | 自建 | `PatientMarker`/`OrSpecialHandover` 旗標 | ③→自建 |
 
 ## 三、API 組合策略（OR 特有）
-- **OPORDER 一次 list query**：以「今日＋各刀房」一次撈當日手術（7 間，量小）→ 不需逐房呼叫，效能佳。
+- **OPORDER 一次 list query**：以 **`ORBGNDT >= 今日`**（排除過去刀單）一次撈，依刀房排列（7 間，量小）→ 不需逐房呼叫，效能佳。base SQL 見上節。
 - 後端聚合 `GET /api/Board/or`：`OR.OPORDER`（手術）＋ 自建（`OrShiftAssignment` 派班、`OrSpecialHandover` 交班）→ 依 RoomId 合併。
 - 派班/交班屬操作性、與 HIS 無相依 → 可先自建上線；OPORDER 開放後再疊手術資訊。
 - 統計（急/門/住刀、進行中/準備/完成）由前端就回傳資料彙算（現 `getStats`）。
@@ -61,7 +81,7 @@ tags: [kmsh, 技術, OR, 手術動態, 試作]
 ```mermaid
 flowchart TD
   subgraph HIS["高榮 HIS（開放後）"]
-    OP["OR.OPORDER 當日手術<br/>刀房/術式/主刀/麻醉/狀態/時間/來源"]
+    OP["OR.OPORDER（ORBGNDT>=今日）<br/>刀房/術式/主刀/麻醉/狀態/時間/來源 ＋ join HPBASIC"]
   end
   subgraph SELF["自建後台 Whiteboard DB"]
     OSA["OrShiftAssignment 刷手/流動派班"]

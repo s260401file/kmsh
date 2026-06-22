@@ -7,7 +7,7 @@ tags: [kmsh, 技術, ICU, 病室動態, 試作]
 > 注意：ICU `mockData` 採 **camelCase**（`patient.name`/`doctor`/`ventilator`…），與 W52/OR/ER 的 PascalCase 不同，JSON 須對應。
 
 ## ⚠ 實測更新（2026-06-22）
-✅ 確認可用：床位 `AM.HLOC`、科別 `HSECTION`、**主治 `HDOCTOR`(HDOCNAMC/HMDTYPE)**、診斷 `HDIAGNOS`。⛔ 空值→自建：DNR、保密、安寧、血型/身高體重、轉院、候床(HWBDDT 異常)。管路本就自建（護理紀錄未開放）。抗生素旗標 `UDANTFLG` 空→改藥名比對（見 [[抗生素-JSON]]）。詳 [[欄位資料實況]]。
+✅ **在床清單＋基本 ← [[Board_bed]] API**（病房參數化，**ICU HNURSTA=`AICU`**；或直接對 DB2_DUMP 同支 SQL 查）；DB2_DUMP 補：科別 `HSECTION`、**主治 `HDOCTOR`(HDOCNAMC/HMDTYPE)**、診斷 `HDIAGNOS`。⛔ 空值→自建：DNR、保密、安寧、血型/身高體重、轉院、候床(HWBDDT 異常)。管路本就自建（護理紀錄未開放）。抗生素旗標 `UDANTFLG` 空→改藥名比對（見 [[抗生素-JSON]]）。詳 [[欄位資料實況]]。
 
 ## 一、試作 JSON（貼合前端 `mockData`，camelCase）
 ```json

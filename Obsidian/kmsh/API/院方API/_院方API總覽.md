@@ -6,11 +6,25 @@ tags: [kmsh, API, 院方]
 院方（民生醫院 HIS）提供的唯讀資料來源。看板透過自建 .NET API 轉接後給前端（見 [[系統架構]]）。
 
 ## 已知端點（真正可用）
-| 端點 | 用途 | 認證 | 筆記 |
+| 端點 | 用途 | 認證/參數 | 筆記 |
 |------|------|------|------|
-| `POST /api/v1/Board_ER` | 急診在室病患 | `x-api-key` | [[Board_ER]]（唯一實測過、且資料可能停更）|
+| `POST /api/v1/Board_ER` | 急診在室病患 | `x-api-key` | [[Board_ER]]（資料可能停更）|
+| `POST /api/v1/Board_bed` | **住院在床清單＋病人基本** | body `{"病房":"W52"}` | [[Board_bed]]（2026-06 確認有真實資料）★ |
 
 主機：`http://10.20.111.84:8088`
+
+## Board_bed（住院在床清單）— 2026-06 確認可用
+`POST /api/v1/Board_bed`，body `{"病房":"W52"}`（病房參數化，可查各住院病房）。回 `success` + `data[]`，**每筆＝一床在床病人**，欄位（皆**有真實資料**）：
+| 欄位 | 說明 | 對應 HIS |
+|---|---|---|
+| 病歷號 | 補空白，需 trim | HHISNUM |
+| 姓名 | **全形補空白**，需 trim | HPBASIC.HNAMEC |
+| 身分證 | ⚠**個資、白板不可顯示**（僅後端比對用）| HPBASIC.HIDNO |
+| 出生年月日 | `yyyy/MM/dd`，前端自算年齡 | HPBASIC.HBIRTHDT |
+| 性別 | M/F | HPBASIC.HSEX |
+| 病房 | 補空白，需 trim | HLOC.HNURSTA |
+| 床位 | 如 `006`（零補） | HLOC.HBED |
+> 提供「在床清單＋基本」；**不含**科別/主治/診斷/入院日/狀態/註記 → 那些另由備份庫 DB2_DUMP（科別/主治/診斷/預定出院 實測有值）或自建補。組裝見 [[W52病室動態-JSON與組裝]]。
 
 ## ⚠ 程式碼已對接、但欄位為「預留殼」（民生大部份無資料）
 > 重要：`API/` 的 `VghksApiService`（AMDRService/UDSPService/MAASService/LABService）已寫好多支端點與資料模型（`Ward/bed-list`、`Patient/er`·`/am`·`/allergy`·`/info`、`NonExSchList`、`Lab/urgent`），其中 `AmdrCase.patflag.hicmap` 帶有 **dnr/fall/iso/npo/activityMode/critical**、**nurseNo/nurseName（主責護理師）**、會診（`NonExSchList` chktype=CON）等欄位。
@@ -25,4 +39,5 @@ tags: [kmsh, API, 院方]
 - 回應偏慢（Board_ER ~8.7s）→ 看板輪詢需快取。
 
 ## 待確認
-其他單位（W52/ICU/OR）是否有對應 Board API？檢查/會診/手術/抗生素 端點？見 [[資料項對照表]]。
+- 住院病房已有 `Board_bed`（W52 實測✅）→ 確認 ICU/其他病房同支可查、OR 是否有對應 Board。
+- 是否有 **科別/主治/診斷/入院日/狀態** 的 Board 端點（目前這些靠備份庫 DB2_DUMP）？檢查/會診/手術/抗生素 端點？見 [[資料項對照表]]、[[欄位資料實況]]。
