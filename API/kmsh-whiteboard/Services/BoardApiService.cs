@@ -58,6 +58,58 @@ public class BoardApiService : IBoardApiService
         return list;
     }
 
+    public async Task<List<BoardErItem>> GetErListAsync(CancellationToken ct = default)
+    {
+        using var req = new HttpRequestMessage(HttpMethod.Post, "api/v1/Board_ER")
+        {
+            Content = JsonContent.Create(new { }),   // body {}
+        };
+        if (!string.IsNullOrWhiteSpace(_options.ApiKey))
+            req.Headers.TryAddWithoutValidation("x-api-key", _options.ApiKey);
+
+        _logger.LogInformation("呼叫 Board_ER");
+        var resp = await _http.SendAsync(req, ct);
+        resp.EnsureSuccessStatusCode();
+        var raw = await resp.Content.ReadAsStringAsync(ct);
+
+        var parsed = JsonSerializer.Deserialize<BoardErResponse>(raw, _json);
+        var list = parsed?.Data ?? new List<BoardErItem>();
+        foreach (var it in list)
+        {
+            it.Hhisnum = Trim(it.Hhisnum); it.Hnamec = Trim(it.Hnamec); it.Hidno = Trim(it.Hidno);
+            it.Hbirthdt = Trim(it.Hbirthdt); it.Hsex = Trim(it.Hsex); it.Doctor = Trim(it.Doctor);
+            it.DoctorCard = Trim(it.DoctorCard); it.Ward = Trim(it.Ward); it.Flow = Trim(it.Flow);
+            it.Triage = Trim(it.Triage); it.Category = Trim(it.Category); it.Hbed = Trim(it.Hbed);
+        }
+        return list;
+    }
+
+    public async Task<List<BoardOrItem>> GetOrListAsync(CancellationToken ct = default)
+    {
+        using var req = new HttpRequestMessage(HttpMethod.Post, "api/v1/Board_OR")
+        {
+            Content = JsonContent.Create(new { }),   // body {}
+        };
+        if (!string.IsNullOrWhiteSpace(_options.ApiKey))
+            req.Headers.TryAddWithoutValidation("x-api-key", _options.ApiKey);
+
+        _logger.LogInformation("呼叫 Board_OR");
+        var resp = await _http.SendAsync(req, ct);
+        resp.EnsureSuccessStatusCode();
+        var raw = await resp.Content.ReadAsStringAsync(ct);
+
+        var parsed = JsonSerializer.Deserialize<BoardOrResponse>(raw, _json);
+        var list = parsed?.Data ?? new List<BoardOrItem>();
+        foreach (var it in list)
+        {
+            it.Room = Trim(it.Room); it.Hhisnum = Trim(it.Hhisnum); it.Hnamec = Trim(it.Hnamec);
+            it.Hsex = Trim(it.Hsex); it.Hbirthdt = Trim(it.Hbirthdt); it.Surgery = Trim(it.Surgery);
+            it.Doctor = Trim(it.Doctor); it.Anes = Trim(it.Anes); it.Source = Trim(it.Source);
+            it.OpDate = Trim(it.OpDate); it.OpTime = Trim(it.OpTime); it.Diagnosis = Trim(it.Diagnosis);
+        }
+        return list;
+    }
+
     /// <summary>去除前後半形與全形空白。</summary>
     private static string? Trim(string? s)
         => string.IsNullOrEmpty(s) ? s : s.Trim().Trim('　');

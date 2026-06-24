@@ -39,5 +39,25 @@ public class WardPatientExtUpsertRequest
     public bool Exam { get; set; }
     public bool Consult { get; set; }
     public string? Notes { get; set; }
+    // ── ER 專屬狀態 ──
+    public bool Observation { get; set; }
+    public bool Awaiting { get; set; }
+    public string? AwaitingType { get; set; }
+    public bool TransferIn { get; set; }
+    public bool TransferOut { get; set; }
+    public string? TransferHospital { get; set; }
+    public bool Admitted { get; set; }
+    public string? AdmBedNo { get; set; }
+    public bool Aad { get; set; }
+    public bool Mbd { get; set; }
+    public bool Deceased { get; set; }
+    public string? ArrivalDate { get; set; }
+    public string? ArrivalTime { get; set; }
+    // ── OR 專屬 ──
+    public string? ScrubNurse { get; set; }
+    public string? CircNurse { get; set; }
+    public string? SurgeryStatus { get; set; }
+    public string? StartTime { get; set; }
+    public string? EndTime { get; set; }
     public bool IsActive { get; set; } = true;
 }

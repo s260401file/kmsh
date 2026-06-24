@@ -1,10 +1,10 @@
 // WardTab：OR 手術室站「刀房狀態地圖」分頁
-// 以卡片地圖呈現 7 間刀房（OR-01～03、OR-05～08，已移除 OR-04）的即時狀態，
-// 每張卡片顯示術式、主刀醫師、麻醉、手術狀態、來源（急診/門診/住院刀）等。
-// 右側為手術統計面板，下方為來源/狀態篩選列，點卡片可開啟病患詳情 Modal。
-// 資料來源為 mockData（假資料，待接 API）。OR 站病患標記維持中文字（非 SVG 形狀）。
+// 以卡片地圖呈現 7 間刀房（OR-01～03、OR-05～08，已移除 OR-04）的今日手術狀態，
+// 每張卡片顯示今日「進行中/首台」手術＋「今日 N 台」，點卡片開啟 Modal 看今日全部台次。
+// 資料來源：後端 /api/Board/or（自建刀房主檔 ＋ Board_OR 今日排程 ＋ overlay；免 F5 輪詢）。
 import { useState, useMemo } from 'react'
-import MOCK_DATA, { getStats } from '../mockData'
+import { getStats } from '../mockData'
+import { useOrWard } from '../../../../hooks/useOrWard'
 
 // 依手術來源回傳對應的 CSS class（急診/門診/住院刀）
 function sourceClass(source) {
@@ -44,7 +44,7 @@ function calcDuration(startTime, endTime) {
   return elapsed > 0 ? `${Math.floor(elapsed / 60)}h ${elapsed % 60}m（進行中）` : '—'
 }
 
-// 單一刀房卡片：空房顯示房號與「空房」字樣；有病患則顯示來源/狀態/病患/術式/主刀
+// 單一刀房卡片：空房顯示房號與「空房」；有手術則顯示來源/狀態/今日台數/病患/術式/主刀
 function RoomCard({ room, filteredOut, onClick }) {
   if (room.Status === 'empty') {
     return (
@@ -55,6 +55,7 @@ function RoomCard({ room, filteredOut, onClick }) {
     )
   }
   const p = room.Patient
+  const status = p.SurgeryStatus || '排程'
   return (
     <div
       className={`or-card ${room.Status} ${sourceClass(p.SurgerySource)}${filteredOut ? ' filtered-out' : ''}`}
@@ -62,22 +63,27 @@ function RoomCard({ room, filteredOut, onClick }) {
     >
       <div className="card-row1">
         <span className="room-num">{room.RoomId}</span>
-        <span className={`badge badge-${p.SurgerySource}`}>{p.SurgerySource}</span>
-        <span className={`badge badge-${p.SurgeryStatus}`}>{p.SurgeryStatus}</span>
+        {p.SurgerySource && <span className={`badge badge-${p.SurgerySource}`}>{p.SurgerySource}</span>}
+        <span className={`badge badge-${status}`}>{status}</span>
+        {room.TodayCount > 1 && <span className="badge badge-count">今日 {room.TodayCount} 台</span>}
       </div>
       <div className="card-row2">
         <span className={`patient-name ${p.Gender === 'M' ? 'gender-m' : 'gender-f'}`}>{p.PatientName}</span>
-        <span className="patient-basic">{p.Gender}/{p.Age}</span>
+        <span className="patient-basic">{p.Gender}/{p.Age ?? '—'}　{p.ScheduledTime || ''}</span>
       </div>
       <div className="card-row3">{p.SurgeryName}</div>
-      <div className="card-row4">術：{p.Doctor}</div>
+      <div className="card-row4">術：{p.Doctor || '—'}{p.AnesType ? `　麻：${p.AnesType}` : ''}</div>
     </div>
   )
 }
 
-// 點擊刀房卡片後彈出的病患詳情視窗（診斷、術式、派班、麻醉、時間、備註等）
+// 點擊刀房卡片後彈出的病患詳情視窗（今日台次清單可切換；顯示診斷、術式、派班、麻醉、時間、備註）
 function RoomModal({ room, onClose }) {
-  const p = room.Patient
+  const list = room.Surgeries?.length ? room.Surgeries : (room.Patient ? [room.Patient] : [])
+  const initIdx = Math.max(0, list.findIndex(s => s.SurgeryStatus === '手術中'))
+  const [idx, setIdx] = useState(initIdx < 0 ? 0 : initIdx)
+  const p = list[idx] || room.Patient
+  const status = p.SurgeryStatus || '排程'
   const duration = calcDuration(p.StartTime, p.EndTime)
   return (
     <div className="modal-overlay show" onClick={e => e.target === e.currentTarget && onClose()}>
@@ -86,31 +92,44 @@ function RoomModal({ room, onClose }) {
           <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', flexWrap: 'wrap' }}>
             <span className="modal-room-id">{room.RoomId}</span>
             <span className="modal-patient">{p.PatientName}</span>
-            <span className="modal-basic">{p.Gender === 'M' ? '男' : '女'} / {p.Age}歲</span>
+            <span className="modal-basic">{p.Gender === 'M' ? '男' : '女'} / {p.Age ?? '—'}歲</span>
             <div className="modal-badges">
-              <span className={`badge badge-${p.SurgerySource}`}>{p.SurgerySource}</span>
-              <span className={`badge badge-${p.SurgeryStatus}`}>{p.SurgeryStatus}</span>
+              {p.SurgerySource && <span className={`badge badge-${p.SurgerySource}`}>{p.SurgerySource}</span>}
+              <span className={`badge badge-${status}`}>{status}</span>
             </div>
           </div>
           <button className="modal-close" onClick={onClose}>✕</button>
         </div>
+
+        {/* 今日台次清單（多台時可切換） */}
+        {list.length > 1 && (
+          <div className="or-today-list">
+            <span className="or-today-label">今日 {list.length} 台：</span>
+            {list.map((s, i) => (
+              <button key={i} className={`or-today-item${i === idx ? ' active' : ''}`} onClick={() => setIdx(i)}>
+                {s.ScheduledTime || '—'} {s.PatientName}
+              </button>
+            ))}
+          </div>
+        )}
+
         <div className="modal-body">
-          <div className="modal-row"><div className="modal-field full"><div className="field-label">診斷</div><div className="field-value diagnosis">{p.Diagnosis}</div></div></div>
-          <div className="modal-row"><div className="modal-field full"><div className="field-label">術式</div><div className="field-value">{p.SurgeryName}</div></div></div>
+          <div className="modal-row"><div className="modal-field full"><div className="field-label">診斷</div><div className="field-value diagnosis">{p.Diagnosis || '—'}</div></div></div>
+          <div className="modal-row"><div className="modal-field full"><div className="field-label">術式</div><div className="field-value">{p.SurgeryName || '—'}</div></div></div>
           <div className="modal-row">
             <div className="modal-field"><div className="field-label">病歷號</div><div className="field-value">{p.MedRecord || '—'}</div></div>
             <div className="modal-field"><div className="field-label">生日</div><div className="field-value">{p.BirthDate || '—'}</div></div>
             <div className="modal-field"><div className="field-label">科別</div><div className="field-value">{p.Department || '—'}</div></div>
           </div>
           <div className="modal-row">
-            <div className="modal-field"><div className="field-label">手術醫師</div><div className="field-value">{p.Doctor}</div></div>
-            <div className="modal-field"><div className="field-label">刷手護理師</div><div className="field-value">{p.ScrubNurse}</div></div>
-            <div className="modal-field"><div className="field-label">流動護理師</div><div className="field-value">{p.CircNurse}</div></div>
+            <div className="modal-field"><div className="field-label">手術醫師</div><div className="field-value">{p.Doctor || '—'}</div></div>
+            <div className="modal-field"><div className="field-label">刷手護理師</div><div className="field-value">{p.ScrubNurse || '—'}</div></div>
+            <div className="modal-field"><div className="field-label">流動護理師</div><div className="field-value">{p.CircNurse || '—'}</div></div>
           </div>
           <div className="modal-row">
-            <div className="modal-field"><div className="field-label">麻醉方式</div><div className="field-value">{p.AnesType}</div></div>
-            <div className="modal-field"><div className="field-label">手術來源</div><div className="field-value">{p.SurgerySource}</div></div>
-            <div className="modal-field"><div className="field-label">手術狀態</div><div className="field-value">{p.SurgeryStatus}</div></div>
+            <div className="modal-field"><div className="field-label">麻醉方式</div><div className="field-value">{p.AnesType || '—'}</div></div>
+            <div className="modal-field"><div className="field-label">手術來源</div><div className="field-value">{p.SurgerySource || '—'}</div></div>
+            <div className="modal-field"><div className="field-label">手術狀態</div><div className="field-value">{status}</div></div>
           </div>
           <div className="modal-row">
             <div className="modal-field"><div className="field-label">排程時間</div><div className="field-value">{p.ScheduledTime || '—'}</div></div>
@@ -129,7 +148,8 @@ function RoomModal({ room, onClose }) {
 export default function WardTab() {
   const [filter, setFilter] = useState('all')          // 目前篩選條件（all/er/op/inp/busy/prep/done）
   const [selectedRoom, setSelectedRoom] = useState(null) // 目前開啟詳情的刀房
-  const stats = useMemo(() => getStats(MOCK_DATA.Rooms), []) // 由刀房資料彙總統計數字
+  const { rooms, count } = useOrWard('OR')              // 後端聚合看板（刀房主檔＋今日手術＋overlay）
+  const stats = useMemo(() => getStats(rooms), [rooms]) // 由刀房資料彙總統計數字
   // 點同一篩選鈕再點一次即取消（回到 all）；all 本身不切換
   const handleFilter = f => setFilter(prev => (prev === f && f !== 'all') ? 'all' : f)
 
@@ -137,9 +157,9 @@ export default function WardTab() {
     <>
       <main className="main-content">
         <div className="or-panel">
-          <div className="ward-title">▌ 手術室　共 7 間（OR-01～03、OR-05～08）</div>
+          <div className="ward-title">▌ 手術室　共 7 間（OR-01～03、OR-05～08）　今日 {count} 台</div>
           <div className="or-grid">
-            {MOCK_DATA.Rooms.map(room => (
+            {rooms.map(room => (
               <RoomCard
                 key={room.RoomId}
                 room={room}

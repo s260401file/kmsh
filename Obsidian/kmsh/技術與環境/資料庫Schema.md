@@ -36,6 +36,21 @@ tags: [kmsh, 技術, 資料庫]
 | 13 | `CareTeam` | 照護團隊 | 無 | 自建 |
 | 14 | `OrShiftAssignment` | OR 刷手/流動派班 | 高榮無 API | 自建 |
 
+## ★ 實際已落地（看板接真實資料，schema_v2~v6）
+> 上方 14 表為原始規劃；**實作收斂為「Board API 真實 ＋ 自建 overlay/主檔」的精簡模式**（W52/ICU/ER/OR 四板病室動態已上線）。下列為目前 `Whiteboard` DB 中**實際存在並使用**的自建表：
+
+| 表 | DDL | 鍵 | 用途 / 對應板 |
+|---|---|---|---|
+| `WardPatientExt` | schema_v2（+v3/v5/v6 ALTER）| `(UnitCode, Hhisnum)` | **臨床/狀態 overlay**：補 Board_bed/Board_ER/Board_OR 不足欄位，以病歷號 merge 到各板真實在床/在室/手術病人。四板共用，欄位逐版擴充。 |
+| `ErOnCallDoctor` | schema_v4 | `(UnitCode, DeptCode)` | ER 各科值班醫師（病室動態右下面板）。 |
+| `ErBed` | schema_v5 | `(UnitCode, BedId)` | **ER 床位主檔**：床碼＋分區＋平面圖座標(GridCol/GridRow)；鋪 ER 平面圖、顯示空床。床碼未建者→白板「不佔床病人」面板。 |
+| `OrRoom` | schema_v6 | `(UnitCode, RoomId)` | **OR 刀房主檔**：白板房號 RoomId(OR-01…) ↔ Board_OR 刀房代碼 ApiRoom(R1…) 對應與排序；鋪 OR 4×2 房卡。 |
+
+**`WardPatientExt` 欄位演進**：v2 基本臨床＋管路/旗標（W52）→ v3 加 `Ventilator/Crrt/Ng`（ICU）→ v5 加 ER 狀態 `Observation/Awaiting(+Type)/TransferIn/Out(+Hospital)/Admitted(+AdmBedNo)/Aad/Mbd/Deceased/ArrivalDate/ArrivalTime` → v6 加 OR `ScrubNurse/CircNurse/SurgeryStatus/StartTime/EndTime`。皆 `COL_LENGTH` 保護、可重跑。
+
+**對應端點**：`GET /api/Board/{w52|icu|er|or}`（聚合輸出）＋ overlay CRUD `/api/Board/{ext|bed|room|oncall}`。院方 API 見 [[Board_ER]]、[[Board_OR]]。
+> `OrShiftAssignment`/`OrSpecialHandover`（手術派班/特殊交班）等仍為**規劃中**（OR ScheduleTab/HandoverTab 尚 mock）。
+
 ## ★ 混合機制：`MarkerTypeDef.SourceMode`
 同一註記「HIS 有就用 HIS、沒有就用人工」，逐項可切換、不雙重輸入。
 

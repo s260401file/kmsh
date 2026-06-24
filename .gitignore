@@ -10,6 +10,10 @@ API/**/obj/
 API/**/.vs/
 API/**/*.user
 API/**/logs/
+API/**/publish/
+
+# ── 暫存 / 除錯輸出 ──
+or_resp.json
 
 # ── Windows / IDE ──
 .DS_Store

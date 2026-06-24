@@ -2,18 +2,20 @@
 // 內容：以網格繪出急診室平面圖（分區帶 zone-band + 區名 zone-name），
 //   每張床卡顯示檢傷 A/B/C 徽章與病人狀態旗標；點床卡開啟病人詳情 Modal。
 //   右上角有「三班醫護人員」面板；下方統計面板可點選做床位篩選。
-// 資料來源：MOCK_DATA（假資料，待接 API；床位、三班人員、統計皆由此推導）。
+// 床位/統計來源：後端 /api/Board/er（自建床位主檔鋪平面圖 ＋ Board_ER 真實在室 ＋ overlay；免 F5 輪詢）。
+//   三班醫護人員仍暫用 MOCK_DATA.ShiftStaff（另案自建）。
 import { useState, useMemo } from 'react'
 import MOCK_DATA, { getStats } from '../mockData'
+import { useErWard } from '../../../../hooks/useErWard'              // ER 病室動態：輪詢後端聚合看板
+import { usePolling } from '../../../../hooks/usePolling'           // 各科值班醫師面板：定時輪詢自建資料
+import * as wardApi from '../../../../services/wardApi'
+import { BULLETIN_MS } from '../../../../config/pollingConfig'
 import { FlagDot, makeFlagStyle } from '../../../../utils/flagShapes'
 
-// 檢傷分級：Triage 1-5 → A/B/C 三級（A 重症 1-2、B 中症 3、C 輕症 4-5）
-const triageGrade = t => (t <= 2 ? 'A' : (t === 3 ? 'B' : 'C'))
+// 檢傷分級：院方真實值 1/2/3 → A/B/C 三級（1→A 重症、2→B 中症、3→C 輕症）
+const triageGrade = t => (t === 1 ? 'A' : (t === 2 ? 'B' : 'C'))
 // 各級對應的完整中文標籤（用於 Modal 顯示）
 const GRADE_LABEL = { A: 'A級 重症', B: 'B級 中症', C: 'C級 輕症' }
-
-// 將床號轉成可用於 CSS class 的字串（中文「負」→ neg，例：負壓床）
-function bedClass(bedId) { return bedId.replace('負', 'neg') }
 
 // 依病人各布林欄位組出要顯示的狀態旗標標籤陣列（死亡 / MBD / AAD / 轉出入 / DNR / 留觀 / 住院）
 function buildBadges(patient) {
@@ -37,9 +39,9 @@ function isBedVisible(bed, filter) {
   const p = bed.Patient
   const badges = buildBadges(p)
   switch (filter) {
-    case 'sev-a':     return p?.Triage <= 2
-    case 'sev-b':     return p?.Triage === 3
-    case 'sev-c':     return p?.Triage >= 4
+    case 'sev-a':     return p?.Triage === 1
+    case 'sev-b':     return p?.Triage === 2
+    case 'sev-c':     return p?.Triage === 3
     case 'obs':       return !!p?.Observation
     case 'transfer':  return !!(p?.TransferOut || p?.TransferIn)
     case 'await-gen': return p?.Awaiting && p?.AwaitingType === '一般'
@@ -49,31 +51,34 @@ function isBedVisible(bed, filter) {
   }
 }
 
+// 平面圖座標 → inline grid 定位（座標由床位主檔提供；後台新增床免改 CSS）
+const bedPos = bed => (bed.GridCol && bed.GridRow) ? { gridColumn: bed.GridCol, gridRow: bed.GridRow } : undefined
+
 // 單張床卡：空床顯示床號＋「空床」；佔床顯示檢傷級徽章、床號、姓名性別年齡、狀態旗標
 function BedCard({ bed, filteredOut, onClick }) {
-  const cls = bedClass(bed.BedId)
   if (bed.Status === 'empty') {
     return (
-      <div className={`bed-card empty bed-${cls}`}>
+      <div className="bed-card empty" style={bedPos(bed)}>
         <div className="empty-bed-num">{bed.BedId}</div>
         <div className="empty-label">空床</div>
       </div>
     )
   }
   const p = bed.Patient
-  const triageCls = `triage-${p.Triage}`           // 仍以原始 1-5 級套色（CSS 配色）
+  const triageCls = p.Triage ? `triage-${p.Triage}` : ''   // 依檢傷 1/2/3 套色（CSS 配色）
   const negIsoCls = p.Isolation === '負壓隔離' ? 'neg-iso' : ''
   const deceasedCls = p.Deceased ? 'deceased' : ''
   const allBadges = buildBadges(p)
   const tg = triageGrade(p.Triage)
   return (
     <div
-      className={`bed-card ${bed.Status} ${triageCls} ${negIsoCls} ${deceasedCls} bed-${cls}${filteredOut ? ' filtered-out' : ''}`}
+      className={`bed-card ${bed.Status} ${triageCls} ${negIsoCls} ${deceasedCls}${filteredOut ? ' filtered-out' : ''}`}
+      style={bedPos(bed)}
       onClick={onClick}
     >
       <div className="card-row1">
-        {/* 檢傷 A/B/C 徽章，tg-a / tg-b / tg-c 決定配色 */}
-        <span className={`triage-badge tg-${tg.toLowerCase()}`}>{tg}級</span>
+        {/* 檢傷 A/B/C 徽章（無檢傷值則不顯示），tg-a / tg-b / tg-c 決定配色 */}
+        {p.Triage ? <span className={`triage-badge tg-${tg.toLowerCase()}`}>{tg}級</span> : <span />}
         <span className="bed-num">{bed.BedId}</span>
       </div>
       <div className="card-row2">
@@ -90,12 +95,13 @@ function BedCard({ bed, filteredOut, onClick }) {
 // 點選床卡後彈出的病人詳情視窗（基本資料、診斷、檢傷分級、急診狀態、備註等）
 function BedModal({ bed, onClose }) {
   const p = bed.Patient
-  // 由到院日期＋時間推算目前留觀時長（stayStr）
-  const arrStr = `2026-${p.ArrivalDate.replace('/', '-')}T${p.ArrivalTime}:00`
-  const diff = new Date() - new Date(arrStr)
+  // 由到院日期＋時間推算目前留觀時長（stayStr）；overlay 未填則顯示 —
+  const hasArr = !!(p.ArrivalDate && p.ArrivalTime)
+  const arrStr = hasArr ? `2026-${p.ArrivalDate.replace('/', '-')}T${p.ArrivalTime}:00` : null
+  const diff = hasArr ? (new Date() - new Date(arrStr)) : 0
   const stayH = Math.floor(diff / 3600000)
   const stayM = Math.floor((diff % 3600000) / 60000)
-  const stayStr = diff > 0 ? (stayH > 0 ? `${stayH}h ${stayM}m` : `${stayM}m`) : '—'
+  const stayStr = (hasArr && diff > 0) ? (stayH > 0 ? `${stayH}h ${stayM}m` : `${stayM}m`) : '—'
   // 組合急診狀態文字（死亡 / 留觀 / 待床 / 轉出入 / AAD / MBD / 住院）供 Modal 顯示
   const erStatuses = []
   if (p.Deceased)    erStatuses.push('死亡')
@@ -121,20 +127,20 @@ function BedModal({ bed, onClose }) {
           <button className="modal-close" onClick={onClose}>✕</button>
         </div>
         <div className="modal-body">
-          <div className="modal-row"><div className="modal-field full"><div className="field-label">診斷</div><div className="field-value diagnosis">{p.Diagnosis}</div></div></div>
+          <div className="modal-row"><div className="modal-field full"><div className="field-label">診斷</div><div className="field-value diagnosis">{p.Diagnosis || '—'}</div></div></div>
           <div className="modal-row">
             <div className="modal-field"><div className="field-label">病歷號</div><div className="field-value">{p.MedRecord || '—'}</div></div>
             <div className="modal-field"><div className="field-label">生日</div><div className="field-value">{p.BirthDate || '—'}</div></div>
             <div className="modal-field"><div className="field-label">科別</div><div className="field-value">{p.Department || '—'}</div></div>
           </div>
           <div className="modal-row">
-            <div className="modal-field"><div className="field-label">主治醫師</div><div className="field-value">{p.Doctor}</div></div>
-            <div className="modal-field"><div className="field-label">責任護理師</div><div className="field-value">{p.Nurse}</div></div>
+            <div className="modal-field"><div className="field-label">主治醫師</div><div className="field-value">{p.Doctor || '—'}</div></div>
+            <div className="modal-field"><div className="field-label">責任護理師</div><div className="field-value">{p.Nurse || '—'}</div></div>
           </div>
           <div className="modal-row">
-            <div className="modal-field"><div className="field-label">到院時間</div><div className="field-value">2026/{p.ArrivalDate} {p.ArrivalTime}</div></div>
+            <div className="modal-field"><div className="field-label">到院時間</div><div className="field-value">{hasArr ? `2026/${p.ArrivalDate} ${p.ArrivalTime}` : '—'}</div></div>
             <div className="modal-field"><div className="field-label">留觀時間</div><div className="field-value">{stayStr}</div></div>
-            <div className="modal-field"><div className="field-label">檢傷分級</div><div className={`field-value triage-val tg-${tg.toLowerCase()}`}>{GRADE_LABEL[tg] || '—'}</div></div>
+            <div className="modal-field"><div className="field-label">檢傷分級</div><div className={`field-value triage-val tg-${tg.toLowerCase()}`}>{p.Triage ? (GRADE_LABEL[tg] || '—') : '—'}</div></div>
           </div>
           <div className="modal-row">
             <div className="modal-field"><div className="field-label">隔離狀態</div><div className="field-value">{p.Isolation || '無'}</div></div>
@@ -161,7 +167,16 @@ const FLAG_STYLE = makeFlagStyle(FILTER_BADGES.map(x => x.label))
 export default function WardTab() {
   const [filter, setFilter] = useState('all')          // 目前選取的篩選類別
   const [selectedBed, setSelectedBed] = useState(null)  // 目前開啟詳情的床位
-  const stats = useMemo(() => getStats(MOCK_DATA.Beds), [])  // 統計面板數值（由床位推導）
+  const { beds } = useErWard('ER')                       // 後端聚合看板（床位主檔＋真實病人＋overlay）
+  const placedBeds = useMemo(() => beds.filter(b => !b.Unplaced), [beds])    // 有平面圖座標
+  const unplacedBeds = useMemo(() => beds.filter(b => b.Unplaced), [beds])   // 不佔床病人（床碼未建主檔）→ 負1 下方面板
+  const stats = useMemo(() => getStats(beds), [beds])  // 統計面板數值（由床位推導）
+  // 各科值班醫師（自建，後台維護）：定時輪詢，免 F5 自動更新
+  const { data: onCallData } = usePolling(() => wardApi.getOnCall('ER'), { intervalMs: BULLETIN_MS, deps: ['ER'] })
+  const onCallDocs = onCallData ?? []
+  // 急診醫師只有白班/夜班 → 從三班抽出，顯示在「三班醫護人員」標題右邊（白班=白班、夜班=大夜）
+  const dayDoc = MOCK_DATA.ShiftStaff.find(s => s.Shift === '白班')?.Doctor
+  const nightDoc = MOCK_DATA.ShiftStaff.find(s => s.Shift === '大夜')?.Doctor
   // 再次點同一篩選即取消（回到 all）；點 all 維持 all
   const handleFilter = f => setFilter(prev => (prev === f && f !== 'all') ? 'all' : f)
 
@@ -196,12 +211,17 @@ export default function WardTab() {
 
             {/* 三班醫護人員面板（右上空區）：列出白/小夜/大夜各班醫師、值班護理長、在班人數 */}
             <div className="staff-shifts" style={{gridColumn:'7/12',gridRow:'1/3'}}>
-              <div className="ss-title">三班醫護人員</div>
+              <div className="ss-title">
+                <span>三班醫護人員</span>
+                <span className="ss-title-docs">
+                  <span className="ss-td-item"><span className="ss-td-label">白班</span>{dayDoc || '—'}</span>
+                  <span className="ss-td-item"><span className="ss-td-label">夜班</span>{nightDoc || '—'}</span>
+                </span>
+              </div>
               <div className="ss-body">
                 {MOCK_DATA.ShiftStaff.map(s => (
                   <div className="ss-col" key={s.Shift}>
                     <div className="ss-shift">{s.Shift} <span className="ss-time">{s.Time}</span></div>
-                    <div className="ss-doctor">醫師　{s.Doctor || '—'}</div>
                     <div className="ss-charge">護理　{s.ChargeNurse || '—'}</div>
                     <div className="ss-count">在班 <b>{s.NurseCount ?? '—'}</b> 人</div>
                   </div>
@@ -209,8 +229,37 @@ export default function WardTab() {
               </div>
             </div>
 
-            {/* 依序鋪上所有床卡；空床不可點，佔床點擊開啟詳情 Modal */}
-            {MOCK_DATA.Beds.map(bed => (
+            {/* 各科值班醫師面板（MER09 下方 5×2 空區，col7-11×row7-8）：對應實體急診白板右半，自建資料 */}
+            <div className="oncall-panel" style={{ gridColumn: '7/12', gridRow: '7/9' }}>
+              <div className="oc-title">各科值班醫師</div>
+              <div className="oc-grid">
+                {onCallDocs.map(d => (
+                  <div className="oc-cell" key={d.deptCode}>
+                    <div className="oc-dept">{d.deptCode}<span className="oc-deptname"> {d.deptName}</span></div>
+                    <div className="oc-doc">{d.doctorName || '—'}{d.ext ? <span className="oc-ext"> #{d.ext}</span> : null}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* 不佔床病人（床碼未建主檔）：放負1 下方空格（cols1-3×rows3-5），簡易清單點擊開詳情 */}
+            {unplacedBeds.length > 0 && (
+              <div className="unplaced-panel" style={{ gridColumn: '1/4', gridRow: '3/6' }}>
+                <div className="up-panel-title">不佔床病人（{unplacedBeds.length}）</div>
+                <div className="up-panel-list">
+                  {unplacedBeds.map(bed => (
+                    <div className="up-row" key={bed.BedId} onClick={() => setSelectedBed(bed)}>
+                      <span className="up-bed">{bed.BedId}</span>
+                      <span className="up-name">{bed.Patient?.PatientName || '—'}</span>
+                      <span className="up-basic">{bed.Patient?.Gender}/{bed.Patient?.Age ?? '—'}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* 依床位主檔鋪上床卡（含空床）；空床不可點，佔床點擊開啟詳情 Modal */}
+            {placedBeds.map(bed => (
               <BedCard
                 key={bed.BedId}
                 bed={bed}

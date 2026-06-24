@@ -93,6 +93,15 @@
 .or-board .badge-er { background:#CC3333; color:#fff; }
 .or-board .badge-op { background:#1976D2; color:#fff; }
 .or-board .badge-inp { background:#27AE60; color:#fff; }
+.or-board .badge-排程 { background:#90A4AE; color:#fff; }
+.or-board .badge-count { background:#37474F; color:#fff; font-weight:700; margin-left:auto; }
+
+/* 今日台次清單（Modal 多台切換） */
+.or-board .or-today-list { display:flex; align-items:center; gap:6px; flex-wrap:wrap; padding:8px 16px; background:#F1F5F9; border-bottom:1px solid var(--divider); }
+.or-board .or-today-label { font-size:13px; font-weight:700; color:#475569; }
+.or-board .or-today-item { font-size:13px; padding:3px 9px; border:1px solid #CBD5E1; border-radius:6px; background:#fff; color:#334155; cursor:pointer; }
+.or-board .or-today-item:hover { background:#E2E8F0; }
+.or-board .or-today-item.active { background:#1976D2; color:#fff; border-color:#1976D2; font-weight:700; }
 
 /* ── OR Room Card ── */
 .or-board .or-panel { flex:1; display:flex; flex-direction:column; min-height:0; overflow:hidden; border:1px solid var(--floor-border); border-radius:10px; }
@@ -103,6 +112,7 @@
 .or-board .or-card.in-surgery { background:var(--bg-card-surgery); }
 .or-board .or-card.prep { background:var(--bg-card-prep); }
 .or-board .or-card.completed { background:var(--bg-card-occ); opacity:.7; }
+.or-board .or-card.scheduled { background:var(--bg-card-occ); }
 .or-board .or-card.empty { background:var(--bg-card-empty); border-left:2px dashed var(--border-empty); cursor:default; align-items:center; justify-content:center; opacity:.55; }
 .or-board .or-card.empty:hover { transform:none; box-shadow:var(--shadow-card); }
 .or-board .or-card.src-er { border-left-color:var(--border-er-knife); }

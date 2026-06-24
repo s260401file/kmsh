@@ -1,12 +1,12 @@
 // MassCasualtyTab：ER 急診站「大量傷患」分頁。
 // 將目前所有佔床病人攤平成一張總表，依檢傷級別排序，並於上方顯示各級人數統計，
 // 供大量傷患（MCI）情境快速掌握全院急診收治狀況。
-// 資料來源：MOCK_DATA.Beds（假資料，待接 API）。
-import MOCK_DATA from '../mockData'
+// 資料來源：後端 /api/Board/er（自建床位主檔 ＋ Board_ER 真實在室 ＋ overlay；免 F5 輪詢）。
+import { useErWard } from '../../../../hooks/useErWard'
 import '../tabsCss/mass-casualty.css'
 
-// 檢傷分級：Triage 1-5 → A/B/C 三級（A 重症 1-2、B 中症 3、C 輕症 4-5）
-const triageGrade = t => (t <= 2 ? 'A' : (t === 3 ? 'B' : 'C'))
+// 檢傷分級：院方真實值 1/2/3 → A/B/C 三級（1→A 重症、2→B 中症、3→C 輕症）
+const triageGrade = t => (t === 1 ? 'A' : (t === 2 ? 'B' : 'C'))
 
 // 依病人狀態產生「病人註記」旗標元素陣列（死亡 / MBD / AAD / DNR / 留觀 / 住院 / 轉出入）
 function buildFlags(p) {
@@ -23,16 +23,17 @@ function buildFlags(p) {
 }
 
 export default function MassCasualtyTab() {
-  // 取出所有佔床病人，攤平為含床號的病人陣列，並依檢傷級別（數字小=重）排序
-  const patients = MOCK_DATA.Beds
+  const { beds } = useErWard('ER')
+  // 取出所有佔床病人（含未配置床），攤平為含床號的病人陣列，並依檢傷級別（數字小=重）排序
+  const patients = beds
     .filter(b => b.Status !== 'empty' && b.Patient)
     .map(b => ({ ...b.Patient, BedId: b.BedId }))
-    .sort((a, b) => a.Triage - b.Triage)
+    .sort((a, b) => (a.Triage ?? 99) - (b.Triage ?? 99))
 
   // 各統計數：A 重症、B 中症、C 輕症、死亡、轉出
-  const sevA  = patients.filter(p => p.Triage <= 2).length
-  const sevB  = patients.filter(p => p.Triage === 3).length
-  const sevC  = patients.filter(p => p.Triage >= 4).length
+  const sevA  = patients.filter(p => p.Triage === 1).length
+  const sevB  = patients.filter(p => p.Triage === 2).length
+  const sevC  = patients.filter(p => p.Triage === 3).length
   const dead      = patients.filter(p => p.Deceased).length
   const transfer  = patients.filter(p => p.TransferOut).length
 
@@ -94,7 +95,7 @@ export default function MassCasualtyTab() {
                     <div className="mc-basic">{p.Gender}/{p.Age}</div>
                   </td>
                   <td style={{ fontFamily: 'var(--font-num)', fontSize: '14px', color: 'var(--text-muted)' }}>{p.MedRecord || '—'}</td>
-                  <td><span className={`triage-badge tg-${triageGrade(p.Triage).toLowerCase()}`}>{triageGrade(p.Triage)}</span></td>
+                  <td>{p.Triage ? <span className={`triage-badge tg-${triageGrade(p.Triage).toLowerCase()}`}>{triageGrade(p.Triage)}</span> : '—'}</td>
                   <td>{p.Department || '—'}</td>
                   <td>{p.Diagnosis  || '—'}</td>
                   <td>{p.ArrivalTime || '—'}</td>

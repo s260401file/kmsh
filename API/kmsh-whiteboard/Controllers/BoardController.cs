@@ -209,6 +209,192 @@ public class BoardController : ControllerBase
         return Ok(result);
     }
 
+    /// <summary>
+    /// ER 病室動態：自建床位主檔(ErBed)鋪平面圖 ＋ Board_ER 真實在室病人(以 bedId merge)
+    /// ＋ WardPatientExt(ER) overlay 補臨床/狀態。空床顯示；床碼未建主檔的在室病人落 Unplaced（提示後台補建）。
+    /// </summary>
+    [HttpGet("er")]
+    public async Task<IActionResult> GetEr(CancellationToken ct = default)
+    {
+        List<BoardErItem> occ;
+        try { occ = await _board.GetErListAsync(ct); }
+        catch (Exception ex) { _logger.LogWarning(ex, "Board_ER 取得失敗，以空清單續行"); occ = new(); }
+
+        var beds = (await _ward.GetErBedsAsync("ER", includeAll: false, ct)).ToList();
+        var extList = (await _ward.GetExtAsync("ER", includeAll: false, ct)).ToList();
+        var extByHis = extList
+            .Where(e => !string.IsNullOrWhiteSpace(e.Hhisnum))
+            .GroupBy(e => e.Hhisnum!.Trim())
+            .ToDictionary(g => g.Key, g => g.First());
+
+        // 在室病人以「映射後白板床號」索引（同床取第一筆）
+        var occByBed = occ
+            .Select(o => (BedId: MapErBedId(o.Ward, o.Hbed), Item: o))
+            .Where(x => !string.IsNullOrWhiteSpace(x.BedId))
+            .GroupBy(x => x.BedId!, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(g => g.Key, g => g.First().Item, StringComparer.OrdinalIgnoreCase);
+
+        WardPatientExtItem? ExtOf(BoardErItem o)
+        {
+            WardPatientExtItem? e = null;
+            if (!string.IsNullOrWhiteSpace(o.Hhisnum)) extByHis.TryGetValue(o.Hhisnum!.Trim(), out e);
+            return e;
+        }
+
+        var resp = new ErBoardResponse
+        {
+            Count = occ.Count,
+            Version = extList.Count > 0
+                ? new DateTimeOffset(extList.Max(e => e.UpdatedAt), TimeSpan.Zero).ToUnixTimeSeconds()
+                : 0
+        };
+
+        // 1) 依床位主檔鋪床（含空床）
+        foreach (var b in beds)
+        {
+            var bed = new ErBedDto
+            {
+                BedId = b.BedId, Ward = b.Ward, Zone = b.Zone,
+                GridCol = b.GridCol, GridRow = b.GridRow, SortOrder = b.SortOrder
+            };
+            if (occByBed.TryGetValue(b.BedId, out var o))
+            {
+                var e = ExtOf(o);
+                bed.Patient = BuildErPatient(o, e);
+                bed.Status = DeriveErStatus(e);
+            }
+            resp.Beds.Add(bed);
+        }
+
+        // 2) 床碼不在主檔的在室病人 → Unplaced（前端落溢位區，提示後台補建該床）
+        var placed = new HashSet<string>(beds.Select(b => b.BedId), StringComparer.OrdinalIgnoreCase);
+        foreach (var kv in occByBed)
+        {
+            if (placed.Contains(kv.Key)) continue;
+            var e = ExtOf(kv.Value);
+            resp.Beds.Add(new ErBedDto
+            {
+                BedId = kv.Key, Ward = kv.Value.Ward?.Trim(), Zone = "未配置", Unplaced = true,
+                SortOrder = 9000, Status = DeriveErStatus(e), Patient = BuildErPatient(kv.Value, e)
+            });
+        }
+
+        return Ok(resp);
+    }
+
+    /// <summary>合併 Board_ER 真實病人 ＋ WardPatientExt overlay → ER 病人卡 DTO。</summary>
+    private static ErBedPatientDto BuildErPatient(BoardErItem o, WardPatientExtItem? e) => new()
+    {
+        PatientName = o.Hnamec, Gender = o.Hsex, BirthDate = FormatBirth(o.Hbirthdt), Age = CalcAge(o.Hbirthdt),
+        MedRecord = o.Hhisnum, IdNo = o.Hidno, Doctor = o.Doctor, DoctorCard = o.DoctorCard,
+        Flow = o.Flow, Category = o.Category,
+        Triage = int.TryParse(o.Triage?.Trim(), out var t) ? t : (int?)null, TriageGrade = TriageToGrade(o.Triage),
+        Department = e?.Department, Nurse = e?.PrimaryNurse, Diagnosis = e?.Diagnosis, Isolation = e?.Isolation, Notes = e?.Notes,
+        ArrivalDate = e?.ArrivalDate, ArrivalTime = e?.ArrivalTime,
+        Observation = e?.Observation ?? false, Awaiting = e?.Awaiting ?? false, AwaitingType = e?.AwaitingType,
+        TransferIn = e?.TransferIn ?? false, TransferOut = e?.TransferOut ?? false, TransferHospital = e?.TransferHospital,
+        Admitted = e?.Admitted ?? false, AdmBedNo = e?.AdmBedNo,
+        Dnr = e?.Dnr ?? false, Aad = e?.Aad ?? false, Mbd = e?.Mbd ?? false, Deceased = e?.Deceased ?? false,
+        FallRisk = e?.FallRisk ?? false, Allergy = e?.Allergy ?? false, Exam = e?.Exam ?? false, Consult = e?.Consult ?? false
+    };
+
+    /// <summary>由 overlay 旗標推導床位狀態（隔離→轉床→待床→留觀→否則 occupied）；空床由呼叫端設 empty。</summary>
+    private static string DeriveErStatus(WardPatientExtItem? e)
+    {
+        if (e is null) return "occupied";
+        if (!string.IsNullOrWhiteSpace(e.Isolation) && e.Isolation!.Trim() is not ("" or "無")) return "isolation";
+        if (e.TransferIn || e.TransferOut) return "transfer";
+        if (e.Awaiting) return "awaiting";
+        if (e.Observation) return "observation";
+        return "occupied";
+    }
+
+    /// <summary>
+    /// OR 手術動態：自建刀房主檔(OrRoom)鋪 4×2 房卡 ＋ Board_OR 今日手術(以 ApiRoom merge)
+    /// ＋ WardPatientExt(OR) overlay 補狀態/起訖/刷手流動。每房顯示今日「進行中/首台」＋今日台數。
+    /// </summary>
+    [HttpGet("or")]
+    public async Task<IActionResult> GetOr(CancellationToken ct = default)
+    {
+        List<BoardOrItem> occ;
+        try { occ = await _board.GetOrListAsync(ct); }
+        catch (Exception ex) { _logger.LogWarning(ex, "Board_OR 取得失敗，以空清單續行"); occ = new(); }
+
+        var rooms = (await _ward.GetOrRoomsAsync("OR", includeAll: false, ct)).ToList();
+        var extList = (await _ward.GetExtAsync("OR", includeAll: false, ct)).ToList();
+        var extByHis = extList
+            .Where(e => !string.IsNullOrWhiteSpace(e.Hhisnum))
+            .GroupBy(e => e.Hhisnum!.Trim())
+            .ToDictionary(g => g.Key, g => g.First());
+
+        WardPatientExtItem? ExtOf(string? his)
+        {
+            WardPatientExtItem? e = null;
+            if (!string.IsNullOrWhiteSpace(his)) extByHis.TryGetValue(his!.Trim(), out e);
+            return e;
+        }
+
+        // 今日手術（手術日期＝今天），依刀房代碼分組、依手術時間排序
+        var today = DateTime.Today;
+        var todayByRoom = occ
+            .Where(o => !string.IsNullOrWhiteSpace(o.Room) && ParseBirth(o.OpDate) is { } d && d.Date == today)
+            .GroupBy(o => o.Room!.Trim(), StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(g => g.Key, g => g.OrderBy(x => x.OpTime ?? "").ToList(), StringComparer.OrdinalIgnoreCase);
+
+        var resp = new OrBoardResponse
+        {
+            Count = todayByRoom.Values.Sum(v => v.Count),
+            Version = extList.Count > 0
+                ? new DateTimeOffset(extList.Max(e => e.UpdatedAt), TimeSpan.Zero).ToUnixTimeSeconds()
+                : 0
+        };
+
+        foreach (var r in rooms)
+        {
+            var dto = new OrRoomDto { RoomId = r.RoomId, ApiRoom = r.ApiRoom, SortOrder = r.SortOrder };
+            if (!string.IsNullOrWhiteSpace(r.ApiRoom) && todayByRoom.TryGetValue(r.ApiRoom!.Trim(), out var list) && list.Count > 0)
+            {
+                dto.Surgeries = list.Select(o => BuildOrSurgery(o, ExtOf(o.Hhisnum))).ToList();
+                dto.TodayCount = dto.Surgeries.Count;
+                var current = dto.Surgeries.FirstOrDefault(s => s.SurgeryStatus == "手術中") ?? dto.Surgeries[0];
+                dto.Patient = current;
+                dto.Status = StatusToClass(current.SurgeryStatus);
+            }
+            resp.Rooms.Add(dto);
+        }
+        return Ok(resp);
+    }
+
+    /// <summary>合併 Board_OR 真實手術 ＋ WardPatientExt overlay → OR 手術 DTO。</summary>
+    private static OrSurgeryDto BuildOrSurgery(BoardOrItem o, WardPatientExtItem? e) => new()
+    {
+        PatientName = o.Hnamec, Gender = o.Hsex, Age = CalcAge(o.Hbirthdt), BirthDate = FormatBirth(o.Hbirthdt),
+        MedRecord = o.Hhisnum, Diagnosis = string.IsNullOrWhiteSpace(o.Diagnosis) ? e?.Diagnosis : o.Diagnosis,
+        SurgeryName = o.Surgery, Doctor = o.Doctor, AnesType = o.Anes, SurgerySource = SourceToLabel(o.Source),
+        ScheduledTime = o.OpTime,
+        SurgeryStatus = e?.SurgeryStatus, StartTime = e?.StartTime, EndTime = e?.EndTime,
+        Department = e?.Department, ScrubNurse = e?.ScrubNurse, CircNurse = e?.CircNurse, Notes = e?.Notes
+    };
+
+    /// <summary>手術狀態中文 → 卡片 class；無 overlay 狀態則 scheduled(排程)。</summary>
+    private static string StatusToClass(string? status) => status switch
+    {
+        "手術中" => "in-surgery",
+        "準備中" => "prep",
+        "已完成" => "completed",
+        _ => "scheduled"
+    };
+
+    /// <summary>來源代碼 → 急/門/住刀（實測全 O，暫定對照，待院方代碼表）；未知則回原碼。</summary>
+    private static string? SourceToLabel(string? src) => (src?.Trim()) switch
+    {
+        "O" => "門診刀",
+        "E" => "急診刀",
+        "I" => "住院刀",
+        null or "" => null,
+        var s => s
+    };
+
     // ── 臨床補充層 後台 CRUD ───────────────────────────────────────
     /// <summary>查詢某單位的臨床補充列（後台，含停用）。</summary>
     [HttpGet("{unitCode}/ext")]
@@ -241,6 +427,90 @@ public class BoardController : ControllerBase
     public async Task<IActionResult> DeleteExt(int id, CancellationToken ct = default)
         => await _ward.DeleteExtAsync(id, ct) ? NoContent() : NotFound();
 
+    // ── 各科值班醫師（ER 病室動態面板 + 後台 CRUD）──────────────────
+    /// <summary>查詢某單位各科值班醫師（白板顯示傳 includeAll=false；後台傳 true 含停用）。</summary>
+    [HttpGet("{unitCode}/oncall")]
+    public async Task<IActionResult> GetOnCall(string unitCode, [FromQuery] bool includeAll = false, CancellationToken ct = default)
+        => Ok(await _ward.GetOnCallAsync(unitCode, includeAll, ct));
+
+    [HttpGet("oncall/{id:int}")]
+    public async Task<IActionResult> GetOnCallById(int id, CancellationToken ct = default)
+    {
+        var item = await _ward.GetOnCallByIdAsync(id, ct);
+        return item is null ? NotFound() : Ok(item);
+    }
+
+    [HttpPost("oncall")]
+    public async Task<IActionResult> CreateOnCall([FromBody] ErOnCallDoctorUpsertRequest req, CancellationToken ct = default)
+    {
+        var id = await _ward.CreateOnCallAsync(req, ct);
+        return CreatedAtAction(nameof(GetOnCallById), new { id }, await _ward.GetOnCallByIdAsync(id, ct));
+    }
+
+    [HttpPut("oncall/{id:int}")]
+    public async Task<IActionResult> UpdateOnCall(int id, [FromBody] ErOnCallDoctorUpsertRequest req, CancellationToken ct = default)
+        => await _ward.UpdateOnCallAsync(id, req, ct) ? Ok(await _ward.GetOnCallByIdAsync(id, ct)) : NotFound();
+
+    [HttpDelete("oncall/{id:int}")]
+    public async Task<IActionResult> DeleteOnCall(int id, CancellationToken ct = default)
+        => await _ward.DeleteOnCallAsync(id, ct) ? NoContent() : NotFound();
+
+    // ── ER 床位主檔（病室動態平面圖 + 後台 CRUD）──────────────────────
+    /// <summary>查詢某單位 ER 床位主檔（白板傳 includeAll=false；後台傳 true 含停用）。</summary>
+    [HttpGet("{unitCode}/bed")]
+    public async Task<IActionResult> GetErBeds(string unitCode, [FromQuery] bool includeAll = false, CancellationToken ct = default)
+        => Ok(await _ward.GetErBedsAsync(unitCode, includeAll, ct));
+
+    [HttpGet("bed/{id:int}")]
+    public async Task<IActionResult> GetErBedById(int id, CancellationToken ct = default)
+    {
+        var item = await _ward.GetErBedByIdAsync(id, ct);
+        return item is null ? NotFound() : Ok(item);
+    }
+
+    [HttpPost("bed")]
+    public async Task<IActionResult> CreateErBed([FromBody] ErBedUpsertRequest req, CancellationToken ct = default)
+    {
+        var id = await _ward.CreateErBedAsync(req, ct);
+        return CreatedAtAction(nameof(GetErBedById), new { id }, await _ward.GetErBedByIdAsync(id, ct));
+    }
+
+    [HttpPut("bed/{id:int}")]
+    public async Task<IActionResult> UpdateErBed(int id, [FromBody] ErBedUpsertRequest req, CancellationToken ct = default)
+        => await _ward.UpdateErBedAsync(id, req, ct) ? Ok(await _ward.GetErBedByIdAsync(id, ct)) : NotFound();
+
+    [HttpDelete("bed/{id:int}")]
+    public async Task<IActionResult> DeleteErBed(int id, CancellationToken ct = default)
+        => await _ward.DeleteErBedAsync(id, ct) ? NoContent() : NotFound();
+
+    // ── OR 刀房主檔（手術動態房卡 + 後台 CRUD）────────────────────────
+    /// <summary>查詢某單位 OR 刀房主檔（白板傳 includeAll=false；後台傳 true 含停用）。</summary>
+    [HttpGet("{unitCode}/room")]
+    public async Task<IActionResult> GetOrRooms(string unitCode, [FromQuery] bool includeAll = false, CancellationToken ct = default)
+        => Ok(await _ward.GetOrRoomsAsync(unitCode, includeAll, ct));
+
+    [HttpGet("room/{id:int}")]
+    public async Task<IActionResult> GetOrRoomById(int id, CancellationToken ct = default)
+    {
+        var item = await _ward.GetOrRoomByIdAsync(id, ct);
+        return item is null ? NotFound() : Ok(item);
+    }
+
+    [HttpPost("room")]
+    public async Task<IActionResult> CreateOrRoom([FromBody] OrRoomUpsertRequest req, CancellationToken ct = default)
+    {
+        var id = await _ward.CreateOrRoomAsync(req, ct);
+        return CreatedAtAction(nameof(GetOrRoomById), new { id }, await _ward.GetOrRoomByIdAsync(id, ct));
+    }
+
+    [HttpPut("room/{id:int}")]
+    public async Task<IActionResult> UpdateOrRoom(int id, [FromBody] OrRoomUpsertRequest req, CancellationToken ct = default)
+        => await _ward.UpdateOrRoomAsync(id, req, ct) ? Ok(await _ward.GetOrRoomByIdAsync(id, ct)) : NotFound();
+
+    [HttpDelete("room/{id:int}")]
+    public async Task<IActionResult> DeleteOrRoom(int id, CancellationToken ct = default)
+        => await _ward.DeleteOrRoomAsync(id, ct) ? NoContent() : NotFound();
+
     // ── 私有輔助 ───────────────────────────────────────────────────
     /// <summary>呼叫 Board_bed 取病房在床清單；失敗時記錄並回空清單（白板不中斷）。</summary>
     private async Task<List<BoardBedItem>> SafeBoardAsync(string ward, CancellationToken ct)
@@ -248,6 +518,24 @@ public class BoardController : ControllerBase
         try { return await _board.GetBedListAsync(ward, ct); }
         catch (Exception ex) { _logger.LogWarning(ex, "Board_bed {Ward} 取得失敗，以空清單續行", ward); return new(); }
     }
+
+    /// <summary>
+    /// ER 床號對應：病房(英文前綴) ＋ 床位 → 白板床號。
+    /// 床位為數字則去前導零、不足兩位補零（MER+007→MER07、MER+022→MER22、MER+991→MER991）；
+    /// 前綴直接用 Board_ER 回傳的「病房」值（負壓/OER 等亦同，待院方確認其英文代碼）。
+    /// </summary>
+    private static string? MapErBedId(string? ward, string? bed)
+    {
+        var w = ward?.Trim();
+        var b = bed?.Trim();
+        if (string.IsNullOrWhiteSpace(w) || string.IsNullOrWhiteSpace(b)) return null;
+        return int.TryParse(b, out var n) ? w + (n < 100 ? n.ToString("00") : n.ToString()) : w + b;
+    }
+
+    /// <summary>檢傷分類 1–5 → A/B/C（A:1-2 重症、B:3 中症、C:4-5 輕症）；無法解析回 null。</summary>
+    // 急診檢傷僅 3 級：院方真實值 1/2/3 → A/B/C（1→A 重症、2→B 中症、3→C 輕症）
+    private static string? TriageToGrade(string? triage)
+        => int.TryParse(triage, out var t) ? (t == 1 ? "A" : (t == 2 ? "B" : "C")) : null;
 
     /// <summary>解析出生字串（支援 1970/11/20 與 ISO datetime），回 DateTime。</summary>
     private static DateTime? ParseBirth(string? raw)

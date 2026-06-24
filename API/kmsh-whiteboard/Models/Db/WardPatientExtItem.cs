@@ -42,6 +42,26 @@ public class WardPatientExtItem
     public bool Exam { get; set; }
     public bool Consult { get; set; }
     public string? Notes { get; set; }
+    // ── ER 專屬狀態（急診病室動態用；其他單位可留空）──
+    public bool Observation { get; set; }             // 留觀
+    public bool Awaiting { get; set; }                // 待床
+    public string? AwaitingType { get; set; }         // 待床型態（一般/加護/隔離）
+    public bool TransferIn { get; set; }              // 轉入
+    public bool TransferOut { get; set; }             // 轉出
+    public string? TransferHospital { get; set; }     // 轉出/入醫院
+    public bool Admitted { get; set; }                // 已住院
+    public string? AdmBedNo { get; set; }             // 住院床號
+    public bool Aad { get; set; }                     // 違反醫囑離院(AAD)
+    public bool Mbd { get; set; }                     // 待床死亡/到院前死亡(MBD)
+    public bool Deceased { get; set; }                // 死亡
+    public string? ArrivalDate { get; set; }          // 到院日期（MM/DD）
+    public string? ArrivalTime { get; set; }          // 到院時間（HH:mm）
+    // ── OR 專屬（手術動態用；其他單位留空）──
+    public string? ScrubNurse { get; set; }           // 刷手護理師
+    public string? CircNurse { get; set; }            // 流動護理師
+    public string? SurgeryStatus { get; set; }        // 手術狀態（手術中/準備中/已完成）
+    public string? StartTime { get; set; }            // 實際進刀房 HH:mm
+    public string? EndTime { get; set; }              // 實際出刀房 HH:mm
     public bool IsActive { get; set; }
     public DateTime UpdatedAt { get; set; }
     public DateTime CreatedAt { get; set; }

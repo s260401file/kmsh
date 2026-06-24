@@ -25,6 +25,51 @@ export async function getExt(unitCode, includeAll = true) {
 export async function getOccupancy(unitCode) {
   return handle(await fetch(`${BASE}/${unitCode}/occupancy`))
 }
+
+// ── 各科值班醫師（ER 面板 + 後台 CRUD）──────────────────────────────
+export async function getOnCall(unitCode, includeAll = false) {
+  const p = new URLSearchParams({ includeAll: includeAll ? 'true' : 'false' })
+  return handle(await fetch(`${BASE}/${unitCode}/oncall?${p}`))
+}
+export async function createOnCall(data) {
+  return handle(await fetch(`${BASE}/oncall`, { method: 'POST', headers, body: JSON.stringify(data) }))
+}
+export async function updateOnCall(id, data) {
+  return handle(await fetch(`${BASE}/oncall/${id}`, { method: 'PUT', headers, body: JSON.stringify(data) }))
+}
+export async function removeOnCall(id) {
+  return handle(await fetch(`${BASE}/oncall/${id}`, { method: 'DELETE' }))
+}
+// ── ER 床位主檔（病室動態平面圖 + 後台 CRUD）──────────────────────
+// GET /api/Board/{unitCode}/bed?includeAll= → 該單位 ER 床位主檔（含座標/分區）
+export async function getErBeds(unitCode, includeAll = false) {
+  const p = new URLSearchParams({ includeAll: includeAll ? 'true' : 'false' })
+  return handle(await fetch(`${BASE}/${unitCode}/bed?${p}`))
+}
+export async function createErBed(data) {
+  return handle(await fetch(`${BASE}/bed`, { method: 'POST', headers, body: JSON.stringify(data) }))
+}
+export async function updateErBed(id, data) {
+  return handle(await fetch(`${BASE}/bed/${id}`, { method: 'PUT', headers, body: JSON.stringify(data) }))
+}
+export async function removeErBed(id) {
+  return handle(await fetch(`${BASE}/bed/${id}`, { method: 'DELETE' }))
+}
+// ── OR 刀房主檔（手術動態房卡 + 後台 CRUD）──────────────────────────
+// GET /api/Board/{unitCode}/room?includeAll= → 該單位 OR 刀房主檔（RoomId↔ApiRoom 對應）
+export async function getOrRooms(unitCode, includeAll = false) {
+  const p = new URLSearchParams({ includeAll: includeAll ? 'true' : 'false' })
+  return handle(await fetch(`${BASE}/${unitCode}/room?${p}`))
+}
+export async function createOrRoom(data) {
+  return handle(await fetch(`${BASE}/room`, { method: 'POST', headers, body: JSON.stringify(data) }))
+}
+export async function updateOrRoom(id, data) {
+  return handle(await fetch(`${BASE}/room/${id}`, { method: 'PUT', headers, body: JSON.stringify(data) }))
+}
+export async function removeOrRoom(id) {
+  return handle(await fetch(`${BASE}/room/${id}`, { method: 'DELETE' }))
+}
 export async function createExt(data) {
   return handle(await fetch(`${BASE}/ext`, { method: 'POST', headers, body: JSON.stringify(data) }))
 }

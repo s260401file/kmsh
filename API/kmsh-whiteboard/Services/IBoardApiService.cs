@@ -10,4 +10,10 @@ public interface IBoardApiService
 {
     /// <summary>呼叫 Board_bed 取得指定病房（HNURSTA，如 W52 / AICU）的在床病人清單；字串已 trim。</summary>
     Task<List<BoardBedItem>> GetBedListAsync(string ward, CancellationToken ct = default);
+
+    /// <summary>呼叫 Board_ER 取得急診在室清單（body {}，需 x-api-key）；字串已 trim。</summary>
+    Task<List<BoardErItem>> GetErListAsync(CancellationToken ct = default);
+
+    /// <summary>呼叫 Board_OR 取得手術排程清單（body {}，需 x-api-key）；字串已 trim。</summary>
+    Task<List<BoardOrItem>> GetOrListAsync(CancellationToken ct = default);
 }
