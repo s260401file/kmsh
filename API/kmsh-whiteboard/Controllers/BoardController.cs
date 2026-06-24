@@ -95,9 +95,9 @@ public class BoardController : ControllerBase
                     IdNo = o.Hidno,                       // 身分證（白板需顯示）
                     // 臨床（自建補充層；無資料則預設）
                     Department = e?.Department,
-                    AdmissionDate = e?.AdmissionDate,
-                    Diagnosis = e?.Diagnosis,
-                    AttendingDoctor = e?.AttendingDoctor,
+                    AdmissionDate = FormatBirth(o.AdmitDate) ?? e?.AdmissionDate,   // 院方轉入日期（yyyy/MM/dd）優先
+                    Diagnosis = string.IsNullOrWhiteSpace(o.Diagnosis) ? e?.Diagnosis : o.Diagnosis,  // 院方診斷優先
+                    AttendingDoctor = string.IsNullOrWhiteSpace(o.Doctor) ? e?.AttendingDoctor : o.Doctor,  // 院方負責醫師優先
                     PrimaryNurse = e?.PrimaryNurse,
                     Condition = e?.Condition,
                     Isolation = e?.Isolation,
@@ -166,8 +166,9 @@ public class BoardController : ControllerBase
                     {
                         Name = o.Hnamec, Gender = o.Hsex, BirthDate = FormatBirth(o.Hbirthdt), Age = CalcAge(o.Hbirthdt),
                         MedRecord = o.Hhisnum, IdNo = o.Hidno,
-                        Department = e?.Department, Admission = e?.AdmissionDate, Diagnosis = e?.Diagnosis,
-                        Doctor = e?.AttendingDoctor, Nurse = e?.PrimaryNurse, Condition = e?.Condition, Isolation = e?.Isolation,
+                        Department = e?.Department, Admission = FormatBirth(o.AdmitDate) ?? e?.AdmissionDate,
+                        Diagnosis = string.IsNullOrWhiteSpace(o.Diagnosis) ? e?.Diagnosis : o.Diagnosis,  // 院方診斷優先
+                        Doctor = string.IsNullOrWhiteSpace(o.Doctor) ? e?.AttendingDoctor : o.Doctor, Nurse = e?.PrimaryNurse, Condition = e?.Condition, Isolation = e?.Isolation,
                         Dnr = e?.Dnr ?? false, Ventilator = e?.Ventilator ?? false, Crrt = e?.Crrt ?? false,
                         Ng = e?.Ng ?? false, Foley = e?.Foley ?? false, Cvc = e?.CVC ?? false,
                         FallRisk = e?.FallRisk ?? false, Dependency = e?.Dependency, Confidential = e?.Confidential ?? false,
@@ -205,6 +206,35 @@ public class BoardController : ControllerBase
             foreach (var o in await SafeBoardAsync("CICU", ct))
                 if (!string.IsNullOrWhiteSpace(o.Hhisnum) && int.TryParse(o.Hbed, out var n))
                     result.Add(new { hhisnum = o.Hhisnum!.Trim(), bed = $"F3-{n:00}" });
+        }
+        else if (u == "ER")
+        {
+            // 急診在室：病歷號 → 對應白板床號（病房＋床位映射）
+            List<BoardErItem> occ;
+            try { occ = await _board.GetErListAsync(ct); }
+            catch (Exception ex) { _logger.LogWarning(ex, "Board_ER occupancy 取得失敗"); occ = new(); }
+            foreach (var o in occ)
+                if (!string.IsNullOrWhiteSpace(o.Hhisnum))
+                    result.Add(new { hhisnum = o.Hhisnum!.Trim(), bed = MapErBedId(o.Ward, o.Hbed) });
+        }
+        else if (u == "OR")
+        {
+            // 今日刀表：病歷號 → 刀房（Board_OR 刀房代碼 R{n} 經主檔對應為 OR-xx）
+            List<BoardOrItem> occ;
+            try { occ = await _board.GetOrListAsync(ct); }
+            catch (Exception ex) { _logger.LogWarning(ex, "Board_OR occupancy 取得失敗"); occ = new(); }
+            var roomMap = (await _ward.GetOrRoomsAsync("OR", includeAll: false, ct))
+                .Where(r => !string.IsNullOrWhiteSpace(r.ApiRoom))
+                .GroupBy(r => r.ApiRoom!.Trim(), StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(g => g.Key, g => g.First().RoomId, StringComparer.OrdinalIgnoreCase);
+            var today = DateTime.Today;
+            foreach (var o in occ)
+            {
+                if (string.IsNullOrWhiteSpace(o.Hhisnum) || string.IsNullOrWhiteSpace(o.Room)) continue;
+                if (ParseBirth(o.OpDate) is not { } d || d.Date != today) continue;   // 僅今日刀表
+                var room = roomMap.TryGetValue(o.Room!.Trim(), out var rid) ? rid : o.Room!.Trim();
+                result.Add(new { hhisnum = o.Hhisnum!.Trim(), bed = room });
+            }
         }
         return Ok(result);
     }
@@ -289,7 +319,8 @@ public class BoardController : ControllerBase
         MedRecord = o.Hhisnum, IdNo = o.Hidno, Doctor = o.Doctor, DoctorCard = o.DoctorCard,
         Flow = o.Flow, Category = o.Category,
         Triage = int.TryParse(o.Triage?.Trim(), out var t) ? t : (int?)null, TriageGrade = TriageToGrade(o.Triage),
-        Department = e?.Department, Nurse = e?.PrimaryNurse, Diagnosis = e?.Diagnosis, Isolation = e?.Isolation, Notes = e?.Notes,
+        Department = e?.Department, Nurse = e?.PrimaryNurse, Diagnosis = e?.Diagnosis,  // Board_ER 無診斷 → 仍用後台
+        Isolation = e?.Isolation, Notes = e?.Notes,
         ArrivalDate = e?.ArrivalDate, ArrivalTime = e?.ArrivalTime,
         Observation = e?.Observation ?? false, Awaiting = e?.Awaiting ?? false, AwaitingType = e?.AwaitingType,
         TransferIn = e?.TransferIn ?? false, TransferOut = e?.TransferOut ?? false, TransferHospital = e?.TransferHospital,
@@ -316,17 +347,16 @@ public class BoardController : ControllerBase
     [HttpGet("or")]
     public async Task<IActionResult> GetOr(CancellationToken ct = default)
     {
-        List<BoardOrItem> occ;
-        try { occ = await _board.GetOrListAsync(ct); }
-        catch (Exception ex) { _logger.LogWarning(ex, "Board_OR 取得失敗，以空清單續行"); occ = new(); }
+        var today = DateTime.Today; var now = DateTime.Now;
+        await SyncOrDailyIfFetchedAsync(ct);   // 取 Board_OR 成功才同步當日快照（失敗則僅讀快照）
 
+        var daily = (await _ward.GetOrDailyAsync(today, today, ct)).ToList();   // 當日累積快照（含已完成）
         var rooms = (await _ward.GetOrRoomsAsync("OR", includeAll: false, ct)).ToList();
         var extList = (await _ward.GetExtAsync("OR", includeAll: false, ct)).ToList();
         var extByHis = extList
             .Where(e => !string.IsNullOrWhiteSpace(e.Hhisnum))
             .GroupBy(e => e.Hhisnum!.Trim())
             .ToDictionary(g => g.Key, g => g.First());
-
         WardPatientExtItem? ExtOf(string? his)
         {
             WardPatientExtItem? e = null;
@@ -334,16 +364,13 @@ public class BoardController : ControllerBase
             return e;
         }
 
-        // 今日手術（手術日期＝今天），依刀房代碼分組、依手術時間排序
-        var today = DateTime.Today;
-        var todayByRoom = occ
-            .Where(o => !string.IsNullOrWhiteSpace(o.Room) && ParseBirth(o.OpDate) is { } d && d.Date == today)
-            .GroupBy(o => o.Room!.Trim(), StringComparer.OrdinalIgnoreCase)
-            .ToDictionary(g => g.Key, g => g.OrderBy(x => x.OpTime ?? "").ToList(), StringComparer.OrdinalIgnoreCase);
+        var byRoom = daily
+            .GroupBy(d => d.RoomId ?? "", StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(g => g.Key, g => g.OrderBy(x => x.OpTime).ToList(), StringComparer.OrdinalIgnoreCase);
 
         var resp = new OrBoardResponse
         {
-            Count = todayByRoom.Values.Sum(v => v.Count),
+            Count = daily.Count,   // 當日總刀數（累積、整天穩定）
             Version = extList.Count > 0
                 ? new DateTimeOffset(extList.Max(e => e.UpdatedAt), TimeSpan.Zero).ToUnixTimeSeconds()
                 : 0
@@ -352,11 +379,15 @@ public class BoardController : ControllerBase
         foreach (var r in rooms)
         {
             var dto = new OrRoomDto { RoomId = r.RoomId, ApiRoom = r.ApiRoom, SortOrder = r.SortOrder };
-            if (!string.IsNullOrWhiteSpace(r.ApiRoom) && todayByRoom.TryGetValue(r.ApiRoom!.Trim(), out var list) && list.Count > 0)
+            if (byRoom.TryGetValue(r.RoomId, out var list) && list.Count > 0)
             {
-                dto.Surgeries = list.Select(o => BuildOrSurgery(o, ExtOf(o.Hhisnum))).ToList();
+                dto.Surgeries = list.Select(d => BuildOrSurgeryFromDaily(d, ExtOf(d.Hhisnum), now)).ToList();
                 dto.TodayCount = dto.Surgeries.Count;
-                var current = dto.Surgeries.FirstOrDefault(s => s.SurgeryStatus == "手術中") ?? dto.Surgeries[0];
+                // 房卡顯示：優先進行中→準備中→未完成首台→首台
+                var current = dto.Surgeries.FirstOrDefault(s => s.SurgeryStatus == "手術中")
+                           ?? dto.Surgeries.FirstOrDefault(s => s.SurgeryStatus == "準備中")
+                           ?? dto.Surgeries.FirstOrDefault(s => s.SurgeryStatus != "已完成")
+                           ?? dto.Surgeries[0];
                 dto.Patient = current;
                 dto.Status = StatusToClass(current.SurgeryStatus);
             }
@@ -365,18 +396,75 @@ public class BoardController : ControllerBase
         return Ok(resp);
     }
 
-    /// <summary>合併 Board_OR 真實手術 ＋ WardPatientExt overlay → OR 手術 DTO。</summary>
-    private static OrSurgeryDto BuildOrSurgery(BoardOrItem o, WardPatientExtItem? e) => new()
+    // 取 Board_OR 並同步當日快照（節流；僅成功時寫入、不誤標完成）
+    private static DateTime _lastOrDailySync = DateTime.MinValue;
+    private async Task SyncOrDailyIfFetchedAsync(CancellationToken ct)
     {
-        PatientName = o.Hnamec, Gender = o.Hsex, Age = CalcAge(o.Hbirthdt), BirthDate = FormatBirth(o.Hbirthdt),
-        MedRecord = o.Hhisnum, Diagnosis = string.IsNullOrWhiteSpace(o.Diagnosis) ? e?.Diagnosis : o.Diagnosis,
-        SurgeryName = o.Surgery, Doctor = o.Doctor, AnesType = o.Anes, SurgerySource = SourceToLabel(o.Source),
-        ScheduledTime = o.OpTime,
-        SurgeryStatus = e?.SurgeryStatus, StartTime = e?.StartTime, EndTime = e?.EndTime,
+        List<BoardOrItem>? occ = null;
+        try { occ = await _board.GetOrListAsync(ct); }
+        catch (Exception ex) { _logger.LogWarning(ex, "Board_OR 取得失敗，跳過當日快照同步"); return; }
+
+        if ((DateTime.UtcNow - _lastOrDailySync).TotalSeconds < 8) return;   // 節流：多客戶端/兩端點共用
+        _lastOrDailySync = DateTime.UtcNow;
+
+        var roomMap = (await _ward.GetOrRoomsAsync("OR", false, ct))
+            .Where(r => !string.IsNullOrWhiteSpace(r.ApiRoom))
+            .GroupBy(r => r.ApiRoom!.Trim(), StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(g => g.Key, g => g.First().RoomId, StringComparer.OrdinalIgnoreCase);
+        var today = DateTime.Today;
+        var presentToday = new List<string>();
+        foreach (var o in occ)
+        {
+            if (ParseBirth(o.OpDate) is not { } d) continue;
+            var his = o.Hhisnum?.Trim();
+            if (string.IsNullOrWhiteSpace(his)) continue;
+            var apiRoom = o.Room?.Trim() ?? "";
+            var opt = o.OpTime?.Trim() ?? "";
+            var roomId = roomMap.TryGetValue(apiRoom, out var rid) ? rid : apiRoom;
+            await _ward.UpsertOrDailyAsync(new OrDailySurgeryItem
+            {
+                SurgeryDate = d.Date, Hhisnum = his!, ApiRoom = apiRoom, RoomId = roomId,
+                PatientName = o.Hnamec, Gender = o.Hsex, BirthDate = o.Hbirthdt, SurgeryName = o.Surgery,
+                Doctor = o.Doctor, AnesType = o.Anes, Source = o.Source, OpTime = opt, Diagnosis = o.Diagnosis
+            }, ct);
+            if (d.Date == today) presentToday.Add($"{apiRoom}|{his}|{opt}");
+        }
+        await _ward.MarkOrDailyCompletedAsync(today, presentToday, ct);   // 今日消失者→已完成
+        await _ward.PurgeOrDailyAsync(today.AddDays(-14), ct);
+    }
+
+    /// <summary>當日快照 ＋ WardPatientExt overlay → OR 手術 DTO；Completed→已完成、否則時間/overlay 推導。</summary>
+    private static OrSurgeryDto BuildOrSurgeryFromDaily(OrDailySurgeryItem d, WardPatientExtItem? e, DateTime now) => new()
+    {
+        PatientName = d.PatientName, Gender = d.Gender, Age = CalcAge(d.BirthDate), BirthDate = FormatBirth(d.BirthDate),
+        MedRecord = d.Hhisnum, Diagnosis = string.IsNullOrWhiteSpace(d.Diagnosis) ? e?.Diagnosis : d.Diagnosis,
+        SurgeryName = d.SurgeryName, Doctor = d.Doctor, AnesType = d.AnesType, SurgerySource = SourceToLabel(d.Source),
+        ScheduledTime = d.OpTime,
+        SurgeryStatus = d.Completed ? "已完成" : DeriveOrStatus(d.OpTime, e?.StartTime, e?.EndTime, now),
+        StartTime = e?.StartTime, EndTime = e?.EndTime,
         Department = e?.Department, ScrubNurse = e?.ScrubNurse, CircNurse = e?.CircNurse, Notes = e?.Notes
     };
 
-    /// <summary>手術狀態中文 → 卡片 class；無 overlay 狀態則 scheduled(排程)。</summary>
+    /// <summary>
+    /// 手術狀態依時間自動判定（不採手填）：已填實際出刀房→已完成；已填實際進刀房且已過該時間→手術中；
+    /// 否則已過預定手術時間→準備中、未到→排程。時間為 HH:mm，已先以「手術日期＝今日」過濾。
+    /// </summary>
+    private static string DeriveOrStatus(string? sched, string? start, string? end, DateTime now)
+    {
+        static int? Min(string? t)
+        {
+            if (string.IsNullOrWhiteSpace(t)) return null;
+            var p = t.Trim().Split(':');
+            return p.Length >= 2 && int.TryParse(p[0], out var h) && int.TryParse(p[1], out var m) ? h * 60 + m : (int?)null;
+        }
+        var nowMin = now.Hour * 60 + now.Minute;
+        if (Min(end) is not null) return "已完成";
+        if (Min(start) is { } st) return nowMin >= st ? "手術中" : "準備中";
+        if (Min(sched) is { } sc) return nowMin >= sc ? "準備中" : "排程";
+        return "排程";
+    }
+
+    /// <summary>手術狀態中文 → 卡片 class；排程/未知則 scheduled。</summary>
     private static string StatusToClass(string? status) => status switch
     {
         "手術中" => "in-surgery",
@@ -510,6 +598,213 @@ public class BoardController : ControllerBase
     [HttpDelete("room/{id:int}")]
     public async Task<IActionResult> DeleteOrRoom(int id, CancellationToken ct = default)
         => await _ward.DeleteOrRoomAsync(id, ct) ? NoContent() : NotFound();
+
+    // ── OR 手術派班（ScheduleTab）：組裝三班 ＋ 後台 CRUD ─────────────
+    // 班別常數（含時段；組裝順序）
+    private static readonly (string Type, string Time)[] OR_SHIFTS =
+        { ("白班", "08:00–16:00"), ("小夜", "16:00–24:00"), ("大夜", "00:00–08:00") };
+
+    /// <summary>OR 手術派班：讀 OrShiftStaff＋OrShiftRoom，以 OrRoom 為刀房清單組裝三班 Shifts[]。</summary>
+    [HttpGet("or/schedule")]
+    public async Task<IActionResult> GetOrSchedule(CancellationToken ct = default)
+    {
+        var staff = (await _ward.GetShiftStaffAsync("OR", false, ct)).ToList();
+        var srooms = (await _ward.GetShiftRoomAsync("OR", false, ct)).ToList();
+        var master = (await _ward.GetOrRoomsAsync("OR", false, ct)).ToList();   // 刀房清單（7 房）
+
+        var resp = new OrScheduleResponse { Data = new OrScheduleData { QueryDate = DateTime.Today.ToString("yyyy-MM-dd") } };
+        foreach (var (type, time) in OR_SHIFTS)
+        {
+            var s = staff.Where(x => x.ShiftType == type).ToList();
+            var charge = s.FirstOrDefault(x => x.Role == "護理長");
+            var circ = s.FirstOrDefault(x => x.Role == "體循");
+            var shift = new OrShiftDto
+            {
+                ShiftType = type, ShiftTime = time,
+                Charge = new OrPersonDto { Name = charge?.Name, Extension = charge?.Ext },
+                Anesthesia = s.Where(x => x.Role == "麻醉")
+                              .Select(a => new OrAnesDto { StaffId = a.Id, Name = a.Name, Role = a.RoleTitle, Extension = a.Ext }).ToList(),
+                CircTech = circ is null ? null : new OrPersonDto { Name = circ.Name, Role = circ.RoleTitle, Extension = circ.Ext }
+            };
+            var byRoom = srooms.Where(x => x.ShiftType == type)
+                .GroupBy(x => x.RoomId, StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
+            foreach (var m in master)
+            {
+                byRoom.TryGetValue(m.RoomId, out var a);
+                shift.Rooms.Add(new OrSchedRoomDto { RoomId = m.RoomId, ScrubNurse = a?.ScrubNurse, CircNurse = a?.CircNurse, Extension = a?.Ext });
+            }
+            resp.Data.Shifts.Add(shift);
+        }
+        return Ok(resp);
+    }
+
+    /// <summary>OR 術後特殊交班（自建 OrHandover）。</summary>
+    [HttpGet("or/handover")]
+    public async Task<IActionResult> GetOrHandover(CancellationToken ct = default)
+    {
+        var list = (await _ward.GetHandoverAsync("OR", false, ct)).ToList();
+        var resp = new OrHandoverResponse { Data = new OrHandoverData { QueryDate = DateTime.Today.ToString("yyyy-MM-dd") } };
+        resp.Data.Items = list.Select(h => new OrHandoverDto
+        {
+            HandoverId = h.Id, RoomId = h.RoomId, SurgerySource = h.SurgerySource, PatientName = h.PatientName,
+            Gender = h.Gender, Age = h.Age, MedRecord = h.Hhisnum, SurgeryName = h.SurgeryName, SurgeonName = h.SurgeonName,
+            DestWard = h.DestWard, DestBed = h.DestBed, EndTime = h.EndTime, BloodLoss = h.BloodLoss,
+            BloodTransfusion = h.BloodTransfusion, DrainDetails = h.DrainDetails, SpecialNotes = h.SpecialNotes
+        }).ToList();
+        return Ok(resp);
+    }
+
+    /// <summary>OR 手術清單（全部排程，攤平）：供 ICU/W52「手術資訊」分頁；狀態依時間推導。</summary>
+    [HttpGet("or/surgeries")]
+    public async Task<IActionResult> GetOrSurgeries(CancellationToken ct = default)
+    {
+        var now = DateTime.Now; var today = DateTime.Today;
+        await SyncOrDailyIfFetchedAsync(ct);   // 同步當日快照（成功才寫；失敗僅讀）
+
+        // 讀當日快照（涵蓋手術資訊日期列 ±範圍）；已完成的刀亦留存
+        var daily = (await _ward.GetOrDailyAsync(today.AddDays(-7), today.AddDays(14), ct)).ToList();
+        var list = daily.Select(d => new OrSurgeryListItem
+        {
+            OrRoom = d.RoomId ?? d.ApiRoom, Date = d.SurgeryDate.ToString("yyyy-MM-dd"), ScheduledTime = d.OpTime,
+            PatientName = d.PatientName, Gender = d.Gender, Age = CalcAge(d.BirthDate),
+            Procedure = d.SurgeryName, Diagnosis = d.Diagnosis, AnesthesiaMethod = d.AnesType,
+            AttendingSurgeon = d.Doctor,
+            Status = d.Completed ? "已完成" : DeriveSurgeryStatus(d.SurgeryDate, d.OpTime, now, today)
+        }).OrderBy(x => x.Date).ThenBy(x => x.ScheduledTime).ToList();
+        return Ok(list);
+    }
+
+    /// <summary>手術資訊狀態（依日期/時間推導）：過去日→已完成；今日已過時間→手術中；其餘→待手術。</summary>
+    private static string DeriveSurgeryStatus(DateTime? date, string? time, DateTime now, DateTime today)
+    {
+        if (date is null) return "待手術";
+        if (date.Value.Date < today) return "已完成";
+        if (date.Value.Date > today) return "待手術";
+        var parts = (time ?? "").Trim().Split(':');
+        if (parts.Length >= 2 && int.TryParse(parts[0], out var h) && int.TryParse(parts[1], out var m))
+            return (now.Hour * 60 + now.Minute) >= (h * 60 + m) ? "手術中" : "待手術";
+        return "待手術";
+    }
+
+    // 班級人員 CRUD（後台）
+    [HttpGet("{unitCode}/shiftstaff")]
+    public async Task<IActionResult> GetShiftStaff(string unitCode, [FromQuery] bool includeAll = false, CancellationToken ct = default)
+        => Ok(await _ward.GetShiftStaffAsync(unitCode, includeAll, ct));
+    [HttpGet("shiftstaff/{id:int}")]
+    public async Task<IActionResult> GetShiftStaffById(int id, CancellationToken ct = default)
+    { var x = await _ward.GetShiftStaffByIdAsync(id, ct); return x is null ? NotFound() : Ok(x); }
+    [HttpPost("shiftstaff")]
+    public async Task<IActionResult> CreateShiftStaff([FromBody] OrShiftStaffUpsertRequest req, CancellationToken ct = default)
+    { var id = await _ward.CreateShiftStaffAsync(req, ct); return CreatedAtAction(nameof(GetShiftStaffById), new { id }, await _ward.GetShiftStaffByIdAsync(id, ct)); }
+    [HttpPut("shiftstaff/{id:int}")]
+    public async Task<IActionResult> UpdateShiftStaff(int id, [FromBody] OrShiftStaffUpsertRequest req, CancellationToken ct = default)
+        => await _ward.UpdateShiftStaffAsync(id, req, ct) ? Ok(await _ward.GetShiftStaffByIdAsync(id, ct)) : NotFound();
+    [HttpDelete("shiftstaff/{id:int}")]
+    public async Task<IActionResult> DeleteShiftStaff(int id, CancellationToken ct = default)
+        => await _ward.DeleteShiftStaffAsync(id, ct) ? NoContent() : NotFound();
+
+    // 房×班 刷手/流動 CRUD（後台）
+    [HttpGet("{unitCode}/shiftroom")]
+    public async Task<IActionResult> GetShiftRoom(string unitCode, [FromQuery] bool includeAll = false, CancellationToken ct = default)
+        => Ok(await _ward.GetShiftRoomAsync(unitCode, includeAll, ct));
+    [HttpGet("shiftroom/{id:int}")]
+    public async Task<IActionResult> GetShiftRoomById(int id, CancellationToken ct = default)
+    { var x = await _ward.GetShiftRoomByIdAsync(id, ct); return x is null ? NotFound() : Ok(x); }
+    [HttpPost("shiftroom")]
+    public async Task<IActionResult> CreateShiftRoom([FromBody] OrShiftRoomUpsertRequest req, CancellationToken ct = default)
+    { var id = await _ward.CreateShiftRoomAsync(req, ct); return CreatedAtAction(nameof(GetShiftRoomById), new { id }, await _ward.GetShiftRoomByIdAsync(id, ct)); }
+    [HttpPut("shiftroom/{id:int}")]
+    public async Task<IActionResult> UpdateShiftRoom(int id, [FromBody] OrShiftRoomUpsertRequest req, CancellationToken ct = default)
+        => await _ward.UpdateShiftRoomAsync(id, req, ct) ? Ok(await _ward.GetShiftRoomByIdAsync(id, ct)) : NotFound();
+    [HttpDelete("shiftroom/{id:int}")]
+    public async Task<IActionResult> DeleteShiftRoom(int id, CancellationToken ct = default)
+        => await _ward.DeleteShiftRoomAsync(id, ct) ? NoContent() : NotFound();
+
+    // 特殊交班 CRUD（後台）；list 路由用 handover-list 以避免與 board 的 or/handover 衝突
+    [HttpGet("{unitCode}/handover-list")]
+    public async Task<IActionResult> GetHandoverList(string unitCode, [FromQuery] bool includeAll = false, CancellationToken ct = default)
+        => Ok(await _ward.GetHandoverAsync(unitCode, includeAll, ct));
+    [HttpGet("handover/{id:int}")]
+    public async Task<IActionResult> GetHandoverById(int id, CancellationToken ct = default)
+    { var x = await _ward.GetHandoverByIdAsync(id, ct); return x is null ? NotFound() : Ok(x); }
+    [HttpPost("handover")]
+    public async Task<IActionResult> CreateHandover([FromBody] OrHandoverUpsertRequest req, CancellationToken ct = default)
+    { var id = await _ward.CreateHandoverAsync(req, ct); return CreatedAtAction(nameof(GetHandoverById), new { id }, await _ward.GetHandoverByIdAsync(id, ct)); }
+    [HttpPut("handover/{id:int}")]
+    public async Task<IActionResult> UpdateHandover(int id, [FromBody] OrHandoverUpsertRequest req, CancellationToken ct = default)
+        => await _ward.UpdateHandoverAsync(id, req, ct) ? Ok(await _ward.GetHandoverByIdAsync(id, ct)) : NotFound();
+    [HttpDelete("handover/{id:int}")]
+    public async Task<IActionResult> DeleteHandover(int id, CancellationToken ct = default)
+        => await _ward.DeleteHandoverAsync(id, ct) ? NoContent() : NotFound();
+
+    // ── 各站頁首單位資訊（主任/護理；白板讀取 ＋ 後台 upsert）──────────
+    /// <summary>取某站頁首單位資訊（主任/護理 標籤＋姓名）。</summary>
+    [HttpGet("{unitCode}/info")]
+    public async Task<IActionResult> GetUnitInfo(string unitCode, CancellationToken ct = default)
+        => Ok(await _ward.GetUnitInfoAsync(unitCode, ct));
+
+    /// <summary>後台編輯頁首單位資訊（以 UnitCode upsert）。</summary>
+    [HttpPut("info")]
+    public async Task<IActionResult> UpsertUnitInfo([FromBody] UnitInfoUpsertRequest req, CancellationToken ct = default)
+    {
+        await _ward.UpsertUnitInfoAsync(req, ct);
+        return Ok(await _ward.GetUnitInfoAsync(req.UnitCode, ct));
+    }
+
+    // ── 檢查/會診（W52/ICU/ER 看板 ＋ 後台 CRUD；自建）──────────────
+    /// <summary>看板：某站檢查/會診，依 Kind 拆成 exams/consults（camelCase）。</summary>
+    [HttpGet("{unitCode}/exam")]
+    public async Task<IActionResult> GetExamConsult(string unitCode, CancellationToken ct = default)
+    {
+        var rows = (await _ward.GetExamConsultAsync(unitCode, false, ct)).ToList();
+        var exams = rows.Where(r => r.Kind == "檢查").Select(r => new
+        {
+            bedId = r.BedId, patientName = r.PatientName, gender = r.Gender, examName = r.ItemName,
+            scheduledDate = r.ScheduledDate, timeSlot = r.TimeSlot, status = r.Status, notes = r.Notes
+        });
+        var consults = rows.Where(r => r.Kind == "會診").Select(r => new
+        {
+            bedId = r.BedId, patientName = r.PatientName, gender = r.Gender, consultDept = r.ItemName,
+            consultDoctor = r.Doctor, completedTime = r.CompletedTime, status = r.Status, notes = r.Notes
+        });
+        return Ok(new { exams, consults });
+    }
+
+    // 後台 CRUD
+    [HttpGet("{unitCode}/examconsult")]
+    public async Task<IActionResult> GetExamConsultList(string unitCode, [FromQuery] bool includeAll = true, CancellationToken ct = default)
+        => Ok(await _ward.GetExamConsultAsync(unitCode, includeAll, ct));
+    [HttpGet("examconsult/{id:int}")]
+    public async Task<IActionResult> GetExamConsultById(int id, CancellationToken ct = default)
+    { var x = await _ward.GetExamConsultByIdAsync(id, ct); return x is null ? NotFound() : Ok(x); }
+    [HttpPost("examconsult")]
+    public async Task<IActionResult> CreateExamConsult([FromBody] WardExamConsultUpsertRequest req, CancellationToken ct = default)
+    { var id = await _ward.CreateExamConsultAsync(req, ct); return CreatedAtAction(nameof(GetExamConsultById), new { id }, await _ward.GetExamConsultByIdAsync(id, ct)); }
+    [HttpPut("examconsult/{id:int}")]
+    public async Task<IActionResult> UpdateExamConsult(int id, [FromBody] WardExamConsultUpsertRequest req, CancellationToken ct = default)
+        => await _ward.UpdateExamConsultAsync(id, req, ct) ? Ok(await _ward.GetExamConsultByIdAsync(id, ct)) : NotFound();
+    [HttpDelete("examconsult/{id:int}")]
+    public async Task<IActionResult> DeleteExamConsult(int id, CancellationToken ct = default)
+        => await _ward.DeleteExamConsultAsync(id, ct) ? NoContent() : NotFound();
+
+    // ── ICU 抗生素（自建；看板＋後台共用，以病歷號掛載）──────────────
+    /// <summary>看板＋後台共用：某站抗生素列（camelCase；includeAll=false 僅啟用）。前端以 hhisnum 對應在床病人。</summary>
+    [HttpGet("{unitCode}/antibiotic")]
+    public async Task<IActionResult> GetAntibiotic(string unitCode, [FromQuery] bool includeAll = false, CancellationToken ct = default)
+        => Ok(await _ward.GetAntibioticAsync(unitCode, includeAll, ct));
+    [HttpGet("antibiotic/{id:int}")]
+    public async Task<IActionResult> GetAntibioticById(int id, CancellationToken ct = default)
+    { var x = await _ward.GetAntibioticByIdAsync(id, ct); return x is null ? NotFound() : Ok(x); }
+    [HttpPost("antibiotic")]
+    public async Task<IActionResult> CreateAntibiotic([FromBody] IcuAntibioticUpsertRequest req, CancellationToken ct = default)
+    { var id = await _ward.CreateAntibioticAsync(req, ct); return CreatedAtAction(nameof(GetAntibioticById), new { id }, await _ward.GetAntibioticByIdAsync(id, ct)); }
+    [HttpPut("antibiotic/{id:int}")]
+    public async Task<IActionResult> UpdateAntibiotic(int id, [FromBody] IcuAntibioticUpsertRequest req, CancellationToken ct = default)
+        => await _ward.UpdateAntibioticAsync(id, req, ct) ? Ok(await _ward.GetAntibioticByIdAsync(id, ct)) : NotFound();
+    [HttpDelete("antibiotic/{id:int}")]
+    public async Task<IActionResult> DeleteAntibiotic(int id, CancellationToken ct = default)
+        => await _ward.DeleteAntibioticAsync(id, ct) ? NoContent() : NotFound();
 
     // ── 私有輔助 ───────────────────────────────────────────────────
     /// <summary>呼叫 Board_bed 取病房在床清單；失敗時記錄並回空清單（白板不中斷）。</summary>

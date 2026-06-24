@@ -1,12 +1,15 @@
 // ExamTab：ER 急診站「檢查 / 會診」分頁。
 // 左欄列出檢查清單（X光、CT、超音波等及其狀態），右欄列出會診清單（科別、會診醫師、回覆狀態）。
-// 資料來源：tabsData/examData.js（假資料，待接 API）。
-import EXAM_DATA from '../tabsData/examData'
+// 資料來源：後端 /api/Board/ER/exam（自建 WardExamConsult；免 F5 輪詢）。
+import { usePolling } from '../../../../hooks/usePolling'
+import * as wardApi from '../../../../services/wardApi'
+import { CENSUS_MS } from '../../../../config/pollingConfig'
 import '../tabsCss/exam.css'
 
 export default function ExamTab() {
-  // 從假資料取出檢查（Exams）與會診（Consults）兩份清單
-  const { Exams, Consults } = EXAM_DATA.Data
+  const { data } = usePolling(() => wardApi.getExamConsult('ER'), { intervalMs: CENSUS_MS, deps: ['ER'] })
+  const Exams = data?.exams ?? []
+  const Consults = data?.consults ?? []
 
   return (
     <main className="main-content">
@@ -35,14 +38,14 @@ export default function ExamTab() {
                   </tr>
                 </thead>
                 <tbody>
-                  {Exams.map(e => (
-                    <tr key={e.ExamId}>
-                      <td className="ec-bed">{e.BedId}</td>
-                      <td>{e.PatientName}</td>
-                      <td>{e.ExamName}</td>
-                      <td><span className={`ec-status ec-status-${e.Status}`}>{e.Status}</span></td>
-                      <td>{e.TimeSlot}</td>
-                      <td className="ec-note">{e.Notes || '—'}</td>
+                  {Exams.map((e, i) => (
+                    <tr key={i}>
+                      <td className="ec-bed">{e.bedId}</td>
+                      <td>{e.patientName}</td>
+                      <td>{e.examName}</td>
+                      <td><span className={`ec-status ec-status-${e.status}`}>{e.status}</span></td>
+                      <td>{e.timeSlot}</td>
+                      <td className="ec-note">{e.notes || '—'}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -69,14 +72,14 @@ export default function ExamTab() {
                   </tr>
                 </thead>
                 <tbody>
-                  {Consults.map(c => (
-                    <tr key={c.ConsultId}>
-                      <td className="ec-bed">{c.BedId}</td>
-                      <td>{c.PatientName}</td>
-                      <td>{c.ConsultDept}</td>
-                      <td>{c.ConsultDoctor}</td>
-                      <td><span className={`ec-status ec-status-${c.Status}`}>{c.Status}</span></td>
-                      <td className="ec-note">{c.Notes || '—'}</td>
+                  {Consults.map((c, i) => (
+                    <tr key={i}>
+                      <td className="ec-bed">{c.bedId}</td>
+                      <td>{c.patientName}</td>
+                      <td>{c.consultDept}</td>
+                      <td>{c.consultDoctor}</td>
+                      <td><span className={`ec-status ec-status-${c.status}`}>{c.status}</span></td>
+                      <td className="ec-note">{c.notes || '—'}</td>
                     </tr>
                   ))}
                 </tbody>

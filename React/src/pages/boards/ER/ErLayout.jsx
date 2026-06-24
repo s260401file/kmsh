@@ -4,7 +4,8 @@
 import { NavLink, Outlet } from 'react-router-dom'
 import { useClock } from '../../../hooks/useClock'      // 即時時鐘 hook（提供 date / time）
 import { useMarquee } from '../../../hooks/useMarquee'   // 跑馬燈公告 hook
-import MOCK_DATA from './mockData'                       // 假資料來源（頁首的主任/護理長名單等）
+import { useUnitInfo } from '../../../hooks/useUnitInfo'  // 頁首單位資訊（主任/護理，自建可後台編輯）
+import MOCK_DATA from './mockData'                       // 假資料來源（頁首備援等）
 import './ErLayout.css'
 
 // 底部分頁設定：path 對應巢狀路由、label 為顯示文字（病室動態為預設首頁）
@@ -21,6 +22,7 @@ export default function ErLayout() {
   const { date, time } = useClock()
   // 跑馬燈：第一參數為站別代碼，第二參數為預設公告文字
   const marquee = useMarquee('ER', '2026/05/24 急診分流提醒：目前二級重症病人待床中，ICU 床位有限，請優先處理急救室病人轉出作業。')
+  const info = useUnitInfo('ER')   // 頁首主任/護理（自建；無資料時以 mock 備援）
 
   return (
     <div className="er-board">
@@ -29,12 +31,12 @@ export default function ErLayout() {
         <div className="header-left">ER<span className="ward-sub">急診室</span></div>
         <div className="header-center">
           <div className="staff-block">
-            <div className="staff-label">急診主任</div>
-            <div className="staff-name">{MOCK_DATA.HospitalInfo.WardDirector}</div>
+            <div className="staff-label">{info?.directorLabel || '急診主任'}</div>
+            <div className="staff-name">{info?.directorName || MOCK_DATA.HospitalInfo.WardDirector}</div>
           </div>
           <div className="staff-block">
-            <div className="staff-label">護理長</div>
-            <div className="staff-name">{MOCK_DATA.HospitalInfo.HeadNurse}</div>
+            <div className="staff-label">{info?.headNurseLabel || '護理長'}</div>
+            <div className="staff-name">{info?.headNurseName || MOCK_DATA.HospitalInfo.HeadNurse}</div>
           </div>
         </div>
         <div className="header-right">

@@ -1,15 +1,20 @@
 // ScheduleTab：OR 手術室站「手術排程 / 派班」分頁
 // 左側顯示所選班別的值班護理長、麻醉科人員、體外循環技師與統計；
 // 右側為各刀房的刷手護理師、流動護理師派班一覽。
-// 支援白班 / 小夜 / 大夜三班切換。資料來源為 scheduleData（假資料，待接 API）。
+// 支援白班 / 小夜 / 大夜三班切換。資料來源：後端 /api/Board/or/schedule（自建 OrShiftStaff＋OrShiftRoom；免 F5 輪詢）。
 import { useState } from 'react'
-import SCHEDULE_DATA from '../tabsData/scheduleData'
+import { usePolling } from '../../../../hooks/usePolling'
+import * as wardApi from '../../../../services/wardApi'
+import { BULLETIN_MS } from '../../../../config/pollingConfig'
 import '../tabsCss/schedule.css'
 
 export default function ScheduleTab() {
-  const shifts = SCHEDULE_DATA.Data.Shifts   // 三班（白班/小夜/大夜）派班資料
+  const { data } = usePolling(() => wardApi.getOrSchedule(), { intervalMs: BULLETIN_MS, deps: ['OR'] })
+  const shifts = data?.Data?.Shifts ?? []   // 三班（白班/小夜/大夜）派班資料
   const [currentIdx, setCurrentIdx] = useState(0) // 目前選取的班別索引（預設白班）
-  const shift = shifts[currentIdx]
+  const shift = shifts[Math.min(currentIdx, Math.max(0, shifts.length - 1))]
+
+  if (!shift) return <main className="main-content"><div className="sc-body" style={{ padding: '40px', color: 'var(--text-muted)' }}>尚無派班資料</div></main>
 
   // 統計本班實際出勤的護理師人數（刷手＋流動去重）
   const activeNurses = new Set()

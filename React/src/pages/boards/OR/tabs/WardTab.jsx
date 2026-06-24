@@ -3,7 +3,6 @@
 // 每張卡片顯示今日「進行中/首台」手術＋「今日 N 台」，點卡片開啟 Modal 看今日全部台次。
 // 資料來源：後端 /api/Board/or（自建刀房主檔 ＋ Board_OR 今日排程 ＋ overlay；免 F5 輪詢）。
 import { useState, useMemo } from 'react'
-import { getStats } from '../mockData'
 import { useOrWard } from '../../../../hooks/useOrWard'
 
 // 依手術來源回傳對應的 CSS class（急診/門診/住院刀）
@@ -133,8 +132,8 @@ function RoomModal({ room, onClose }) {
           </div>
           <div className="modal-row">
             <div className="modal-field"><div className="field-label">排程時間</div><div className="field-value">{p.ScheduledTime || '—'}</div></div>
-            <div className="modal-field"><div className="field-label">開始時間</div><div className="field-value">{p.StartTime || '—'}</div></div>
-            <div className="modal-field"><div className="field-label">結束時間</div><div className="field-value">{p.EndTime || (p.StartTime ? '進行中' : '—')}</div></div>
+            <div className="modal-field"><div className="field-label">開始時間</div><div className="field-value">{(status === '手術中' || status === '已完成') ? (p.StartTime || '—') : '—'}</div></div>
+            <div className="modal-field"><div className="field-label">結束時間</div><div className="field-value">{p.EndTime || (status === '手術中' ? '進行中' : '—')}</div></div>
             <div className="modal-field"><div className="field-label">手術時長</div><div className="field-value">{duration}</div></div>
           </div>
           <div className="modal-row"><div className="modal-field full"><div className="field-label">備註</div><div className="field-value" style={{ fontSize: '15px', fontWeight: '400' }}>{p.Notes || '無'}</div></div></div>
@@ -146,10 +145,25 @@ function RoomModal({ room, onClose }) {
 }
 
 export default function WardTab() {
-  const [filter, setFilter] = useState('all')          // 目前篩選條件（all/er/op/inp/busy/prep/done）
+  const [filter, setFilter] = useState('all')          // 目前篩選條件（all/er/op/inp/busy/prep）
   const [selectedRoom, setSelectedRoom] = useState(null) // 目前開啟詳情的刀房
-  const { rooms, count } = useOrWard('OR')              // 後端聚合看板（刀房主檔＋今日手術＋overlay）
-  const stats = useMemo(() => getStats(rooms), [rooms]) // 由刀房資料彙總統計數字
+  const [showCompleted, setShowCompleted] = useState(false) // 今日已完成清單 Modal
+  const { rooms, count } = useOrWard('OR')              // 後端聚合看板（當日快照＋overlay）
+  // 統計改以「刀數」計（由各房今日手術聯集；今日總刀＝後端穩定 count）
+  const allSurgeries = useMemo(() => rooms.flatMap(r => r.Surgeries || []), [rooms])
+  const completedList = useMemo(
+    () => rooms.flatMap(r => (r.Surgeries || []).filter(s => s.SurgeryStatus === '已完成').map(s => ({ ...s, roomId: r.RoomId }))),
+    [rooms])
+  const stats = useMemo(() => ({
+    roomTotal:  rooms.length,
+    inSurgery:  allSurgeries.filter(s => s.SurgeryStatus === '手術中').length,
+    prep:       allSurgeries.filter(s => s.SurgeryStatus === '準備中' || s.SurgeryStatus === '排程').length,
+    completed:  allSurgeries.filter(s => s.SurgeryStatus === '已完成').length,
+    erKnife:    allSurgeries.filter(s => s.SurgerySource === '急診刀').length,
+    opKnife:    allSurgeries.filter(s => s.SurgerySource === '門診刀').length,
+    inpKnife:   allSurgeries.filter(s => s.SurgerySource === '住院刀').length,
+    empty:      rooms.filter(r => !r.Patient).length,
+  }), [rooms, allSurgeries])
   // 點同一篩選鈕再點一次即取消（回到 all）；all 本身不切換
   const handleFilter = f => setFilter(prev => (prev === f && f !== 'all') ? 'all' : f)
 
@@ -174,7 +188,7 @@ export default function WardTab() {
           <div className="stats-title">▌ 手術統計</div>
           <div className="stats-body">
             <div className="ws-row">
-              <div className="ws-item"><div className="ws-value">{stats.total}</div><div className="ws-label">刀房總數</div></div>
+              <div className="ws-item"><div className="ws-value">{count}</div><div className="ws-label">今日總刀</div></div>
               <div className={`ws-item${filter === 'busy' ? ' active' : ''}`} data-filter="busy" onClick={() => handleFilter('busy')}><div className="ws-value ws-busy">{stats.inSurgery}</div><div className="ws-label">手術中</div></div>
             </div>
             <div className="ws-row">
@@ -184,7 +198,7 @@ export default function WardTab() {
             </div>
             <div className="ws-row">
               <div className={`ws-item${filter === 'prep' ? ' active' : ''}`} data-filter="prep" onClick={() => handleFilter('prep')}><div className="ws-value ws-prep">{stats.prep}</div><div className="ws-label">準備中</div></div>
-              <div className={`ws-item${filter === 'done' ? ' active' : ''}`} data-filter="done" onClick={() => handleFilter('done')}><div className="ws-value ws-done">{stats.completed}</div><div className="ws-label">已完成</div></div>
+              <div className="ws-item" style={{ cursor: 'pointer' }} onClick={() => setShowCompleted(true)}><div className="ws-value ws-done">{stats.completed}</div><div className="ws-label">已完成 ▸</div></div>
               <div className="ws-item"><div className="ws-value ws-empty">{stats.empty}</div><div className="ws-label">空房</div></div>
             </div>
           </div>
@@ -199,10 +213,47 @@ export default function WardTab() {
         <button className={`badge badge-filter badge-inp${filter === 'inp' ? ' active' : ''}`} onClick={() => handleFilter('inp')}>住院刀</button>
         <button className={`filter-btn${filter === 'busy' ? ' active' : ''}`} onClick={() => handleFilter('busy')}>手術中</button>
         <button className={`filter-btn${filter === 'prep' ? ' active' : ''}`} onClick={() => handleFilter('prep')}>準備中</button>
-        <button className={`filter-btn${filter === 'done' ? ' active' : ''}`} onClick={() => handleFilter('done')}>已完成</button>
+        <button className="filter-btn" onClick={() => setShowCompleted(true)}>已完成 ▸</button>
       </div>
 
       {selectedRoom && <RoomModal room={selectedRoom} onClose={() => setSelectedRoom(null)} />}
+      {showCompleted && <CompletedModal items={completedList} onClose={() => setShowCompleted(false)} />}
     </>
+  )
+}
+
+// 今日已完成手術清單 Modal（點統計面板/篩選列「已完成」開啟）
+function CompletedModal({ items, onClose }) {
+  return (
+    <div className="modal-overlay show" onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className="modal-box">
+        <div className="modal-header">
+          <span className="modal-room-id">今日已完成手術</span>
+          <span className="modal-basic">{items.length} 台</span>
+          <button className="modal-close" onClick={onClose}>✕</button>
+        </div>
+        <div className="modal-body">
+          <table className="surg-table" style={{ width: '100%' }}>
+            <thead>
+              <tr><th>刀房</th><th>排程</th><th>病人</th><th>術式</th><th>主刀</th></tr>
+            </thead>
+            <tbody>
+              {items.length === 0
+                ? <tr><td colSpan="5" style={{ textAlign: 'center', padding: '24px', color: 'var(--text-muted)' }}>今日尚無已完成手術</td></tr>
+                : items.map((s, i) => (
+                  <tr key={i}>
+                    <td><span className="surg-td-or">{s.roomId}</span></td>
+                    <td>{s.ScheduledTime || '—'}</td>
+                    <td><span className={s.Gender === 'M' ? 'gender-m' : 'gender-f'}>{s.PatientName}</span> {s.Gender}/{s.Age ?? '—'}</td>
+                    <td>{s.SurgeryName || '—'}</td>
+                    <td>{s.Doctor || '—'}</td>
+                  </tr>
+                ))}
+            </tbody>
+          </table>
+        </div>
+        <div className="modal-footer"><button className="btn-close-modal" onClick={onClose}>關閉</button></div>
+      </div>
+    </div>
   )
 }

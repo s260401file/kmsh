@@ -45,6 +45,9 @@ tags: [kmsh, 技術, 資料庫]
 | `ErOnCallDoctor` | schema_v4 | `(UnitCode, DeptCode)` | ER 各科值班醫師（病室動態右下面板）。 |
 | `ErBed` | schema_v5 | `(UnitCode, BedId)` | **ER 床位主檔**：床碼＋分區＋平面圖座標(GridCol/GridRow)；鋪 ER 平面圖、顯示空床。床碼未建者→白板「不佔床病人」面板。 |
 | `OrRoom` | schema_v6 | `(UnitCode, RoomId)` | **OR 刀房主檔**：白板房號 RoomId(OR-01…) ↔ Board_OR 刀房代碼 ApiRoom(R1…) 對應與排序；鋪 OR 4×2 房卡。 |
+| `OrShiftStaff` | schema_v8 | `(UnitCode, ShiftType, Role)` | **OR 手術派班-班級人員**：護理長/麻醉/體循，依班別。供 ScheduleTab。 |
+| `OrShiftRoom` | schema_v8 | `(UnitCode, ShiftType, RoomId)` | **OR 手術派班-房×班 刷手/流動**：刀房清單用 `OrRoom`，此表只存派班。 |
+| `OrHandover` | schema_v8 | `Id`（active 列） | **OR 術後特殊交班**：轉病房/床、出血/輸血、引流、注意事項…全自建手填。供 HandoverTab。 |
 
 **`WardPatientExt` 欄位演進**：v2 基本臨床＋管路/旗標（W52）→ v3 加 `Ventilator/Crrt/Ng`（ICU）→ v5 加 ER 狀態 `Observation/Awaiting(+Type)/TransferIn/Out(+Hospital)/Admitted(+AdmBedNo)/Aad/Mbd/Deceased/ArrivalDate/ArrivalTime` → v6 加 OR `ScrubNurse/CircNurse/SurgeryStatus/StartTime/EndTime`。皆 `COL_LENGTH` 保護、可重跑。
 

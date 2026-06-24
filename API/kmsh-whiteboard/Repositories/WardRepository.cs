@@ -251,4 +251,356 @@ public class WardRepository : IWardRepository
             new CommandDefinition("DELETE FROM [dbo].[OrRoom] WHERE Id=@Id", new { Id = id }, cancellationToken: ct));
         return rows > 0;
     }
+
+    // ── OR 手術派班-班級人員 [dbo].[OrShiftStaff] ──────────────────
+    private const string OssCols = "Id, UnitCode, ShiftType, Role, Name, RoleTitle, Ext, SortOrder, IsActive, UpdatedAt, CreatedAt";
+
+    public async Task<IEnumerable<OrShiftStaffItem>> GetShiftStaffAsync(string unitCode, bool includeAll = false, CancellationToken ct = default)
+    {
+        var sql = $@"SELECT {OssCols} FROM [dbo].[OrShiftStaff]
+                     WHERE UnitCode=@UnitCode AND (@IncludeAll=1 OR IsActive=1)
+                     ORDER BY ShiftType, SortOrder, Id";
+        using var conn = _db.Create();
+        return await conn.QueryAsync<OrShiftStaffItem>(
+            new CommandDefinition(sql, new { UnitCode = unitCode, IncludeAll = includeAll ? 1 : 0 }, cancellationToken: ct));
+    }
+
+    public async Task<OrShiftStaffItem?> GetShiftStaffByIdAsync(int id, CancellationToken ct = default)
+    {
+        using var conn = _db.Create();
+        return await conn.QueryFirstOrDefaultAsync<OrShiftStaffItem>(
+            new CommandDefinition($"SELECT {OssCols} FROM [dbo].[OrShiftStaff] WHERE Id=@Id", new { Id = id }, cancellationToken: ct));
+    }
+
+    public async Task<int> CreateShiftStaffAsync(OrShiftStaffUpsertRequest req, CancellationToken ct = default)
+    {
+        var sql = @"INSERT INTO [dbo].[OrShiftStaff] (UnitCode, ShiftType, Role, Name, RoleTitle, Ext, SortOrder, IsActive, UpdatedAt, CreatedAt)
+                    OUTPUT INSERTED.Id
+                    VALUES (@UnitCode, @ShiftType, @Role, @Name, @RoleTitle, @Ext, @SortOrder, @IsActive, GETDATE(), GETDATE())";
+        using var conn = _db.Create();
+        return await conn.ExecuteScalarAsync<int>(new CommandDefinition(sql, req, cancellationToken: ct));
+    }
+
+    public async Task<bool> UpdateShiftStaffAsync(int id, OrShiftStaffUpsertRequest req, CancellationToken ct = default)
+    {
+        var sql = @"UPDATE [dbo].[OrShiftStaff] SET
+                    UnitCode=@UnitCode, ShiftType=@ShiftType, Role=@Role, Name=@Name, RoleTitle=@RoleTitle,
+                    Ext=@Ext, SortOrder=@SortOrder, IsActive=@IsActive, UpdatedAt=GETDATE()
+                    WHERE Id=@Id";
+        using var conn = _db.Create();
+        var rows = await conn.ExecuteAsync(new CommandDefinition(sql,
+            new { req.UnitCode, req.ShiftType, req.Role, req.Name, req.RoleTitle, req.Ext, req.SortOrder, req.IsActive, Id = id }, cancellationToken: ct));
+        return rows > 0;
+    }
+
+    public async Task<bool> DeleteShiftStaffAsync(int id, CancellationToken ct = default)
+    {
+        using var conn = _db.Create();
+        var rows = await conn.ExecuteAsync(
+            new CommandDefinition("DELETE FROM [dbo].[OrShiftStaff] WHERE Id=@Id", new { Id = id }, cancellationToken: ct));
+        return rows > 0;
+    }
+
+    // ── OR 手術派班-房×班 刷手/流動 [dbo].[OrShiftRoom] ────────────
+    private const string OsrCols = "Id, UnitCode, ShiftType, RoomId, ScrubNurse, CircNurse, Ext, SortOrder, IsActive, UpdatedAt, CreatedAt";
+
+    public async Task<IEnumerable<OrShiftRoomItem>> GetShiftRoomAsync(string unitCode, bool includeAll = false, CancellationToken ct = default)
+    {
+        var sql = $@"SELECT {OsrCols} FROM [dbo].[OrShiftRoom]
+                     WHERE UnitCode=@UnitCode AND (@IncludeAll=1 OR IsActive=1)
+                     ORDER BY ShiftType, SortOrder, RoomId";
+        using var conn = _db.Create();
+        return await conn.QueryAsync<OrShiftRoomItem>(
+            new CommandDefinition(sql, new { UnitCode = unitCode, IncludeAll = includeAll ? 1 : 0 }, cancellationToken: ct));
+    }
+
+    public async Task<OrShiftRoomItem?> GetShiftRoomByIdAsync(int id, CancellationToken ct = default)
+    {
+        using var conn = _db.Create();
+        return await conn.QueryFirstOrDefaultAsync<OrShiftRoomItem>(
+            new CommandDefinition($"SELECT {OsrCols} FROM [dbo].[OrShiftRoom] WHERE Id=@Id", new { Id = id }, cancellationToken: ct));
+    }
+
+    public async Task<int> CreateShiftRoomAsync(OrShiftRoomUpsertRequest req, CancellationToken ct = default)
+    {
+        var sql = @"INSERT INTO [dbo].[OrShiftRoom] (UnitCode, ShiftType, RoomId, ScrubNurse, CircNurse, Ext, SortOrder, IsActive, UpdatedAt, CreatedAt)
+                    OUTPUT INSERTED.Id
+                    VALUES (@UnitCode, @ShiftType, @RoomId, @ScrubNurse, @CircNurse, @Ext, @SortOrder, @IsActive, GETDATE(), GETDATE())";
+        using var conn = _db.Create();
+        return await conn.ExecuteScalarAsync<int>(new CommandDefinition(sql, req, cancellationToken: ct));
+    }
+
+    public async Task<bool> UpdateShiftRoomAsync(int id, OrShiftRoomUpsertRequest req, CancellationToken ct = default)
+    {
+        var sql = @"UPDATE [dbo].[OrShiftRoom] SET
+                    UnitCode=@UnitCode, ShiftType=@ShiftType, RoomId=@RoomId, ScrubNurse=@ScrubNurse, CircNurse=@CircNurse,
+                    Ext=@Ext, SortOrder=@SortOrder, IsActive=@IsActive, UpdatedAt=GETDATE()
+                    WHERE Id=@Id";
+        using var conn = _db.Create();
+        var rows = await conn.ExecuteAsync(new CommandDefinition(sql,
+            new { req.UnitCode, req.ShiftType, req.RoomId, req.ScrubNurse, req.CircNurse, req.Ext, req.SortOrder, req.IsActive, Id = id }, cancellationToken: ct));
+        return rows > 0;
+    }
+
+    public async Task<bool> DeleteShiftRoomAsync(int id, CancellationToken ct = default)
+    {
+        using var conn = _db.Create();
+        var rows = await conn.ExecuteAsync(
+            new CommandDefinition("DELETE FROM [dbo].[OrShiftRoom] WHERE Id=@Id", new { Id = id }, cancellationToken: ct));
+        return rows > 0;
+    }
+
+    // ── OR 特殊交班 [dbo].[OrHandover] ─────────────────────────────
+    private const string OhdCols = @"Id, UnitCode, Hhisnum, RoomId, PatientName, Gender, Age, SurgeryName, SurgerySource, SurgeonName,
+        DestWard, DestBed, EndTime, BloodLoss, BloodTransfusion, DrainDetails, SpecialNotes, SortOrder, IsActive, UpdatedAt, CreatedAt";
+
+    public async Task<IEnumerable<OrHandoverItem>> GetHandoverAsync(string unitCode, bool includeAll = false, CancellationToken ct = default)
+    {
+        var sql = $@"SELECT {OhdCols} FROM [dbo].[OrHandover]
+                     WHERE UnitCode=@UnitCode AND (@IncludeAll=1 OR IsActive=1)
+                     ORDER BY SortOrder, Id";
+        using var conn = _db.Create();
+        return await conn.QueryAsync<OrHandoverItem>(
+            new CommandDefinition(sql, new { UnitCode = unitCode, IncludeAll = includeAll ? 1 : 0 }, cancellationToken: ct));
+    }
+
+    public async Task<OrHandoverItem?> GetHandoverByIdAsync(int id, CancellationToken ct = default)
+    {
+        using var conn = _db.Create();
+        return await conn.QueryFirstOrDefaultAsync<OrHandoverItem>(
+            new CommandDefinition($"SELECT {OhdCols} FROM [dbo].[OrHandover] WHERE Id=@Id", new { Id = id }, cancellationToken: ct));
+    }
+
+    public async Task<int> CreateHandoverAsync(OrHandoverUpsertRequest req, CancellationToken ct = default)
+    {
+        var sql = @"INSERT INTO [dbo].[OrHandover]
+            (UnitCode, Hhisnum, RoomId, PatientName, Gender, Age, SurgeryName, SurgerySource, SurgeonName,
+             DestWard, DestBed, EndTime, BloodLoss, BloodTransfusion, DrainDetails, SpecialNotes, SortOrder, IsActive, UpdatedAt, CreatedAt)
+            OUTPUT INSERTED.Id
+            VALUES
+            (@UnitCode, @Hhisnum, @RoomId, @PatientName, @Gender, @Age, @SurgeryName, @SurgerySource, @SurgeonName,
+             @DestWard, @DestBed, @EndTime, @BloodLoss, @BloodTransfusion, @DrainDetails, @SpecialNotes, @SortOrder, @IsActive, GETDATE(), GETDATE())";
+        using var conn = _db.Create();
+        return await conn.ExecuteScalarAsync<int>(new CommandDefinition(sql, req, cancellationToken: ct));
+    }
+
+    public async Task<bool> UpdateHandoverAsync(int id, OrHandoverUpsertRequest req, CancellationToken ct = default)
+    {
+        var sql = @"UPDATE [dbo].[OrHandover] SET
+            UnitCode=@UnitCode, Hhisnum=@Hhisnum, RoomId=@RoomId, PatientName=@PatientName, Gender=@Gender, Age=@Age,
+            SurgeryName=@SurgeryName, SurgerySource=@SurgerySource, SurgeonName=@SurgeonName,
+            DestWard=@DestWard, DestBed=@DestBed, EndTime=@EndTime, BloodLoss=@BloodLoss, BloodTransfusion=@BloodTransfusion,
+            DrainDetails=@DrainDetails, SpecialNotes=@SpecialNotes, SortOrder=@SortOrder, IsActive=@IsActive, UpdatedAt=GETDATE()
+            WHERE Id=@Id";
+        using var conn = _db.Create();
+        var rows = await conn.ExecuteAsync(new CommandDefinition(sql, new {
+            req.UnitCode, req.Hhisnum, req.RoomId, req.PatientName, req.Gender, req.Age, req.SurgeryName, req.SurgerySource,
+            req.SurgeonName, req.DestWard, req.DestBed, req.EndTime, req.BloodLoss, req.BloodTransfusion, req.DrainDetails,
+            req.SpecialNotes, req.SortOrder, req.IsActive, Id = id
+        }, cancellationToken: ct));
+        return rows > 0;
+    }
+
+    public async Task<bool> DeleteHandoverAsync(int id, CancellationToken ct = default)
+    {
+        using var conn = _db.Create();
+        var rows = await conn.ExecuteAsync(
+            new CommandDefinition("DELETE FROM [dbo].[OrHandover] WHERE Id=@Id", new { Id = id }, cancellationToken: ct));
+        return rows > 0;
+    }
+
+    // ── 各站頁首單位資訊 [dbo].[UnitInfo]（一站一列；以 UnitCode upsert）──
+    private const string UiCols = "Id, UnitCode, HospitalName, WardName, DirectorLabel, DirectorName, HeadNurseLabel, HeadNurseName, TotalBeds, UpdatedAt, CreatedAt";
+
+    public async Task<UnitInfoItem?> GetUnitInfoAsync(string unitCode, CancellationToken ct = default)
+    {
+        using var conn = _db.Create();
+        return await conn.QueryFirstOrDefaultAsync<UnitInfoItem>(
+            new CommandDefinition($"SELECT {UiCols} FROM [dbo].[UnitInfo] WHERE UnitCode=@UnitCode", new { UnitCode = unitCode }, cancellationToken: ct));
+    }
+
+    // ── 檢查/會診 [dbo].[WardExamConsult] ─────────────────────────
+    private const string WecCols = @"Id, UnitCode, Kind, Hhisnum, BedId, PatientName, Gender, ItemName, Doctor,
+        ScheduledDate, TimeSlot, CompletedTime, Status, Notes, SortOrder, IsActive, UpdatedAt, CreatedAt";
+
+    public async Task<IEnumerable<WardExamConsultItem>> GetExamConsultAsync(string unitCode, bool includeAll = false, CancellationToken ct = default)
+    {
+        var sql = $@"SELECT {WecCols} FROM [dbo].[WardExamConsult]
+                     WHERE UnitCode=@UnitCode AND (@IncludeAll=1 OR IsActive=1)
+                     ORDER BY Kind DESC, SortOrder, Id";
+        using var conn = _db.Create();
+        return await conn.QueryAsync<WardExamConsultItem>(
+            new CommandDefinition(sql, new { UnitCode = unitCode, IncludeAll = includeAll ? 1 : 0 }, cancellationToken: ct));
+    }
+
+    public async Task<WardExamConsultItem?> GetExamConsultByIdAsync(int id, CancellationToken ct = default)
+    {
+        using var conn = _db.Create();
+        return await conn.QueryFirstOrDefaultAsync<WardExamConsultItem>(
+            new CommandDefinition($"SELECT {WecCols} FROM [dbo].[WardExamConsult] WHERE Id=@Id", new { Id = id }, cancellationToken: ct));
+    }
+
+    public async Task<int> CreateExamConsultAsync(WardExamConsultUpsertRequest req, CancellationToken ct = default)
+    {
+        var sql = @"INSERT INTO [dbo].[WardExamConsult]
+            (UnitCode, Kind, Hhisnum, BedId, PatientName, Gender, ItemName, Doctor, ScheduledDate, TimeSlot, CompletedTime, Status, Notes, SortOrder, IsActive, UpdatedAt, CreatedAt)
+            OUTPUT INSERTED.Id
+            VALUES
+            (@UnitCode, @Kind, @Hhisnum, @BedId, @PatientName, @Gender, @ItemName, @Doctor, @ScheduledDate, @TimeSlot, @CompletedTime, @Status, @Notes, @SortOrder, @IsActive, GETDATE(), GETDATE())";
+        using var conn = _db.Create();
+        return await conn.ExecuteScalarAsync<int>(new CommandDefinition(sql, req, cancellationToken: ct));
+    }
+
+    public async Task<bool> UpdateExamConsultAsync(int id, WardExamConsultUpsertRequest req, CancellationToken ct = default)
+    {
+        var sql = @"UPDATE [dbo].[WardExamConsult] SET
+            UnitCode=@UnitCode, Kind=@Kind, Hhisnum=@Hhisnum, BedId=@BedId, PatientName=@PatientName, Gender=@Gender,
+            ItemName=@ItemName, Doctor=@Doctor, ScheduledDate=@ScheduledDate, TimeSlot=@TimeSlot, CompletedTime=@CompletedTime,
+            Status=@Status, Notes=@Notes, SortOrder=@SortOrder, IsActive=@IsActive, UpdatedAt=GETDATE()
+            WHERE Id=@Id";
+        using var conn = _db.Create();
+        var rows = await conn.ExecuteAsync(new CommandDefinition(sql, new {
+            req.UnitCode, req.Kind, req.Hhisnum, req.BedId, req.PatientName, req.Gender, req.ItemName, req.Doctor,
+            req.ScheduledDate, req.TimeSlot, req.CompletedTime, req.Status, req.Notes, req.SortOrder, req.IsActive, Id = id
+        }, cancellationToken: ct));
+        return rows > 0;
+    }
+
+    public async Task<bool> DeleteExamConsultAsync(int id, CancellationToken ct = default)
+    {
+        using var conn = _db.Create();
+        var rows = await conn.ExecuteAsync(
+            new CommandDefinition("DELETE FROM [dbo].[WardExamConsult] WHERE Id=@Id", new { Id = id }, cancellationToken: ct));
+        return rows > 0;
+    }
+
+    // ── ICU 抗生素 [dbo].[IcuAntibiotic] ─────────────────────────
+    private const string AbxCols = @"Id, UnitCode, Hhisnum, DrugName, StartDateTime, FirstDoseDateTime,
+        EndDateTime, SortOrder, IsActive, UpdatedAt, CreatedAt";
+
+    public async Task<IEnumerable<IcuAntibioticItem>> GetAntibioticAsync(string unitCode, bool includeAll = false, CancellationToken ct = default)
+    {
+        var sql = $@"SELECT {AbxCols} FROM [dbo].[IcuAntibiotic]
+                     WHERE UnitCode=@UnitCode AND (@IncludeAll=1 OR IsActive=1)
+                     ORDER BY Hhisnum, SortOrder, Id";
+        using var conn = _db.Create();
+        return await conn.QueryAsync<IcuAntibioticItem>(
+            new CommandDefinition(sql, new { UnitCode = unitCode, IncludeAll = includeAll ? 1 : 0 }, cancellationToken: ct));
+    }
+
+    public async Task<IcuAntibioticItem?> GetAntibioticByIdAsync(int id, CancellationToken ct = default)
+    {
+        using var conn = _db.Create();
+        return await conn.QueryFirstOrDefaultAsync<IcuAntibioticItem>(
+            new CommandDefinition($"SELECT {AbxCols} FROM [dbo].[IcuAntibiotic] WHERE Id=@Id", new { Id = id }, cancellationToken: ct));
+    }
+
+    public async Task<int> CreateAntibioticAsync(IcuAntibioticUpsertRequest req, CancellationToken ct = default)
+    {
+        var sql = @"INSERT INTO [dbo].[IcuAntibiotic]
+            (UnitCode, Hhisnum, DrugName, StartDateTime, FirstDoseDateTime, EndDateTime, SortOrder, IsActive, UpdatedAt, CreatedAt)
+            OUTPUT INSERTED.Id
+            VALUES
+            (@UnitCode, @Hhisnum, @DrugName, @StartDateTime, @FirstDoseDateTime, @EndDateTime, @SortOrder, @IsActive, GETDATE(), GETDATE())";
+        using var conn = _db.Create();
+        return await conn.ExecuteScalarAsync<int>(new CommandDefinition(sql, req, cancellationToken: ct));
+    }
+
+    public async Task<bool> UpdateAntibioticAsync(int id, IcuAntibioticUpsertRequest req, CancellationToken ct = default)
+    {
+        var sql = @"UPDATE [dbo].[IcuAntibiotic] SET
+            UnitCode=@UnitCode, Hhisnum=@Hhisnum, DrugName=@DrugName, StartDateTime=@StartDateTime,
+            FirstDoseDateTime=@FirstDoseDateTime, EndDateTime=@EndDateTime, SortOrder=@SortOrder,
+            IsActive=@IsActive, UpdatedAt=GETDATE()
+            WHERE Id=@Id";
+        using var conn = _db.Create();
+        var rows = await conn.ExecuteAsync(new CommandDefinition(sql, new {
+            req.UnitCode, req.Hhisnum, req.DrugName, req.StartDateTime, req.FirstDoseDateTime,
+            req.EndDateTime, req.SortOrder, req.IsActive, Id = id
+        }, cancellationToken: ct));
+        return rows > 0;
+    }
+
+    public async Task<bool> DeleteAntibioticAsync(int id, CancellationToken ct = default)
+    {
+        using var conn = _db.Create();
+        var rows = await conn.ExecuteAsync(
+            new CommandDefinition("DELETE FROM [dbo].[IcuAntibiotic] WHERE Id=@Id", new { Id = id }, cancellationToken: ct));
+        return rows > 0;
+    }
+
+    // ── OR 當日手術快照 [dbo].[OrDailySurgery] ─────────────────────
+    private const string OdsCols = @"Id, SurgeryDate, Hhisnum, ApiRoom, RoomId, PatientName, Gender, BirthDate,
+        SurgeryName, Doctor, AnesType, Source, OpTime, Diagnosis, Completed, FirstSeenAt, LastSeenAt, UpdatedAt, CreatedAt";
+
+    public async Task<IEnumerable<OrDailySurgeryItem>> GetOrDailyAsync(DateTime fromDate, DateTime toDate, CancellationToken ct = default)
+    {
+        var sql = $@"SELECT {OdsCols} FROM [dbo].[OrDailySurgery]
+                     WHERE SurgeryDate >= @From AND SurgeryDate <= @To
+                     ORDER BY SurgeryDate, OpTime";
+        using var conn = _db.Create();
+        return await conn.QueryAsync<OrDailySurgeryItem>(
+            new CommandDefinition(sql, new { From = fromDate.Date, To = toDate.Date }, cancellationToken: ct));
+    }
+
+    /// <summary>依唯一鍵(日期+刀房+病歷號+時間) upsert；存在則更新欄位＋LastSeen、Completed 歸 0。</summary>
+    public async Task<int> UpsertOrDailyAsync(OrDailySurgeryItem it, CancellationToken ct = default)
+    {
+        var sql = @"
+            UPDATE [dbo].[OrDailySurgery] SET
+                RoomId=@RoomId, PatientName=@PatientName, Gender=@Gender, BirthDate=@BirthDate,
+                SurgeryName=@SurgeryName, Doctor=@Doctor, AnesType=@AnesType, Source=@Source, Diagnosis=@Diagnosis,
+                Completed=0, LastSeenAt=GETDATE(), UpdatedAt=GETDATE()
+            WHERE SurgeryDate=@SurgeryDate AND ApiRoom=@ApiRoom AND Hhisnum=@Hhisnum AND OpTime=@OpTime;
+            IF @@ROWCOUNT = 0
+            INSERT INTO [dbo].[OrDailySurgery]
+                (SurgeryDate, Hhisnum, ApiRoom, RoomId, PatientName, Gender, BirthDate, SurgeryName, Doctor, AnesType, Source, OpTime, Diagnosis, Completed, FirstSeenAt, LastSeenAt, UpdatedAt, CreatedAt)
+            VALUES
+                (@SurgeryDate, @Hhisnum, @ApiRoom, @RoomId, @PatientName, @Gender, @BirthDate, @SurgeryName, @Doctor, @AnesType, @Source, @OpTime, @Diagnosis, 0, GETDATE(), GETDATE(), GETDATE(), GETDATE());";
+        using var conn = _db.Create();
+        return await conn.ExecuteAsync(new CommandDefinition(sql, new {
+            it.SurgeryDate, it.Hhisnum, it.ApiRoom, it.RoomId, it.PatientName, it.Gender, it.BirthDate,
+            it.SurgeryName, it.Doctor, it.AnesType, it.Source, it.OpTime, it.Diagnosis
+        }, cancellationToken: ct));
+    }
+
+    /// <summary>把某日「目前已不在院方清單」的快照列標記 Completed=1（傳入現存唯一鍵清單；空＝全部該日標完成）。</summary>
+    public async Task<int> MarkOrDailyCompletedAsync(DateTime date, IEnumerable<string> presentKeys, CancellationToken ct = default)
+    {
+        // 唯一鍵以字串表示：ApiRoom|Hhisnum|OpTime
+        var keys = presentKeys.ToList();
+        var sql = @"UPDATE [dbo].[OrDailySurgery]
+                    SET Completed=1, UpdatedAt=GETDATE()
+                    WHERE SurgeryDate=@Date AND Completed=0
+                      AND (ISNULL(ApiRoom,'') + '|' + Hhisnum + '|' + OpTime) NOT IN @Keys";
+        using var conn = _db.Create();
+        // Dapper 對空集合的 NOT IN 會出錯 → 空集合時用恆真比較
+        if (keys.Count == 0)
+            sql = @"UPDATE [dbo].[OrDailySurgery] SET Completed=1, UpdatedAt=GETDATE() WHERE SurgeryDate=@Date AND Completed=0";
+        return await conn.ExecuteAsync(new CommandDefinition(sql, new { Date = date.Date, Keys = keys }, cancellationToken: ct));
+    }
+
+    public async Task<int> PurgeOrDailyAsync(DateTime beforeDate, CancellationToken ct = default)
+    {
+        using var conn = _db.Create();
+        return await conn.ExecuteAsync(new CommandDefinition(
+            "DELETE FROM [dbo].[OrDailySurgery] WHERE SurgeryDate < @Before", new { Before = beforeDate.Date }, cancellationToken: ct));
+    }
+
+    /// <summary>以 UnitCode 為鍵 upsert（存在則更新、否則新增）。</summary>
+    public async Task<bool> UpsertUnitInfoAsync(UnitInfoUpsertRequest req, CancellationToken ct = default)
+    {
+        var sql = @"
+            UPDATE [dbo].[UnitInfo] SET
+                HospitalName=@HospitalName, WardName=@WardName,
+                DirectorLabel=@DirectorLabel, DirectorName=@DirectorName,
+                HeadNurseLabel=@HeadNurseLabel, HeadNurseName=@HeadNurseName, TotalBeds=@TotalBeds, UpdatedAt=GETDATE()
+            WHERE UnitCode=@UnitCode;
+            IF @@ROWCOUNT = 0
+            INSERT INTO [dbo].[UnitInfo] (UnitCode, HospitalName, WardName, DirectorLabel, DirectorName, HeadNurseLabel, HeadNurseName, TotalBeds, UpdatedAt, CreatedAt)
+            VALUES (@UnitCode, @HospitalName, @WardName, @DirectorLabel, @DirectorName, @HeadNurseLabel, @HeadNurseName, @TotalBeds, GETDATE(), GETDATE());";
+        using var conn = _db.Create();
+        await conn.ExecuteAsync(new CommandDefinition(sql, req, cancellationToken: ct));
+        return true;
+    }
 }

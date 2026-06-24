@@ -13,6 +13,9 @@ public class BoardBedItem
     [JsonPropertyName("身分證")]   public string? Hidno { get; set; }   // 個資，僅後端比對用
     [JsonPropertyName("出生年月日")] public string? Hbirthdt { get; set; } // 如 1970/11/20
     [JsonPropertyName("性別")]     public string? Hsex { get; set; }
+    [JsonPropertyName("負責醫師")] public string? Doctor { get; set; }   // 院方已回傳（可帶入，免後台自建）
+    [JsonPropertyName("轉入日期")] public string? AdmitDate { get; set; }// ISO；院方已回傳（入院/轉入日）
+    [JsonPropertyName("診斷")]     public string? Diagnosis { get; set; }// 院方已回傳（可帶入，免後台自建）
     [JsonPropertyName("病房")]     public string? Hnursta { get; set; }
     [JsonPropertyName("床位")]     public string? Hbed { get; set; }    // 如 006
 }

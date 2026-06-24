@@ -1,5 +1,13 @@
 /* 手術資訊 — 所有選擇器以 .w52-board 為根 */
 .w52-board .surg-panel { flex: 1; display: flex; flex-direction: column; overflow: hidden; padding: 16px 20px 12px; gap: 14px; }
+/* 日期切換列（手術資訊接 Board_OR 後新增）*/
+.w52-board .sr-date-bar { display:flex;gap:6px;flex-shrink:0;flex-wrap:wrap }
+.w52-board .sr-date-btn { display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:6px 16px;border-radius:var(--radius-pill);font-size:15px;font-weight:700;cursor:pointer;border:2px solid var(--divider);background:var(--bg-card-empty);color:var(--text-secondary);transition:background .15s,color .15s,border-color .15s;white-space:nowrap;min-width:80px;font-family:inherit }
+.w52-board .sr-date-btn:hover { border-color:var(--text-secondary);color:var(--text-primary) }
+.w52-board .sr-date-btn.is-today { border-color:var(--accent-blue);color:var(--accent-blue);background:#EEF4FF }
+.w52-board .sr-date-btn.active { background:var(--text-primary);color:#fff;border-color:var(--text-primary) }
+.w52-board .sr-date-btn.is-today.active { background:var(--accent-blue);border-color:var(--accent-blue);color:#fff }
+.w52-board .sr-date-weekday { font-size:11px;font-weight:400;opacity:.75 }
 .w52-board .surg-title { font-size: 24px; font-weight: 800; color: var(--text-primary); display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
 .w52-board .surg-title-bar { display: inline-block; width: 5px; height: 24px; background: var(--accent-blue); border-radius: 3px; }
 .w52-board .surg-card { flex: 1; background: var(--bg-card-occ); border: 1px solid var(--divider); border-radius: var(--radius-card); display: flex; flex-direction: column; overflow: hidden; min-height: 0; }

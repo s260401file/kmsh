@@ -7,6 +7,7 @@
 import { useState, useMemo } from 'react'
 import MOCK_DATA, { getStats } from '../mockData'
 import { useErWard } from '../../../../hooks/useErWard'              // ER 病室動態：輪詢後端聚合看板
+import { useUnitInfo } from '../../../../hooks/useUnitInfo'          // 頁首設定（含總病床數覆寫）
 import { usePolling } from '../../../../hooks/usePolling'           // 各科值班醫師面板：定時輪詢自建資料
 import * as wardApi from '../../../../services/wardApi'
 import { BULLETIN_MS } from '../../../../config/pollingConfig'
@@ -16,6 +17,8 @@ import { FlagDot, makeFlagStyle } from '../../../../utils/flagShapes'
 const triageGrade = t => (t === 1 ? 'A' : (t === 2 ? 'B' : 'C'))
 // 各級對應的完整中文標籤（用於 Modal 顯示）
 const GRADE_LABEL = { A: 'A級 重症', B: 'B級 中症', C: 'C級 輕症' }
+// 各級的中文病況描述（Modal 檢傷分級徽章後的說明文字）
+const GRADE_DESC = { A: '重症', B: '中症', C: '輕症' }
 
 // 依病人各布林欄位組出要顯示的狀態旗標標籤陣列（死亡 / MBD / AAD / 轉出入 / DNR / 留觀 / 住院）
 function buildBadges(patient) {
@@ -140,7 +143,7 @@ function BedModal({ bed, onClose }) {
           <div className="modal-row">
             <div className="modal-field"><div className="field-label">到院時間</div><div className="field-value">{hasArr ? `2026/${p.ArrivalDate} ${p.ArrivalTime}` : '—'}</div></div>
             <div className="modal-field"><div className="field-label">留觀時間</div><div className="field-value">{stayStr}</div></div>
-            <div className="modal-field"><div className="field-label">檢傷分級</div><div className={`field-value triage-val tg-${tg.toLowerCase()}`}>{p.Triage ? (GRADE_LABEL[tg] || '—') : '—'}</div></div>
+            <div className="modal-field"><div className="field-label">檢傷分級</div><div className="field-value">{p.Triage ? <><span className={`triage-badge tg-${tg.toLowerCase()}`}>{tg}級</span>　{GRADE_DESC[tg] || ''}</> : '—'}</div></div>
           </div>
           <div className="modal-row">
             <div className="modal-field"><div className="field-label">隔離狀態</div><div className="field-value">{p.Isolation || '無'}</div></div>
@@ -171,6 +174,8 @@ export default function WardTab() {
   const placedBeds = useMemo(() => beds.filter(b => !b.Unplaced), [beds])    // 有平面圖座標
   const unplacedBeds = useMemo(() => beds.filter(b => b.Unplaced), [beds])   // 不佔床病人（床碼未建主檔）→ 負1 下方面板
   const stats = useMemo(() => getStats(beds), [beds])  // 統計面板數值（由床位推導）
+  const info = useUnitInfo('ER')                        // 頁首設定（總病床數覆寫）
+  const totalBeds = info?.totalBeds ?? 19               // 留空→19；有值（含 0/1）→該值
   // 各科值班醫師（自建，後台維護）：定時輪詢，免 F5 自動更新
   const { data: onCallData } = usePolling(() => wardApi.getOnCall('ER'), { intervalMs: BULLETIN_MS, deps: ['ER'] })
   const onCallDocs = onCallData ?? []
@@ -184,7 +189,7 @@ export default function WardTab() {
     <>
       <main className="main-content">
         <div className="beds-panel">
-          <div className="ward-title">▌ 急診室　共 19 床（負壓 2＋兒科留觀 1＋第一留觀 5＋第二留觀 6＋急診手術 2＋急救 3）</div>
+          <div className="ward-title">▌ 急診室　共 {totalBeds} 床</div>
           {/* 病室動態地圖：以 CSS grid 對位排出急診室平面 */}
           <div className="ward-grid">
             <div className="nursing-station">護理站</div>
@@ -275,7 +280,7 @@ export default function WardTab() {
           <div className="stats-title">▌ 急診統計</div>
           <div className="stats-body">
             <div className="ws-row">
-              <div className="ws-item"><div className="ws-value">{stats.total}</div><div className="ws-label">總床數</div></div>
+              <div className="ws-item"><div className="ws-value">{totalBeds}</div><div className="ws-label">總床數</div></div>
               <div className="ws-item"><div className="ws-value">{stats.attending}</div><div className="ws-label">看診中</div></div>
             </div>
             <div className="ws-row">

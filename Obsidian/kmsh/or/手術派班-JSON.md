@@ -3,8 +3,8 @@ tags: [kmsh, 技術, OR, 手術派班, 試作]
 ---
 # OR 手術派班 — JSON 設計
 
-> 對應分頁 `ScheduleTab`（三班 × 各刀房派班）。OR 派班系統**高榮無 API → 全自建**（[[資料項對照表]]、第5次會議）。
-> 自建表 [[資料庫Schema]] `OrShiftAssignment`（刷手/流動）＋ `ShiftStaff`（護理長/麻醉/體循）。
+> ✅ **已上線（schema_v8，2026-06-24）**：`GET /api/Board/or/schedule`（自建 `OrShiftStaff` 班級人員＋`OrShiftRoom` 房×班 刷手/流動，刀房清單用 `OrRoom` 主檔，後端 group by 班別組 Shifts[]）。ScheduleTab 已接、免 F5；後台「OR 手術派班」可增刪改；種子照搬原 mock。
+> 對應分頁 `ScheduleTab`（三班 × 各刀房派班）。OR 派班系統**高榮無 API → 全自建**（[[資料項對照表]]、第5次會議）。實作改用 OR 專屬小表 `OrShiftStaff`/`OrShiftRoom`（非共用大表 ShiftStaff），與 ErOnCallDoctor/OrRoom 一致。
 
 ## 試作 JSON
 ```json

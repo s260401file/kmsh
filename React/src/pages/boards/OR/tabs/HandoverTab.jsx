@@ -1,12 +1,15 @@
 // HandoverTab：OR 手術室站「術後特殊交班」分頁
 // 以表格列出術後需特別交班的病患：刀房/來源、病患、術式、主刀、轉往病房床位、
 // 出血/輸血量、引流管、特殊照護注意事項。供接手單位掌握重點。
-// 資料來源為 handoverData（假資料，待接 API）；無資料時顯示「今日無特殊交班事項」。
-import HANDOVER_DATA from '../tabsData/handoverData'
+// 資料來源：後端 /api/Board/or/handover（自建 OrHandover；免 F5 輪詢）。無資料時顯示「今日無特殊交班事項」。
+import { usePolling } from '../../../../hooks/usePolling'
+import * as wardApi from '../../../../services/wardApi'
+import { BULLETIN_MS } from '../../../../config/pollingConfig'
 import '../tabsCss/handover.css'
 
 export default function HandoverTab() {
-  const items = HANDOVER_DATA.Data.Items   // 特殊交班項目清單
+  const { data } = usePolling(() => wardApi.getOrHandover(), { intervalMs: BULLETIN_MS, deps: ['OR'] })
+  const items = data?.Data?.Items ?? []   // 特殊交班項目清單
 
   return (
     <main className="main-content">

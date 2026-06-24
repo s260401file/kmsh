@@ -87,8 +87,8 @@ function BedCard({ bed, filteredOut, onClick }) {
 function BedModal({ bed, onClose }) {
   const p = bed.Patient
   const bedLabel = bed.BedId.replace('W52-', '')
-  // 住院天數：以入院日期（補上 2026 年）與今天相減（毫秒 / 一天毫秒數）
-  const daysSince = Math.floor((new Date() - new Date('2026/' + p.AdmissionDate)) / 86400000)
+  // 住院天數：入院/轉入日（院方 Board_bed 轉入日期，yyyy/MM/dd）與今天相減
+  const daysSince = Math.floor((new Date() - new Date(p.AdmissionDate)) / 86400000)
   // 將病人身上為 true 的管路欄位轉成中文名稱清單
   const tubes = [['PortCath','人工血管'],['DLVC','雙腔靜脈導管'],['Foley','導尿管'],['CVC','中心靜脈導管'],['CardiacCath','心導管']]
     .filter(([k]) => p[k]).map(([,v]) => v)
@@ -126,7 +126,7 @@ function BedModal({ bed, onClose }) {
             <div className="modal-field"><div className="field-label">責任護理師</div><div className="field-value">{p.PrimaryNurse}</div></div>
           </div>
           <div className="modal-row">
-            <div className="modal-field"><div className="field-label">入院日期</div><div className="field-value">2026/{p.AdmissionDate}</div></div>
+            <div className="modal-field"><div className="field-label">入院日期</div><div className="field-value">{p.AdmissionDate || '—'}</div></div>
             <div className="modal-field"><div className="field-label">住院天數</div><div className="field-value">{daysSince >= 0 ? daysSince + ' 天' : '—'}</div></div>
             <div className="modal-field"><div className="field-label">病況等級</div><div className="field-value">{p.Condition || '—'}</div></div>
           </div>

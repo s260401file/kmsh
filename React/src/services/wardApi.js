@@ -70,6 +70,59 @@ export async function updateOrRoom(id, data) {
 export async function removeOrRoom(id) {
   return handle(await fetch(`${BASE}/room/${id}`, { method: 'DELETE' }))
 }
+// ── 檢查/會診（自建；W52/ICU/ER）──────────────────────────────────
+export async function getExamConsult(unitCode) { return handle(await fetch(`${BASE}/${unitCode}/exam`)) }
+export async function getExamConsultList(unitCode, includeAll = true) {
+  const p = new URLSearchParams({ includeAll: includeAll ? 'true' : 'false' })
+  return handle(await fetch(`${BASE}/${unitCode}/examconsult?${p}`))
+}
+export async function createExamConsult(data) { return handle(await fetch(`${BASE}/examconsult`, { method: 'POST', headers, body: JSON.stringify(data) })) }
+export async function updateExamConsult(id, data) { return handle(await fetch(`${BASE}/examconsult/${id}`, { method: 'PUT', headers, body: JSON.stringify(data) })) }
+export async function removeExamConsult(id) { return handle(await fetch(`${BASE}/examconsult/${id}`, { method: 'DELETE' })) }
+
+// ── ICU 抗生素（自建；看板＋後台共用，以病歷號掛載）──────────────────
+// GET /api/Board/{unitCode}/antibiotic?includeAll= → 抗生素列（看板用 includeAll=false 僅啟用）
+export async function getAntibiotic(unitCode = 'ICU', includeAll = false) {
+  const p = new URLSearchParams({ includeAll: includeAll ? 'true' : 'false' })
+  return handle(await fetch(`${BASE}/${unitCode}/antibiotic?${p}`))
+}
+export async function createAntibiotic(data) { return handle(await fetch(`${BASE}/antibiotic`, { method: 'POST', headers, body: JSON.stringify(data) })) }
+export async function updateAntibiotic(id, data) { return handle(await fetch(`${BASE}/antibiotic/${id}`, { method: 'PUT', headers, body: JSON.stringify(data) })) }
+export async function removeAntibiotic(id) { return handle(await fetch(`${BASE}/antibiotic/${id}`, { method: 'DELETE' })) }
+
+// ── 各站頁首單位資訊（主任/護理；自建可編輯）────────────────────────
+export async function getUnitInfo(unitCode) { return handle(await fetch(`${BASE}/${unitCode}/info`)) }
+export async function saveUnitInfo(data) { return handle(await fetch(`${BASE}/info`, { method: 'PUT', headers, body: JSON.stringify(data) })) }
+
+// ── OR 手術派班 / 特殊交班（自建）──────────────────────────────────
+// 看板：組裝三班 / 交班清單
+export async function getOrSchedule() { return handle(await fetch(`${BASE}/or/schedule`)) }
+export async function getOrHandover() { return handle(await fetch(`${BASE}/or/handover`)) }
+export async function getOrSurgeries() { return handle(await fetch(`${BASE}/or/surgeries`)) }  // 全部 OR 手術清單（ICU/W52 手術資訊）
+// 後台 CRUD：班級人員 OrShiftStaff
+export async function getShiftStaff(unitCode = 'OR', includeAll = true) {
+  const p = new URLSearchParams({ includeAll: includeAll ? 'true' : 'false' })
+  return handle(await fetch(`${BASE}/${unitCode}/shiftstaff?${p}`))
+}
+export async function createShiftStaff(data) { return handle(await fetch(`${BASE}/shiftstaff`, { method: 'POST', headers, body: JSON.stringify(data) })) }
+export async function updateShiftStaff(id, data) { return handle(await fetch(`${BASE}/shiftstaff/${id}`, { method: 'PUT', headers, body: JSON.stringify(data) })) }
+export async function removeShiftStaff(id) { return handle(await fetch(`${BASE}/shiftstaff/${id}`, { method: 'DELETE' })) }
+// 後台 CRUD：房×班 刷手/流動 OrShiftRoom
+export async function getShiftRoom(unitCode = 'OR', includeAll = true) {
+  const p = new URLSearchParams({ includeAll: includeAll ? 'true' : 'false' })
+  return handle(await fetch(`${BASE}/${unitCode}/shiftroom?${p}`))
+}
+export async function createShiftRoom(data) { return handle(await fetch(`${BASE}/shiftroom`, { method: 'POST', headers, body: JSON.stringify(data) })) }
+export async function updateShiftRoom(id, data) { return handle(await fetch(`${BASE}/shiftroom/${id}`, { method: 'PUT', headers, body: JSON.stringify(data) })) }
+export async function removeShiftRoom(id) { return handle(await fetch(`${BASE}/shiftroom/${id}`, { method: 'DELETE' })) }
+// 後台 CRUD：特殊交班 OrHandover
+export async function getHandoverList(unitCode = 'OR', includeAll = true) {
+  const p = new URLSearchParams({ includeAll: includeAll ? 'true' : 'false' })
+  return handle(await fetch(`${BASE}/${unitCode}/handover-list?${p}`))
+}
+export async function createHandover(data) { return handle(await fetch(`${BASE}/handover`, { method: 'POST', headers, body: JSON.stringify(data) })) }
+export async function updateHandover(id, data) { return handle(await fetch(`${BASE}/handover/${id}`, { method: 'PUT', headers, body: JSON.stringify(data) })) }
+export async function removeHandover(id) { return handle(await fetch(`${BASE}/handover/${id}`, { method: 'DELETE' })) }
 export async function createExt(data) {
   return handle(await fetch(`${BASE}/ext`, { method: 'POST', headers, body: JSON.stringify(data) }))
 }

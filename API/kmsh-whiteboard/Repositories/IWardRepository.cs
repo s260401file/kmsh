@@ -43,4 +43,49 @@ public interface IWardRepository
     Task<int> CreateOrRoomAsync(OrRoomUpsertRequest req, CancellationToken ct = default);
     Task<bool> UpdateOrRoomAsync(int id, OrRoomUpsertRequest req, CancellationToken ct = default);
     Task<bool> DeleteOrRoomAsync(int id, CancellationToken ct = default);
+
+    // ── OR 手術派班-班級人員 [dbo].[OrShiftStaff] ──
+    Task<IEnumerable<OrShiftStaffItem>> GetShiftStaffAsync(string unitCode, bool includeAll = false, CancellationToken ct = default);
+    Task<OrShiftStaffItem?> GetShiftStaffByIdAsync(int id, CancellationToken ct = default);
+    Task<int> CreateShiftStaffAsync(OrShiftStaffUpsertRequest req, CancellationToken ct = default);
+    Task<bool> UpdateShiftStaffAsync(int id, OrShiftStaffUpsertRequest req, CancellationToken ct = default);
+    Task<bool> DeleteShiftStaffAsync(int id, CancellationToken ct = default);
+
+    // ── OR 手術派班-房×班 刷手/流動 [dbo].[OrShiftRoom] ──
+    Task<IEnumerable<OrShiftRoomItem>> GetShiftRoomAsync(string unitCode, bool includeAll = false, CancellationToken ct = default);
+    Task<OrShiftRoomItem?> GetShiftRoomByIdAsync(int id, CancellationToken ct = default);
+    Task<int> CreateShiftRoomAsync(OrShiftRoomUpsertRequest req, CancellationToken ct = default);
+    Task<bool> UpdateShiftRoomAsync(int id, OrShiftRoomUpsertRequest req, CancellationToken ct = default);
+    Task<bool> DeleteShiftRoomAsync(int id, CancellationToken ct = default);
+
+    // ── OR 特殊交班 [dbo].[OrHandover] ──
+    Task<IEnumerable<OrHandoverItem>> GetHandoverAsync(string unitCode, bool includeAll = false, CancellationToken ct = default);
+    Task<OrHandoverItem?> GetHandoverByIdAsync(int id, CancellationToken ct = default);
+    Task<int> CreateHandoverAsync(OrHandoverUpsertRequest req, CancellationToken ct = default);
+    Task<bool> UpdateHandoverAsync(int id, OrHandoverUpsertRequest req, CancellationToken ct = default);
+    Task<bool> DeleteHandoverAsync(int id, CancellationToken ct = default);
+
+    // ── 各站頁首單位資訊 [dbo].[UnitInfo] ──
+    Task<UnitInfoItem?> GetUnitInfoAsync(string unitCode, CancellationToken ct = default);
+    Task<bool> UpsertUnitInfoAsync(UnitInfoUpsertRequest req, CancellationToken ct = default);
+
+    // ── 檢查/會診 [dbo].[WardExamConsult] ──
+    Task<IEnumerable<WardExamConsultItem>> GetExamConsultAsync(string unitCode, bool includeAll = false, CancellationToken ct = default);
+    Task<WardExamConsultItem?> GetExamConsultByIdAsync(int id, CancellationToken ct = default);
+    Task<int> CreateExamConsultAsync(WardExamConsultUpsertRequest req, CancellationToken ct = default);
+    Task<bool> UpdateExamConsultAsync(int id, WardExamConsultUpsertRequest req, CancellationToken ct = default);
+    Task<bool> DeleteExamConsultAsync(int id, CancellationToken ct = default);
+
+    // ── ICU 抗生素 [dbo].[IcuAntibiotic] ──
+    Task<IEnumerable<IcuAntibioticItem>> GetAntibioticAsync(string unitCode, bool includeAll = false, CancellationToken ct = default);
+    Task<IcuAntibioticItem?> GetAntibioticByIdAsync(int id, CancellationToken ct = default);
+    Task<int> CreateAntibioticAsync(IcuAntibioticUpsertRequest req, CancellationToken ct = default);
+    Task<bool> UpdateAntibioticAsync(int id, IcuAntibioticUpsertRequest req, CancellationToken ct = default);
+    Task<bool> DeleteAntibioticAsync(int id, CancellationToken ct = default);
+
+    // ── OR 當日手術快照 [dbo].[OrDailySurgery] ──
+    Task<IEnumerable<OrDailySurgeryItem>> GetOrDailyAsync(DateTime fromDate, DateTime toDate, CancellationToken ct = default);
+    Task<int> UpsertOrDailyAsync(OrDailySurgeryItem it, CancellationToken ct = default);
+    Task<int> MarkOrDailyCompletedAsync(DateTime date, IEnumerable<string> presentKeys, CancellationToken ct = default);
+    Task<int> PurgeOrDailyAsync(DateTime beforeDate, CancellationToken ct = default);
 }

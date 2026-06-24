@@ -1,17 +1,40 @@
-// SurgeryTab：手術資訊分頁
-// 角色：以表格列出當日手術排程（床號、病人、時間、刀房、術式、診斷、麻醉、主治、狀態）；
-//       依狀態優先序排序，狀態以色票標示，「取消」整列淡化、不計入台數。
-import SURGERY_DATA from '../tabsData/surgeryData'   // 手術假資料，待接 API
+// SurgeryTab：W52 手術資訊分頁
+// 角色：頂部日期列（真實今天±3 天）可切換，下方表格列出該日全院 OR 手術；依狀態排序。
+// 資料來源：後端 /api/Board/or/surgeries（Board_OR 全部排程；狀態依時間推導；免 F5 輪詢）。
+import { useState, useMemo } from 'react'
+import { usePolling } from '../../../../hooks/usePolling'
+import * as wardApi from '../../../../services/wardApi'
+import { BULLETIN_MS } from '../../../../config/pollingConfig'
 import '../tabsCss/surgery.css'
 
-// 列表排序依據：手術中 → 待手術 → 已完成 → 取消
-const STATUS_ORDER = ['手術中','待手術','已完成','取消']
+const DAYS = ['日','一','二','三','四','五','六']
+const STATUS_ORDER = ['手術中','待手術','已完成','取消']      // 列表排序優先序
+
+// 本地日期 → yyyy-MM-dd（避免 toISOString 的 UTC 時區位移）
+const isoLocal = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
+
+// 以「真實今天」為中心、前後各 3 天的日期列
+function buildDateRange() {
+  const today = new Date()
+  const dates = []
+  for (let i = -3; i <= 3; i++) {
+    const d = new Date(today)
+    d.setDate(d.getDate() + i)
+    dates.push({ iso: isoLocal(d), label: `${d.getMonth()+1}/${d.getDate()}`, day: DAYS[d.getDay()], isToday: i === 0 })
+  }
+  return dates
+}
 
 export default function SurgeryTab() {
-  // 複製後依 STATUS_ORDER 排序（不直接改動原始資料）
-  const items = [...SURGERY_DATA.Data.Items].sort(
-    (a, b) => STATUS_ORDER.indexOf(a.Status) - STATUS_ORDER.indexOf(b.Status)
-  )
+  const dates = useMemo(() => buildDateRange(), [])
+  const [activeDate, setActiveDate] = useState(() => isoLocal(new Date()))
+  const { data } = usePolling(() => wardApi.getOrSurgeries(), { intervalMs: BULLETIN_MS, deps: ['OR'] })
+
+  const items = useMemo(() => {
+    const filtered = (data ?? []).filter(i => i.date === activeDate)
+    return [...filtered].sort((a, b) => STATUS_ORDER.indexOf(a.status) - STATUS_ORDER.indexOf(b.status))
+  }, [activeDate, data])
+
   return (
     <main className="main-content">
       <div className="surg-panel">
@@ -19,38 +42,52 @@ export default function SurgeryTab() {
           <span className="surg-title-bar"></span>
           手術資訊
         </div>
+
+        {/* 日期切換列；is-today 標示今天、active 標示目前選取 */}
+        <div className="sr-date-bar">
+          {dates.map(d => (
+            <button
+              key={d.iso}
+              className={`sr-date-btn${d.isToday ? ' is-today' : ''}${activeDate === d.iso ? ' active' : ''}`}
+              onClick={() => setActiveDate(d.iso)}
+            >
+              {d.label}
+              <span className="sr-date-weekday">({d.day})</span>
+            </button>
+          ))}
+        </div>
+
         <div className="surg-card">
           <div className="surg-card-header">
             當日手術
-            <span className="surg-card-count">共 {items.filter(i => i.Status !== '取消').length} 台</span>
+            <span className="surg-card-count">{items.filter(i => i.status !== '取消').length} 台</span>
           </div>
           <div className="surg-table-wrap">
             <table className="surg-table">
               <thead>
                 <tr>
-                  <th>床號</th><th>姓名</th><th>排程時間</th><th>手術間</th>
+                  <th>刀房</th><th>排程時間</th><th>姓名</th>
                   <th>術式</th><th>診斷</th><th>麻醉方式</th><th>主治醫師</th>
                   <th className="surg-th-center">狀態</th>
                 </tr>
               </thead>
               <tbody>
                 {items.length === 0
-                  ? <tr className="surg-empty-row"><td colSpan="9">今日無手術排程</td></tr>
-                  : items.map(item => (
-                    <tr key={item.SurgeryId} className={item.Status === '取消' ? 'surg-row-cancel' : ''}>
-                      <td className="surg-td-bed">{item.BedNo}</td>
+                  ? <tr className="surg-empty-row"><td colSpan="8">本日無手術排程</td></tr>
+                  : items.map((item, idx) => (
+                    <tr key={idx} className={item.status === '取消' ? 'surg-row-cancel' : ''}>
+                      <td><span className="surg-td-or">{item.orRoom}</span></td>
+                      <td className="surg-td-time">{item.scheduledTime}</td>
                       <td className="surg-td-name">
-                        <span className={`surg-name surg-gender-${item.Gender === 'M' ? 'm' : 'f'}`}>{item.PatientName}</span>
-                        <span className="surg-basic">{item.Gender}/{item.Age}</span>
+                        <span className={`surg-name surg-gender-${item.gender === 'M' ? 'm' : 'f'}`}>{item.patientName}</span>
+                        <span className="surg-basic">{item.gender}/{item.age}</span>
                       </td>
-                      <td className="surg-td-time">{item.ScheduledTime}</td>
-                      <td><span className="surg-td-or">{item.OrRoom}</span></td>
-                      <td className="surg-td-procedure">{item.Procedure}</td>
-                      <td className="surg-td-diagnosis">{item.Diagnosis}</td>
-                      <td className="surg-td-anesthesia">{item.AnesthesiaMethod}</td>
-                      <td className="surg-td-surgeon">{item.AttendingSurgeon}</td>
+                      <td className="surg-td-procedure">{item.procedure}</td>
+                      <td className="surg-td-diagnosis">{item.diagnosis}</td>
+                      <td className="surg-td-anesthesia">{item.anesthesiaMethod}</td>
+                      <td className="surg-td-surgeon">{item.attendingSurgeon}</td>
                       <td className="surg-td-status">
-                        <span className={`surg-status surg-status-${item.Status}`}>{item.Status}</span>
+                        <span className={`surg-status surg-status-${item.status}`}>{item.status}</span>
                       </td>
                     </tr>
                   ))

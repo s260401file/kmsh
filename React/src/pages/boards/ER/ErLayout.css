@@ -58,7 +58,7 @@
 
 /* ── Bottom tabs ── */
 .er-board .bottom-tabs{height:var(--tabs-h);background:var(--bg-tabs);display:flex;flex-shrink:0;border-top:1px solid var(--divider)}
-.er-board .tab-btn{flex:1;display:flex;align-items:center;justify-content:center;font-size:19px;font-weight:600;color:var(--text-tab);border-right:1px solid rgba(255,255,255,0.08);position:relative;transition:background .15s,color .15s;text-decoration:none}
+.er-board .tab-btn{flex:1;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:600;color:var(--text-tab);border-right:1px solid rgba(255,255,255,0.08);position:relative;transition:background .15s,color .15s;text-decoration:none}
 .er-board .tab-btn:last-child{border-right:none}
 .er-board .tab-btn:hover{background:var(--bg-tab-active);color:var(--text-tab-active)}
 .er-board .tab-btn.active{background:#fff;color:var(--accent-red);font-weight:800}

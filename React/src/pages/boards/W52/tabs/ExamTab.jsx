@@ -1,11 +1,15 @@
 // ExamTab：檢查／會診分頁
 // 角色：左欄列出檢查排程（項目/預定日期/時段/狀態/備註），右欄列出會診（科別/醫師/完成時間/狀態）。
-import EXAM_DATA from '../tabsData/examData'   // 檢查/會診假資料，待接 API
+import { usePolling } from '../../../../hooks/usePolling'
+import * as wardApi from '../../../../services/wardApi'
+import { CENSUS_MS } from '../../../../config/pollingConfig'
 import '../tabsCss/exam.css'
 
 export default function ExamTab() {
-  // 解構並改名：Examinations→exams（檢查）、Consultations→consults（會診）
-  const { Examinations: exams, Consultations: consults } = EXAM_DATA.Data
+  // 後端 /api/Board/W52/exam（自建 WardExamConsult；免 F5 輪詢）
+  const { data } = usePolling(() => wardApi.getExamConsult('W52'), { intervalMs: CENSUS_MS, deps: ['W52'] })
+  const exams = data?.exams ?? []
+  const consults = data?.consults ?? []
   return (
     <main className="main-content">
       <div className="ec-panel">
@@ -26,15 +30,15 @@ export default function ExamTab() {
                 <tbody>
                   {exams.length === 0
                     ? <tr className="ec-empty-row"><td colSpan="7">無待執行檢查</td></tr>
-                    : exams.map(e => (
-                      <tr key={e.ExamId}>
-                        <td className="ec-td-bed">{e.BedNo}</td>
-                        <td className="ec-td-name"><span className={`ec-gender-${e.Gender === 'M' ? 'm' : 'f'}`}>{e.PatientName}</span></td>
-                        <td className="ec-td-item">{e.ExamName}</td>
-                        <td className="ec-td-date">{e.ScheduledDate}</td>
-                        <td className="ec-td-time">{e.TimeSlot} {e.ScheduledTime}</td>
-                        <td className="ec-td-status"><span className={`ec-status ec-status-${e.Status}`}>{e.Status}</span></td>
-                        <td className="ec-td-remark">{e.Remarks || '—'}</td>
+                    : exams.map((e, i) => (
+                      <tr key={i}>
+                        <td className="ec-td-bed">{e.bedId}</td>
+                        <td className="ec-td-name"><span className={`ec-gender-${e.gender === 'M' ? 'm' : 'f'}`}>{e.patientName}</span></td>
+                        <td className="ec-td-item">{e.examName}</td>
+                        <td className="ec-td-date">{e.scheduledDate}</td>
+                        <td className="ec-td-time">{e.timeSlot}</td>
+                        <td className="ec-td-status"><span className={`ec-status ec-status-${e.status}`}>{e.status}</span></td>
+                        <td className="ec-td-remark">{e.notes || '—'}</td>
                       </tr>
                     ))
                   }
@@ -54,15 +58,15 @@ export default function ExamTab() {
                 <tbody>
                   {consults.length === 0
                     ? <tr className="ec-empty-row"><td colSpan="7">無待會診</td></tr>
-                    : consults.map(c => (
-                      <tr key={c.ConsultId}>
-                        <td className="ec-td-bed">{c.BedNo}</td>
-                        <td className="ec-td-name"><span className={`ec-gender-${c.Gender === 'M' ? 'm' : 'f'}`}>{c.PatientName}</span></td>
-                        <td className="ec-td-item">{c.ConsultDept}</td>
-                        <td className="ec-td-doctor">{c.ConsultDoctor}</td>
-                        <td className="ec-td-time">{c.CompletedAt || '—'}</td>
-                        <td className="ec-td-status"><span className={`ec-status ec-status-${c.Status}`}>{c.Status}</span></td>
-                        <td className="ec-td-remark">{c.Remarks || '—'}</td>
+                    : consults.map((c, i) => (
+                      <tr key={i}>
+                        <td className="ec-td-bed">{c.bedId}</td>
+                        <td className="ec-td-name"><span className={`ec-gender-${c.gender === 'M' ? 'm' : 'f'}`}>{c.patientName}</span></td>
+                        <td className="ec-td-item">{c.consultDept}</td>
+                        <td className="ec-td-doctor">{c.consultDoctor}</td>
+                        <td className="ec-td-time">{c.completedTime || '—'}</td>
+                        <td className="ec-td-status"><span className={`ec-status ec-status-${c.status}`}>{c.status}</span></td>
+                        <td className="ec-td-remark">{c.notes || '—'}</td>
                       </tr>
                     ))
                   }

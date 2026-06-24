@@ -1,14 +1,19 @@
 // AntibioticTab.jsx — ICU 抗生素分頁
 // 角色：床位格狀圖標示哪些病人正使用抗生素（有用藥者床卡加紅框並顯示筆數徽章），
 //       點擊床位開啟該病人的抗生素清單彈窗；底部為各類抗生素統計面板。
+// 資料來源：床位/病人＝ ICU 看板（useIcuWard，Board_bed 真實在床）；
+//          抗生素＝自建表（/api/Board/ICU/antibiotic），以「病歷號」對應在床病人。免 F5 輪詢。
 import { useState, useMemo } from 'react'
-import MOCK_DATA from '../mockData'
-import { getAbxByBedId, getAbxStats } from '../tabsData/antibioticData'
+import { useIcuWard } from '../../../../hooks/useIcuWard'
+import { usePolling } from '../../../../hooks/usePolling'
+import * as wardApi from '../../../../services/wardApi'
+import { CENSUS_MS } from '../../../../config/pollingConfig'
 
-// 單張床位卡片。props：bed 床資料、onClick 點擊（空床不傳）
-function BedCard({ bed, onClick }) {
+const norm = v => (v ?? '').toString().trim()
+
+// 單張床位卡片。props：bed 床資料、abxList 該病人抗生素、onClick 點擊（空床不傳）
+function BedCard({ bed, abxList, onClick }) {
   const bedLabel = `${bed.floor}F-${String(bed.num).padStart(2, '0')}`
-  const abxList = getAbxByBedId(bed.id) // 該床的抗生素紀錄
   const hasAbx = abxList.length > 0     // 是否有用藥（決定紅框與筆數徽章）
 
   if (bed.status === 'empty') {
@@ -37,11 +42,10 @@ function BedCard({ bed, onClick }) {
   )
 }
 
-// 抗生素清單彈窗。props：bed 該床資料、onClose 關閉回呼
-function AbxModal({ bed, onClose }) {
+// 抗生素清單彈窗。props：bed 該床資料、abxList 該病人抗生素、onClose 關閉回呼
+function AbxModal({ bed, abxList, onClose }) {
   const bedLabel = `${bed.floor}F-${String(bed.num).padStart(2, '0')}`
   const p = bed.patient
-  const abxList = getAbxByBedId(bed.id) // 表格列出每筆藥品的起訖與首次給藥時間
   return (
     <div className="ab-modal-overlay show" onClick={e => e.target === e.currentTarget && onClose()}>
       <div className="ab-modal-box">
@@ -49,7 +53,7 @@ function AbxModal({ bed, onClose }) {
           <div style={{display:'flex',alignItems:'baseline',gap:'8px',flexWrap:'wrap'}}>
             <span className="ab-modal-bed">{bedLabel}</span>
             <span className="ab-modal-name">{p.name}</span>
-            <span className="ab-modal-rec">病歷號：{p.medRecord}</span>
+            <span className="ab-modal-rec">病歷號：{norm(p.medRecord)}</span>
           </div>
           <button className="ab-modal-close" onClick={onClose}>✕</button>
         </div>
@@ -63,11 +67,11 @@ function AbxModal({ bed, onClose }) {
                 </thead>
                 <tbody>
                   {abxList.map(ab => (
-                    <tr key={ab.antibioticId}>
+                    <tr key={ab.id}>
                       <td className="ab-td-drug">{ab.drugName}</td>
-                      <td className="ab-td-time">{ab.startDateTime}</td>
-                      <td className="ab-td-time">{ab.firstDoseDateTime}</td>
-                      <td className="ab-td-time">{ab.endDateTime}</td>
+                      <td className="ab-td-time">{ab.startDateTime || '—'}</td>
+                      <td className="ab-td-time">{ab.firstDoseDateTime || '—'}</td>
+                      <td className="ab-td-time">{ab.endDateTime || '—'}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -85,35 +89,75 @@ function AbxModal({ bed, onClose }) {
 
 export default function AntibioticTab() {
   const [selectedBed, setSelectedBed] = useState(null)   // 目前開啟清單的床（null=未開）
-  const stats = useMemo(() => getAbxStats(), [])          // 抗生素統計（資料固定，只算一次）
-  const f4beds = MOCK_DATA.beds.filter(b => b.floor === 4) // 4F 床位
-  const f3beds = MOCK_DATA.beds.filter(b => b.floor === 3) // 3F 床位
+  const [floor, setFloor] = useState(4)                  // 目前顯示樓層（4F 為主，可切 3F）
+
+  const { beds } = useIcuWard('ICU')                     // 床位/病人＝真實在床
+  const { data: abxRows } = usePolling(                  // 抗生素＝自建表
+    () => wardApi.getAntibiotic('ICU'),
+    { intervalMs: CENSUS_MS, deps: ['ICU-abx'] },
+  )
+
+  // 以病歷號建索引：getAbx(病歷號) → 該病人抗生素清單
+  const byHis = useMemo(() => {
+    const m = {}
+    ;(abxRows ?? []).forEach(a => {
+      const k = norm(a.hhisnum)
+      if (!k) return
+      ;(m[k] = m[k] || []).push(a)
+    })
+    return m
+  }, [abxRows])
+  const getAbx = his => byHis[norm(his)] || []
+
+  const floorBeds = useMemo(() => beds.filter(b => b.floor === floor), [beds, floor])
+  const toggleFloor = () => { setFloor(f => (f === 4 ? 3 : 4)); setSelectedBed(null) }
+
+  // 統計：由在床病人 × 其抗生素即時計算（4F/3F 依床所在樓層；藥別以名稱比對）
+  const stats = useMemo(() => {
+    const occ = beds.filter(b => b.status !== 'empty' && b.patient)
+    let f4 = 0, f3 = 0, bedsUsed = 0
+    let vanc = 0, mero = 0, pip = 0
+    occ.forEach(b => {
+      const list = getAbx(b.patient.medRecord)
+      if (list.length === 0) return
+      bedsUsed++
+      if (b.floor === 4) f4 += list.length; else if (b.floor === 3) f3 += list.length
+      list.forEach(a => {
+        const n = (a.drugName || '').toLowerCase()
+        if (n.includes('vancomycin')) vanc++
+        else if (n.includes('meropenem')) mero++
+        else if (n.includes('piperacillin')) pip++
+      })
+    })
+    const total = f4 + f3
+    return { total, f4, f3, beds: bedsUsed, vanc, mero, pip, other: Math.max(0, total - vanc - mero - pip) }
+  }, [beds, byHis])
 
   return (
     <main className="main-content">
-      <div className="floor-section floor-4f">
-        <div className="floor-title">▌ 4F　共 20 床</div>
+      <div className="floor-section floor-main">
+        <div className="floor-title">
+          <span>▌ {floor}F　共 {floorBeds.length} 床</span>
+          <button className="floor-toggle" onClick={toggleFloor}>
+            {floor === 4 ? '切換 3F ▸' : '◂ 切回 4F'}
+          </button>
+        </div>
         <div className="floor-beds">
-          <div className="grid-4f">
-            {f4beds.map(bed => (
-              <BedCard key={bed.id} bed={bed}
-                onClick={bed.status !== 'empty' ? () => setSelectedBed(bed) : undefined} />
-            ))}
+          <div className={floor === 4 ? 'grid-4f' : 'grid-3f'}>
+            {floorBeds.map(bed => {
+              const abxList = bed.patient ? getAbx(bed.patient.medRecord) : []
+              return (
+                <BedCard key={bed.id} bed={bed} abxList={abxList}
+                  onClick={bed.status !== 'empty' ? () => setSelectedBed(bed) : undefined} />
+              )
+            })}
           </div>
         </div>
       </div>
 
-      <div className="floor-section floor-3f">
-        <div className="floor-title">▌ 3F　共 5 床</div>
-        <div className="floor-beds">
-          <div className="grid-3f">
-            {f3beds.map(bed => (
-              <BedCard key={bed.id} bed={bed}
-                onClick={bed.status !== 'empty' ? () => setSelectedBed(bed) : undefined} />
-            ))}
-          </div>
-        </div>
-        {/* 抗生素統計面板 */}
+      <div className="floor-section stats-section">
+        <div className="floor-title">▌ 抗生素統計</div>
+        {/* 抗生素統計面板（含 4F/3F 筆數，整體呈現） */}
         <div className="ward-stats">
           <div className="ws-row">
             <div className="ws-item"><div className="ws-value">{stats.total}</div><div className="ws-label">抗生素總筆</div></div>
@@ -131,7 +175,7 @@ export default function AntibioticTab() {
       </div>
 
       {/* 有選取床位時才渲染抗生素清單彈窗 */}
-      {selectedBed && <AbxModal bed={selectedBed} onClose={() => setSelectedBed(null)} />}
+      {selectedBed && <AbxModal bed={selectedBed} abxList={getAbx(selectedBed.patient?.medRecord)} onClose={() => setSelectedBed(null)} />}
     </main>
   )
 }

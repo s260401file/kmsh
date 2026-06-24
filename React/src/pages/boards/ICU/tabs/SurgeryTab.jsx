@@ -2,34 +2,40 @@
 // 角色：頂部日期列（今天前後各 3 天共 7 天）可切換，下方表格列出該日手術排程。
 //       依手術狀態排序（手術中 → 待手術 → 已完成 → 取消），取消列加刪除線樣式。
 import { useState, useMemo } from 'react'
-import SURGERY_DATA from '../tabsData/surgeryData'
+import { usePolling } from '../../../../hooks/usePolling'
+import * as wardApi from '../../../../services/wardApi'
+import { BULLETIN_MS } from '../../../../config/pollingConfig'
 import '../tabsCss/surgery.css'
 
 const DAYS = ['日','一','二','三','四','五','六']            // 星期顯示字
 const STATUS_ORDER = ['手術中','待手術','已完成','取消']      // 表格列排序優先序
 
-// 產生以 2026-06-03 為「今天」、前後各 3 天的日期列資料
+// 本地日期 → yyyy-MM-dd（避免 toISOString 的 UTC 時區位移）
+const isoLocal = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
+
+// 以「真實今天」為中心、前後各 3 天的日期列
 function buildDateRange() {
-  const today = new Date('2026-06-03')
+  const today = new Date()
   const dates = []
   for (let i = -3; i <= 3; i++) {
     const d = new Date(today)
     d.setDate(d.getDate() + i)
-    const iso = d.toISOString().slice(0, 10)
-    dates.push({ iso, label: `${d.getMonth()+1}/${d.getDate()}`, day: DAYS[d.getDay()], isToday: i === 0 })
+    dates.push({ iso: isoLocal(d), label: `${d.getMonth()+1}/${d.getDate()}`, day: DAYS[d.getDay()], isToday: i === 0 })
   }
   return dates
 }
 
 export default function SurgeryTab() {
   const dates = useMemo(() => buildDateRange(), [])          // 日期列（只算一次）
-  const [activeDate, setActiveDate] = useState('2026-06-03') // 目前選取日期，預設今天
+  const [activeDate, setActiveDate] = useState(() => isoLocal(new Date())) // 預設真實今天
+  // 全部 OR 手術（Board_OR），免 F5 輪詢
+  const { data } = usePolling(() => wardApi.getOrSurgeries(), { intervalMs: BULLETIN_MS, deps: ['OR'] })
 
-  // 取出選取日期的手術並依狀態排序；隨 activeDate 變動重算
+  // 取出選取日期的手術並依狀態排序；隨 activeDate / data 變動重算
   const items = useMemo(() => {
-    const filtered = SURGERY_DATA.data.items.filter(i => i.date === activeDate)
+    const filtered = (data ?? []).filter(i => i.date === activeDate)
     return [...filtered].sort((a, b) => STATUS_ORDER.indexOf(a.status) - STATUS_ORDER.indexOf(b.status))
-  }, [activeDate])
+  }, [activeDate, data])
 
   return (
     <main className="main-content">
@@ -63,7 +69,7 @@ export default function SurgeryTab() {
             <table className="surg-table">
               <thead>
                 <tr>
-                  <th>刀房</th><th>排程時間</th><th>床號</th><th>姓名</th>
+                  <th>刀房</th><th>排程時間</th><th>姓名</th>
                   <th>術式</th><th>診斷</th><th>麻醉方式</th><th>主治醫師</th>
                   <th className="surg-th-center">狀態</th>
                 </tr>
@@ -71,12 +77,11 @@ export default function SurgeryTab() {
               <tbody>
                 {/* 無排程時顯示佔位列；取消的手術整列套用刪除線樣式 */}
                 {items.length === 0
-                  ? <tr className="surg-empty-row"><td colSpan="9">本日無手術排程</td></tr>
-                  : items.map(item => (
-                    <tr key={item.surgeryId} className={item.status === '取消' ? 'surg-row-cancel' : ''}>
+                  ? <tr className="surg-empty-row"><td colSpan="8">本日無手術排程</td></tr>
+                  : items.map((item, idx) => (
+                    <tr key={idx} className={item.status === '取消' ? 'surg-row-cancel' : ''}>
                       <td><span className="surg-td-or">{item.orRoom}</span></td>
                       <td className="surg-td-time">{item.scheduledTime}</td>
-                      <td className="surg-td-bed">{item.bedId}</td>
                       <td className="surg-td-name">
                         <span className={`surg-name surg-gender-${item.gender === 'M' ? 'm' : 'f'}`}>{item.patientName}</span>
                         <span className="surg-basic">{item.gender}/{item.age}</span>

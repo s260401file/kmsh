@@ -91,8 +91,8 @@ function BedCard({ bed, filteredOut, onClick }) {
 function BedModal({ bed, onClose }) {
   const p = bed.patient
   const bedLabel = `${bed.floor}F-${String(bed.num).padStart(2, '0')}`
-  // 由入院日期推算住院天數（mock 資料僅有月日，故補上 2026 年）
-  const daysSince = Math.floor((new Date() - new Date('2026/' + p.admission)) / 86400000)
+  // 由入院/轉入日（院方 Board_bed 轉入日期，yyyy/MM/dd）推算住院天數
+  const daysSince = Math.floor((new Date() - new Date(p.admission)) / 86400000)
   // 管路欄位鍵 → 中文名稱對照，過濾出該病人實際使用中的管路
   const tubeMap = [['ventilator','氣管內管'],['ng','鼻胃管'],['foley','導尿管'],['cvc','中心靜脈導管']]
   const tubes = tubeMap.filter(([k]) => p[k]).map(([,v]) => v)
@@ -122,7 +122,7 @@ function BedModal({ bed, onClose }) {
             <div className="modal-field"><div className="field-label">責任護理師</div><div className="field-value">{p.nurse}</div></div>
           </div>
           <div className="modal-row">
-            <div className="modal-field"><div className="field-label">入院日期</div><div className="field-value">2026/{p.admission}</div></div>
+            <div className="modal-field"><div className="field-label">入院日期</div><div className="field-value">{p.admission || '—'}</div></div>
             <div className="modal-field"><div className="field-label">住院天數</div><div className="field-value">{daysSince >= 0 ? daysSince + ' 天' : '—'}</div></div>
             <div className="modal-field"><div className="field-label">病況等級</div><div className="field-value">{CONDITION_LABEL[p.condition] || p.condition}</div></div>
           </div>
@@ -160,23 +160,29 @@ const FLAG_STYLE = makeFlagStyle(FILTER_BADGES.map(x => x.f))
 export default function WardTab() {
   const [filter, setFilter] = useState('all')          // 目前篩選條件
   const [selectedBed, setSelectedBed] = useState(null)  // 目前開啟詳情的床（null=未開）
+  const [floor, setFloor] = useState(4)                 // 目前顯示樓層（4F 為主，可切 3F）
   const { beds } = useIcuWard('ICU')                    // 後端聚合看板（真實在床＋自建臨床），定時輪詢
-  const stats = useMemo(() => getStats(beds), [beds])   // 統計面板數據
+  // 只顯示當前樓層；統計亦只計當前樓層（總床數 4F=20、3F=5）
+  const floorBeds = useMemo(() => beds.filter(b => b.floor === floor), [beds, floor])
+  const stats = useMemo(() => getStats(floorBeds), [floorBeds])
   // 點同一篩選鍵再按 → 取消回到 all；「全部」不可被反選
   const handleFilter = f => setFilter(prev => (prev === f && f !== 'all') ? 'all' : f)
-
-  // 依樓層分組（ICU 分 4F、3F 兩區）
-  const f4beds = beds.filter(b => b.floor === 4)
-  const f3beds = beds.filter(b => b.floor === 3)
+  // 切換樓層：重置篩選、關閉開啟中的詳情
+  const toggleFloor = () => { setFloor(f => (f === 4 ? 3 : 4)); setFilter('all'); setSelectedBed(null) }
 
   return (
     <>
       <main className="main-content">
-        <div className="floor-section floor-4f">
-          <div className="floor-title">▌ 4F　共 20 床</div>
+        <div className="floor-section floor-main">
+          <div className="floor-title">
+            <span>▌ {floor}F　共 {floorBeds.length} 床</span>
+            <button className="floor-toggle" onClick={toggleFloor}>
+              {floor === 4 ? '切換 3F ▸' : '◂ 切回 4F'}
+            </button>
+          </div>
           <div className="floor-beds">
-            <div className="grid-4f">
-              {f4beds.map(bed => (
+            <div className={floor === 4 ? 'grid-4f' : 'grid-3f'}>
+              {floorBeds.map(bed => (
                 <BedCard key={bed.id} bed={bed} filteredOut={!isBedVisible(bed, filter)}
                   onClick={bed.status !== 'empty' ? () => setSelectedBed(bed) : undefined} />
               ))}
@@ -184,16 +190,8 @@ export default function WardTab() {
           </div>
         </div>
 
-        <div className="floor-section floor-3f">
-          <div className="floor-title">▌ 3F　共 5 床</div>
-          <div className="floor-beds">
-            <div className="grid-3f">
-              {f3beds.map(bed => (
-                <BedCard key={bed.id} bed={bed} filteredOut={!isBedVisible(bed, filter)}
-                  onClick={bed.status !== 'empty' ? () => setSelectedBed(bed) : undefined} />
-              ))}
-            </div>
-          </div>
+        <div className="floor-section stats-section">
+          <div className="floor-title">▌ {floor}F 統計</div>
           <div className="ward-stats">
             <div className="ws-row">
               <div className="ws-item"><div className="ws-value">{stats.total}</div><div className="ws-label">總床數</div></div>
@@ -213,10 +211,10 @@ export default function WardTab() {
               <div className={`ws-item${filter==='RRT'?' active':''}`} data-filter="RRT" onClick={()=>handleFilter('RRT')}><div className="ws-value ws-rrt">{stats.rrt}</div><div className="ws-label">RRT</div></div>
             </div>
             <div className="ws-row">
-              <div className={`ws-item${filter==='tube-ett'?' active':''}`} data-filter="tube-ett" onClick={()=>handleFilter('tube-ett')}><div className="ws-value ws-ett">{stats.ett}</div><div className="ws-label">氣管內管 ▾</div></div>
-              <div className={`ws-item${filter==='tube-ng'?' active':''}`} data-filter="tube-ng" onClick={()=>handleFilter('tube-ng')}><div className="ws-value ws-ng">{stats.ng}</div><div className="ws-label">鼻胃管 ▾</div></div>
-              <div className={`ws-item${filter==='tube-foley'?' active':''}`} data-filter="tube-foley" onClick={()=>handleFilter('tube-foley')}><div className="ws-value ws-foley">{stats.foley}</div><div className="ws-label">導尿管 ▾</div></div>
-              <div className={`ws-item${filter==='tube-cvc'?' active':''}`} data-filter="tube-cvc" onClick={()=>handleFilter('tube-cvc')}><div className="ws-value ws-cvc">{stats.cvc}</div><div className="ws-label">中心靜脈 ▾</div></div>
+              <div className={`ws-item${filter==='tube-ett'?' active':''}`} data-filter="tube-ett" onClick={()=>handleFilter('tube-ett')}><div className="ws-value ws-ett">{stats.ett}</div><div className="ws-label">氣管內管</div></div>
+              <div className={`ws-item${filter==='tube-ng'?' active':''}`} data-filter="tube-ng" onClick={()=>handleFilter('tube-ng')}><div className="ws-value ws-ng">{stats.ng}</div><div className="ws-label">鼻胃管</div></div>
+              <div className={`ws-item${filter==='tube-foley'?' active':''}`} data-filter="tube-foley" onClick={()=>handleFilter('tube-foley')}><div className="ws-value ws-foley">{stats.foley}</div><div className="ws-label">導尿管</div></div>
+              <div className={`ws-item${filter==='tube-cvc'?' active':''}`} data-filter="tube-cvc" onClick={()=>handleFilter('tube-cvc')}><div className="ws-value ws-cvc">{stats.cvc}</div><div className="ws-label">中心靜脈</div></div>
             </div>
           </div>
         </div>

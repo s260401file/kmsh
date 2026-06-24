@@ -2,13 +2,14 @@
 // 角色：以表格逐床列出各類管路使用狀態，每欄打勾(✓)或槓號(—)；底部彙整各管路使用人數。
 //   管路類別：呼吸器(ETT 氣管內管)、鼻胃管(NG)、導尿管(Foley)、中心靜脈導管(CVC)、CRRT(連續性腎臟替代療法)。
 import { useMemo } from 'react'
-import MOCK_DATA from '../mockData'
+import { useIcuWard } from '../../../../hooks/useIcuWard'   // 與病室動態同源（真實在床＋後台管路勾選）
 
 export default function TubeTab() {
-  // 取出所有非空床且有病人的床位（資料固定，只算一次）
+  const { beds } = useIcuWard('ICU')   // 管路旗標來自後台「病人臨床補充」overlay，免 F5 輪詢
+  // 取出所有非空床且有病人的床位
   const patients = useMemo(() =>
-    MOCK_DATA.beds.filter(b => b.status !== 'empty' && b.patient),
-    []
+    beds.filter(b => b.status !== 'empty' && b.patient),
+    [beds]
   )
 
   // 各管路使用人數統計，供底部彙總列顯示

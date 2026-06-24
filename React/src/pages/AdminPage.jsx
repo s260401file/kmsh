@@ -43,13 +43,40 @@ const MENU_CONFIG = [
       { id: 'evac-image', label: '圖片管理', available: true  },  // Phase 3
     ]
   },
+  // ── 站別管理分類（依角色 unitCodes 過濾顯示；站別專屬功能歸入對應站）──
   {
-    id: 'ward', label: '病室動態',
+    id: 'w52-admin', label: 'W52 管理', unit: 'W52',
     children: [
-      { id: 'ward-ext',  label: '病人臨床補充',     available: true  },  // 補 Board_bed 不足欄位
-      { id: 'er-bed',    label: 'ER 床位主檔',       available: true  },  // ER 病室動態平面圖（床碼/分區/座標）
-      { id: 'or-room',   label: 'OR 刀房主檔',       available: true  },  // OR 手術動態房卡（房號↔R代碼）
-      { id: 'er-oncall', label: '急診各科值班醫師', available: true  },  // ER 病室動態面板
+      { id: 'w52-info', label: '頁首設定', available: true },
+      { id: 'w52-ext',  label: '病人臨床補充', available: true },
+      { id: 'w52-exam', label: '檢查/會診', available: true },
+    ]
+  },
+  {
+    id: 'icu-admin', label: 'ICU 管理', unit: 'ICU',
+    children: [
+      { id: 'icu-info', label: '頁首設定', available: true },
+      { id: 'icu-ext',  label: '病人臨床補充', available: true },  // 3F/4F 不分（以病歷號為鍵）
+      { id: 'icu-exam', label: '檢查/會診', available: true },
+      { id: 'icu-abx',  label: '抗生素', available: true },        // 以病歷號掛載（自建）
+    ]
+  },
+  {
+    id: 'or-admin', label: 'OR 管理', unit: 'OR',
+    children: [
+      { id: 'or-info',     label: '頁首設定', available: true },
+      { id: 'or-ext',      label: '病人臨床補充', available: true },  // 手術狀態/刷手/流動 overlay
+      { id: 'or-schedule', label: 'OR 手術派班', available: true },
+      { id: 'or-handover', label: 'OR 特殊交班', available: true },
+    ]
+  },
+  {
+    id: 'er-admin', label: 'ER 管理', unit: 'ER',
+    children: [
+      { id: 'er-info',   label: '頁首設定', available: true },
+      { id: 'er-ext',    label: '病人臨床補充', available: true },
+      { id: 'er-exam',   label: '檢查/會診', available: true },
+      { id: 'er-oncall', label: '各科值班醫師', available: true },
     ]
   },
 ]
@@ -860,7 +887,7 @@ function EvacManager({ units }) {
 }
 
 // ── 病室動態：病人臨床補充層（WardPatientExt）─────────────────────
-// 補 Board_bed 不足的臨床欄位（科別/主治/責護/診斷/病況/狀態/各註記旗標/管路…），
+// 補 Board_bed 不足的臨床欄位（科別/責護/病況/狀態/各註記旗標/管路…；主治/轉入日期已由院方 API 帶入，診斷 W52/ICU/OR 亦由 API，僅 ER 保留），
 // 以病歷號(Hhisnum)識別病人；看板以病歷號把本表疊到 Board_bed 真實在床病人上。
 const emptyWardExtForm = {
   hhisnum: '', department: '', attendingDoctor: '', primaryNurse: '', diagnosis: '',
@@ -896,7 +923,6 @@ const ISO_OPTS = ['', '無', '接觸隔離', '飛沫隔離', '空氣隔離', '�
 const DEP_OPTS = ['', 'L1', 'L2', 'L3']
 const TRANSPORT_OPTS = ['', '輪椅', '推床']
 const AWAIT_OPTS = ['', '一般', '加護', '隔離']
-const SURGERY_STATUS_OPTS = ['', '準備中', '手術中', '已完成']
 
 // 單一單位的臨床補充 CRUD（讀取 includeAll=true，後台含停用）
 function WardExtSection({ unitCode }) {
@@ -960,22 +986,23 @@ function WardExtSection({ unitCode }) {
       <div style={s.formCard}>
         <h4 style={s.formTitle}>{editId ? `修改臨床補充 (ID: ${editId})` : '新增臨床補充'}</h4>
         <div style={{ fontSize: '12px', color: '#9ca3af', marginBottom: '10px' }}>
-          以「病歷號」對應 Board_bed 真實在床病人。基本（姓名/性別/生日/床）由院方 API 提供，此處只補臨床欄位。
+          以「病歷號」對應 Board_bed 真實在床病人。基本（姓名/性別/生日/床號）＋<b>主治醫師（負責醫師）/入院日（轉入日期）</b>由院方 API 提供，此處只補其餘臨床欄位。
         </div>
         <form onSubmit={handleSubmit}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0 16px' }}>
             <div style={s.formRow}><label style={s.label}>病歷號 *</label><input style={s.input} value={form.hhisnum} required onChange={e => setF('hhisnum', e.target.value)} placeholder="19021524" /></div>
             <div style={s.formRow}><label style={s.label}>科別</label><input style={s.input} value={form.department} onChange={e => setF('department', e.target.value)} /></div>
-            <div style={s.formRow}><label style={s.label}>主治醫師</label><input style={s.input} value={form.attendingDoctor} onChange={e => setF('attendingDoctor', e.target.value)} /></div>
             <div style={s.formRow}><label style={s.label}>責任護理師</label><input style={s.input} value={form.primaryNurse} onChange={e => setF('primaryNurse', e.target.value)} /></div>
-            <div style={s.formRow}><label style={s.label}>入院日(MM/DD)</label><input style={s.input} value={form.admissionDate} onChange={e => setF('admissionDate', e.target.value)} placeholder="06/18" /></div>
             <div style={s.formRow}><label style={s.label}>病況等級</label><select style={s.input} value={form.condition} onChange={e => setF('condition', e.target.value)}>{COND_OPTS.map(o => <option key={o} value={o}>{o || '（無）'}</option>)}</select></div>
             <div style={s.formRow}><label style={s.label}>床位狀態</label><select style={s.input} value={form.bedStatus} onChange={e => setF('bedStatus', e.target.value)}>{BEDSTATUS_OPTS.map(o => <option key={o} value={o}>{o || '（占床 occupied）'}</option>)}</select></div>
             <div style={s.formRow}><label style={s.label}>隔離</label><select style={s.input} value={form.isolation} onChange={e => setF('isolation', e.target.value)}>{ISO_OPTS.map(o => <option key={o} value={o}>{o || '（無）'}</option>)}</select></div>
             <div style={s.formRow}><label style={s.label}>運送</label><select style={s.input} value={form.transport} onChange={e => setF('transport', e.target.value)}>{TRANSPORT_OPTS.map(o => <option key={o} value={o}>{o || '（無）'}</option>)}</select></div>
             <div style={s.formRow}><label style={s.label}>依賴度</label><select style={s.input} value={form.dependency} onChange={e => setF('dependency', e.target.value)}>{DEP_OPTS.map(o => <option key={o} value={o}>{o || '（無）'}</option>)}</select></div>
           </div>
-          <div style={s.formRow}><label style={s.label}>診斷</label><input style={s.input} value={form.diagnosis} onChange={e => setF('diagnosis', e.target.value)} /></div>
+          {/* 診斷：W52/ICU/OR 由院方 API 帶入；僅 ER（Board_ER 無診斷）保留後台輸入 */}
+          {unitCode === 'ER' && (
+            <div style={s.formRow}><label style={s.label}>診斷</label><input style={s.input} value={form.diagnosis} onChange={e => setF('diagnosis', e.target.value)} /></div>
+          )}
           <div style={s.formRow}><label style={s.label}>備註</label><textarea style={{ ...s.input, height: '52px', resize: 'vertical' }} value={form.notes} onChange={e => setF('notes', e.target.value)} /></div>
           {unitCode === 'ER' && (
             <>
@@ -999,13 +1026,14 @@ function WardExtSection({ unitCode }) {
           {unitCode === 'OR' && (
             <>
               <label style={s.label}>手術欄位（OR；以病歷號對應 Board_OR 今日手術）</label>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0 16px', marginBottom: '8px' }}>
-                <div style={s.formRow}><label style={s.label}>手術狀態</label><select style={s.input} value={form.surgeryStatus} onChange={e => setF('surgeryStatus', e.target.value)}>{SURGERY_STATUS_OPTS.map(o => <option key={o} value={o}>{o || '（排程）'}</option>)}</select></div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0 16px', marginBottom: '4px' }}>
                 <div style={s.formRow}><label style={s.label}>刷手護理師</label><input style={s.input} value={form.scrubNurse} onChange={e => setF('scrubNurse', e.target.value)} /></div>
                 <div style={s.formRow}><label style={s.label}>流動護理師</label><input style={s.input} value={form.circNurse} onChange={e => setF('circNurse', e.target.value)} /></div>
+                <div style={s.formRow} />
                 <div style={s.formRow}><label style={s.label}>實際進刀房(HH:mm)</label><input style={s.input} value={form.startTime} onChange={e => setF('startTime', e.target.value)} placeholder="09:05" /></div>
                 <div style={s.formRow}><label style={s.label}>實際出刀房(HH:mm)</label><input style={s.input} value={form.endTime} onChange={e => setF('endTime', e.target.value)} placeholder="10:18" /></div>
               </div>
+              <div style={{ fontSize: '12px', color: '#9ca3af', margin: '0 0 12px' }}>手術狀態由系統依時間自動判定：未到預定時間→<b>排程</b>、已過預定時間→<b>準備中</b>、已填實際進刀房且已到→<b>手術中</b>、已填實際出刀房→<b>已完成</b>。</div>
             </>
           )}
           <label style={s.label}>註記旗標</label>
@@ -1029,7 +1057,7 @@ function WardExtSection({ unitCode }) {
         <h4 style={s.formTitle}>臨床補充清單（共 {list.length} 筆）</h4>
         {list.length === 0 ? <p style={{ color: '#9ca3af', fontSize: '14px' }}>尚無資料，請新增（病歷號需對應 Board_bed 在床病人才會顯示在白板）</p> : (
           <table style={s.table}>
-            <thead><tr>{['病歷號','床號','科別','主治','責護','病況','狀態','旗標','啟用','操作'].map(h => <th key={h} style={s.th}>{h}</th>)}</tr></thead>
+            <thead><tr>{['病歷號', unitCode === 'OR' ? '刀房' : '床號', '科別','責護','病況','狀態','旗標','啟用','操作'].map(h => <th key={h} style={s.th}>{h}</th>)}</tr></thead>
             <tbody>
               {list.map((item, i) => {
                 const flags = WARD_BOOLS.filter(([k]) => item[k]).map(([, l]) => l)
@@ -1039,9 +1067,8 @@ function WardExtSection({ unitCode }) {
                     <td style={s.td}>{item.hhisnum}</td>
                     <td style={s.td}>{occ[item.hhisnum?.trim()]
                       ? <span style={{ ...s.badge, background: '#dbeafe', color: '#1e40af' }}>{occ[item.hhisnum.trim()]}</span>
-                      : <span style={{ color: '#9ca3af', fontSize: '12px' }}>已離床</span>}</td>
+                      : <span style={{ color: '#9ca3af', fontSize: '12px' }}>{unitCode === 'OR' ? '未排今日' : '已離床'}</span>}</td>
                     <td style={s.td}>{item.department || '—'}</td>
-                    <td style={s.td}>{item.attendingDoctor || '—'}</td>
                     <td style={s.td}>{item.primaryNurse || '—'}</td>
                     <td style={s.td}>{item.condition || '—'}</td>
                     <td style={s.td}>{item.bedStatus || 'occupied'}</td>
@@ -1055,19 +1082,6 @@ function WardExtSection({ unitCode }) {
           </table>
         )}
       </div>
-    </div>
-  )
-}
-
-// 病室動態臨床補充 Manager（含單位切換）
-function WardExtManager({ units }) {
-  const [activeUnit, setActiveUnit] = useState(units[0] ?? 'W52')
-  return (
-    <div>
-      <div style={s.unitTabs}>
-        {units.map(u => <button key={u} style={{ ...s.unitTab, ...(activeUnit === u ? s.unitTabActive : {}) }} onClick={() => setActiveUnit(u)}>{UNIT_LABELS[u]}</button>)}
-      </div>
-      <WardExtSection key={activeUnit} unitCode={activeUnit} />
     </div>
   )
 }
@@ -1161,168 +1175,68 @@ function ErOnCallManager() {
   )
 }
 
-// ── ER 床位主檔（ErBed）──────────────────────────────────────────
-// 存床碼＋分區＋平面圖座標(GridCol/GridRow)；ER 病室動態照主檔擺床、顯示空床。
-// Board_ER 在室病人以 bedId merge 上去；床碼未建此表者會落白板「未配置床位」溢位區。
-const emptyErBedForm = { bedId: '', ward: '', zone: '', gridCol: '', gridRow: '', sortOrder: 0, isActive: true }
+// ── OR 手術派班（OrShiftStaff 班級人員 ＋ OrShiftRoom 房×班 刷手/流動）──────
+const OR_SHIFT_TYPES = ['白班', '小夜', '大夜']
+const OR_STAFF_ROLES = ['護理長', '麻醉', '體循']
+const OR_ROOM_IDS = ['OR-01', 'OR-02', 'OR-03', 'OR-05', 'OR-06', 'OR-07', 'OR-08']
+const SURGERY_SOURCE_OPTS = ['', '急診刀', '門診刀', '住院刀']
+const emptyShiftStaffForm = { shiftType: '白班', role: '麻醉', name: '', roleTitle: '', ext: '', sortOrder: 0, isActive: true }
+const emptyShiftRoomForm = { shiftType: '白班', roomId: 'OR-01', scrubNurse: '', circNurse: '', ext: '', sortOrder: 0, isActive: true }
 
-function ErBedSection() {
-  const [list, setList]     = useState([])
-  const [form, setForm]     = useState(emptyErBedForm)
+// 班級人員 CRUD
+function OrShiftStaffSection() {
+  const [list, setList] = useState([])
+  const [form, setForm] = useState(emptyShiftStaffForm)
   const [editId, setEditId] = useState(null)
-  const [msg, setMsg]       = useState({ text: '', error: false })
-
+  const [msg, setMsg] = useState({ text: '', error: false })
   const showMsg = (text, error = false) => { setMsg({ text, error }); setTimeout(() => setMsg({ text: '', error: false }), 3000) }
-  const load = useCallback(async () => {
-    try   { setList((await wardApi.getErBeds('ER', true)) ?? []) }
-    catch { showMsg('讀取失敗', true) }
-  }, [])
+  const load = useCallback(async () => { try { setList((await wardApi.getShiftStaff('OR', true)) ?? []) } catch { showMsg('讀取失敗', true) } }, [])
   useEffect(() => { load() }, [load])
-
-  const setF = (k, v) => setForm(f => ({ ...f, [k]: v }))
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    const payload = {
-      ...form, unitCode: 'ER',
-      gridCol: form.gridCol === '' ? null : Number(form.gridCol),
-      gridRow: form.gridRow === '' ? null : Number(form.gridRow),
-    }
-    try {
-      if (editId) { await wardApi.updateErBed(editId, payload); showMsg('修改成功') }
-      else        { await wardApi.createErBed(payload); showMsg('新增成功') }
-      setForm(emptyErBedForm); setEditId(null); load()
-    } catch { showMsg('操作失敗（床號是否重複？）', true) }
-  }
-  const handleEdit = item => { setEditId(item.id); setForm({ bedId: item.bedId, ward: item.ward ?? '', zone: item.zone ?? '', gridCol: item.gridCol ?? '', gridRow: item.gridRow ?? '', sortOrder: item.sortOrder, isActive: item.isActive }) }
-  const handleDelete = async id => { if (!window.confirm('確定刪除？')) return; try { await wardApi.removeErBed(id); showMsg('刪除成功'); load() } catch { showMsg('刪除失敗', true) } }
-
-  return (
-    <div>
-      {msg.text && <div style={{ ...s.msg, background: msg.error ? '#fee2e2' : '#d1fae5', color: msg.error ? '#991b1b' : '#065f46' }}>{msg.text}</div>}
-      <div style={s.formCard}>
-        <h4 style={s.formTitle}>{editId ? `修改床位 (ID: ${editId})` : '新增 ER 床位'}</h4>
-        <div style={{ fontSize: '12px', color: '#9ca3af', marginBottom: '10px' }}>
-          床號需與 Board_ER 的「病房＋床位」對應（如 MER+007 → <b>MER07</b>）。GridCol/GridRow 為平面圖座標（11 欄×8 列；護理站在 col4 row5）。停用則白板不顯示該床。
-        </div>
-        <form onSubmit={handleSubmit}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0 16px' }}>
-            <div style={s.formRow}><label style={s.label}>床號 *</label><input style={s.input} value={form.bedId} required onChange={e => setF('bedId', e.target.value)} placeholder="MER07" /></div>
-            <div style={s.formRow}><label style={s.label}>病房前綴</label><input style={s.input} value={form.ward} onChange={e => setF('ward', e.target.value)} placeholder="MER" /></div>
-            <div style={s.formRow}><label style={s.label}>分區</label><input style={s.input} value={form.zone} onChange={e => setF('zone', e.target.value)} placeholder="第一診療區" /></div>
-            <div style={s.formRow}><label style={s.label}>GridCol(欄 1-11)</label><input type="number" style={s.input} value={form.gridCol} onChange={e => setF('gridCol', e.target.value)} placeholder="11" /></div>
-            <div style={s.formRow}><label style={s.label}>GridRow(列 1-8)</label><input type="number" style={s.input} value={form.gridRow} onChange={e => setF('gridRow', e.target.value)} placeholder="3" /></div>
-            <div style={s.formRow}><label style={s.label}>排序</label><input type="number" style={s.input} value={form.sortOrder} onChange={e => setF('sortOrder', Number(e.target.value))} /></div>
-          </div>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '14px', cursor: 'pointer', marginTop: '4px' }}>
-            <input type="checkbox" checked={form.isActive} onChange={e => setF('isActive', e.target.checked)} />啟用
-          </label>
-          <div style={{ marginTop: '14px', display: 'flex', gap: '8px' }}>
-            <button type="submit" style={s.btnPrimary}>{editId ? '儲存修改' : '+ 新增'}</button>
-            {editId && <button type="button" style={s.btnSecondary} onClick={() => { setForm(emptyErBedForm); setEditId(null) }}>取消</button>}
-          </div>
-        </form>
-      </div>
-      <div style={s.listCard}>
-        <h4 style={s.formTitle}>ER 床位主檔（共 {list.length} 床）</h4>
-        {list.length === 0 ? <p style={{ color: '#9ca3af', fontSize: '14px' }}>尚無資料，請新增</p> : (
-          <table style={s.table}>
-            <thead><tr>{['排序','床號','病房','分區','座標(欄,列)','啟用','操作'].map(h => <th key={h} style={s.th}>{h}</th>)}</tr></thead>
-            <tbody>
-              {list.map((item, i) => (
-                <tr key={item.id} style={{ background: editId === item.id ? '#fef9c3' : i % 2 ? '#f9fafb' : '#fff' }}>
-                  <td style={s.td}>{item.sortOrder}</td>
-                  <td style={s.td}>{item.bedId}</td>
-                  <td style={s.td}>{item.ward || '—'}</td>
-                  <td style={s.td}>{item.zone || '—'}</td>
-                  <td style={s.td}>{(item.gridCol != null && item.gridRow != null) ? `${item.gridCol}, ${item.gridRow}` : '—'}</td>
-                  <td style={s.td}><span style={{ ...s.badge, background: item.isActive ? '#d1fae5' : '#f3f4f6', color: item.isActive ? '#065f46' : '#6b7280' }}>{item.isActive ? '✓ 啟用' : '停用'}</span></td>
-                  <td style={s.td}><button style={s.btnEdit} onClick={() => handleEdit(item)}>編輯</button><button style={s.btnDel} onClick={() => handleDelete(item.id)}>刪除</button></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
-    </div>
-  )
-}
-
-function ErBedManager() {
-  return (
-    <div>
-      <div style={s.sectionSub}>ER 床位主檔（病室動態平面圖；床碼＋分區＋座標）</div>
-      <ErBedSection />
-    </div>
-  )
-}
-
-// ── OR 刀房主檔（OrRoom）──────────────────────────────────────────
-// 做白板房號 RoomId(OR-01…) ↔ Board_OR 刀房代碼 ApiRoom(R1…) 對應與排序；
-// OR 手術動態照主檔鋪 4×2 房卡，Board_OR 今日手術以 ApiRoom merge 上去。
-const emptyOrRoomForm = { roomId: '', apiRoom: '', sortOrder: 0, isActive: true }
-
-function OrRoomSection() {
-  const [list, setList]     = useState([])
-  const [form, setForm]     = useState(emptyOrRoomForm)
-  const [editId, setEditId] = useState(null)
-  const [msg, setMsg]       = useState({ text: '', error: false })
-
-  const showMsg = (text, error = false) => { setMsg({ text, error }); setTimeout(() => setMsg({ text: '', error: false }), 3000) }
-  const load = useCallback(async () => {
-    try   { setList((await wardApi.getOrRooms('OR', true)) ?? []) }
-    catch { showMsg('讀取失敗', true) }
-  }, [])
-  useEffect(() => { load() }, [load])
-
   const setF = (k, v) => setForm(f => ({ ...f, [k]: v }))
   const handleSubmit = async (e) => {
     e.preventDefault()
     const payload = { ...form, unitCode: 'OR' }
     try {
-      if (editId) { await wardApi.updateOrRoom(editId, payload); showMsg('修改成功') }
-      else        { await wardApi.createOrRoom(payload); showMsg('新增成功') }
-      setForm(emptyOrRoomForm); setEditId(null); load()
-    } catch { showMsg('操作失敗（房號是否重複？）', true) }
+      if (editId) { await wardApi.updateShiftStaff(editId, payload); showMsg('修改成功') }
+      else { await wardApi.createShiftStaff(payload); showMsg('新增成功') }
+      setForm(emptyShiftStaffForm); setEditId(null); load()
+    } catch { showMsg('操作失敗', true) }
   }
-  const handleEdit = item => { setEditId(item.id); setForm({ roomId: item.roomId, apiRoom: item.apiRoom ?? '', sortOrder: item.sortOrder, isActive: item.isActive }) }
-  const handleDelete = async id => { if (!window.confirm('確定刪除？')) return; try { await wardApi.removeOrRoom(id); showMsg('刪除成功'); load() } catch { showMsg('刪除失敗', true) } }
-
+  const handleEdit = i => { setEditId(i.id); setForm({ shiftType: i.shiftType, role: i.role, name: i.name ?? '', roleTitle: i.roleTitle ?? '', ext: i.ext ?? '', sortOrder: i.sortOrder, isActive: i.isActive }) }
+  const handleDelete = async id => { if (!window.confirm('確定刪除？')) return; try { await wardApi.removeShiftStaff(id); showMsg('刪除成功'); load() } catch { showMsg('刪除失敗', true) } }
   return (
     <div>
       {msg.text && <div style={{ ...s.msg, background: msg.error ? '#fee2e2' : '#d1fae5', color: msg.error ? '#991b1b' : '#065f46' }}>{msg.text}</div>}
       <div style={s.formCard}>
-        <h4 style={s.formTitle}>{editId ? `修改刀房 (ID: ${editId})` : '新增 OR 刀房'}</h4>
-        <div style={{ fontSize: '12px', color: '#9ca3af', marginBottom: '10px' }}>
-          房號＝白板顯示（OR-01…OR-08，無 OR-04）；ApiRoom＝Board_OR「刀房」代碼（R1…R7），手術以此對應上板。停用則白板不顯示該房。
-        </div>
+        <h4 style={s.formTitle}>{editId ? `修改班級人員 (ID: ${editId})` : '新增班級人員'}</h4>
+        <div style={{ fontSize: '12px', color: '#9ca3af', marginBottom: '10px' }}>角色：護理長＝值班護理長；麻醉＝麻醉科人員（可多筆）；體循＝體外循環技師。職稱供麻醉/體循顯示。</div>
         <form onSubmit={handleSubmit}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0 16px' }}>
-            <div style={s.formRow}><label style={s.label}>房號 *</label><input style={s.input} value={form.roomId} required onChange={e => setF('roomId', e.target.value)} placeholder="OR-01" /></div>
-            <div style={s.formRow}><label style={s.label}>ApiRoom(R1…)</label><input style={s.input} value={form.apiRoom} onChange={e => setF('apiRoom', e.target.value)} placeholder="R1" /></div>
+            <div style={s.formRow}><label style={s.label}>班別 *</label><select style={s.input} value={form.shiftType} onChange={e => setF('shiftType', e.target.value)}>{OR_SHIFT_TYPES.map(o => <option key={o} value={o}>{o}</option>)}</select></div>
+            <div style={s.formRow}><label style={s.label}>角色 *</label><select style={s.input} value={form.role} onChange={e => setF('role', e.target.value)}>{OR_STAFF_ROLES.map(o => <option key={o} value={o}>{o}</option>)}</select></div>
+            <div style={s.formRow}><label style={s.label}>姓名</label><input style={s.input} value={form.name} onChange={e => setF('name', e.target.value)} /></div>
+            <div style={s.formRow}><label style={s.label}>職稱</label><input style={s.input} value={form.roleTitle} onChange={e => setF('roleTitle', e.target.value)} placeholder="主治麻醉科醫師" /></div>
+            <div style={s.formRow}><label style={s.label}>分機</label><input style={s.input} value={form.ext} onChange={e => setF('ext', e.target.value)} /></div>
             <div style={s.formRow}><label style={s.label}>排序</label><input type="number" style={s.input} value={form.sortOrder} onChange={e => setF('sortOrder', Number(e.target.value))} /></div>
           </div>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '14px', cursor: 'pointer', marginTop: '4px' }}>
-            <input type="checkbox" checked={form.isActive} onChange={e => setF('isActive', e.target.checked)} />啟用
-          </label>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '14px', cursor: 'pointer', marginTop: '4px' }}><input type="checkbox" checked={form.isActive} onChange={e => setF('isActive', e.target.checked)} />啟用</label>
           <div style={{ marginTop: '14px', display: 'flex', gap: '8px' }}>
             <button type="submit" style={s.btnPrimary}>{editId ? '儲存修改' : '+ 新增'}</button>
-            {editId && <button type="button" style={s.btnSecondary} onClick={() => { setForm(emptyOrRoomForm); setEditId(null) }}>取消</button>}
+            {editId && <button type="button" style={s.btnSecondary} onClick={() => { setForm(emptyShiftStaffForm); setEditId(null) }}>取消</button>}
           </div>
         </form>
       </div>
       <div style={s.listCard}>
-        <h4 style={s.formTitle}>OR 刀房主檔（共 {list.length} 房）</h4>
-        {list.length === 0 ? <p style={{ color: '#9ca3af', fontSize: '14px' }}>尚無資料，請新增</p> : (
+        <h4 style={s.formTitle}>班級人員（共 {list.length} 筆）</h4>
+        {list.length === 0 ? <p style={{ color: '#9ca3af', fontSize: '14px' }}>尚無資料</p> : (
           <table style={s.table}>
-            <thead><tr>{['排序','房號','ApiRoom','啟用','操作'].map(h => <th key={h} style={s.th}>{h}</th>)}</tr></thead>
+            <thead><tr>{['班別', '角色', '姓名', '職稱', '分機', '排序', '啟用', '操作'].map(h => <th key={h} style={s.th}>{h}</th>)}</tr></thead>
             <tbody>
-              {list.map((item, i) => (
-                <tr key={item.id} style={{ background: editId === item.id ? '#fef9c3' : i % 2 ? '#f9fafb' : '#fff' }}>
-                  <td style={s.td}>{item.sortOrder}</td>
-                  <td style={s.td}>{item.roomId}</td>
-                  <td style={s.td}>{item.apiRoom || '—'}</td>
-                  <td style={s.td}><span style={{ ...s.badge, background: item.isActive ? '#d1fae5' : '#f3f4f6', color: item.isActive ? '#065f46' : '#6b7280' }}>{item.isActive ? '✓ 啟用' : '停用'}</span></td>
-                  <td style={s.td}><button style={s.btnEdit} onClick={() => handleEdit(item)}>編輯</button><button style={s.btnDel} onClick={() => handleDelete(item.id)}>刪除</button></td>
+              {list.map((i, n) => (
+                <tr key={i.id} style={{ background: editId === i.id ? '#fef9c3' : n % 2 ? '#f9fafb' : '#fff' }}>
+                  <td style={s.td}>{i.shiftType}</td><td style={s.td}>{i.role}</td><td style={s.td}>{i.name || '—'}</td><td style={s.td}>{i.roleTitle || '—'}</td><td style={s.td}>{i.ext || '—'}</td><td style={s.td}>{i.sortOrder}</td>
+                  <td style={s.td}><span style={{ ...s.badge, background: i.isActive ? '#d1fae5' : '#f3f4f6', color: i.isActive ? '#065f46' : '#6b7280' }}>{i.isActive ? '✓' : '停'}</span></td>
+                  <td style={s.td}><button style={s.btnEdit} onClick={() => handleEdit(i)}>編輯</button><button style={s.btnDel} onClick={() => handleDelete(i.id)}>刪除</button></td>
                 </tr>
               ))}
             </tbody>
@@ -1333,14 +1247,382 @@ function OrRoomSection() {
   )
 }
 
-function OrRoomManager() {
+// 房×班 刷手/流動 CRUD
+function OrShiftRoomSection() {
+  const [list, setList] = useState([])
+  const [form, setForm] = useState(emptyShiftRoomForm)
+  const [editId, setEditId] = useState(null)
+  const [msg, setMsg] = useState({ text: '', error: false })
+  const showMsg = (text, error = false) => { setMsg({ text, error }); setTimeout(() => setMsg({ text: '', error: false }), 3000) }
+  const load = useCallback(async () => { try { setList((await wardApi.getShiftRoom('OR', true)) ?? []) } catch { showMsg('讀取失敗', true) } }, [])
+  useEffect(() => { load() }, [load])
+  const setF = (k, v) => setForm(f => ({ ...f, [k]: v }))
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    const payload = { ...form, unitCode: 'OR' }
+    try {
+      if (editId) { await wardApi.updateShiftRoom(editId, payload); showMsg('修改成功') }
+      else { await wardApi.createShiftRoom(payload); showMsg('新增成功') }
+      setForm(emptyShiftRoomForm); setEditId(null); load()
+    } catch { showMsg('操作失敗（班別＋刀房是否重複？）', true) }
+  }
+  const handleEdit = i => { setEditId(i.id); setForm({ shiftType: i.shiftType, roomId: i.roomId, scrubNurse: i.scrubNurse ?? '', circNurse: i.circNurse ?? '', ext: i.ext ?? '', sortOrder: i.sortOrder, isActive: i.isActive }) }
+  const handleDelete = async id => { if (!window.confirm('確定刪除？')) return; try { await wardApi.removeShiftRoom(id); showMsg('刪除成功'); load() } catch { showMsg('刪除失敗', true) } }
   return (
     <div>
-      <div style={s.sectionSub}>OR 刀房主檔（手術動態房卡；房號 ↔ Board_OR R 代碼對應）</div>
-      <OrRoomSection />
+      {msg.text && <div style={{ ...s.msg, background: msg.error ? '#fee2e2' : '#d1fae5', color: msg.error ? '#991b1b' : '#065f46' }}>{msg.text}</div>}
+      <div style={s.formCard}>
+        <h4 style={s.formTitle}>{editId ? `修改刀房派班 (ID: ${editId})` : '新增刀房派班'}</h4>
+        <form onSubmit={handleSubmit}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0 16px' }}>
+            <div style={s.formRow}><label style={s.label}>班別 *</label><select style={s.input} value={form.shiftType} onChange={e => setF('shiftType', e.target.value)}>{OR_SHIFT_TYPES.map(o => <option key={o} value={o}>{o}</option>)}</select></div>
+            <div style={s.formRow}><label style={s.label}>刀房 *</label><select style={s.input} value={form.roomId} onChange={e => setF('roomId', e.target.value)}>{OR_ROOM_IDS.map(o => <option key={o} value={o}>{o}</option>)}</select></div>
+            <div style={s.formRow}><label style={s.label}>分機</label><input style={s.input} value={form.ext} onChange={e => setF('ext', e.target.value)} /></div>
+            <div style={s.formRow}><label style={s.label}>刷手護理師</label><input style={s.input} value={form.scrubNurse} onChange={e => setF('scrubNurse', e.target.value)} /></div>
+            <div style={s.formRow}><label style={s.label}>流動護理師</label><input style={s.input} value={form.circNurse} onChange={e => setF('circNurse', e.target.value)} /></div>
+            <div style={s.formRow}><label style={s.label}>排序</label><input type="number" style={s.input} value={form.sortOrder} onChange={e => setF('sortOrder', Number(e.target.value))} /></div>
+          </div>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '14px', cursor: 'pointer', marginTop: '4px' }}><input type="checkbox" checked={form.isActive} onChange={e => setF('isActive', e.target.checked)} />啟用</label>
+          <div style={{ marginTop: '14px', display: 'flex', gap: '8px' }}>
+            <button type="submit" style={s.btnPrimary}>{editId ? '儲存修改' : '+ 新增'}</button>
+            {editId && <button type="button" style={s.btnSecondary} onClick={() => { setForm(emptyShiftRoomForm); setEditId(null) }}>取消</button>}
+          </div>
+        </form>
+      </div>
+      <div style={s.listCard}>
+        <h4 style={s.formTitle}>刀房派班（共 {list.length} 筆）</h4>
+        {list.length === 0 ? <p style={{ color: '#9ca3af', fontSize: '14px' }}>尚無資料</p> : (
+          <table style={s.table}>
+            <thead><tr>{['班別', '刀房', '刷手', '流動', '分機', '啟用', '操作'].map(h => <th key={h} style={s.th}>{h}</th>)}</tr></thead>
+            <tbody>
+              {list.map((i, n) => (
+                <tr key={i.id} style={{ background: editId === i.id ? '#fef9c3' : n % 2 ? '#f9fafb' : '#fff' }}>
+                  <td style={s.td}>{i.shiftType}</td><td style={s.td}>{i.roomId}</td><td style={s.td}>{i.scrubNurse || '—'}</td><td style={s.td}>{i.circNurse || '—'}</td><td style={s.td}>{i.ext || '—'}</td>
+                  <td style={s.td}><span style={{ ...s.badge, background: i.isActive ? '#d1fae5' : '#f3f4f6', color: i.isActive ? '#065f46' : '#6b7280' }}>{i.isActive ? '✓' : '停'}</span></td>
+                  <td style={s.td}><button style={s.btnEdit} onClick={() => handleEdit(i)}>編輯</button><button style={s.btnDel} onClick={() => handleDelete(i.id)}>刪除</button></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
     </div>
   )
 }
+
+function OrScheduleManager() {
+  return (
+    <div>
+      <div style={s.sectionSub}>OR 手術派班 — 班級人員（護理長/麻醉/體循）</div>
+      <OrShiftStaffSection />
+      <div style={{ ...s.sectionSub, marginTop: '24px' }}>OR 手術派班 — 刀房派班（刷手/流動）</div>
+      <OrShiftRoomSection />
+    </div>
+  )
+}
+
+// ── OR 特殊交班（OrHandover）─────────────────────────────────────
+const emptyHandoverForm = { hhisnum: '', roomId: 'OR-01', patientName: '', gender: 'M', age: '', surgeryName: '', surgerySource: '門診刀', surgeonName: '', destWard: '', destBed: '', endTime: '', bloodLoss: '', bloodTransfusion: '', drainDetails: '', specialNotes: '', sortOrder: 0, isActive: true }
+
+function OrHandoverSection() {
+  const [list, setList] = useState([])
+  const [form, setForm] = useState(emptyHandoverForm)
+  const [editId, setEditId] = useState(null)
+  const [msg, setMsg] = useState({ text: '', error: false })
+  const showMsg = (text, error = false) => { setMsg({ text, error }); setTimeout(() => setMsg({ text: '', error: false }), 3000) }
+  const load = useCallback(async () => { try { setList((await wardApi.getHandoverList('OR', true)) ?? []) } catch { showMsg('讀取失敗', true) } }, [])
+  useEffect(() => { load() }, [load])
+  const setF = (k, v) => setForm(f => ({ ...f, [k]: v }))
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    const payload = {
+      ...form, unitCode: 'OR',
+      age: form.age === '' ? null : Number(form.age),
+      bloodLoss: form.bloodLoss === '' ? null : Number(form.bloodLoss),
+      bloodTransfusion: form.bloodTransfusion === '' ? null : Number(form.bloodTransfusion),
+    }
+    try {
+      if (editId) { await wardApi.updateHandover(editId, payload); showMsg('修改成功') }
+      else { await wardApi.createHandover(payload); showMsg('新增成功') }
+      setForm(emptyHandoverForm); setEditId(null); load()
+    } catch { showMsg('操作失敗', true) }
+  }
+  const handleEdit = i => {
+    setEditId(i.id)
+    setForm({
+      hhisnum: i.hhisnum ?? '', roomId: i.roomId ?? 'OR-01', patientName: i.patientName ?? '', gender: i.gender ?? 'M',
+      age: i.age ?? '', surgeryName: i.surgeryName ?? '', surgerySource: i.surgerySource ?? '門診刀', surgeonName: i.surgeonName ?? '',
+      destWard: i.destWard ?? '', destBed: i.destBed ?? '', endTime: i.endTime ?? '', bloodLoss: i.bloodLoss ?? '',
+      bloodTransfusion: i.bloodTransfusion ?? '', drainDetails: i.drainDetails ?? '', specialNotes: i.specialNotes ?? '',
+      sortOrder: i.sortOrder, isActive: i.isActive,
+    })
+  }
+  const handleDelete = async id => { if (!window.confirm('確定刪除？')) return; try { await wardApi.removeHandover(id); showMsg('刪除成功'); load() } catch { showMsg('刪除失敗', true) } }
+  return (
+    <div>
+      {msg.text && <div style={{ ...s.msg, background: msg.error ? '#fee2e2' : '#d1fae5', color: msg.error ? '#991b1b' : '#065f46' }}>{msg.text}</div>}
+      <div style={s.formCard}>
+        <h4 style={s.formTitle}>{editId ? `修改特殊交班 (ID: ${editId})` : '新增特殊交班'}</h4>
+        <div style={{ fontSize: '12px', color: '#9ca3af', marginBottom: '10px' }}>術後轉病房特殊交班；內容為流動護理師護理紀錄（手填）。</div>
+        <form onSubmit={handleSubmit}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0 16px' }}>
+            <div style={s.formRow}><label style={s.label}>刀房</label><select style={s.input} value={form.roomId} onChange={e => setF('roomId', e.target.value)}>{OR_ROOM_IDS.map(o => <option key={o} value={o}>{o}</option>)}</select></div>
+            <div style={s.formRow}><label style={s.label}>來源</label><select style={s.input} value={form.surgerySource} onChange={e => setF('surgerySource', e.target.value)}>{SURGERY_SOURCE_OPTS.map(o => <option key={o} value={o}>{o || '（無）'}</option>)}</select></div>
+            <div style={s.formRow}><label style={s.label}>病歷號</label><input style={s.input} value={form.hhisnum} onChange={e => setF('hhisnum', e.target.value)} /></div>
+            <div style={s.formRow}><label style={s.label}>姓名</label><input style={s.input} value={form.patientName} onChange={e => setF('patientName', e.target.value)} /></div>
+            <div style={s.formRow}><label style={s.label}>性別</label><select style={s.input} value={form.gender} onChange={e => setF('gender', e.target.value)}><option value="M">男</option><option value="F">女</option></select></div>
+            <div style={s.formRow}><label style={s.label}>年齡</label><input type="number" style={s.input} value={form.age} onChange={e => setF('age', e.target.value)} /></div>
+            <div style={s.formRow}><label style={s.label}>主刀醫師</label><input style={s.input} value={form.surgeonName} onChange={e => setF('surgeonName', e.target.value)} /></div>
+            <div style={s.formRow}><label style={s.label}>結束時間</label><input style={s.input} value={form.endTime} onChange={e => setF('endTime', e.target.value)} placeholder="10:18" /></div>
+            <div style={s.formRow}><label style={s.label}>轉往病房</label><input style={s.input} value={form.destWard} onChange={e => setF('destWard', e.target.value)} placeholder="骨科病房（W52）" /></div>
+            <div style={s.formRow}><label style={s.label}>轉往床號</label><input style={s.input} value={form.destBed} onChange={e => setF('destBed', e.target.value)} placeholder="W52-014" /></div>
+            <div style={s.formRow}><label style={s.label}>出血(mL)</label><input type="number" style={s.input} value={form.bloodLoss} onChange={e => setF('bloodLoss', e.target.value)} /></div>
+            <div style={s.formRow}><label style={s.label}>輸血(單位)</label><input type="number" style={s.input} value={form.bloodTransfusion} onChange={e => setF('bloodTransfusion', e.target.value)} /></div>
+          </div>
+          <div style={s.formRow}><label style={s.label}>術式</label><input style={s.input} value={form.surgeryName} onChange={e => setF('surgeryName', e.target.value)} /></div>
+          <div style={s.formRow}><label style={s.label}>引流管</label><input style={s.input} value={form.drainDetails} onChange={e => setF('drainDetails', e.target.value)} /></div>
+          <div style={s.formRow}><label style={s.label}>特殊事項</label><textarea style={{ ...s.input, height: '60px', resize: 'vertical' }} value={form.specialNotes} onChange={e => setF('specialNotes', e.target.value)} /></div>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '14px', cursor: 'pointer' }}><input type="checkbox" checked={form.isActive} onChange={e => setF('isActive', e.target.checked)} />啟用</label>
+          <div style={{ marginTop: '14px', display: 'flex', gap: '8px' }}>
+            <button type="submit" style={s.btnPrimary}>{editId ? '儲存修改' : '+ 新增'}</button>
+            {editId && <button type="button" style={s.btnSecondary} onClick={() => { setForm(emptyHandoverForm); setEditId(null) }}>取消</button>}
+          </div>
+        </form>
+      </div>
+      <div style={s.listCard}>
+        <h4 style={s.formTitle}>特殊交班（共 {list.length} 筆）</h4>
+        {list.length === 0 ? <p style={{ color: '#9ca3af', fontSize: '14px' }}>尚無資料</p> : (
+          <table style={s.table}>
+            <thead><tr>{['刀房', '病患', '術式', '主刀', '轉往', '出血/輸血', '啟用', '操作'].map(h => <th key={h} style={s.th}>{h}</th>)}</tr></thead>
+            <tbody>
+              {list.map((i, n) => (
+                <tr key={i.id} style={{ background: editId === i.id ? '#fef9c3' : n % 2 ? '#f9fafb' : '#fff' }}>
+                  <td style={s.td}>{i.roomId}</td>
+                  <td style={s.td}>{i.patientName || '—'}<div style={{ fontSize: '12px', color: '#9ca3af' }}>{i.gender}/{i.age}</div></td>
+                  <td style={{ ...s.td, maxWidth: '180px', fontSize: '12px' }}>{i.surgeryName || '—'}</td>
+                  <td style={s.td}>{i.surgeonName || '—'}</td>
+                  <td style={{ ...s.td, fontSize: '12px' }}>{i.destWard || '—'} {i.destBed || ''}</td>
+                  <td style={s.td}>{i.bloodLoss != null ? `${i.bloodLoss}mL` : '—'} / {i.bloodTransfusion != null ? `${i.bloodTransfusion}u` : '0'}</td>
+                  <td style={s.td}><span style={{ ...s.badge, background: i.isActive ? '#d1fae5' : '#f3f4f6', color: i.isActive ? '#065f46' : '#6b7280' }}>{i.isActive ? '✓' : '停'}</span></td>
+                  <td style={s.td}><button style={s.btnEdit} onClick={() => handleEdit(i)}>編輯</button><button style={s.btnDel} onClick={() => handleDelete(i.id)}>刪除</button></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function OrHandoverManager() {
+  return (
+    <div>
+      <div style={s.sectionSub}>OR 術後特殊交班（HandoverTab）</div>
+      <OrHandoverSection />
+    </div>
+  )
+}
+
+// ── 各站頁首單位資訊（主任/護理）──────────────────────────────────
+const emptyUnitInfoForm = { hospitalName: '', wardName: '', directorLabel: '', directorName: '', headNurseLabel: '', headNurseName: '', totalBeds: '' }
+
+function UnitInfoSection({ unitCode }) {
+  const [form, setForm] = useState(emptyUnitInfoForm)
+  const [msg, setMsg]   = useState({ text: '', error: false })
+  const showMsg = (text, error = false) => { setMsg({ text, error }); setTimeout(() => setMsg({ text: '', error: false }), 3000) }
+  const load = useCallback(async () => {
+    try {
+      const d = await wardApi.getUnitInfo(unitCode)
+      if (d) setForm({ hospitalName: d.hospitalName ?? '', wardName: d.wardName ?? '', directorLabel: d.directorLabel ?? '', directorName: d.directorName ?? '', headNurseLabel: d.headNurseLabel ?? '', headNurseName: d.headNurseName ?? '', totalBeds: d.totalBeds ?? '' })
+    } catch { showMsg('讀取失敗', true) }
+  }, [unitCode])
+  useEffect(() => { load() }, [load])
+  const setF = (k, v) => setForm(f => ({ ...f, [k]: v }))
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    const payload = { ...form, unitCode, totalBeds: form.totalBeds === '' ? null : Number(form.totalBeds) }
+    try { await wardApi.saveUnitInfo(payload); showMsg('儲存成功') }
+    catch { showMsg('儲存失敗', true) }
+  }
+  return (
+    <div>
+      {msg.text && <div style={{ ...s.msg, background: msg.error ? '#fee2e2' : '#d1fae5', color: msg.error ? '#991b1b' : '#065f46' }}>{msg.text}</div>}
+      <div style={s.formCard}>
+        <h4 style={s.formTitle}>頁首單位資訊（{UNIT_LABELS[unitCode] || unitCode}）</h4>
+        <div style={{ fontSize: '12px', color: '#9ca3af', marginBottom: '10px' }}>白板頂部顯示的「主任／護理」兩個欄位；職稱與姓名皆可編輯（如 病房主任／單位護理長、急診主任／護理長）。</div>
+        <form onSubmit={handleSubmit}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 16px' }}>
+            <div style={s.formRow}><label style={s.label}>主任職稱</label><input style={s.input} value={form.directorLabel} onChange={e => setF('directorLabel', e.target.value)} placeholder="病房主任" /></div>
+            <div style={s.formRow}><label style={s.label}>主任姓名</label><input style={s.input} value={form.directorName} onChange={e => setF('directorName', e.target.value)} /></div>
+            <div style={s.formRow}><label style={s.label}>護理職稱</label><input style={s.input} value={form.headNurseLabel} onChange={e => setF('headNurseLabel', e.target.value)} placeholder="單位護理長" /></div>
+            <div style={s.formRow}><label style={s.label}>護理姓名</label><input style={s.input} value={form.headNurseName} onChange={e => setF('headNurseName', e.target.value)} /></div>
+            {unitCode === 'ER' && (
+              <div style={s.formRow}><label style={s.label}>總病床數</label><input type="number" style={s.input} value={form.totalBeds} onChange={e => setF('totalBeds', e.target.value)} placeholder="留空＝預設 19" /></div>
+            )}
+          </div>
+          {/* 醫院/站別名稱為固定值，不開放後台編輯（仍隨表單原值回存、不清空）*/}
+          <div style={{ marginTop: '14px' }}><button type="submit" style={s.btnPrimary}>儲存</button></div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
+// ── 檢查/會診（WardExamConsult；W52/ICU/ER 自建）──────────────────
+const EXAM_STATUS_OPTS = ['待執行', '執行中', '已完成', '預約', '取消']
+const CONSULT_STATUS_OPTS = ['待回覆', '已回覆', '進行中', '待安排', '取消']
+const emptyExamConsultForm = { kind: '檢查', hhisnum: '', bedId: '', patientName: '', gender: 'M', itemName: '', doctor: '', scheduledDate: '', timeSlot: '', completedTime: '', status: '待執行', notes: '', sortOrder: 0, isActive: true }
+
+function ExamConsultSection({ unitCode }) {
+  const [list, setList] = useState([])
+  const [form, setForm] = useState(emptyExamConsultForm)
+  const [editId, setEditId] = useState(null)
+  const [msg, setMsg] = useState({ text: '', error: false })
+  const showMsg = (text, error = false) => { setMsg({ text, error }); setTimeout(() => setMsg({ text: '', error: false }), 3000) }
+  const load = useCallback(async () => { try { setList((await wardApi.getExamConsultList(unitCode, true)) ?? []) } catch { showMsg('讀取失敗', true) } }, [unitCode])
+  useEffect(() => { load() }, [load])
+  const setF = (k, v) => setForm(f => ({ ...f, [k]: v }))
+  const isExam = form.kind === '檢查'
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    const payload = { ...form, unitCode }
+    try {
+      if (editId) { await wardApi.updateExamConsult(editId, payload); showMsg('修改成功') }
+      else { await wardApi.createExamConsult(payload); showMsg('新增成功') }
+      setForm(emptyExamConsultForm); setEditId(null); load()
+    } catch { showMsg('操作失敗', true) }
+  }
+  const handleEdit = i => {
+    setEditId(i.id)
+    setForm({ kind: i.kind, hhisnum: i.hhisnum ?? '', bedId: i.bedId ?? '', patientName: i.patientName ?? '', gender: i.gender ?? 'M', itemName: i.itemName ?? '', doctor: i.doctor ?? '', scheduledDate: i.scheduledDate ?? '', timeSlot: i.timeSlot ?? '', completedTime: i.completedTime ?? '', status: i.status ?? '', notes: i.notes ?? '', sortOrder: i.sortOrder, isActive: i.isActive })
+  }
+  const handleDelete = async id => { if (!window.confirm('確定刪除？')) return; try { await wardApi.removeExamConsult(id); showMsg('刪除成功'); load() } catch { showMsg('刪除失敗', true) } }
+  return (
+    <div>
+      {msg.text && <div style={{ ...s.msg, background: msg.error ? '#fee2e2' : '#d1fae5', color: msg.error ? '#991b1b' : '#065f46' }}>{msg.text}</div>}
+      <div style={s.formCard}>
+        <h4 style={s.formTitle}>{editId ? `修改檢查/會診 (ID: ${editId})` : '新增檢查/會診'}</h4>
+        <div style={{ fontSize: '12px', color: '#9ca3af', marginBottom: '10px' }}>自建（院方 OR.ORDER/RESULT 未開放前）。檢查＝項目/預定日期/時段；會診＝科別/醫師/完成時間。</div>
+        <form onSubmit={handleSubmit}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0 16px' }}>
+            <div style={s.formRow}><label style={s.label}>類型 *</label><select style={s.input} value={form.kind} onChange={e => setF('kind', e.target.value)}><option value="檢查">檢查</option><option value="會診">會診</option></select></div>
+            <div style={s.formRow}><label style={s.label}>床號</label><input style={s.input} value={form.bedId} onChange={e => setF('bedId', e.target.value)} /></div>
+            <div style={s.formRow}><label style={s.label}>病歷號</label><input style={s.input} value={form.hhisnum} onChange={e => setF('hhisnum', e.target.value)} /></div>
+            <div style={s.formRow}><label style={s.label}>姓名</label><input style={s.input} value={form.patientName} onChange={e => setF('patientName', e.target.value)} /></div>
+            <div style={s.formRow}><label style={s.label}>性別</label><select style={s.input} value={form.gender} onChange={e => setF('gender', e.target.value)}><option value="M">男</option><option value="F">女</option></select></div>
+            <div style={s.formRow}><label style={s.label}>{isExam ? '檢查項目' : '會診科別'}</label><input style={s.input} value={form.itemName} onChange={e => setF('itemName', e.target.value)} /></div>
+            {isExam ? <>
+              <div style={s.formRow}><label style={s.label}>預定日期</label><input style={s.input} value={form.scheduledDate} onChange={e => setF('scheduledDate', e.target.value)} placeholder="2026-06-24" /></div>
+              <div style={s.formRow}><label style={s.label}>時段</label><input style={s.input} value={form.timeSlot} onChange={e => setF('timeSlot', e.target.value)} placeholder="上午 09:00" /></div>
+            </> : <>
+              <div style={s.formRow}><label style={s.label}>會診醫師</label><input style={s.input} value={form.doctor} onChange={e => setF('doctor', e.target.value)} /></div>
+              <div style={s.formRow}><label style={s.label}>完成時間</label><input style={s.input} value={form.completedTime} onChange={e => setF('completedTime', e.target.value)} placeholder="2026-06-24 10:00" /></div>
+            </>}
+            <div style={s.formRow}><label style={s.label}>狀態</label><select style={s.input} value={form.status} onChange={e => setF('status', e.target.value)}>{(isExam ? EXAM_STATUS_OPTS : CONSULT_STATUS_OPTS).map(o => <option key={o} value={o}>{o}</option>)}</select></div>
+            <div style={s.formRow}><label style={s.label}>排序</label><input type="number" style={s.input} value={form.sortOrder} onChange={e => setF('sortOrder', Number(e.target.value))} /></div>
+          </div>
+          <div style={s.formRow}><label style={s.label}>備註</label><input style={s.input} value={form.notes} onChange={e => setF('notes', e.target.value)} /></div>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '14px', cursor: 'pointer' }}><input type="checkbox" checked={form.isActive} onChange={e => setF('isActive', e.target.checked)} />啟用</label>
+          <div style={{ marginTop: '14px', display: 'flex', gap: '8px' }}>
+            <button type="submit" style={s.btnPrimary}>{editId ? '儲存修改' : '+ 新增'}</button>
+            {editId && <button type="button" style={s.btnSecondary} onClick={() => { setForm(emptyExamConsultForm); setEditId(null) }}>取消</button>}
+          </div>
+        </form>
+      </div>
+      <div style={s.listCard}>
+        <h4 style={s.formTitle}>檢查/會診（共 {list.length} 筆）</h4>
+        {list.length === 0 ? <p style={{ color: '#9ca3af', fontSize: '14px' }}>尚無資料</p> : (
+          <table style={s.table}>
+            <thead><tr>{['類型', '床號', '姓名', '項目/科別', '醫師', '狀態', '啟用', '操作'].map(h => <th key={h} style={s.th}>{h}</th>)}</tr></thead>
+            <tbody>
+              {list.map((i, n) => (
+                <tr key={i.id} style={{ background: editId === i.id ? '#fef9c3' : n % 2 ? '#f9fafb' : '#fff' }}>
+                  <td style={s.td}>{i.kind}</td><td style={s.td}>{i.bedId || '—'}</td><td style={s.td}>{i.patientName || '—'}</td>
+                  <td style={s.td}>{i.itemName || '—'}</td><td style={s.td}>{i.doctor || '—'}</td><td style={s.td}>{i.status || '—'}</td>
+                  <td style={s.td}><span style={{ ...s.badge, background: i.isActive ? '#d1fae5' : '#f3f4f6', color: i.isActive ? '#065f46' : '#6b7280' }}>{i.isActive ? '✓' : '停'}</span></td>
+                  <td style={s.td}><button style={s.btnEdit} onClick={() => handleEdit(i)}>編輯</button><button style={s.btnDel} onClick={() => handleDelete(i.id)}>刪除</button></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+    </div>
+  )
+}
+
+
+// ── ICU 抗生素（自建；以病歷號掛載）────────────────────────────────
+const emptyAbxForm = { hhisnum: '', drugName: '', startDateTime: '', firstDoseDateTime: '', endDateTime: '', sortOrder: 0, isActive: true }
+
+function AntibioticSection() {
+  const [list, setList] = useState([])
+  const [form, setForm] = useState(emptyAbxForm)
+  const [editId, setEditId] = useState(null)
+  const [msg, setMsg] = useState({ text: '', error: false })
+  const showMsg = (text, error = false) => { setMsg({ text, error }); setTimeout(() => setMsg({ text: '', error: false }), 3000) }
+  const load = useCallback(async () => { try { setList((await wardApi.getAntibiotic('ICU', true)) ?? []) } catch { showMsg('讀取失敗', true) } }, [])
+  useEffect(() => { load() }, [load])
+  const setF = (k, v) => setForm(f => ({ ...f, [k]: v }))
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    const payload = { ...form, unitCode: 'ICU' }
+    try {
+      if (editId) { await wardApi.updateAntibiotic(editId, payload); showMsg('修改成功') }
+      else { await wardApi.createAntibiotic(payload); showMsg('新增成功') }
+      setForm(emptyAbxForm); setEditId(null); load()
+    } catch { showMsg('操作失敗', true) }
+  }
+  const handleEdit = i => {
+    setEditId(i.id)
+    setForm({ hhisnum: i.hhisnum ?? '', drugName: i.drugName ?? '', startDateTime: i.startDateTime ?? '', firstDoseDateTime: i.firstDoseDateTime ?? '', endDateTime: i.endDateTime ?? '', sortOrder: i.sortOrder, isActive: i.isActive })
+  }
+  const handleDelete = async id => { if (!window.confirm('確定刪除？')) return; try { await wardApi.removeAntibiotic(id); showMsg('刪除成功'); load() } catch { showMsg('刪除失敗', true) } }
+  return (
+    <div>
+      {msg.text && <div style={{ ...s.msg, background: msg.error ? '#fee2e2' : '#d1fae5', color: msg.error ? '#991b1b' : '#065f46' }}>{msg.text}</div>}
+      <div style={s.formCard}>
+        <h4 style={s.formTitle}>{editId ? `修改抗生素 (ID: ${editId})` : '新增抗生素'}</h4>
+        <div style={{ fontSize: '12px', color: '#9ca3af', marginBottom: '10px' }}>自建（院方 UD.UDORDER 未開放前）。以「病歷號」掛載；抗生素分頁依在床病人病歷號對應顯示。時間格式 2026-06-24 08:00。</div>
+        <form onSubmit={handleSubmit}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0 16px' }}>
+            <div style={s.formRow}><label style={s.label}>病歷號 *</label><input style={s.input} value={form.hhisnum} onChange={e => setF('hhisnum', e.target.value)} /></div>
+            <div style={s.formRow}><label style={s.label}>藥品名稱 *</label><input style={s.input} value={form.drugName} onChange={e => setF('drugName', e.target.value)} placeholder="Vancomycin" /></div>
+            <div style={s.formRow}><label style={s.label}>排序</label><input type="number" style={s.input} value={form.sortOrder} onChange={e => setF('sortOrder', Number(e.target.value))} /></div>
+            <div style={s.formRow}><label style={s.label}>開始時間</label><input style={s.input} value={form.startDateTime} onChange={e => setF('startDateTime', e.target.value)} placeholder="2026-06-24 08:00" /></div>
+            <div style={s.formRow}><label style={s.label}>首次給藥時間</label><input style={s.input} value={form.firstDoseDateTime} onChange={e => setF('firstDoseDateTime', e.target.value)} placeholder="2026-06-24 08:30" /></div>
+            <div style={s.formRow}><label style={s.label}>結束時間</label><input style={s.input} value={form.endDateTime} onChange={e => setF('endDateTime', e.target.value)} placeholder="（進行中可留空）" /></div>
+          </div>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '14px', cursor: 'pointer' }}><input type="checkbox" checked={form.isActive} onChange={e => setF('isActive', e.target.checked)} />啟用</label>
+          <div style={{ marginTop: '14px', display: 'flex', gap: '8px' }}>
+            <button type="submit" style={s.btnPrimary}>{editId ? '儲存修改' : '+ 新增'}</button>
+            {editId && <button type="button" style={s.btnSecondary} onClick={() => { setForm(emptyAbxForm); setEditId(null) }}>取消</button>}
+          </div>
+        </form>
+      </div>
+      <div style={s.listCard}>
+        <h4 style={s.formTitle}>抗生素（共 {list.length} 筆）</h4>
+        {list.length === 0 ? <p style={{ color: '#9ca3af', fontSize: '14px' }}>尚無資料</p> : (
+          <table style={s.table}>
+            <thead><tr>{['病歷號', '藥品名稱', '開始時間', '首次給藥', '結束時間', '啟用', '操作'].map(h => <th key={h} style={s.th}>{h}</th>)}</tr></thead>
+            <tbody>
+              {list.map((i, n) => (
+                <tr key={i.id} style={{ background: editId === i.id ? '#fef9c3' : n % 2 ? '#f9fafb' : '#fff' }}>
+                  <td style={s.td}>{i.hhisnum || '—'}</td><td style={s.td}>{i.drugName || '—'}</td>
+                  <td style={s.td}>{i.startDateTime || '—'}</td><td style={s.td}>{i.firstDoseDateTime || '—'}</td><td style={s.td}>{i.endDateTime || '—'}</td>
+                  <td style={s.td}><span style={{ ...s.badge, background: i.isActive ? '#d1fae5' : '#f3f4f6', color: i.isActive ? '#065f46' : '#6b7280' }}>{i.isActive ? '✓' : '停'}</span></td>
+                  <td style={s.td}><button style={s.btnEdit} onClick={() => handleEdit(i)}>編輯</button><button style={s.btnDel} onClick={() => handleDelete(i.id)}>刪除</button></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+    </div>
+  )
+}
+
 
 // 佔位元件（Phase 2/3 預留）
 function ComingSoon({ label }) {
@@ -1356,7 +1638,7 @@ function ComingSoon({ label }) {
 // ── 左側 Sidebar ─────────────────────────────────────────────
 // 依 MENU_CONFIG 渲染可展開分組；selectedMenu 為目前選中的 leaf id，
 // onSelect 通知父層切換內容區。expanded 記錄哪些分組為展開狀態。
-function Sidebar({ selectedMenu, onSelect }) {
+function Sidebar({ selectedMenu, onSelect, units = [] }) {
   const [expanded, setExpanded] = useState(new Set(['announcement']))
 
   // 切換某分組的展開/收合
@@ -1366,9 +1648,12 @@ function Sidebar({ selectedMenu, onSelect }) {
     return next
   })
 
+  // 通用群組（無 unit）恆顯示；站別群組（有 unit）依角色可管理單位過濾
+  const groups = MENU_CONFIG.filter(g => !g.unit || units.includes(g.unit))
+
   return (
     <nav style={s.sidebar}>
-      {MENU_CONFIG.map(group => (
+      {groups.map(group => (
         <div key={group.id} style={s.menuGroup}>
           {/* Group header */}
           <button style={s.menuGroupBtn} onClick={() => toggle(group.id)}>
@@ -1432,14 +1717,24 @@ export default function AdminPage() {
       case 'duty-contact':   return <DutyManager units={units} />
       case 'common-contact': return <CommonManager units={units} />
       case 'evac-image':     return <EvacManager units={units} />
-      case 'ward-ext':       return <WardExtManager units={units} />
-      case 'er-bed':         return <ErBedManager />
-      case 'or-room':        return <OrRoomManager />
+      // 站別：頁首單位資訊（各站固定 unitCode）
+      case 'w52-info':       return <UnitInfoSection key="W52i" unitCode="W52" />
+      case 'icu-info':       return <UnitInfoSection key="ICUi" unitCode="ICU" />
+      case 'or-info':        return <UnitInfoSection key="ORi"  unitCode="OR" />
+      case 'er-info':        return <UnitInfoSection key="ERi"  unitCode="ER" />
+      // 站別：病人臨床補充（各站固定 unitCode，直接渲染 Section）
+      case 'w52-exam':       return <ExamConsultSection key="W52e" unitCode="W52" />
+      case 'icu-exam':       return <ExamConsultSection key="ICUe" unitCode="ICU" />
+      case 'icu-abx':        return <AntibioticSection key="ICUabx" />
+      case 'er-exam':        return <ExamConsultSection key="ERe"  unitCode="ER" />
+      case 'w52-ext':        return <WardExtSection key="W52" unitCode="W52" />
+      case 'icu-ext':        return <WardExtSection key="ICU" unitCode="ICU" />
+      case 'or-ext':         return <WardExtSection key="OR"  unitCode="OR" />
+      case 'er-ext':         return <WardExtSection key="ER"  unitCode="ER" />
       case 'er-oncall':      return <ErOnCallManager />
-      // bulletin is now handled above
-      // duty-contact and common-contact handled above
-      case 'evac-image':    return <ComingSoon label="避難圖管理" />
-      default:              return null
+      case 'or-schedule':    return <OrScheduleManager />
+      case 'or-handover':    return <OrHandoverManager />
+      default:               return null
     }
   }
 
@@ -1459,7 +1754,7 @@ export default function AdminPage() {
 
       {/* ── Body（Sidebar + Content）── */}
       <div style={s.body}>
-        <Sidebar selectedMenu={selectedMenu} onSelect={setSelectedMenu} />
+        <Sidebar selectedMenu={selectedMenu} onSelect={setSelectedMenu} units={units} />
 
         <main style={s.content}>
           {/* 麵包屑 */}
@@ -1492,7 +1787,7 @@ const s = {
   // Sidebar
   sidebar: { width: '230px', background: '#1e293b', flexShrink: 0, padding: '16px 0', overflowY: 'auto', minHeight: 'calc(100vh - 56px)' },
   menuGroup: { marginBottom: '4px' },
-  menuGroupBtn: { width: '100%', display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px', background: 'transparent', border: 'none', color: '#94a3b8', fontSize: '12px', fontWeight: '800', letterSpacing: '1px', cursor: 'pointer', textTransform: 'uppercase', fontFamily: 'inherit', textAlign: 'left' },
+  menuGroupBtn: { width: '100%', display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px', background: 'transparent', border: 'none', color: '#cbd5e1', fontSize: '15px', fontWeight: '800', letterSpacing: '0.5px', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left' },
   menuGroupArrow: { fontSize: '10px', width: '12px', flexShrink: 0 },
   menuChildren: { paddingLeft: '4px' },
   menuItem: { width: '100%', display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 16px 8px 24px', background: 'transparent', border: 'none', color: '#94a3b8', fontSize: '14px', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left', borderLeft: '3px solid transparent', transition: 'all .12s' },

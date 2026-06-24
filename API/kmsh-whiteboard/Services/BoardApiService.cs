@@ -54,6 +54,9 @@ public class BoardApiService : IBoardApiService
             it.Hsex    = Trim(it.Hsex);
             it.Hnursta = Trim(it.Hnursta);
             it.Hbed    = Trim(it.Hbed);
+            it.Doctor    = Trim(it.Doctor);
+            it.AdmitDate = Trim(it.AdmitDate);
+            it.Diagnosis = Trim(it.Diagnosis);
         }
         return list;
     }

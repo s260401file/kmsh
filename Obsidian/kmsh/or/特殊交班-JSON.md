@@ -3,8 +3,9 @@ tags: [kmsh, 技術, OR, 特殊交班, 試作]
 ---
 # OR 特殊交班 — JSON 設計
 
-> 對應分頁 `HandoverTab`（術後轉病房特殊交班表）。內容源自**流動護理師護理紀錄**（未開放）→ 盡量帶入、撈不到先留白、避免重複登打（第5次會議）。手術基本可帶 `OR.OPORDER`，交班細節（出血/輸血/引流/注意事項）為自建。
-> 自建表 [[資料庫Schema]] `OrSpecialHandover`（需擴充欄位）。
+> ✅ **已上線（schema_v8，2026-06-24）**：`GET /api/Board/or/handover`（自建 `OrHandover`，含病人/術式/主刀/轉病房床/出血/輸血/引流/注意事項，**全自建手填**）。HandoverTab 已接、免 F5；後台「OR 特殊交班」可增刪改；種子照搬原 mock。
+> 對應分頁 `HandoverTab`（術後轉病房特殊交班表）。內容源自**流動護理師護理紀錄**（未開放）→ 手填。手術基本（術式/主刀/來源）目前一併手填；待 `OR.OPORDER`/Board_OR 自動帶入為**未來補洞**。
+> 自建表 [[資料庫Schema]] `OrHandover`。
 
 ## 試作 JSON
 ```json

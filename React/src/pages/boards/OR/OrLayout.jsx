@@ -4,6 +4,7 @@
 import { NavLink, Outlet } from 'react-router-dom'
 import { useClock } from '../../../hooks/useClock'      // 即時日期/時間
 import { useMarquee } from '../../../hooks/useMarquee'   // 跑馬燈公告文字
+import { useUnitInfo } from '../../../hooks/useUnitInfo'  // 頁首單位資訊（主任/護理，自建可後台編輯）
 import MOCK_DATA from './mockData'
 import './OrLayout.css'
 
@@ -20,6 +21,7 @@ const TABS = [
 export default function OrLayout() {
   const { date, time } = useClock()
   const marquee = useMarquee('OR', '2026/05/24 手術室公告：今日共安排 7 台手術，OR-05 MVR 預計 13:00 完成，ICU 床位已預留。')
+  const info = useUnitInfo('OR')   // 頁首主任/護理（自建；無資料時以 mock 備援）
 
   return (
     <div className="or-board">
@@ -27,12 +29,12 @@ export default function OrLayout() {
         <div className="header-left">OR<span className="ward-sub">手術室</span></div>
         <div className="header-center">
           <div className="staff-block">
-            <div className="staff-label">手術室主任</div>
-            <div className="staff-name">{MOCK_DATA.HospitalInfo.WardDirector}</div>
+            <div className="staff-label">{info?.directorLabel || '手術室主任'}</div>
+            <div className="staff-name">{info?.directorName || MOCK_DATA.HospitalInfo.WardDirector}</div>
           </div>
           <div className="staff-block">
-            <div className="staff-label">護理長</div>
-            <div className="staff-name">{MOCK_DATA.HospitalInfo.HeadNurse}</div>
+            <div className="staff-label">{info?.headNurseLabel || '護理長'}</div>
+            <div className="staff-name">{info?.headNurseName || MOCK_DATA.HospitalInfo.HeadNurse}</div>
           </div>
         </div>
         <div className="header-right">

@@ -4,6 +4,7 @@
 import { Outlet, NavLink } from 'react-router-dom'
 import { useClock } from '../../../hooks/useClock'      // 即時日期/時間 Hook
 import { useMarquee } from '../../../hooks/useMarquee'  // 跑馬燈文字 Hook
+import { useUnitInfo } from '../../../hooks/useUnitInfo' // 頁首單位資訊（主任/護理，自建可後台編輯）
 import MOCK_DATA from './mockData'
 import './IcuLayout.css'
 
@@ -23,6 +24,7 @@ export default function IcuLayout() {
   const { date, time } = useClock()
   // 跑馬燈：第一參數為單位代碼，第二參數為無資料時的預設文字
   const marquee = useMarquee('ICU', '院內感染管制週宣導：請確實執行手部衛生，進出隔離病房務必穿戴適當防護裝備。')
+  const info = useUnitInfo('ICU')   // 頁首主任/護理（自建；無資料時以 mock 備援）
 
   return (
     <div className="icu-board">
@@ -30,8 +32,8 @@ export default function IcuLayout() {
       <header className="page-header">
         <div className="header-left">ICU</div>
         <div className="header-center">
-          <div className="staff-block"><div className="staff-label">病房主任</div><div className="staff-name">{MOCK_DATA.hospitalInfo.wardDirector}</div></div>
-          <div className="staff-block"><div className="staff-label">單位護理長</div><div className="staff-name">{MOCK_DATA.hospitalInfo.headNurse}</div></div>
+          <div className="staff-block"><div className="staff-label">{info?.directorLabel || '病房主任'}</div><div className="staff-name">{info?.directorName || MOCK_DATA.hospitalInfo.wardDirector}</div></div>
+          <div className="staff-block"><div className="staff-label">{info?.headNurseLabel || '單位護理長'}</div><div className="staff-name">{info?.headNurseName || MOCK_DATA.hospitalInfo.headNurse}</div></div>
         </div>
         <div className="header-right">
           <div className="update-label">資料更新時間：剛剛</div>
