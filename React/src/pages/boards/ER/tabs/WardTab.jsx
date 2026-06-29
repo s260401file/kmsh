@@ -7,6 +7,7 @@
 import { useState, useMemo } from 'react'
 import MOCK_DATA, { getStats } from '../mockData'
 import { useErWard } from '../../../../hooks/useErWard'              // ER 病室動態：輪詢後端聚合看板
+import BoardLoading from '../../../../components/BoardLoading'        // 院方資料載入中動畫
 import { useUnitInfo } from '../../../../hooks/useUnitInfo'          // 頁首設定（含總病床數覆寫）
 import { usePolling } from '../../../../hooks/usePolling'           // 各科值班醫師面板：定時輪詢自建資料
 import * as wardApi from '../../../../services/wardApi'
@@ -170,7 +171,7 @@ const FLAG_STYLE = makeFlagStyle(FILTER_BADGES.map(x => x.label))
 export default function WardTab() {
   const [filter, setFilter] = useState('all')          // 目前選取的篩選類別
   const [selectedBed, setSelectedBed] = useState(null)  // 目前開啟詳情的床位
-  const { beds } = useErWard('ER')                       // 後端聚合看板（床位主檔＋真實病人＋overlay）
+  const { beds, deceasedCount, loading } = useErWard('ER')  // 後端聚合看板（床位主檔＋真實病人＋overlay）；死亡數另由 Board_ER_TypeE 計
   const placedBeds = useMemo(() => beds.filter(b => !b.Unplaced), [beds])    // 有平面圖座標
   const unplacedBeds = useMemo(() => beds.filter(b => b.Unplaced), [beds])   // 不佔床病人（床碼未建主檔）→ 負1 下方面板
   const stats = useMemo(() => getStats(beds), [beds])  // 統計面板數值（由床位推導）
@@ -179,11 +180,18 @@ export default function WardTab() {
   // 各科值班醫師（自建，後台維護）：定時輪詢，免 F5 自動更新
   const { data: onCallData } = usePolling(() => wardApi.getOnCall('ER'), { intervalMs: BULLETIN_MS, deps: ['ER'] })
   const onCallDocs = onCallData ?? []
-  // 急診醫師只有白班/夜班 → 從三班抽出，顯示在「三班醫護人員」標題右邊（白班=白班、夜班=大夜）
-  const dayDoc = MOCK_DATA.ShiftStaff.find(s => s.Shift === '白班')?.Doctor
-  const nightDoc = MOCK_DATA.ShiftStaff.find(s => s.Shift === '大夜')?.Doctor
+  // 三班醫護人員面板（自建，後台維護；護理師取自人員管理）：定時輪詢
+  const { data: shiftData } = usePolling(() => wardApi.getErShiftPanel('ER'), { intervalMs: BULLETIN_MS, deps: ['ER-shift'] })
+  const shifts = shiftData ?? []
+  // 急診醫師/照服員只顯示白班(白)、大夜(夜) 於標題右側
+  const dayDoc = shifts.find(s => s.shift === '白班')?.doctor
+  const nightDoc = shifts.find(s => s.shift === '大夜')?.doctor
+  const dayAide = shifts.find(s => s.shift === '白班')?.aide
+  const nightAide = shifts.find(s => s.shift === '大夜')?.aide
   // 再次點同一篩選即取消（回到 all）；點 all 維持 all
   const handleFilter = f => setFilter(prev => (prev === f && f !== 'all') ? 'all' : f)
+
+  if (loading) return <main className="main-content"><BoardLoading /></main>   // 院方資料載入中
 
   return (
     <>
@@ -214,21 +222,29 @@ export default function WardTab() {
             <div className="zone-name" style={{gridColumn:'5/6',gridRow:'7/9'}}>急診手術室</div>
             <div className="zone-name" style={{gridColumn:'1/4',gridRow:'7'}}>急救室</div>
 
-            {/* 三班醫護人員面板（右上空區）：列出白/小夜/大夜各班醫師、值班護理長、在班人數 */}
+            {/* 三班醫護人員面板（右上空區）：列出大夜/白班/小夜各班醫師、值班護理長 */}
             <div className="staff-shifts" style={{gridColumn:'7/12',gridRow:'1/3'}}>
               <div className="ss-title">
-                <span>三班醫護人員</span>
+                <span className="ss-title-docs ss-aides">
+                  <span className="ss-td-item"><span className="ss-td-label">白</span>{dayAide || '—'}</span>
+                  <span className="ss-td-item"><span className="ss-td-label">夜</span>{nightAide || '—'}</span>
+                </span>
                 <span className="ss-title-docs">
-                  <span className="ss-td-item"><span className="ss-td-label">白班</span>{dayDoc || '—'}</span>
-                  <span className="ss-td-item"><span className="ss-td-label">夜班</span>{nightDoc || '—'}</span>
+                  <span className="ss-td-item"><span className="ss-td-label">白</span>{dayDoc || '—'}</span>
+                  <span className="ss-td-item"><span className="ss-td-label">夜</span>{nightDoc || '—'}</span>
                 </span>
               </div>
               <div className="ss-body">
-                {MOCK_DATA.ShiftStaff.map(s => (
-                  <div className="ss-col" key={s.Shift}>
-                    <div className="ss-shift">{s.Shift} <span className="ss-time">{s.Time}</span></div>
-                    <div className="ss-charge">護理　{s.ChargeNurse || '—'}</div>
-                    <div className="ss-count">在班 <b>{s.NurseCount ?? '—'}</b> 人</div>
+                {shifts.map(s => (
+                  <div className="ss-col" key={s.shift || s.time}>
+                    <div className="ss-shift">{s.shift ? <>{s.shift} <span className="ss-time">{s.time}</span></> : <span className="ss-time">{s.time}</span>}</div>
+                    {(() => {
+                      const names = (s.nurses && s.nurses.length ? s.nurses : ['—'])
+                      const per = s.shift ? 2 : 1   // 有班別：每行 2 個；無班別(12:00–20:00)：每行 1 個
+                      const rows = []
+                      for (let i = 0; i < names.length; i += per) rows.push(names.slice(i, i + per).join('／'))
+                      return rows.map((r, i) => <div className="ss-charge" key={i}>{r}</div>)
+                    })()}
                   </div>
                 ))}
               </div>
@@ -311,7 +327,7 @@ export default function WardTab() {
         <button className={`filter-btn${filter==='all'?' active':''}`} onClick={() => handleFilter('all')}>全部</button>
         {FILTER_BADGES.map(({ f, label }) => (
           <button key={f} className={`badge badge-filter${filter===f?' active':''}`} onClick={() => handleFilter(f)}>
-            <FlagDot k={label} flagStyle={FLAG_STYLE} title={false} />{label}
+            <FlagDot k={label} flagStyle={FLAG_STYLE} title={false} />{label}{f === '死亡' ? `(${deceasedCount})` : ''}
           </button>
         ))}
       </div>

@@ -7,6 +7,7 @@
 import { useState, useMemo } from 'react'
 import { getStats } from '../mockData'                          // 統計函式（mockData 保留備援）
 import { useIcuWard } from '../../../../hooks/useIcuWard'        // 病室動態：Board_bed(AICU/CICU) 真實在床＋自建臨床，輪詢
+import BoardLoading from '../../../../components/BoardLoading'   // 院方資料載入中動畫
 import { FlagDot, makeFlagStyle } from '../../../../utils/flagShapes'
 
 // 病況等級顯示對照：資料值 → 畫面徽章文字（穩定=C、重症=B、危急=A）
@@ -161,7 +162,7 @@ export default function WardTab() {
   const [filter, setFilter] = useState('all')          // 目前篩選條件
   const [selectedBed, setSelectedBed] = useState(null)  // 目前開啟詳情的床（null=未開）
   const [floor, setFloor] = useState(4)                 // 目前顯示樓層（4F 為主，可切 3F）
-  const { beds } = useIcuWard('ICU')                    // 後端聚合看板（真實在床＋自建臨床），定時輪詢
+  const { beds, loading } = useIcuWard('ICU')           // 後端聚合看板（真實在床＋自建臨床），定時輪詢
   // 只顯示當前樓層；統計亦只計當前樓層（總床數 4F=20、3F=5）
   const floorBeds = useMemo(() => beds.filter(b => b.floor === floor), [beds, floor])
   const stats = useMemo(() => getStats(floorBeds), [floorBeds])
@@ -169,6 +170,8 @@ export default function WardTab() {
   const handleFilter = f => setFilter(prev => (prev === f && f !== 'all') ? 'all' : f)
   // 切換樓層：重置篩選、關閉開啟中的詳情
   const toggleFloor = () => { setFloor(f => (f === 4 ? 3 : 4)); setFilter('all'); setSelectedBed(null) }
+
+  if (loading) return <main className="main-content"><BoardLoading /></main>   // 院方資料載入中
 
   return (
     <>

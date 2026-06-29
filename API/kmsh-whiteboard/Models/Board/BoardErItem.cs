@@ -17,8 +17,10 @@ public class BoardErItem
     [JsonPropertyName("醫師卡號")] public string? DoctorCard { get; set; }
     [JsonPropertyName("病房")]     public string? Ward { get; set; }
     [JsonPropertyName("病患動向")] public string? Flow { get; set; }     // 代碼，意義待院方確認（如 O）
-    [JsonPropertyName("檢傷分類")] public string? Triage { get; set; }   // 1–5
+    [JsonPropertyName("檢傷分類")] public string? Triage { get; set; }   // E/2/3/4/5/9（重症E,2／中症3／輕症4,5,9）
     [JsonPropertyName("類別")]     public string? Category { get; set; } // 就醫類別（E=急診）
+    [JsonPropertyName("診斷")]     public string? Diagnosis { get; set; } // 院方已回傳（可帶入，免後台自建）
+    [JsonPropertyName("科別")]     public string? Department { get; set; } // 院方已回傳（代碼，可帶入，免後台自建）
     [JsonPropertyName("床位")]     public string? Hbed { get; set; }
 }
 

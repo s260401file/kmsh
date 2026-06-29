@@ -6,13 +6,15 @@ import { getBoard } from '../services/wardApi'
 import { CENSUS_MS } from '../config/pollingConfig'
 
 export function useErWard(unitCode = 'ER') {
-  const { data, stale } = usePolling(
+  const { data, stale, loading } = usePolling(
     () => getBoard(unitCode),
     { intervalMs: CENSUS_MS, deps: [unitCode] },
   )
   return {
     beds: data?.Beds ?? [],
     count: data?.Count ?? 0,
+    deceasedCount: data?.DeceasedCount ?? 0,   // 死亡(不佔床)筆數，顯示於「死亡」篩選
     stale,
+    loading,
   }
 }

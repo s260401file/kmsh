@@ -10,6 +10,7 @@ namespace kmsh_whiteboard.Models.Board;
 public class ErBoardResponse
 {
     [JsonPropertyName("Count")]   public int Count { get; set; }    // 在室佔床數
+    [JsonPropertyName("DeceasedCount")] public int DeceasedCount { get; set; }  // 死亡類別(Board_ER_TypeE，不佔床)筆數
     [JsonPropertyName("Version")] public long Version { get; set; }
     [JsonPropertyName("Beds")]    public List<ErBedDto> Beds { get; set; } = new();
 }

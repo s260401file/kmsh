@@ -4,6 +4,7 @@
 // 資料來源：後端 /api/Board/or（自建刀房主檔 ＋ Board_OR 今日排程 ＋ overlay；免 F5 輪詢）。
 import { useState, useMemo } from 'react'
 import { useOrWard } from '../../../../hooks/useOrWard'
+import BoardLoading from '../../../../components/BoardLoading'   // 院方資料載入中動畫
 
 // 依手術來源回傳對應的 CSS class（急診/門診/住院刀）
 function sourceClass(source) {
@@ -148,7 +149,7 @@ export default function WardTab() {
   const [filter, setFilter] = useState('all')          // 目前篩選條件（all/er/op/inp/busy/prep）
   const [selectedRoom, setSelectedRoom] = useState(null) // 目前開啟詳情的刀房
   const [showCompleted, setShowCompleted] = useState(false) // 今日已完成清單 Modal
-  const { rooms, count } = useOrWard('OR')              // 後端聚合看板（當日快照＋overlay）
+  const { rooms, count, loading } = useOrWard('OR')     // 後端聚合看板（當日快照＋overlay）
   // 統計改以「刀數」計（由各房今日手術聯集；今日總刀＝後端穩定 count）
   const allSurgeries = useMemo(() => rooms.flatMap(r => r.Surgeries || []), [rooms])
   const completedList = useMemo(
@@ -166,6 +167,8 @@ export default function WardTab() {
   }), [rooms, allSurgeries])
   // 點同一篩選鈕再點一次即取消（回到 all）；all 本身不切換
   const handleFilter = f => setFilter(prev => (prev === f && f !== 'all') ? 'all' : f)
+
+  if (loading) return <main className="main-content"><BoardLoading /></main>   // 院方資料載入中
 
   return (
     <>

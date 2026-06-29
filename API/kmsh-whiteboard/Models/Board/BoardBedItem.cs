@@ -16,6 +16,7 @@ public class BoardBedItem
     [JsonPropertyName("負責醫師")] public string? Doctor { get; set; }   // 院方已回傳（可帶入，免後台自建）
     [JsonPropertyName("轉入日期")] public string? AdmitDate { get; set; }// ISO；院方已回傳（入院/轉入日）
     [JsonPropertyName("診斷")]     public string? Diagnosis { get; set; }// 院方已回傳（可帶入，免後台自建）
+    [JsonPropertyName("科別")]     public string? Department { get; set; }// 院方已回傳（可帶入，免後台自建）
     [JsonPropertyName("病房")]     public string? Hnursta { get; set; }
     [JsonPropertyName("床位")]     public string? Hbed { get; set; }    // 如 006
 }

@@ -21,6 +21,7 @@ builder.Services.AddScoped<ITextRepository, TextRepository>();
 builder.Services.AddScoped<IContactRepository, ContactRepository>();
 builder.Services.AddScoped<IEvacRepository, EvacRepository>();
 builder.Services.AddScoped<IWardRepository, WardRepository>();
+builder.Services.AddScoped<IPersonnelRepository, PersonnelRepository>();
 builder.Services.AddEndpointsApiExplorer();
 // ── Swagger / OpenAPI 文件（含 XML 註解）───────────────────────
 builder.Services.AddSwaggerGen(c =>

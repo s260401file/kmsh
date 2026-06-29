@@ -57,6 +57,7 @@ public class BoardApiService : IBoardApiService
             it.Doctor    = Trim(it.Doctor);
             it.AdmitDate = Trim(it.AdmitDate);
             it.Diagnosis = Trim(it.Diagnosis);
+            it.Department = Trim(it.Department);
         }
         return list;
     }
@@ -83,8 +84,26 @@ public class BoardApiService : IBoardApiService
             it.Hbirthdt = Trim(it.Hbirthdt); it.Hsex = Trim(it.Hsex); it.Doctor = Trim(it.Doctor);
             it.DoctorCard = Trim(it.DoctorCard); it.Ward = Trim(it.Ward); it.Flow = Trim(it.Flow);
             it.Triage = Trim(it.Triage); it.Category = Trim(it.Category); it.Hbed = Trim(it.Hbed);
+            it.Diagnosis = Trim(it.Diagnosis); it.Department = Trim(it.Department);
         }
         return list;
+    }
+
+    /// <summary>Board_ER_TypeE（死亡類別在室，不佔床）筆數；失敗回 0（白板不中斷）。</summary>
+    public async Task<int> GetErTypeECountAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            using var req = new HttpRequestMessage(HttpMethod.Post, "api/v1/Board_ER_TypeE") { Content = JsonContent.Create(new { }) };
+            if (!string.IsNullOrWhiteSpace(_options.ApiKey))
+                req.Headers.TryAddWithoutValidation("x-api-key", _options.ApiKey);
+            var resp = await _http.SendAsync(req, ct);
+            resp.EnsureSuccessStatusCode();
+            var raw = await resp.Content.ReadAsStringAsync(ct);
+            var parsed = JsonSerializer.Deserialize<BoardErResponse>(raw, _json);
+            return parsed?.Data?.Count ?? 0;
+        }
+        catch (Exception ex) { _logger.LogWarning(ex, "Board_ER_TypeE 取得失敗，死亡數以 0 續行"); return 0; }
     }
 
     public async Task<List<BoardOrItem>> GetOrListAsync(CancellationToken ct = default)

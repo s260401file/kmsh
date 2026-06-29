@@ -83,6 +83,20 @@ public interface IWardRepository
     Task<bool> UpdateAntibioticAsync(int id, IcuAntibioticUpsertRequest req, CancellationToken ct = default);
     Task<bool> DeleteAntibioticAsync(int id, CancellationToken ct = default);
 
+    // ── ER 三班醫護面板 [dbo].[ErShiftStaff] ──
+    Task<IEnumerable<ErShiftStaffItem>> GetErShiftAsync(string unitCode, bool includeAll = false, CancellationToken ct = default);
+    Task<ErShiftStaffItem?> GetErShiftByIdAsync(int id, CancellationToken ct = default);
+    Task<int> CreateErShiftAsync(ErShiftStaffUpsertRequest req, CancellationToken ct = default);
+    Task<bool> UpdateErShiftAsync(int id, ErShiftStaffUpsertRequest req, CancellationToken ct = default);
+    Task<bool> DeleteErShiftAsync(int id, CancellationToken ct = default);
+
+    // ── 照護提醒 [dbo].[CareReminder] ──
+    Task<IEnumerable<CareReminderItem>> GetCareReminderAsync(string unitCode, bool includeAll = false, CancellationToken ct = default);
+    Task<CareReminderItem?> GetCareReminderByIdAsync(int id, CancellationToken ct = default);
+    Task<int> CreateCareReminderAsync(CareReminderUpsertRequest req, CancellationToken ct = default);
+    Task<bool> UpdateCareReminderAsync(int id, CareReminderUpsertRequest req, CancellationToken ct = default);
+    Task<bool> DeleteCareReminderAsync(int id, CancellationToken ct = default);
+
     // ── OR 當日手術快照 [dbo].[OrDailySurgery] ──
     Task<IEnumerable<OrDailySurgeryItem>> GetOrDailyAsync(DateTime fromDate, DateTime toDate, CancellationToken ct = default);
     Task<int> UpsertOrDailyAsync(OrDailySurgeryItem it, CancellationToken ct = default);

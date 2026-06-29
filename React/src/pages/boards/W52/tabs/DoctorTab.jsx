@@ -1,6 +1,9 @@
 // DoctorTab：醫師資訊分頁
 // 角色：左欄列出醫師/專師各自負責的床位與分機；右欄為當日起的查房時間表（依日期分組）。
-import DOCTOR_DATA from '../tabsData/doctorData'   // 醫師/查房假資料，待接 API
+import { Fragment } from 'react'
+import { usePolling } from '../../../../hooks/usePolling'
+import * as wardApi from '../../../../services/wardApi'
+import { CENSUS_MS } from '../../../../config/pollingConfig'
 import '../tabsCss/doctor.css'
 
 // 星期數字 → 中文（用於查房日期標頭）
@@ -15,12 +18,15 @@ function formatDate(d) {
 }
 
 export default function DoctorTab() {
-  const { DoctorBeds, RoundSchedule } = DOCTOR_DATA.Data
+  // 後端 /api/Board/W52/doctor（主治-床指派＋查房表；免 F5 輪詢）
+  const { data } = usePolling(() => wardApi.getDoctorInfo('W52'), { intervalMs: CENSUS_MS, deps: ['W52-dr'] })
+  const DoctorBeds = data?.doctorBeds ?? []
+  const RoundSchedule = data?.roundSchedule ?? []
 
-  // 將查房排程依日期（RoundDate）分組，方便畫面用日期當分隔列
+  // 將查房排程依日期（roundDate）分組，方便畫面用日期當分隔列
   const roundsByDate = RoundSchedule.reduce((acc, r) => {
-    if (!acc[r.RoundDate]) acc[r.RoundDate] = []
-    acc[r.RoundDate].push(r)
+    if (!acc[r.roundDate]) acc[r.roundDate] = []
+    acc[r.roundDate].push(r)
     return acc
   }, {})
 
@@ -43,14 +49,14 @@ export default function DoctorTab() {
                 <thead><tr><th>姓名</th><th>職別</th><th>專科</th><th>分機</th><th>負責床位</th></tr></thead>
                 <tbody>
                   {DoctorBeds.map(d => (
-                    <tr key={d.DoctorId}>
-                      <td>{d.DoctorName}</td>
-                      <td><span className={`dr-role-badge dr-role-${d.Role}`}>{d.Role}</span></td>
-                      <td className="dr-td-specialty">{d.Specialty}</td>
-                      <td className="dr-td-ext">{d.Ext}</td>
+                    <tr key={d.doctorId}>
+                      <td>{d.doctorName}</td>
+                      <td><span className={`dr-role-badge dr-role-${d.role}`}>{d.role}</span></td>
+                      <td className="dr-td-specialty">{d.specialty}</td>
+                      <td className="dr-td-ext">{d.ext}</td>
                       <td>
                         <div className="dr-beds">
-                          {d.BedNos.map(b => <span key={b} className="dr-bed-tag">{b}</span>)}
+                          {d.bedNos.map(b => <span key={b} className="dr-bed-tag">{b}</span>)}
                         </div>
                       </td>
                     </tr>
@@ -68,28 +74,28 @@ export default function DoctorTab() {
                 <thead><tr><th>日期</th><th>姓名</th><th>專科</th><th>預計時段</th><th className="dr-th-center">狀態</th></tr></thead>
                 <tbody>
                   {Object.entries(roundsByDate).map(([date, rounds]) => (
-                    <>
-                      <tr key={`sep-${date}`} className="dr-date-sep">
+                    <Fragment key={`grp-${date}`}>
+                      <tr className="dr-date-sep">
                         <td colSpan="5">{formatDate(date).label}</td>
                       </tr>
                       {rounds.map(r => (
-                        <tr key={r.RoundId} className={r.IsCompleted ? 'dr-row-done' : ''}>
+                        <tr key={r.roundId} className={r.isCompleted ? 'dr-row-done' : ''}>
                           <td className="dr-td-date">
-                            <span className="dr-date-main">{r.EstimatedTime}</span>
-                            {r.ActualTime && <span className="dr-actual-time">實 {r.ActualTime}</span>}
+                            <span className="dr-date-main">{r.estimatedTime}</span>
+                            {r.actualTime && <span className="dr-actual-time">實 {r.actualTime}</span>}
                           </td>
-                          <td>{r.DoctorName}</td>
-                          <td className="dr-td-specialty">{r.Specialty}</td>
-                          <td className="dr-td-time">{r.EstimatedTime}</td>
+                          <td>{r.doctorName}</td>
+                          <td className="dr-td-specialty">{r.specialty}</td>
+                          <td className="dr-td-time">{r.estimatedTime}</td>
                           <td className="dr-td-status">
-                            {r.IsCompleted
+                            {r.isCompleted
                               ? <span className="dr-status-done">✓ 完成</span>
                               : <span className="dr-status-pending">待查房</span>
                             }
                           </td>
                         </tr>
                       ))}
-                    </>
+                    </Fragment>
                   ))}
                 </tbody>
               </table>

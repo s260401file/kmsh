@@ -6,7 +6,7 @@ import { getBoard } from '../services/wardApi'
 import { CENSUS_MS } from '../config/pollingConfig'
 
 export function useOrWard(unitCode = 'OR') {
-  const { data, stale } = usePolling(
+  const { data, stale, loading } = usePolling(
     () => getBoard(unitCode),
     { intervalMs: CENSUS_MS, deps: [unitCode] },
   )
@@ -14,5 +14,6 @@ export function useOrWard(unitCode = 'OR') {
     rooms: data?.Rooms ?? [],
     count: data?.Count ?? 0,
     stale,
+    loading,
   }
 }

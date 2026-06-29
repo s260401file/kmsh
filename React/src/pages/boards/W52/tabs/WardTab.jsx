@@ -7,6 +7,7 @@
 import { useState, useMemo } from 'react'
 import { getStats } from '../mockData'                            // 統計函式（mockData 保留備援）
 import { useWard } from '../../../../hooks/useWard'               // 病室動態：Board_bed 真實在床＋自建臨床，輪詢
+import BoardLoading from '../../../../components/BoardLoading'     // 院方資料載入中動畫
 import { FlagDot, makeFlagStyle } from '../../../../utils/flagShapes' // 共用 SVG 旗標形狀系統
 
 // 由病人資料 + 床位狀態組出該床要顯示的註記字串陣列（順序即顯示順序）
@@ -155,10 +156,12 @@ const FLAG_STYLE = makeFlagStyle(FILTER_BADGES)
 export default function WardTab() {
   const [filter, setFilter] = useState('all')          // 目前篩選的註記，'all' 為不篩選
   const [selectedBed, setSelectedBed] = useState(null) // 目前開啟詳情的床位，null 為未開啟
-  const { beds } = useWard('W52')                       // 後端聚合看板（真實在床＋自建臨床），定時輪詢
+  const { beds, loading } = useWard('W52')              // 後端聚合看板（真實在床＋自建臨床），定時輪詢
   const stats = useMemo(() => getStats(beds), [beds])   // 統計面板數值（總床/住院/各類別計數）
   // 點同一篩選鈕再按一次可取消（回到 all）；'all' 鈕本身不切回
   const handleFilter = f => setFilter(prev => (prev === f && f !== 'all') ? 'all' : f)
+
+  if (loading) return <main className="main-content"><BoardLoading /></main>   // 院方資料載入中
 
   return (
     <>

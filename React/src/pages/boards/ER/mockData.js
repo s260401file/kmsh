@@ -41,9 +41,10 @@ const MOCK_DATA = {
   // 每筆代表一個班別：Shift 班別、Time 時段、Doctor 值班醫師、
   //   ChargeNurse 負責/Leader 護理師、NurseCount 在班護理師人數。供右上面板顯示。
   ShiftStaff: [
-    { Shift:"白班", Time:"07:00–15:00", Doctor:"張○哲醫師", ChargeNurse:"王○琳護理師", NurseCount:6 },
-    { Shift:"小夜", Time:"15:00–23:00", Doctor:"林○泰醫師", ChargeNurse:"李○婷護理師", NurseCount:4 },
-    { Shift:"大夜", Time:"23:00–07:00", Doctor:"黃○誠醫師", ChargeNurse:"陳○華護理師", NurseCount:3 }
+    { Shift:"大夜", Time:"00:00–08:00", Doctor:"黃○誠醫師", Aide:"何○妹照服員", Nurses:["陳○華護理師"] },
+    { Shift:"白班", Time:"08:00–16:00", Doctor:"張○哲醫師", Aide:"周○英照服員", Nurses:["王○琳護理師","李○娟護理師","周○妏護理師"] },
+    { Shift:"小夜", Time:"16:00–24:00", Doctor:"林○泰醫師", Aide:"蔡○滿照服員", Nurses:["李○婷護理師"] },
+    { Shift:"", Time:"12:00–20:00", Nurses:["林○潔護理師","吳○儒護理師"] }   // 無班別標題，直接顯示時間
   ]
 }
 

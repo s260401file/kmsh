@@ -17,12 +17,14 @@ public class BoardController : ControllerBase
 {
     private readonly IBoardApiService _board;
     private readonly IWardRepository _ward;
+    private readonly IPersonnelRepository _staff;
     private readonly ILogger<BoardController> _logger;
 
-    public BoardController(IBoardApiService board, IWardRepository ward, ILogger<BoardController> logger)
+    public BoardController(IBoardApiService board, IWardRepository ward, IPersonnelRepository staff, ILogger<BoardController> logger)
     {
         _board = board;
         _ward = ward;
+        _staff = staff;
         _logger = logger;
     }
 
@@ -67,6 +69,13 @@ public class BoardController : ControllerBase
                 : 0
         };
 
+        // 責任護理師：改由「我的病床」勾床（依床號）決定（今日，主護）
+        var w52today = DateTime.Today.ToString("yyyy-MM-dd");
+        var nurseByBed = (await _staff.GetBedAssignAsync("W52", w52today, "主護", false, ct))
+            .Where(b => !string.IsNullOrWhiteSpace(b.BedId))
+            .GroupBy(b => b.BedId!)
+            .ToDictionary(g => g.Key, g => g.First().Name, StringComparer.OrdinalIgnoreCase);
+
         foreach (var code in W52_BEDS)
         {
             var bedId = $"W52-{code}";
@@ -94,11 +103,11 @@ public class BoardController : ControllerBase
                     MedicalRecordNo = o.Hhisnum,
                     IdNo = o.Hidno,                       // 身分證（白板需顯示）
                     // 臨床（自建補充層；無資料則預設）
-                    Department = e?.Department,
+                    Department = string.IsNullOrWhiteSpace(o.Department) ? e?.Department : o.Department,  // 院方科別優先
                     AdmissionDate = FormatBirth(o.AdmitDate) ?? e?.AdmissionDate,   // 院方轉入日期（yyyy/MM/dd）優先
                     Diagnosis = string.IsNullOrWhiteSpace(o.Diagnosis) ? e?.Diagnosis : o.Diagnosis,  // 院方診斷優先
                     AttendingDoctor = string.IsNullOrWhiteSpace(o.Doctor) ? e?.AttendingDoctor : o.Doctor,  // 院方負責醫師優先
-                    PrimaryNurse = e?.PrimaryNurse,
+                    PrimaryNurse = nurseByBed.TryGetValue(bedId, out var rn) ? rn : null,  // 責任護理師＝我的病床勾床
                     Condition = e?.Condition,
                     Isolation = e?.Isolation,
                     Dnr = e?.Dnr ?? false,
@@ -142,6 +151,13 @@ public class BoardController : ControllerBase
             .GroupBy(e => e.Hhisnum!.Trim())
             .ToDictionary(g => g.Key, g => g.First());
 
+        // 責任護理師：改由「勾床配對」（依床號）決定（今日，AssignType=主護）
+        var today = DateTime.Today.ToString("yyyy-MM-dd");
+        var nurseByBed = (await _staff.GetBedAssignAsync("ICU", today, "主護", false, ct))
+            .Where(b => !string.IsNullOrWhiteSpace(b.BedId))
+            .GroupBy(b => b.BedId!)
+            .ToDictionary(g => g.Key, g => g.First().Name, StringComparer.OrdinalIgnoreCase);
+
         var resp = new IcuBoardResponse
         {
             HospitalInfo = new IcuHospitalInfo { Name = "高雄市立民生醫院", Ward = "ICU", WardDirector = "王○明", HeadNurse = "陳○美" },
@@ -166,9 +182,12 @@ public class BoardController : ControllerBase
                     {
                         Name = o.Hnamec, Gender = o.Hsex, BirthDate = FormatBirth(o.Hbirthdt), Age = CalcAge(o.Hbirthdt),
                         MedRecord = o.Hhisnum, IdNo = o.Hidno,
-                        Department = e?.Department, Admission = FormatBirth(o.AdmitDate) ?? e?.AdmissionDate,
+                        Department = string.IsNullOrWhiteSpace(o.Department) ? e?.Department : o.Department, Admission = FormatBirth(o.AdmitDate) ?? e?.AdmissionDate,
                         Diagnosis = string.IsNullOrWhiteSpace(o.Diagnosis) ? e?.Diagnosis : o.Diagnosis,  // 院方診斷優先
-                        Doctor = string.IsNullOrWhiteSpace(o.Doctor) ? e?.AttendingDoctor : o.Doctor, Nurse = e?.PrimaryNurse, Condition = e?.Condition, Isolation = e?.Isolation,
+                        Doctor = string.IsNullOrWhiteSpace(o.Doctor) ? e?.AttendingDoctor : o.Doctor,
+                        Nurse = nurseByBed.TryGetValue(bed.Id, out var rn) ? rn : null,  // 責任護理師＝勾床配對（依床號）
+                        Condition = string.IsNullOrWhiteSpace(e?.Condition) ? "危急" : e!.Condition,  // ICU 病況預設 A級（危急）；無後台設定即 A
+                        Isolation = e?.Isolation,
                         Dnr = e?.Dnr ?? false, Ventilator = e?.Ventilator ?? false, Crrt = e?.Crrt ?? false,
                         Ng = e?.Ng ?? false, Foley = e?.Foley ?? false, Cvc = e?.CVC ?? false,
                         FallRisk = e?.FallRisk ?? false, Dependency = e?.Dependency, Confidential = e?.Confidential ?? false,
@@ -257,6 +276,13 @@ public class BoardController : ControllerBase
             .GroupBy(e => e.Hhisnum!.Trim())
             .ToDictionary(g => g.Key, g => g.First());
 
+        // 責任護理師：改由「我的病床」勾床（依床號）決定（今日，主護）
+        var erToday = DateTime.Today.ToString("yyyy-MM-dd");
+        var nurseByBed = (await _staff.GetBedAssignAsync("ER", erToday, "主護", false, ct))
+            .Where(x => !string.IsNullOrWhiteSpace(x.BedId))
+            .GroupBy(x => x.BedId!)
+            .ToDictionary(g => g.Key, g => g.First().Name, StringComparer.OrdinalIgnoreCase);
+
         // 在室病人以「映射後白板床號」索引（同床取第一筆）
         var occByBed = occ
             .Select(o => (BedId: MapErBedId(o.Ward, o.Hbed), Item: o))
@@ -274,6 +300,7 @@ public class BoardController : ControllerBase
         var resp = new ErBoardResponse
         {
             Count = occ.Count,
+            DeceasedCount = await _board.GetErTypeECountAsync(ct),   // 死亡(不佔床)筆數
             Version = extList.Count > 0
                 ? new DateTimeOffset(extList.Max(e => e.UpdatedAt), TimeSpan.Zero).ToUnixTimeSeconds()
                 : 0
@@ -291,7 +318,8 @@ public class BoardController : ControllerBase
             {
                 var e = ExtOf(o);
                 bed.Patient = BuildErPatient(o, e);
-                bed.Status = DeriveErStatus(e);
+                bed.Patient.Nurse = nurseByBed.TryGetValue(b.BedId, out var ern) ? ern : null;  // 責任護理師＝我的病床勾床
+                bed.Status = DeriveErStatus(o, e);
             }
             resp.Beds.Add(bed);
         }
@@ -305,7 +333,7 @@ public class BoardController : ControllerBase
             resp.Beds.Add(new ErBedDto
             {
                 BedId = kv.Key, Ward = kv.Value.Ward?.Trim(), Zone = "未配置", Unplaced = true,
-                SortOrder = 9000, Status = DeriveErStatus(e), Patient = BuildErPatient(kv.Value, e)
+                SortOrder = 9000, Status = DeriveErStatus(kv.Value, e), Patient = BuildErPatient(kv.Value, e)
             });
         }
 
@@ -318,25 +346,28 @@ public class BoardController : ControllerBase
         PatientName = o.Hnamec, Gender = o.Hsex, BirthDate = FormatBirth(o.Hbirthdt), Age = CalcAge(o.Hbirthdt),
         MedRecord = o.Hhisnum, IdNo = o.Hidno, Doctor = o.Doctor, DoctorCard = o.DoctorCard,
         Flow = o.Flow, Category = o.Category,
-        Triage = int.TryParse(o.Triage?.Trim(), out var t) ? t : (int?)null, TriageGrade = TriageToGrade(o.Triage),
-        Department = e?.Department, Nurse = e?.PrimaryNurse, Diagnosis = e?.Diagnosis,  // Board_ER 無診斷 → 仍用後台
+        Triage = TriageLevel(o.Triage), TriageGrade = TriageToGrade(o.Triage),  // 正規化為 1/2/3 層級（前端據此 A/B/C 配色）
+        Department = string.IsNullOrWhiteSpace(o.Department) ? e?.Department : o.Department, Nurse = e?.PrimaryNurse,  // 院方科別優先
+        Diagnosis = string.IsNullOrWhiteSpace(o.Diagnosis) ? e?.Diagnosis : o.Diagnosis,  // 院方診斷優先
         Isolation = e?.Isolation, Notes = e?.Notes,
         ArrivalDate = e?.ArrivalDate, ArrivalTime = e?.ArrivalTime,
-        Observation = e?.Observation ?? false, Awaiting = e?.Awaiting ?? false, AwaitingType = e?.AwaitingType,
+        // 留觀/待床由院方「病患動向」Flow 推導：A=留觀、4=待床(一般)；加護/隔離代碼待院方確認(待辦)
+        Observation = o.Flow == "A" || (e?.Observation ?? false),
+        Awaiting = o.Flow == "4" || (e?.Awaiting ?? false),
+        AwaitingType = o.Flow == "4" ? "一般" : e?.AwaitingType,
         TransferIn = e?.TransferIn ?? false, TransferOut = e?.TransferOut ?? false, TransferHospital = e?.TransferHospital,
         Admitted = e?.Admitted ?? false, AdmBedNo = e?.AdmBedNo,
         Dnr = e?.Dnr ?? false, Aad = e?.Aad ?? false, Mbd = e?.Mbd ?? false, Deceased = e?.Deceased ?? false,
         FallRisk = e?.FallRisk ?? false, Allergy = e?.Allergy ?? false, Exam = e?.Exam ?? false, Consult = e?.Consult ?? false
     };
 
-    /// <summary>由 overlay 旗標推導床位狀態（隔離→轉床→待床→留觀→否則 occupied）；空床由呼叫端設 empty。</summary>
-    private static string DeriveErStatus(WardPatientExtItem? e)
+    /// <summary>推導床位狀態（隔離→轉床→待床→留觀→否則 occupied）；待床/留觀含院方 Flow(4/A)。空床由呼叫端設 empty。</summary>
+    private static string DeriveErStatus(BoardErItem o, WardPatientExtItem? e)
     {
-        if (e is null) return "occupied";
-        if (!string.IsNullOrWhiteSpace(e.Isolation) && e.Isolation!.Trim() is not ("" or "無")) return "isolation";
-        if (e.TransferIn || e.TransferOut) return "transfer";
-        if (e.Awaiting) return "awaiting";
-        if (e.Observation) return "observation";
+        if (e is not null && !string.IsNullOrWhiteSpace(e.Isolation) && e.Isolation!.Trim() is not ("" or "無")) return "isolation";
+        if (e is not null && (e.TransferIn || e.TransferOut)) return "transfer";
+        if (o.Flow == "4" || (e?.Awaiting ?? false)) return "awaiting";
+        if (o.Flow == "A" || (e?.Observation ?? false)) return "observation";
         return "occupied";
     }
 
@@ -542,6 +573,39 @@ public class BoardController : ControllerBase
     [HttpDelete("oncall/{id:int}")]
     public async Task<IActionResult> DeleteOnCall(int id, CancellationToken ct = default)
         => await _ward.DeleteOnCallAsync(id, ct) ? NoContent() : NotFound();
+
+    // ── ER 三班醫護人員面板（自建；護理師掛人員管理）──────────────────
+    /// <summary>看板：ER 四班面板，護理師 Staff.Id→姓名解析；回 camelCase。</summary>
+    [HttpGet("{unitCode}/shiftpanel")]
+    public async Task<IActionResult> GetErShiftPanel(string unitCode, CancellationToken ct = default)
+    {
+        var rows = (await _ward.GetErShiftAsync(unitCode, false, ct)).ToList();
+        var staff = (await _staff.GetStaffAsync(true, ct)).ToDictionary(s => s.Id, s => s.Name);
+        var data = rows.Select(r => new
+        {
+            shift = r.ShiftLabel, time = r.ShiftTime, doctor = r.Doctor, aide = r.Aide,
+            nurses = (r.NurseStaffIds ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Select(x => int.TryParse(x, out var i) && staff.TryGetValue(i, out var n) ? n : null)
+                .Where(n => n != null).ToList()
+        });
+        return Ok(data);
+    }
+    // 後台 CRUD（固定四班，主要用 PUT；POST/DELETE 備用）
+    [HttpGet("{unitCode}/shiftpanel-list")]
+    public async Task<IActionResult> GetErShiftList(string unitCode, [FromQuery] bool includeAll = true, CancellationToken ct = default)
+        => Ok(await _ward.GetErShiftAsync(unitCode, includeAll, ct));
+    [HttpGet("shiftpanel/{id:int}")]
+    public async Task<IActionResult> GetErShiftById(int id, CancellationToken ct = default)
+    { var x = await _ward.GetErShiftByIdAsync(id, ct); return x is null ? NotFound() : Ok(x); }
+    [HttpPost("shiftpanel")]
+    public async Task<IActionResult> CreateErShift([FromBody] ErShiftStaffUpsertRequest req, CancellationToken ct = default)
+    { var id = await _ward.CreateErShiftAsync(req, ct); return CreatedAtAction(nameof(GetErShiftById), new { id }, await _ward.GetErShiftByIdAsync(id, ct)); }
+    [HttpPut("shiftpanel/{id:int}")]
+    public async Task<IActionResult> UpdateErShift(int id, [FromBody] ErShiftStaffUpsertRequest req, CancellationToken ct = default)
+        => await _ward.UpdateErShiftAsync(id, req, ct) ? Ok(await _ward.GetErShiftByIdAsync(id, ct)) : NotFound();
+    [HttpDelete("shiftpanel/{id:int}")]
+    public async Task<IActionResult> DeleteErShift(int id, CancellationToken ct = default)
+        => await _ward.DeleteErShiftAsync(id, ct) ? NoContent() : NotFound();
 
     // ── ER 床位主檔（病室動態平面圖 + 後台 CRUD）──────────────────────
     /// <summary>查詢某單位 ER 床位主檔（白板傳 includeAll=false；後台傳 true 含停用）。</summary>
@@ -806,6 +870,289 @@ public class BoardController : ControllerBase
     public async Task<IActionResult> DeleteAntibiotic(int id, CancellationToken ct = default)
         => await _ward.DeleteAntibioticAsync(id, ct) ? NoContent() : NotFound();
 
+    // ── 照護提醒（自建；看板＋後台共用，W52）──────────────────────
+    /// <summary>看板＋後台共用：某站照護提醒（camelCase，含責任護理師姓名；includeAll=false 僅啟用）。</summary>
+    [HttpGet("{unitCode}/care-reminder")]
+    public async Task<IActionResult> GetCareReminder(string unitCode, [FromQuery] bool includeAll = false, CancellationToken ct = default)
+        => Ok(await _ward.GetCareReminderAsync(unitCode, includeAll, ct));
+    [HttpGet("care-reminder/{id:int}")]
+    public async Task<IActionResult> GetCareReminderById(int id, CancellationToken ct = default)
+    { var x = await _ward.GetCareReminderByIdAsync(id, ct); return x is null ? NotFound() : Ok(x); }
+    [HttpPost("care-reminder")]
+    public async Task<IActionResult> CreateCareReminder([FromBody] CareReminderUpsertRequest req, CancellationToken ct = default)
+    { var id = await _ward.CreateCareReminderAsync(req, ct); return CreatedAtAction(nameof(GetCareReminderById), new { id }, await _ward.GetCareReminderByIdAsync(id, ct)); }
+    [HttpPut("care-reminder/{id:int}")]
+    public async Task<IActionResult> UpdateCareReminder(int id, [FromBody] CareReminderUpsertRequest req, CancellationToken ct = default)
+        => await _ward.UpdateCareReminderAsync(id, req, ct) ? Ok(await _ward.GetCareReminderByIdAsync(id, ct)) : NotFound();
+    [HttpDelete("care-reminder/{id:int}")]
+    public async Task<IActionResult> DeleteCareReminder(int id, CancellationToken ct = default)
+        => await _ward.DeleteCareReminderAsync(id, ct) ? NoContent() : NotFound();
+
+    // ═══════════════ 人員管理（v14：人員/角色/排班/床位指派/查房/交班/照護團隊）═══════════════
+
+    // ── 人員主檔 ──
+    [HttpGet("personnel")]
+    public async Task<IActionResult> GetStaff([FromQuery] bool includeAll = true, CancellationToken ct = default)
+        => Ok(await _staff.GetStaffAsync(includeAll, ct));
+    [HttpGet("personnel/{id:int}")]
+    public async Task<IActionResult> GetStaffById(int id, CancellationToken ct = default)
+    { var x = await _staff.GetStaffByIdAsync(id, ct); return x is null ? NotFound() : Ok(x); }
+    [HttpPost("personnel")]
+    public async Task<IActionResult> CreateStaff([FromBody] StaffUpsertRequest req, CancellationToken ct = default)
+    { var id = await _staff.CreateStaffAsync(req, ct); return CreatedAtAction(nameof(GetStaffById), new { id }, await _staff.GetStaffByIdAsync(id, ct)); }
+    [HttpPut("personnel/{id:int}")]
+    public async Task<IActionResult> UpdateStaff(int id, [FromBody] StaffUpsertRequest req, CancellationToken ct = default)
+        => await _staff.UpdateStaffAsync(id, req, ct) ? Ok(await _staff.GetStaffByIdAsync(id, ct)) : NotFound();
+    [HttpDelete("personnel/{id:int}")]
+    public async Task<IActionResult> DeleteStaff(int id, CancellationToken ct = default)
+        => await _staff.DeleteStaffAsync(id, ct) ? NoContent() : NotFound();
+
+    /// <summary>員編登入：回人員＋可管理單位（IsAdmin→四站；否則 IsManager=1 的單位）。現階段免密碼。</summary>
+    [HttpGet("personnel/auth/{employeeNo}")]
+    public async Task<IActionResult> AuthByEmployeeNo(string employeeNo, CancellationToken ct = default)
+    {
+        var s = await _staff.GetStaffByEmployeeNoAsync(employeeNo, ct);
+        if (s is null) return NotFound(new { message = "查無此員編或已停用" });
+        var roles = (await _staff.GetUnitRolesAsync(s.Id, null, false, ct)).ToList();
+        var allUnits = new[] { "W52", "ICU", "OR", "ER" };
+        var manageUnits = s.IsAdmin ? allUnits
+            : roles.Where(r => r.IsManager).Select(r => r.UnitCode).Distinct().ToArray();
+        return Ok(new
+        {
+            staffId = s.Id, employeeNo = s.EmployeeNo, name = s.Name, isAdmin = s.IsAdmin,
+            units = manageUnits,
+            roles = roles.Select(r => new { r.UnitCode, r.Role, r.IsManager, r.Department })
+        });
+    }
+
+    // ── 人員×單位×角色 ──
+    [HttpGet("unitrole")]
+    public async Task<IActionResult> GetUnitRoles([FromQuery] int? staffId, [FromQuery] string? unit, [FromQuery] bool includeAll = true, CancellationToken ct = default)
+        => Ok(await _staff.GetUnitRolesAsync(staffId, unit, includeAll, ct));
+    [HttpGet("unitrole/{id:int}")]
+    public async Task<IActionResult> GetUnitRoleById(int id, CancellationToken ct = default)
+    { var x = await _staff.GetUnitRoleByIdAsync(id, ct); return x is null ? NotFound() : Ok(x); }
+    [HttpPost("unitrole")]
+    public async Task<IActionResult> CreateUnitRole([FromBody] StaffUnitRoleUpsertRequest req, CancellationToken ct = default)
+    { var id = await _staff.CreateUnitRoleAsync(req, ct); return CreatedAtAction(nameof(GetUnitRoleById), new { id }, await _staff.GetUnitRoleByIdAsync(id, ct)); }
+    [HttpPut("unitrole/{id:int}")]
+    public async Task<IActionResult> UpdateUnitRole(int id, [FromBody] StaffUnitRoleUpsertRequest req, CancellationToken ct = default)
+        => await _staff.UpdateUnitRoleAsync(id, req, ct) ? Ok(await _staff.GetUnitRoleByIdAsync(id, ct)) : NotFound();
+    [HttpDelete("unitrole/{id:int}")]
+    public async Task<IActionResult> DeleteUnitRole(int id, CancellationToken ct = default)
+        => await _staff.DeleteUnitRoleAsync(id, ct) ? NoContent() : NotFound();
+
+    // ── 排班：看板組裝（ScheduleTab）──
+    /// <summary>排班資訊：依班別分組，護理師帶其負責床位（主護指派聚合）。</summary>
+    [HttpGet("{unitCode}/schedule")]
+    public async Task<IActionResult> GetScheduleBoard(string unitCode, [FromQuery] string? date, CancellationToken ct = default)
+    {
+        var d = string.IsNullOrWhiteSpace(date) ? DateTime.Today.ToString("yyyy-MM-dd") : date;
+        var rows = (await _staff.GetScheduleAsync(unitCode, d, false, ct)).ToList();
+        var beds = (await _staff.GetBedAssignAsync(unitCode, d, "主護", false, ct)).ToList();
+        var bedsByStaff = beds.GroupBy(b => b.StaffId)
+            .ToDictionary(g => g.Key, g => g.OrderBy(x => x.SortOrder).Select(x => x.BedId).ToList());
+
+        string Cat(string? role) => role switch
+        {
+            var r when r != null && r.Contains("住院") => "resident",
+            var r when r != null && (r.Contains("專科") || r.Contains("專師")) => "specialist",
+            var r when r != null && r.Contains("護理") => "nurse",
+            _ => "other"
+        };
+        var shifts = rows.GroupBy(r => r.Shift).Select(g => new
+        {
+            shiftType = g.Key,
+            nurses = g.Where(r => Cat(r.Role) == "nurse").Select(r => new {
+                staffId = r.StaffId, peNo = r.EmployeeNo, peName = r.Name, role = r.Role, extension = r.Ext,
+                bedNos = bedsByStaff.TryGetValue(r.StaffId, out var bn) ? bn : new List<string>(),
+                emergencyGroup = r.EmergencyGroup, checkIn = r.IsCharge
+            }),
+            specialists = g.Where(r => Cat(r.Role) == "specialist").Select(r => new {
+                staffId = r.StaffId, peNo = r.EmployeeNo, peName = r.Name, specialty = r.Department, extension = r.Ext }),
+            residents = g.Where(r => Cat(r.Role) == "resident").Select(r => new {
+                staffId = r.StaffId, peNo = r.EmployeeNo, peName = r.Name, department = r.Department, extension = r.Ext })
+        });
+        return Ok(new { unitCode, queryDate = d, shifts });
+    }
+
+    // ── 排班 CRUD（admin）──
+    [HttpGet("{unitCode}/schedule-list")]
+    public async Task<IActionResult> GetScheduleList(string unitCode, [FromQuery] string? date, [FromQuery] bool includeAll = true, CancellationToken ct = default)
+        => Ok(await _staff.GetScheduleAsync(unitCode, date, includeAll, ct));
+    [HttpGet("schedule/{id:int}")]
+    public async Task<IActionResult> GetScheduleById(int id, CancellationToken ct = default)
+    { var x = await _staff.GetScheduleByIdAsync(id, ct); return x is null ? NotFound() : Ok(x); }
+    [HttpPost("schedule")]
+    public async Task<IActionResult> CreateSchedule([FromBody] StaffScheduleUpsertRequest req, CancellationToken ct = default)
+    { var id = await _staff.CreateScheduleAsync(req, ct); return CreatedAtAction(nameof(GetScheduleById), new { id }, await _staff.GetScheduleByIdAsync(id, ct)); }
+    [HttpPut("schedule/{id:int}")]
+    public async Task<IActionResult> UpdateSchedule(int id, [FromBody] StaffScheduleUpsertRequest req, CancellationToken ct = default)
+        => await _staff.UpdateScheduleAsync(id, req, ct) ? Ok(await _staff.GetScheduleByIdAsync(id, ct)) : NotFound();
+    [HttpDelete("schedule/{id:int}")]
+    public async Task<IActionResult> DeleteSchedule(int id, CancellationToken ct = default)
+        => await _staff.DeleteScheduleAsync(id, ct) ? NoContent() : NotFound();
+
+    // ── 床位指派 CRUD（主護勾床／醫師-床）──
+    [HttpGet("{unitCode}/bedassign")]
+    public async Task<IActionResult> GetBedAssign(string unitCode, [FromQuery] string? date, [FromQuery] string? type, [FromQuery] bool includeAll = true, CancellationToken ct = default)
+        => Ok(await _staff.GetBedAssignAsync(unitCode, date, type, includeAll, ct));
+    [HttpGet("bedassign/{id:int}")]
+    public async Task<IActionResult> GetBedAssignById(int id, CancellationToken ct = default)
+    { var x = await _staff.GetBedAssignByIdAsync(id, ct); return x is null ? NotFound() : Ok(x); }
+    [HttpPost("bedassign")]
+    public async Task<IActionResult> CreateBedAssign([FromBody] BedStaffAssignmentUpsertRequest req, CancellationToken ct = default)
+    { var id = await _staff.CreateBedAssignAsync(req, ct); return CreatedAtAction(nameof(GetBedAssignById), new { id }, await _staff.GetBedAssignByIdAsync(id, ct)); }
+    [HttpPut("bedassign/{id:int}")]
+    public async Task<IActionResult> UpdateBedAssign(int id, [FromBody] BedStaffAssignmentUpsertRequest req, CancellationToken ct = default)
+        => await _staff.UpdateBedAssignAsync(id, req, ct) ? Ok(await _staff.GetBedAssignByIdAsync(id, ct)) : NotFound();
+    [HttpDelete("bedassign/{id:int}")]
+    public async Task<IActionResult> DeleteBedAssign(int id, CancellationToken ct = default)
+        => await _staff.DeleteBedAssignAsync(id, ct) ? NoContent() : NotFound();
+
+    /// <summary>勾床配對：設定某護理師當日「主護」床位為恰好 bedIds（一床一主護）。</summary>
+    [HttpPost("{unitCode}/bed-nurse")]
+    public async Task<IActionResult> SetBedNurse(string unitCode, [FromBody] BedNurseSetRequest req, CancellationToken ct = default)
+    {
+        var date = string.IsNullOrWhiteSpace(req.WorkDate) ? DateTime.Today.ToString("yyyy-MM-dd") : req.WorkDate;
+        await _staff.SetBedNurseAsync(unitCode, req.StaffId, date, req.BedIds ?? new(), ct);
+        return Ok(await _staff.GetBedAssignAsync(unitCode, date, "主護", false, ct));
+    }
+
+    // ── 醫師資訊：看板組裝（DoctorTab）──
+    /// <summary>醫師資訊：醫師-床對應（主治指派聚合）＋查房時間表。</summary>
+    [HttpGet("{unitCode}/doctor")]
+    public async Task<IActionResult> GetDoctorBoard(string unitCode, [FromQuery] string? date, CancellationToken ct = default)
+    {
+        var d = string.IsNullOrWhiteSpace(date) ? DateTime.Today.ToString("yyyy-MM-dd") : date;
+        var roles = (await _staff.GetUnitRolesAsync(null, unitCode, false, ct))
+            .Where(r => r.Role != null && r.Role.Contains("主治")).ToList();
+        var beds = (await _staff.GetBedAssignAsync(unitCode, d, "主治", false, ct)).ToList();
+        var bedsByStaff = beds.GroupBy(b => b.StaffId)
+            .ToDictionary(g => g.Key, g => g.OrderBy(x => x.SortOrder).Select(x => x.BedId).ToList());
+        var doctorBeds = roles.Select(r => new {
+            doctorId = r.StaffId, doctorNo = r.EmployeeNo, doctorName = r.Name, role = r.Role,
+            specialty = r.Department, ext = r.Ext,
+            bedNos = bedsByStaff.TryGetValue(r.StaffId, out var bn) ? bn : new List<string>()
+        });
+        var rounds = (await _staff.GetRoundAsync(unitCode, d, false, ct)).Select(x => new {
+            roundId = x.Id, roundDate = x.RoundDate.ToString("yyyyMMdd"), doctorName = x.DoctorName, specialty = x.Specialty,
+            estimatedTime = x.EstimatedTime, actualTime = x.ActualTime, isCompleted = x.IsCompleted, remark = x.Remark
+        });
+        return Ok(new { unitCode, queryDate = d, doctorBeds, roundSchedule = rounds });
+    }
+
+    // ── 查房表 CRUD ──
+    [HttpGet("{unitCode}/round-list")]
+    public async Task<IActionResult> GetRoundList(string unitCode, [FromQuery] string? date, [FromQuery] bool includeAll = true, CancellationToken ct = default)
+        => Ok(await _staff.GetRoundAsync(unitCode, date, includeAll, ct));
+    [HttpGet("round/{id:int}")]
+    public async Task<IActionResult> GetRoundById(int id, CancellationToken ct = default)
+    { var x = await _staff.GetRoundByIdAsync(id, ct); return x is null ? NotFound() : Ok(x); }
+    [HttpPost("round")]
+    public async Task<IActionResult> CreateRound([FromBody] DoctorRoundUpsertRequest req, CancellationToken ct = default)
+    { var id = await _staff.CreateRoundAsync(req, ct); return CreatedAtAction(nameof(GetRoundById), new { id }, await _staff.GetRoundByIdAsync(id, ct)); }
+    [HttpPut("round/{id:int}")]
+    public async Task<IActionResult> UpdateRound(int id, [FromBody] DoctorRoundUpsertRequest req, CancellationToken ct = default)
+        => await _staff.UpdateRoundAsync(id, req, ct) ? Ok(await _staff.GetRoundByIdAsync(id, ct)) : NotFound();
+    [HttpDelete("round/{id:int}")]
+    public async Task<IActionResult> DeleteRound(int id, CancellationToken ct = default)
+        => await _staff.DeleteRoundAsync(id, ct) ? NoContent() : NotFound();
+
+    // ── 護理交班：看板組裝（HandoverTab）──
+    /// <summary>護理交班：取當日（或指定班別）一筆交班 header ＋病人卡（含分類事項）。</summary>
+    [HttpGet("{unitCode}/handover")]
+    public async Task<IActionResult> GetHandoverBoard(string unitCode, [FromQuery] string? date, [FromQuery] string? shift, CancellationToken ct = default)
+    {
+        var d = string.IsNullOrWhiteSpace(date) ? DateTime.Today.ToString("yyyy-MM-dd") : date;
+        var hs = (await _staff.GetHandoverShiftsAsync(unitCode, d, shift, false, ct)).FirstOrDefault();
+        if (hs is null) return Ok(new { unitCode, queryDate = d, handoverInfo = (object?)null, patients = Array.Empty<object>() });
+
+        var allStaff = (await _staff.GetStaffAsync(true, ct)).ToDictionary(s => s.Id, s => s.Name);
+        List<string> Names(string? csv) => string.IsNullOrWhiteSpace(csv) ? new()
+            : csv.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                 .Select(x => int.TryParse(x, out var i) && allStaff.TryGetValue(i, out var n) ? n : null)
+                 .Where(n => n != null).Select(n => n!).ToList();
+
+        var pats = (await _staff.GetHandoverPatientsAsync(hs.Id, ct)).ToList();
+        var patients = new List<object>();
+        foreach (var p in pats)
+        {
+            var items = (await _staff.GetHandoverNotesAsync(p.Id, ct)).Select(n => new { category = n.Category, content = n.Content });
+            patients.Add(new {
+                handoverId = p.Id, bedNo = p.BedNo, patientName = p.PatientName, gender = p.Gender, age = p.Age,
+                diagnosis = p.Diagnosis, priority = p.Priority, items
+            });
+        }
+        var info = new {
+            fromShift = hs.FromShift, fromShiftTime = hs.FromShiftTime, toShift = hs.ToShift, toShiftTime = hs.ToShiftTime,
+            handoverTime = hs.HandoverTime, fromNurses = Names(hs.FromStaffIds), toNurses = Names(hs.ToStaffIds)
+        };
+        return Ok(new { unitCode, queryDate = d, shiftId = hs.Id, handoverInfo = info, patients });
+    }
+
+    // ── 護理交班 CRUD ──
+    [HttpGet("{unitCode}/handover-shifts")]
+    public async Task<IActionResult> GetHandoverShifts(string unitCode, [FromQuery] string? date, [FromQuery] bool includeAll = true, CancellationToken ct = default)
+        => Ok(await _staff.GetHandoverShiftsAsync(unitCode, date, null, includeAll, ct));
+    [HttpGet("handover-shift/{id:int}")]
+    public async Task<IActionResult> GetHandoverShiftById(int id, CancellationToken ct = default)
+    { var x = await _staff.GetHandoverShiftByIdAsync(id, ct); return x is null ? NotFound() : Ok(x); }
+    [HttpPost("handover-shift")]
+    public async Task<IActionResult> CreateHandoverShift([FromBody] HandoverShiftUpsertRequest req, CancellationToken ct = default)
+    { var id = await _staff.CreateHandoverShiftAsync(req, ct); return CreatedAtAction(nameof(GetHandoverShiftById), new { id }, await _staff.GetHandoverShiftByIdAsync(id, ct)); }
+    [HttpPut("handover-shift/{id:int}")]
+    public async Task<IActionResult> UpdateHandoverShift(int id, [FromBody] HandoverShiftUpsertRequest req, CancellationToken ct = default)
+        => await _staff.UpdateHandoverShiftAsync(id, req, ct) ? Ok(await _staff.GetHandoverShiftByIdAsync(id, ct)) : NotFound();
+    [HttpDelete("handover-shift/{id:int}")]
+    public async Task<IActionResult> DeleteHandoverShift(int id, CancellationToken ct = default)
+        => await _staff.DeleteHandoverShiftAsync(id, ct) ? NoContent() : NotFound();
+
+    [HttpGet("handover-shift/{shiftId:int}/patients")]
+    public async Task<IActionResult> GetHandoverPatients(int shiftId, CancellationToken ct = default)
+        => Ok(await _staff.GetHandoverPatientsAsync(shiftId, ct));
+    [HttpPost("handover-patient")]
+    public async Task<IActionResult> CreateHandoverPatient([FromBody] HandoverPatientUpsertRequest req, CancellationToken ct = default)
+    { var id = await _staff.CreateHandoverPatientAsync(req, ct); return Ok(new { id }); }
+    [HttpPut("handover-patient/{id:int}")]
+    public async Task<IActionResult> UpdateHandoverPatient(int id, [FromBody] HandoverPatientUpsertRequest req, CancellationToken ct = default)
+        => await _staff.UpdateHandoverPatientAsync(id, req, ct) ? NoContent() : NotFound();
+    [HttpDelete("handover-patient/{id:int}")]
+    public async Task<IActionResult> DeleteHandoverPatient(int id, CancellationToken ct = default)
+        => await _staff.DeleteHandoverPatientAsync(id, ct) ? NoContent() : NotFound();
+
+    [HttpGet("handover-patient/{patientId:int}/notes")]
+    public async Task<IActionResult> GetHandoverNotes(int patientId, CancellationToken ct = default)
+        => Ok(await _staff.GetHandoverNotesAsync(patientId, ct));
+    [HttpPost("handover-note")]
+    public async Task<IActionResult> CreateHandoverNote([FromBody] HandoverNoteUpsertRequest req, CancellationToken ct = default)
+    { var id = await _staff.CreateHandoverNoteAsync(req, ct); return Ok(new { id }); }
+    [HttpPut("handover-note/{id:int}")]
+    public async Task<IActionResult> UpdateHandoverNote(int id, [FromBody] HandoverNoteUpsertRequest req, CancellationToken ct = default)
+        => await _staff.UpdateHandoverNoteAsync(id, req, ct) ? NoContent() : NotFound();
+    [HttpDelete("handover-note/{id:int}")]
+    public async Task<IActionResult> DeleteHandoverNote(int id, CancellationToken ct = default)
+        => await _staff.DeleteHandoverNoteAsync(id, ct) ? NoContent() : NotFound();
+
+    // ── 照護團隊：看板組裝（TeamTab）── 由 StaffUnitRole 依 GroupKey 分組
+    [HttpGet("{unitCode}/team")]
+    public async Task<IActionResult> GetTeamBoard(string unitCode, CancellationToken ct = default)
+    {
+        var roles = (await _staff.GetUnitRolesAsync(null, unitCode, false, ct)).ToList();
+        var groupNames = new (string Key, string Name)[] {
+            ("leader","病房主管"), ("attending","主治醫師"), ("resident","住院醫師"),
+            ("specialist","專科護理師"), ("nurse","護理師"), ("allied","醫事人員")
+        };
+        var teamGroups = groupNames
+            .Select(gn => new {
+                groupKey = gn.Key, groupName = gn.Name,
+                members = roles.Where(r => (r.GroupKey ?? "") == gn.Key).Select(r => new {
+                    teamId = r.Id, role = r.Role, name = r.Name, department = r.Department, ext = r.Ext, mobile = r.Mobile })
+            })
+            .Where(g => g.members.Any());
+        return Ok(new { unitCode, teamGroups });
+    }
+
     // ── 私有輔助 ───────────────────────────────────────────────────
     /// <summary>呼叫 Board_bed 取病房在床清單；失敗時記錄並回空清單（白板不中斷）。</summary>
     private async Task<List<BoardBedItem>> SafeBoardAsync(string ward, CancellationToken ct)
@@ -829,8 +1176,19 @@ public class BoardController : ControllerBase
 
     /// <summary>檢傷分類 1–5 → A/B/C（A:1-2 重症、B:3 中症、C:4-5 輕症）；無法解析回 null。</summary>
     // 急診檢傷僅 3 級：院方真實值 1/2/3 → A/B/C（1→A 重症、2→B 中症、3→C 輕症）
+    /// <summary>院方檢傷分類(E/2/3/4/5/9) → 嚴重度層級：1=重症(E,2)、2=中症(3)、3=輕症(4,5,9)。</summary>
+    private static int? TriageLevel(string? raw)
+        => (raw?.Trim().ToUpperInvariant()) switch
+        {
+            "E" or "2" => 1,            // 重症 → A
+            "3" => 2,                    // 中症 → B
+            "4" or "5" or "9" => 3,      // 輕症 → C
+            _ => (int?)null
+        };
+
+    /// <summary>檢傷層級 → A/B/C 級。</summary>
     private static string? TriageToGrade(string? triage)
-        => int.TryParse(triage, out var t) ? (t == 1 ? "A" : (t == 2 ? "B" : "C")) : null;
+        => TriageLevel(triage) is { } lv ? (lv == 1 ? "A" : lv == 2 ? "B" : "C") : null;
 
     /// <summary>解析出生字串（支援 1970/11/20 與 ISO datetime），回 DateTime。</summary>
     private static DateTime? ParseBirth(string? raw)

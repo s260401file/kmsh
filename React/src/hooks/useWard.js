@@ -6,7 +6,7 @@ import { getBoard } from '../services/wardApi'
 import { CENSUS_MS } from '../config/pollingConfig'
 
 export function useWard(unitCode) {
-  const { data, stale } = usePolling(
+  const { data, stale, loading } = usePolling(
     () => getBoard(unitCode),
     { intervalMs: CENSUS_MS, deps: [unitCode] },
   )
@@ -14,5 +14,6 @@ export function useWard(unitCode) {
     beds: data?.Beds ?? [],
     hospitalInfo: data?.HospitalInfo ?? null,
     stale,
+    loading,
   }
 }

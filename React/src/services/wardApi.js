@@ -90,6 +90,97 @@ export async function createAntibiotic(data) { return handle(await fetch(`${BASE
 export async function updateAntibiotic(id, data) { return handle(await fetch(`${BASE}/antibiotic/${id}`, { method: 'PUT', headers, body: JSON.stringify(data) })) }
 export async function removeAntibiotic(id) { return handle(await fetch(`${BASE}/antibiotic/${id}`, { method: 'DELETE' })) }
 
+// ══ 人員管理（自建；人員主檔＋多單位多角色＋排班＋床位指派＋查房＋交班）══
+// 看板組裝（各站頁籤）
+export async function getSchedule(unit, date) {
+  const p = date ? `?date=${date}` : ''
+  return handle(await fetch(`${BASE}/${unit}/schedule${p}`))
+}
+export async function getDoctorInfo(unit, date) {
+  const p = date ? `?date=${date}` : ''
+  return handle(await fetch(`${BASE}/${unit}/doctor${p}`))
+}
+export async function getHandover(unit, date, shift) {
+  const p = new URLSearchParams(); if (date) p.set('date', date); if (shift) p.set('shift', shift)
+  const qs = p.toString() ? `?${p}` : ''
+  return handle(await fetch(`${BASE}/${unit}/handover${qs}`))
+}
+export async function getTeam(unit) { return handle(await fetch(`${BASE}/${unit}/team`)) }
+// 員編登入（免密碼，回可管理單位）
+export async function authStaff(empNo) { return handle(await fetch(`${BASE}/personnel/auth/${encodeURIComponent(empNo)}`)) }
+// 人員主檔 CRUD
+export async function getStaff(includeAll = true) {
+  return handle(await fetch(`${BASE}/personnel?includeAll=${includeAll ? 'true' : 'false'}`))
+}
+export async function createStaff(d) { return handle(await fetch(`${BASE}/personnel`, { method: 'POST', headers, body: JSON.stringify(d) })) }
+export async function updateStaff(id, d) { return handle(await fetch(`${BASE}/personnel/${id}`, { method: 'PUT', headers, body: JSON.stringify(d) })) }
+export async function removeStaff(id) { return handle(await fetch(`${BASE}/personnel/${id}`, { method: 'DELETE' })) }
+// 單位×角色 CRUD
+export async function getUnitRoles(staffId, unit, includeAll = true) {
+  const p = new URLSearchParams({ includeAll: includeAll ? 'true' : 'false' })
+  if (staffId != null) p.set('staffId', staffId); if (unit) p.set('unit', unit)
+  return handle(await fetch(`${BASE}/unitrole?${p}`))
+}
+export async function createUnitRole(d) { return handle(await fetch(`${BASE}/unitrole`, { method: 'POST', headers, body: JSON.stringify(d) })) }
+export async function updateUnitRole(id, d) { return handle(await fetch(`${BASE}/unitrole/${id}`, { method: 'PUT', headers, body: JSON.stringify(d) })) }
+export async function removeUnitRole(id) { return handle(await fetch(`${BASE}/unitrole/${id}`, { method: 'DELETE' })) }
+// 排班 CRUD
+export async function getScheduleList(unit, date, includeAll = true) {
+  const p = new URLSearchParams({ includeAll: includeAll ? 'true' : 'false' }); if (date) p.set('date', date)
+  return handle(await fetch(`${BASE}/${unit}/schedule-list?${p}`))
+}
+export async function createSchedule(d) { return handle(await fetch(`${BASE}/schedule`, { method: 'POST', headers, body: JSON.stringify(d) })) }
+export async function updateSchedule(id, d) { return handle(await fetch(`${BASE}/schedule/${id}`, { method: 'PUT', headers, body: JSON.stringify(d) })) }
+export async function removeSchedule(id) { return handle(await fetch(`${BASE}/schedule/${id}`, { method: 'DELETE' })) }
+// 床位指派 CRUD
+export async function getBedAssign(unit, date, type, includeAll = true) {
+  const p = new URLSearchParams({ includeAll: includeAll ? 'true' : 'false' }); if (date) p.set('date', date); if (type) p.set('type', type)
+  return handle(await fetch(`${BASE}/${unit}/bedassign?${p}`))
+}
+export async function createBedAssign(d) { return handle(await fetch(`${BASE}/bedassign`, { method: 'POST', headers, body: JSON.stringify(d) })) }
+export async function updateBedAssign(id, d) { return handle(await fetch(`${BASE}/bedassign/${id}`, { method: 'PUT', headers, body: JSON.stringify(d) })) }
+export async function removeBedAssign(id) { return handle(await fetch(`${BASE}/bedassign/${id}`, { method: 'DELETE' })) }
+// 勾床配對：設定某護理師當日主護床位為恰好 bedIds（一床一主護）
+export async function setBedNurse(unit, data) { return handle(await fetch(`${BASE}/${unit}/bed-nurse`, { method: 'POST', headers, body: JSON.stringify(data) })) }
+// 查房表 CRUD
+export async function getRoundList(unit, date, includeAll = true) {
+  const p = new URLSearchParams({ includeAll: includeAll ? 'true' : 'false' }); if (date) p.set('date', date)
+  return handle(await fetch(`${BASE}/${unit}/round-list?${p}`))
+}
+export async function createRound(d) { return handle(await fetch(`${BASE}/round`, { method: 'POST', headers, body: JSON.stringify(d) })) }
+export async function updateRound(id, d) { return handle(await fetch(`${BASE}/round/${id}`, { method: 'PUT', headers, body: JSON.stringify(d) })) }
+export async function removeRound(id) { return handle(await fetch(`${BASE}/round/${id}`, { method: 'DELETE' })) }
+// 護理交班 header / 病人卡 / 事項 CRUD
+export async function getHandoverShifts(unit, date, includeAll = true) {
+  const p = new URLSearchParams({ includeAll: includeAll ? 'true' : 'false' }); if (date) p.set('date', date)
+  return handle(await fetch(`${BASE}/${unit}/handover-shifts?${p}`))
+}
+export async function createHandoverShift(d) { return handle(await fetch(`${BASE}/handover-shift`, { method: 'POST', headers, body: JSON.stringify(d) })) }
+export async function updateHandoverShift(id, d) { return handle(await fetch(`${BASE}/handover-shift/${id}`, { method: 'PUT', headers, body: JSON.stringify(d) })) }
+export async function removeHandoverShift(id) { return handle(await fetch(`${BASE}/handover-shift/${id}`, { method: 'DELETE' })) }
+export async function getHandoverPatients(shiftId) { return handle(await fetch(`${BASE}/handover-shift/${shiftId}/patients`)) }
+export async function createHandoverPatient(d) { return handle(await fetch(`${BASE}/handover-patient`, { method: 'POST', headers, body: JSON.stringify(d) })) }
+export async function updateHandoverPatient(id, d) { return handle(await fetch(`${BASE}/handover-patient/${id}`, { method: 'PUT', headers, body: JSON.stringify(d) })) }
+export async function removeHandoverPatient(id) { return handle(await fetch(`${BASE}/handover-patient/${id}`, { method: 'DELETE' })) }
+export async function getHandoverNotes(patientId) { return handle(await fetch(`${BASE}/handover-patient/${patientId}/notes`)) }
+export async function createHandoverNote(d) { return handle(await fetch(`${BASE}/handover-note`, { method: 'POST', headers, body: JSON.stringify(d) })) }
+export async function updateHandoverNote(id, d) { return handle(await fetch(`${BASE}/handover-note/${id}`, { method: 'PUT', headers, body: JSON.stringify(d) })) }
+export async function removeHandoverNote(id) { return handle(await fetch(`${BASE}/handover-note/${id}`, { method: 'DELETE' })) }
+
+// ── ER 三班醫護人員面板（自建；護理師掛人員管理）────────────────────
+export async function getErShiftPanel(unit = 'ER') { return handle(await fetch(`${BASE}/${unit}/shiftpanel`)) }       // 看板（護理師已解析姓名）
+export async function getErShiftPanelList(unit = 'ER') { return handle(await fetch(`${BASE}/${unit}/shiftpanel-list?includeAll=true`)) }  // 後台原始列
+export async function updateErShiftPanel(id, d) { return handle(await fetch(`${BASE}/shiftpanel/${id}`, { method: 'PUT', headers, body: JSON.stringify(d) })) }
+
+// ── 照護提醒（自建；W52）──────────────────────────────────────────
+export async function getCareReminder(unit = 'W52', includeAll = false) {
+  const p = new URLSearchParams({ includeAll: includeAll ? 'true' : 'false' })
+  return handle(await fetch(`${BASE}/${unit}/care-reminder?${p}`))
+}
+export async function createCareReminder(d) { return handle(await fetch(`${BASE}/care-reminder`, { method: 'POST', headers, body: JSON.stringify(d) })) }
+export async function updateCareReminder(id, d) { return handle(await fetch(`${BASE}/care-reminder/${id}`, { method: 'PUT', headers, body: JSON.stringify(d) })) }
+export async function removeCareReminder(id) { return handle(await fetch(`${BASE}/care-reminder/${id}`, { method: 'DELETE' })) }
+
 // ── 各站頁首單位資訊（主任/護理；自建可編輯）────────────────────────
 export async function getUnitInfo(unitCode) { return handle(await fetch(`${BASE}/${unitCode}/info`)) }
 export async function saveUnitInfo(data) { return handle(await fetch(`${BASE}/info`, { method: 'PUT', headers, body: JSON.stringify(data) })) }

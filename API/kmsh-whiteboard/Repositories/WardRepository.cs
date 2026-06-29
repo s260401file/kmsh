@@ -154,6 +154,56 @@ public class WardRepository : IWardRepository
         return rows > 0;
     }
 
+    // ── ER 三班醫護面板 [dbo].[ErShiftStaff] ───────────────────────
+    private const string EssCols = "Id, UnitCode, ShiftKey, ShiftLabel, ShiftTime, Doctor, Aide, NurseStaffIds, SortOrder, IsActive, UpdatedAt, CreatedAt";
+
+    public async Task<IEnumerable<ErShiftStaffItem>> GetErShiftAsync(string unitCode, bool includeAll = false, CancellationToken ct = default)
+    {
+        var sql = $@"SELECT {EssCols} FROM [dbo].[ErShiftStaff]
+                     WHERE UnitCode=@UnitCode AND (@IncludeAll=1 OR IsActive=1)
+                     ORDER BY SortOrder, Id";
+        using var conn = _db.Create();
+        return await conn.QueryAsync<ErShiftStaffItem>(
+            new CommandDefinition(sql, new { UnitCode = unitCode, IncludeAll = includeAll ? 1 : 0 }, cancellationToken: ct));
+    }
+
+    public async Task<ErShiftStaffItem?> GetErShiftByIdAsync(int id, CancellationToken ct = default)
+    {
+        using var conn = _db.Create();
+        return await conn.QueryFirstOrDefaultAsync<ErShiftStaffItem>(
+            new CommandDefinition($"SELECT {EssCols} FROM [dbo].[ErShiftStaff] WHERE Id=@Id", new { Id = id }, cancellationToken: ct));
+    }
+
+    public async Task<int> CreateErShiftAsync(ErShiftStaffUpsertRequest req, CancellationToken ct = default)
+    {
+        var sql = @"INSERT INTO [dbo].[ErShiftStaff] (UnitCode, ShiftKey, ShiftLabel, ShiftTime, Doctor, Aide, NurseStaffIds, SortOrder, IsActive, UpdatedAt, CreatedAt)
+                    OUTPUT INSERTED.Id
+                    VALUES (@UnitCode, @ShiftKey, @ShiftLabel, @ShiftTime, @Doctor, @Aide, @NurseStaffIds, @SortOrder, @IsActive, GETDATE(), GETDATE())";
+        using var conn = _db.Create();
+        return await conn.ExecuteScalarAsync<int>(new CommandDefinition(sql, req, cancellationToken: ct));
+    }
+
+    public async Task<bool> UpdateErShiftAsync(int id, ErShiftStaffUpsertRequest req, CancellationToken ct = default)
+    {
+        var sql = @"UPDATE [dbo].[ErShiftStaff] SET
+                    UnitCode=@UnitCode, ShiftKey=@ShiftKey, ShiftLabel=@ShiftLabel, ShiftTime=@ShiftTime,
+                    Doctor=@Doctor, Aide=@Aide, NurseStaffIds=@NurseStaffIds, SortOrder=@SortOrder, IsActive=@IsActive, UpdatedAt=GETDATE()
+                    WHERE Id=@Id";
+        using var conn = _db.Create();
+        var rows = await conn.ExecuteAsync(new CommandDefinition(sql, new {
+            req.UnitCode, req.ShiftKey, req.ShiftLabel, req.ShiftTime, req.Doctor, req.Aide, req.NurseStaffIds, req.SortOrder, req.IsActive, Id = id
+        }, cancellationToken: ct));
+        return rows > 0;
+    }
+
+    public async Task<bool> DeleteErShiftAsync(int id, CancellationToken ct = default)
+    {
+        using var conn = _db.Create();
+        var rows = await conn.ExecuteAsync(
+            new CommandDefinition("DELETE FROM [dbo].[ErShiftStaff] WHERE Id=@Id", new { Id = id }, cancellationToken: ct));
+        return rows > 0;
+    }
+
     // ── ER 床位主檔 [dbo].[ErBed] ──────────────────────────────────
     private const string BedCols = "Id, UnitCode, BedId, Ward, Zone, GridCol, GridRow, SortOrder, IsActive, UpdatedAt, CreatedAt";
 
@@ -526,6 +576,64 @@ public class WardRepository : IWardRepository
         using var conn = _db.Create();
         var rows = await conn.ExecuteAsync(
             new CommandDefinition("DELETE FROM [dbo].[IcuAntibiotic] WHERE Id=@Id", new { Id = id }, cancellationToken: ct));
+        return rows > 0;
+    }
+
+    // ── 照護提醒 [dbo].[CareReminder] ─────────────────────────────
+    private const string CrCols = @"cr.Id, cr.UnitCode, cr.BedId, cr.PatientName, cr.Gender, cr.Age, cr.Priority,
+        cr.Category, cr.Content, cr.RemindTime, cr.PrimaryNurseStaffId, cr.IsDone, cr.SortOrder, cr.IsActive,
+        cr.UpdatedAt, cr.CreatedAt, st.Name AS PrimaryNurseName";
+
+    public async Task<IEnumerable<CareReminderItem>> GetCareReminderAsync(string unitCode, bool includeAll = false, CancellationToken ct = default)
+    {
+        var sql = $@"SELECT {CrCols} FROM [dbo].[CareReminder] cr
+                     LEFT JOIN [dbo].[Staff] st ON st.Id = cr.PrimaryNurseStaffId
+                     WHERE cr.UnitCode=@UnitCode AND (@IncludeAll=1 OR cr.IsActive=1)
+                     ORDER BY cr.IsDone, cr.SortOrder, cr.Id";
+        using var conn = _db.Create();
+        return await conn.QueryAsync<CareReminderItem>(
+            new CommandDefinition(sql, new { UnitCode = unitCode, IncludeAll = includeAll ? 1 : 0 }, cancellationToken: ct));
+    }
+
+    public async Task<CareReminderItem?> GetCareReminderByIdAsync(int id, CancellationToken ct = default)
+    {
+        var sql = $@"SELECT {CrCols} FROM [dbo].[CareReminder] cr
+                     LEFT JOIN [dbo].[Staff] st ON st.Id = cr.PrimaryNurseStaffId WHERE cr.Id=@Id";
+        using var conn = _db.Create();
+        return await conn.QueryFirstOrDefaultAsync<CareReminderItem>(new CommandDefinition(sql, new { Id = id }, cancellationToken: ct));
+    }
+
+    public async Task<int> CreateCareReminderAsync(CareReminderUpsertRequest req, CancellationToken ct = default)
+    {
+        var sql = @"INSERT INTO [dbo].[CareReminder]
+            (UnitCode, BedId, PatientName, Gender, Age, Priority, Category, Content, RemindTime, PrimaryNurseStaffId, IsDone, SortOrder, IsActive, UpdatedAt, CreatedAt)
+            OUTPUT INSERTED.Id
+            VALUES
+            (@UnitCode, @BedId, @PatientName, @Gender, @Age, @Priority, @Category, @Content, @RemindTime, @PrimaryNurseStaffId, @IsDone, @SortOrder, @IsActive, GETDATE(), GETDATE())";
+        using var conn = _db.Create();
+        return await conn.ExecuteScalarAsync<int>(new CommandDefinition(sql, req, cancellationToken: ct));
+    }
+
+    public async Task<bool> UpdateCareReminderAsync(int id, CareReminderUpsertRequest req, CancellationToken ct = default)
+    {
+        var sql = @"UPDATE [dbo].[CareReminder] SET
+            UnitCode=@UnitCode, BedId=@BedId, PatientName=@PatientName, Gender=@Gender, Age=@Age, Priority=@Priority,
+            Category=@Category, Content=@Content, RemindTime=@RemindTime, PrimaryNurseStaffId=@PrimaryNurseStaffId,
+            IsDone=@IsDone, SortOrder=@SortOrder, IsActive=@IsActive, UpdatedAt=GETDATE()
+            WHERE Id=@Id";
+        using var conn = _db.Create();
+        var rows = await conn.ExecuteAsync(new CommandDefinition(sql, new {
+            req.UnitCode, req.BedId, req.PatientName, req.Gender, req.Age, req.Priority, req.Category, req.Content,
+            req.RemindTime, req.PrimaryNurseStaffId, req.IsDone, req.SortOrder, req.IsActive, Id = id
+        }, cancellationToken: ct));
+        return rows > 0;
+    }
+
+    public async Task<bool> DeleteCareReminderAsync(int id, CancellationToken ct = default)
+    {
+        using var conn = _db.Create();
+        var rows = await conn.ExecuteAsync(
+            new CommandDefinition("DELETE FROM [dbo].[CareReminder] WHERE Id=@Id", new { Id = id }, cancellationToken: ct));
         return rows > 0;
     }
 
