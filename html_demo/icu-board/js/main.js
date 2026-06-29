@@ -46,15 +46,17 @@ function applyFilter() {
   });
 }
 
-// ── Sync 3F row height to match 4F row height ──
-function syncGridRowHeights() {
-  const g4 = document.getElementById('grid-4f');
-  const rowH = parseFloat(getComputedStyle(g4).gridTemplateRows.split(' ')[0]);
-  if (!rowH) return;
-  const g3 = document.getElementById('grid-3f');
-  g3.style.gridTemplateRows = `repeat(2, ${rowH}px)`;
-  g3.style.height = 'auto';
-  g3.style.alignContent = 'start';
+// ── Floor switch（4F ↔ 3F；對齊 React 單樓層檢視）──
+let currentFloor = 4;
+function switchFloor() {
+  currentFloor = currentFloor === 4 ? 3 : 4;
+  currentFilter = "all";                 // 切樓層重置篩選
+  renderFloor(currentFloor);
+  // 重置篩選列 active 狀態
+  document.querySelectorAll("[data-filter]").forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.filter === "all");
+  });
+  applyFilter();
 }
 
 // ── Tabs ──
@@ -73,16 +75,18 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("ward-director").textContent = MOCK_DATA.hospitalInfo.wardDirector;
   document.getElementById("head-nurse").textContent    = MOCK_DATA.hospitalInfo.headNurse;
 
-  // Render
-  renderStats(MOCK_DATA.beds);
-  renderAllBeds(MOCK_DATA.beds);
+  // Render（預設顯示 4F）
+  renderFloor(currentFloor);
   renderLegendShapes();
 
   // Clock
   updateClock();
   setInterval(updateClock, 1000);
 
-  // Filter buttons (全部 + 13 badge filters)
+  // 樓層切換
+  document.getElementById("floor-toggle").addEventListener("click", switchFloor);
+
+  // Filter buttons (全部 + 16 badge filters)
   document.querySelectorAll("[data-filter]").forEach(btn => {
     btn.addEventListener("click", () => setFilter(btn.dataset.filter));
   });
@@ -95,6 +99,4 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("modalCloseBtn").addEventListener("click", closeModal);
 
   initTabs();
-  syncGridRowHeights();
-  window.addEventListener("resize", syncGridRowHeights);
 });

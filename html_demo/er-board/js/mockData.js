@@ -260,11 +260,27 @@ const MOCK_DATA = {
                 Notes:"Salbutamol 吸入、全身性類固醇治療中，一般病房待床中" } }
   ],
 
-  // 三班醫護人員（示意資料；屆時改由 API 提供）
+  // 三班醫護人員（示意資料；屆時改由後台維護＋API 提供）
+  // 4 班固定：大夜/白班/小夜＋第四班(12–20，無班別)；護理師取自人員管理（此處示意名單）
   ShiftStaff: [
-    { Shift: "白班", Time: "07:00–15:00", Doctor: "張○哲醫師", ChargeNurse: "王○琳護理師", NurseCount: 6 },
-    { Shift: "小夜", Time: "15:00–23:00", Doctor: "林○泰醫師", ChargeNurse: "李○婷護理師", NurseCount: 4 },
-    { Shift: "大夜", Time: "23:00–07:00", Doctor: "黃○誠醫師", ChargeNurse: "陳○華護理師", NurseCount: 3 }
+    { Shift: "大夜", Time: "00:00–08:00", Doctor: "黃○誠", Aide: "周○照",  Nurses: ["陳○華","王○琳","李○庭"] },
+    { Shift: "白班", Time: "08:00–16:00", Doctor: "張○哲", Aide: "林○照",  Nurses: ["王○琳","李○婷","周○娟","張○惠","許○雯","蔡○芸"] },
+    { Shift: "小夜", Time: "16:00–24:00", Doctor: "林○泰", Aide: "",        Nurses: ["李○婷","周○娟","張○惠","黃○珠"] },
+    { Shift: "",     Time: "12:00–20:00", Doctor: "",      Aide: "",        Nurses: ["許○雯","蔡○芸"] }
+  ],
+
+  // 各科值班醫師（示意資料；屆時改由後台維護＋API 提供）
+  OnCall: [
+    { DeptCode: "INT", DeptName: "內科",   Doctor: "陳○科", Ext: "3201" },
+    { DeptCode: "SUR", DeptName: "外科",   Doctor: "王○哲", Ext: "3202" },
+    { DeptCode: "ORT", DeptName: "骨科",   Doctor: "林○泰", Ext: "3203" },
+    { DeptCode: "NEU", DeptName: "神經內", Doctor: "黃○誠", Ext: "3204" },
+    { DeptCode: "CAR", DeptName: "心臟內", Doctor: "張○明", Ext: "3205" },
+    { DeptCode: "CHE", DeptName: "胸腔內", Doctor: "李○翔", Ext: "3206" },
+    { DeptCode: "OBS", DeptName: "婦產",   Doctor: "吳○雯", Ext: "3207" },
+    { DeptCode: "PED", DeptName: "小兒",   Doctor: "周○安", Ext: "3208" },
+    { DeptCode: "URO", DeptName: "泌尿",   Doctor: "鄭○宏", Ext: "3209" },
+    { DeptCode: "ENT", DeptName: "耳鼻喉", Doctor: "許○德", Ext: "3210" }
   ]
 };
 
@@ -284,5 +300,6 @@ function getStats(beds) {
   const awaitGen     = occupied.filter(b => b.Patient?.Awaiting && b.Patient?.AwaitingType === "一般").length;
   const awaitIcu     = occupied.filter(b => b.Patient?.Awaiting && b.Patient?.AwaitingType === "加護").length;
   const awaitIso     = occupied.filter(b => b.Patient?.Awaiting && b.Patient?.AwaitingType === "隔離").length;
-  return { total, attending, observation, transferIn, transferOut, sevA, sevB, sevC, dnr, admitted, awaitGen, awaitIcu, awaitIso };
+  const deceased     = occupied.filter(b => b.Patient?.Deceased).length;   // 死亡（示意；正式版由 Board_ER_TypeE 另計，不佔床）
+  return { total, attending, observation, transferIn, transferOut, sevA, sevB, sevC, dnr, admitted, awaitGen, awaitIcu, awaitIso, deceased };
 }

@@ -20,7 +20,31 @@ const MOCK_DATA = {
         SurgerySource: "住院刀", SurgeryStatus: "手術中",
         ScheduledTime: "08:30", StartTime: "09:05", EndTime: null,
         Notes: "有高血壓病史，術前停用 Aspirin 7 天，血壓控制良好"
-      }
+      },
+      // 同房今日 2 台：第一台已完成、第二台手術中（Patient 顯示目前進行中那台）
+      TodayCount: 2,
+      Surgeries: [
+        { PatientName: "趙○琴", Gender: "F", Age: 51,
+          MedRecord: "A201234611", BirthDate: "1975/06/02",
+          Department: "一般外科",
+          Diagnosis: "Inguinal hernia, Right",
+          SurgeryName: "腹腔鏡腹股溝疝氣修補術 TEP",
+          Doctor: "黃○誠醫師", ScrubNurse: "張○惠護理師", CircNurse: "李○婷護理師",
+          AnesType: "全身麻醉 (GA)",
+          SurgerySource: "門診刀", SurgeryStatus: "已完成",
+          ScheduledTime: "07:00", StartTime: "07:18", EndTime: "08:40",
+          Notes: "手術順利，已轉恢復室" },
+        { PatientName: "王○明", Gender: "M", Age: 65,
+          MedRecord: "A201234601", BirthDate: "1961/02/15",
+          Department: "一般外科",
+          Diagnosis: "Cholelithiasis, Acute cholecystitis",
+          SurgeryName: "腹腔鏡膽囊切除術 LC",
+          Doctor: "黃○誠醫師", ScrubNurse: "張○惠護理師", CircNurse: "李○婷護理師",
+          AnesType: "全身麻醉 (GA)",
+          SurgerySource: "住院刀", SurgeryStatus: "手術中",
+          ScheduledTime: "08:30", StartTime: "09:05", EndTime: null,
+          Notes: "有高血壓病史，術前停用 Aspirin 7 天，血壓控制良好" }
+      ]
     },
 
     // OR-02: 門診刀, 手術中
@@ -84,7 +108,31 @@ const MOCK_DATA = {
         SurgerySource: "住院刀", SurgeryStatus: "手術中",
         ScheduledTime: "10:00", StartTime: "10:28", EndTime: null,
         Notes: "術前停用 Warfarin，PT/INR 1.2，麻醉科術前評估 ASA II"
-      }
+      },
+      // 同房今日 2 台：第一台已完成、第二台手術中
+      TodayCount: 2,
+      Surgeries: [
+        { PatientName: "孫○德", Gender: "M", Age: 69,
+          MedRecord: "E601234615", BirthDate: "1957/03/21",
+          Department: "泌尿外科",
+          Diagnosis: "Bladder tumor, Recurrent",
+          SurgeryName: "經尿道膀胱腫瘤刮除術 TURBT",
+          Doctor: "陳○科醫師", ScrubNurse: "李○婷護理師", CircNurse: "周○娟護理師",
+          AnesType: "脊椎麻醉 (SA)",
+          SurgerySource: "住院刀", SurgeryStatus: "已完成",
+          ScheduledTime: "08:00", StartTime: "08:10", EndTime: "09:50",
+          Notes: "腫瘤刮除完整，病理送驗" },
+        { PatientName: "劉○明", Gender: "M", Age: 72,
+          MedRecord: "E601234605", BirthDate: "1954/01/11",
+          Department: "泌尿外科",
+          Diagnosis: "BPH with LUTS, IPSS 28, Qmax 5.2 mL/s",
+          SurgeryName: "經尿道前列腺刮除術 TURP",
+          Doctor: "陳○科醫師", ScrubNurse: "李○婷護理師", CircNurse: "周○娟護理師",
+          AnesType: "脊椎麻醉 (SA)",
+          SurgerySource: "住院刀", SurgeryStatus: "手術中",
+          ScheduledTime: "10:00", StartTime: "10:28", EndTime: null,
+          Notes: "術前停用 Warfarin，PT/INR 1.2，麻醉科術前評估 ASA II" }
+      ]
     },
 
     // OR-07: 門診刀, 已完成
@@ -122,18 +170,28 @@ const MOCK_DATA = {
   ]
 };
 
+// 一房可能今日多台刀：統計改以「刀數」計（聯集各房 Surgeries；無 Surgeries 則以 Patient 視為 1 台）
+function roomSurgeries(r) { return r.Surgeries || (r.Patient ? [r.Patient] : []); }
+function allSurgeries(rooms) { return rooms.flatMap(roomSurgeries); }
+
 function getStats(rooms) {
-  const total = rooms.length;
-  const occupied = rooms.filter(r => r.Status !== "empty");
+  const surgeries = allSurgeries(rooms);
   return {
-    total,
-    occupied:  occupied.length,
-    inSurgery: rooms.filter(r => r.Status === "in-surgery").length,
-    prep:      rooms.filter(r => r.Status === "prep").length,
-    completed: rooms.filter(r => r.Status === "completed").length,
-    empty:     rooms.filter(r => r.Status === "empty").length,
-    erKnife:   occupied.filter(r => r.Patient?.SurgerySource === "急診刀").length,
-    opKnife:   occupied.filter(r => r.Patient?.SurgerySource === "門診刀").length,
-    inpKnife:  occupied.filter(r => r.Patient?.SurgerySource === "住院刀").length,
+    count:     surgeries.length,                                                  // 今日總刀
+    roomTotal: rooms.length,
+    inSurgery: surgeries.filter(s => s.SurgeryStatus === "手術中").length,
+    prep:      surgeries.filter(s => s.SurgeryStatus === "準備中" || s.SurgeryStatus === "排程").length,
+    completed: surgeries.filter(s => s.SurgeryStatus === "已完成").length,
+    erKnife:   surgeries.filter(s => s.SurgerySource === "急診刀").length,
+    opKnife:   surgeries.filter(s => s.SurgerySource === "門診刀").length,
+    inpKnife:  surgeries.filter(s => s.SurgerySource === "住院刀").length,
+    empty:     rooms.filter(r => !r.Patient).length,
   };
+}
+
+// 今日已完成手術清單（跨房聯集，附 roomId）
+function completedSurgeries(rooms) {
+  return rooms.flatMap(r => roomSurgeries(r)
+    .filter(s => s.SurgeryStatus === "已完成")
+    .map(s => ({ ...s, roomId: r.RoomId })));
 }

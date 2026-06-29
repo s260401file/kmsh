@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="css/variables.css?v=2">
   <link rel="stylesheet" href="css/reset.css?v=1">
   <link rel="stylesheet" href="css/main.css?v=2">
-  <link rel="stylesheet" href="css/components.css?v=2">
+  <link rel="stylesheet" href="css/components.css?v=3">
 </head>
 <body>
 
@@ -44,7 +44,7 @@
 
     <!-- OR Rooms panel -->
     <div class="or-panel">
-      <div class="ward-title">▌ 手術室　共 7 間（OR-01～03、OR-05～08）</div>
+      <div class="ward-title">▌ 手術室　共 7 間（OR-01～03、OR-05～08）　今日 <span id="ward-count">—</span> 台</div>
       <div class="or-grid" id="or-grid"></div>
     </div>
 
@@ -56,7 +56,7 @@
         <div class="ws-row">
           <div class="ws-item">
             <div class="ws-value" id="stat-total">—</div>
-            <div class="ws-label">刀房總數</div>
+            <div class="ws-label">今日總刀</div>
           </div>
           <div class="ws-item" data-filter="busy">
             <div class="ws-value ws-busy" id="stat-inSurgery">—</div>
@@ -84,9 +84,9 @@
             <div class="ws-value ws-prep" id="stat-prep">—</div>
             <div class="ws-label">準備中</div>
           </div>
-          <div class="ws-item" data-filter="done">
+          <div class="ws-item" id="stat-completed-item" style="cursor:pointer">
             <div class="ws-value ws-done" id="stat-completed">—</div>
-            <div class="ws-label">已完成</div>
+            <div class="ws-label">已完成 ▸</div>
           </div>
           <div class="ws-item">
             <div class="ws-value ws-empty" id="stat-empty">—</div>
@@ -108,7 +108,7 @@
     <button class="badge badge-filter badge-inp" data-filter="inp">住院刀</button>
     <button class="filter-btn" data-filter="busy">手術中</button>
     <button class="filter-btn" data-filter="prep">準備中</button>
-    <button class="filter-btn" data-filter="done">已完成</button>
+    <button class="filter-btn" id="btn-completed">已完成 ▸</button>
   </div>
 
   <!-- ── Bottom tabs ── -->
@@ -133,6 +133,13 @@
         </div>
         <button class="modal-close" id="modalClose">✕</button>
       </div>
+
+      <!-- 今日台次清單（多台時可切換）-->
+      <div class="or-today-list" id="m-todaylist" style="display:none;">
+        <span class="or-today-label" id="m-todaylabel"></span>
+        <span id="m-todayitems"></span>
+      </div>
+
       <div class="modal-body">
         <div class="modal-row">
           <div class="modal-field full">
@@ -219,8 +226,30 @@
     </div>
   </div>
 
-  <script src="js/mockData.js"></script>
-  <script src="js/components.js"></script>
-  <script src="js/main.js"></script>
+  <!-- ── 今日已完成手術 Modal ── -->
+  <div class="modal-overlay" id="completedModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <span class="modal-room-id">今日已完成手術</span>
+        <span class="modal-basic" id="comp-count"></span>
+        <button class="modal-close" id="compClose">✕</button>
+      </div>
+      <div class="modal-body">
+        <table class="surg-table" style="width:100%;">
+          <thead>
+            <tr><th>刀房</th><th>排程</th><th>病人</th><th>術式</th><th>主刀</th></tr>
+          </thead>
+          <tbody id="comp-tbody"></tbody>
+        </table>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-close-modal" id="compCloseBtn">關閉</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/mockData.js?v=2"></script>
+  <script src="js/components.js?v=2"></script>
+  <script src="js/main.js?v=2"></script>
 </body>
 </html>

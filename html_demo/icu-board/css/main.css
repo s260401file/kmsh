@@ -85,8 +85,25 @@ body { flex-direction: column; }
 }
 .floor-4f { flex: 4; }
 .floor-3f { flex: 3; min-width: 320px; grid-template-rows: auto auto 1fr; }
+/* 單樓層檢視（對齊 React）：左床位主區 + 右側固定寬統計區 */
+.floor-main   { flex: 1; }
+.stats-section { flex: 0 0 360px; }
 
-/* ── Ward Stats Panel (inside 3F section) ── */
+/* ── 樓層切換鈕（floor-title 右側）── */
+.floor-toggle {
+  border: 1px solid var(--accent-green);
+  background: #fff;
+  color: var(--accent-green);
+  font-size: 13px;
+  font-weight: 700;
+  padding: 3px 12px;
+  border-radius: 14px;
+  cursor: pointer;
+  letter-spacing: 1px;
+}
+.floor-toggle:hover { background: var(--accent-green); color: #fff; }
+
+/* ── Ward Stats Panel (stats-section) ── */
 .ward-stats {
   background: transparent;
   display: flex;
@@ -172,6 +189,10 @@ body { flex-direction: column; }
   color: var(--accent-green);
   letter-spacing: 1px;
   border-bottom: 1px solid var(--divider);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
 }
 
 .floor-beds {

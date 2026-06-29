@@ -27,7 +27,7 @@ const MOCK_DATA = {
         NoTreatment:false, Npo:false, Allergy:false, Rrt:false,
         Chemo:false, Transport:"輪椅", Oxygen:false,
         Surgery:false, Exam:false, Consult:false,
-        MedicalRecordNo:"A112345678", BirthDate:"1950/03/15",
+        MedicalRecordNo:"A112345678", IdNo:"A1******78", BirthDate:"1950/03/15",
         Department:"骨科", Notes:"" } },
 
     { BedId:"W52-003", Status:"occupied",
@@ -39,7 +39,7 @@ const MOCK_DATA = {
         NoTreatment:false, Npo:false, Allergy:true, Rrt:false,
         Chemo:false, Transport:null, Oxygen:false,
         Surgery:false, Exam:true, Consult:false,
-        MedicalRecordNo:"B223456789", BirthDate:"1957/09/22",
+        MedicalRecordNo:"B223456789", IdNo:"B2******89", BirthDate:"1957/09/22",
         Department:"骨科", Notes:"對盤尼西林過敏" } },
 
     { BedId:"W52-006", Status:"isolation",
@@ -51,7 +51,7 @@ const MOCK_DATA = {
         NoTreatment:false, Npo:false, Allergy:false, Rrt:false,
         Chemo:false, Transport:null, Oxygen:false,
         Surgery:false, Exam:false, Consult:true,
-        MedicalRecordNo:"C334567890", BirthDate:"1967/06/10",
+        MedicalRecordNo:"C334567890", IdNo:"C3******90", BirthDate:"1967/06/10",
         Department:"感染科", Notes:"接觸隔離，需穿戴手套與隔離衣" } },
 
     { BedId:"W52-008", Status:"occupied",
@@ -63,7 +63,7 @@ const MOCK_DATA = {
         NoTreatment:false, Npo:true, Allergy:false, Rrt:false,
         Chemo:false, Transport:null, Oxygen:false,
         Surgery:true, Exam:false, Consult:false,
-        MedicalRecordNo:"D445678901", BirthDate:"1969/12/03",
+        MedicalRecordNo:"D445678901", IdNo:"D4******01", BirthDate:"1969/12/03",
         Department:"一般外科", Notes:"術後禁食，補充靜脈輸液" } },
 
     { BedId:"W52-010", Status:"occupied",
@@ -75,7 +75,7 @@ const MOCK_DATA = {
         NoTreatment:false, Npo:false, Allergy:false, Rrt:false,
         Chemo:false, Transport:null, Oxygen:false,
         Surgery:false, Exam:false, Consult:false,
-        MedicalRecordNo:"E556789012", BirthDate:"1954/07/28",
+        MedicalRecordNo:"E556789012", IdNo:"E5******12", BirthDate:"1954/07/28",
         Department:"泌尿科", Notes:"" } },
 
     { BedId:"W52-012", Status:"occupied",
@@ -87,7 +87,7 @@ const MOCK_DATA = {
         NoTreatment:false, Npo:false, Allergy:true, Rrt:false,
         Chemo:false, Transport:null, Oxygen:false,
         Surgery:false, Exam:false, Consult:true,
-        MedicalRecordNo:"F667890123", BirthDate:"1961/02/14",
+        MedicalRecordNo:"F667890123", IdNo:"F6******23", BirthDate:"1961/02/14",
         Department:"腸胃科", Notes:"" } },
 
     { BedId:"W52-015", Status:"occupied",
@@ -99,7 +99,7 @@ const MOCK_DATA = {
         NoTreatment:false, Npo:false, Allergy:false, Rrt:false,
         Chemo:false, Transport:null, Oxygen:true,
         Surgery:false, Exam:true, Consult:false,
-        MedicalRecordNo:"G778901234", BirthDate:"1947/11/05",
+        MedicalRecordNo:"G778901234", IdNo:"G7******34", BirthDate:"1947/11/05",
         Department:"胸腔內科", Notes:"持續氧氣供應" } },
 
     // ── 右側雙排 上排（R7，靠窗側）──
@@ -112,7 +112,7 @@ const MOCK_DATA = {
         NoTreatment:false, Npo:true, Allergy:false, Rrt:false,
         Chemo:false, Transport:null, Oxygen:false,
         Surgery:true, Exam:false, Consult:false,
-        MedicalRecordNo:"H889012345", BirthDate:"1981/04/18",
+        MedicalRecordNo:"H889012345", IdNo:"H8******45", BirthDate:"1981/04/18",
         Department:"婦產科", Notes:"術後第一日，監測生命跡象" } },
 
     { BedId:"W52-005", Status:"occupied",
@@ -124,7 +124,7 @@ const MOCK_DATA = {
         NoTreatment:false, Npo:false, Allergy:false, Rrt:false,
         Chemo:false, Transport:null, Oxygen:true, CardiacCath:true,
         Surgery:false, Exam:false, Consult:false,
-        MedicalRecordNo:"I990123456", BirthDate:"1958/08/30",
+        MedicalRecordNo:"I990123456", IdNo:"I9******56", BirthDate:"1958/08/30",
         Department:"心臟內科", Notes:"" } },
 
     { BedId:"W52-007", Status:"isolation",
@@ -136,7 +136,7 @@ const MOCK_DATA = {
         NoTreatment:false, Npo:false, Allergy:false, Rrt:false,
         Chemo:false, Transport:null, Oxygen:true, CVC:true, Foley:true,
         Surgery:false, Exam:false, Consult:false,
-        MedicalRecordNo:"J001234567", BirthDate:"1942/01/20",
+        MedicalRecordNo:"J001234567", IdNo:"J0******67", BirthDate:"1942/01/20",
         Department:"胸腔內科", Notes:"飛沫隔離，需戴外科口罩" } },
 
     { BedId:"W52-009", Status:"occupied",
@@ -148,7 +148,7 @@ const MOCK_DATA = {
         NoTreatment:false, Npo:false, Allergy:false, Rrt:false,
         Chemo:false, Transport:"推床", Oxygen:false, CVC:true, Foley:true,
         Surgery:false, Exam:true, Consult:false,
-        MedicalRecordNo:"K112345679", BirthDate:"1966/10/07",
+        MedicalRecordNo:"K112345679", IdNo:"K1******79", BirthDate:"1966/10/07",
         Department:"神經內科", Notes:"" } },
 
     { BedId:"W52-011", Status:"transfer",
@@ -160,7 +160,7 @@ const MOCK_DATA = {
         NoTreatment:false, Npo:false, Allergy:false, Rrt:false,
         Chemo:false, Transport:null, Oxygen:false, Renal:true,
         Surgery:false, Exam:false, Consult:false,
-        MedicalRecordNo:"L223456790", BirthDate:"1952/05/19",
+        MedicalRecordNo:"L223456790", IdNo:"L2******90", BirthDate:"1952/05/19",
         Department:"腎臟科", Notes:"預計今日轉腎臟科病房" } },
 
     { BedId:"W52-013", Status:"discharge",
@@ -172,7 +172,7 @@ const MOCK_DATA = {
         NoTreatment:false, Npo:false, Allergy:false, Rrt:false,
         Chemo:false, Transport:null, Oxygen:false,
         Surgery:false, Exam:false, Consult:false,
-        MedicalRecordNo:"M334567891", BirthDate:"1965/03/08",
+        MedicalRecordNo:"M334567891", IdNo:"M3******91", BirthDate:"1965/03/08",
         Department:"內分泌科", Notes:"預計今日出院，衛教完成" } },
 
     { BedId:"W52-016", Status:"occupied",
@@ -184,7 +184,7 @@ const MOCK_DATA = {
         NoTreatment:false, Npo:false, Allergy:false, Rrt:false,
         Chemo:false, Transport:"推床", Oxygen:true, CVC:true, Foley:true,
         Surgery:false, Exam:false, Consult:true,
-        MedicalRecordNo:"N445678902", BirthDate:"1937/12/31",
+        MedicalRecordNo:"N445678902", IdNo:"N4******02", BirthDate:"1937/12/31",
         Department:"心臟內科", Notes:"需特別注意液體平衡" } },
 
     // ── 底排（R11，走廊底端）──
@@ -197,7 +197,7 @@ const MOCK_DATA = {
         NoTreatment:false, Npo:false, Allergy:false, Rrt:false,
         Chemo:false, Transport:null, Oxygen:false,
         Surgery:false, Exam:false, Consult:false,
-        MedicalRecordNo:"O556789013", BirthDate:"1990/07/23",
+        MedicalRecordNo:"O556789013", IdNo:"O5******13", BirthDate:"1990/07/23",
         Department:"婦產科", Notes:"病人要求保密，不得透露住院資訊" } },
 
     { BedId:"W52-018", Status:"occupied",
@@ -209,7 +209,7 @@ const MOCK_DATA = {
         NoTreatment:false, Npo:false, Allergy:false, Rrt:false,
         Chemo:false, Transport:"輪椅", Oxygen:false,
         Surgery:false, Exam:false, Consult:false,
-        MedicalRecordNo:"P667890124", BirthDate:"1960/09/14",
+        MedicalRecordNo:"P667890124", IdNo:"P6******24", BirthDate:"1960/09/14",
         Department:"骨科", Notes:"" } },
 
     { BedId:"W52-019", Status:"occupied",
@@ -221,7 +221,7 @@ const MOCK_DATA = {
         NoTreatment:false, Npo:false, Allergy:false, Rrt:false,
         Chemo:false, Transport:null, Oxygen:false,
         Surgery:false, Exam:false, Consult:false,
-        MedicalRecordNo:"Q778901235", BirthDate:"1953/04/06",
+        MedicalRecordNo:"Q778901235", IdNo:"Q7******35", BirthDate:"1953/04/06",
         Department:"老人醫學科", Notes:"認知障礙，需加護欄" } },
 
     { BedId:"W52-020", Status:"transfer-in",
@@ -233,7 +233,7 @@ const MOCK_DATA = {
         NoTreatment:false, Npo:false, Allergy:false, Rrt:false,
         Chemo:false, Transport:null, Oxygen:true,
         Surgery:false, Exam:false, Consult:false,
-        MedicalRecordNo:"Z100200300", BirthDate:"1957/02/14",
+        MedicalRecordNo:"Z100200300", IdNo:"Z1******00", BirthDate:"1957/02/14",
         Department:"胸腔內科", Notes:"ICU 轉入，預計今日抵達" } },
 
     { BedId:"W52-021", Status:"occupied",
@@ -245,7 +245,7 @@ const MOCK_DATA = {
         NoTreatment:false, Npo:false, Allergy:false, Rrt:false,
         Chemo:false, Transport:null, Oxygen:false,
         Surgery:false, Exam:false, Consult:true,
-        MedicalRecordNo:"R889012346", BirthDate:"1967/11/29",
+        MedicalRecordNo:"R889012346", IdNo:"R8******46", BirthDate:"1967/11/29",
         Department:"大腸直腸外科", Notes:"" } },
 
     { BedId:"W52-022", Status:"occupied",
@@ -257,7 +257,7 @@ const MOCK_DATA = {
         NoTreatment:false, Npo:true, Allergy:false, Rrt:false,
         Chemo:false, Transport:null, Oxygen:false,
         Surgery:false, Exam:true, Consult:false,
-        MedicalRecordNo:"S990123457", BirthDate:"1973/02/11",
+        MedicalRecordNo:"S990123457", IdNo:"S9******57", BirthDate:"1973/02/11",
         Department:"腸胃科", Notes:"" } },
 
     { BedId:"W52-023", Status:"occupied",
@@ -269,7 +269,7 @@ const MOCK_DATA = {
         NoTreatment:false, Npo:false, Allergy:true, Rrt:false,
         Chemo:false, Transport:null, Oxygen:true,
         Surgery:false, Exam:false, Consult:false,
-        MedicalRecordNo:"T001234568", BirthDate:"1948/06/17",
+        MedicalRecordNo:"T001234568", IdNo:"T0******68", BirthDate:"1948/06/17",
         Department:"胸腔內科", Notes:"" } },
 
     { BedId:"W52-025", Status:"occupied",
@@ -281,7 +281,7 @@ const MOCK_DATA = {
         NoTreatment:false, Npo:false, Allergy:false, Rrt:false,
         Chemo:false, Transport:null, Oxygen:false,
         Surgery:true, Exam:false, Consult:false,
-        MedicalRecordNo:"U112345679", BirthDate:"1974/08/24",
+        MedicalRecordNo:"U112345679", IdNo:"U1******79", BirthDate:"1974/08/24",
         Department:"乳房外科", Notes:"" } },
 
     { BedId:"W52-026", Status:"isolation",
@@ -293,7 +293,7 @@ const MOCK_DATA = {
         NoTreatment:true, Npo:false, Allergy:false, Rrt:false,
         Chemo:false, Transport:null, Oxygen:true, Foley:true,
         Surgery:false, Exam:false, Consult:false,
-        MedicalRecordNo:"V223456790", BirthDate:"1941/03/02",
+        MedicalRecordNo:"V223456790", IdNo:"V2******90", BirthDate:"1941/03/02",
         Department:"胸腔內科", Notes:"空氣隔離，需佩戴N95口罩" } },
 
     // ── 左翼下段（R10）──
@@ -306,7 +306,7 @@ const MOCK_DATA = {
         NoTreatment:false, Npo:true, Allergy:true, Rrt:false,
         Chemo:true, Transport:null, Oxygen:false, PortCath:true, Foley:true,
         Surgery:false, Exam:false, Consult:false,
-        MedicalRecordNo:"W334567891", BirthDate:"1970/10/16",
+        MedicalRecordNo:"W334567891", IdNo:"W3******91", BirthDate:"1970/10/16",
         Department:"腫瘤科", Notes:"化療中，注意骨髓抑制" } },
 
     { BedId:"W52-028", Status:"occupied",
@@ -318,7 +318,7 @@ const MOCK_DATA = {
         NoTreatment:false, Npo:false, Allergy:false, Rrt:false,
         Chemo:false, Transport:null, Oxygen:false, CVC:true, Foley:true,
         Surgery:true, Exam:false, Consult:false,
-        MedicalRecordNo:"X445678902", BirthDate:"1955/01/09",
+        MedicalRecordNo:"X445678902", IdNo:"X4******02", BirthDate:"1955/01/09",
         Department:"心臟外科", Notes:"" } },
 
     // ── 左翼下段（R9）──
@@ -331,7 +331,7 @@ const MOCK_DATA = {
         NoTreatment:false, Npo:false, Allergy:false, Rrt:false,
         Chemo:false, Transport:"輪椅", Oxygen:false,
         Surgery:false, Exam:true, Consult:false,
-        MedicalRecordNo:"Y556789013", BirthDate:"1959/07/12",
+        MedicalRecordNo:"Y556789013", IdNo:"Y5******13", BirthDate:"1959/07/12",
         Department:"骨科", Notes:"" } },
 
     { BedId:"W52-030", Status:"empty", Patient:null },
@@ -346,7 +346,7 @@ const MOCK_DATA = {
         NoTreatment:false, Npo:false, Allergy:false, Rrt:true,
         Chemo:false, Transport:null, Oxygen:true, CVC:true, Foley:true,
         Surgery:false, Exam:false, Consult:false,
-        MedicalRecordNo:"Z667890124", BirthDate:"1972/05/25",
+        MedicalRecordNo:"Z667890124", IdNo:"Z6******24", BirthDate:"1972/05/25",
         Department:"神經外科", Notes:"RRT 啟動，密切監測" } },
 
     { BedId:"W52-032", Status:"occupied",
@@ -358,7 +358,7 @@ const MOCK_DATA = {
         NoTreatment:false, Npo:false, Allergy:false, Rrt:false,
         Chemo:false, Transport:null, Oxygen:false, Renal:true,
         Surgery:false, Exam:true, Consult:false,
-        MedicalRecordNo:"A778901235", BirthDate:"1946/02/03",
+        MedicalRecordNo:"A778901235", IdNo:"A7******35", BirthDate:"1946/02/03",
         Department:"腎臟科", Notes:"" } },
 
     { BedId:"W52-033", Status:"transfer",
@@ -370,7 +370,7 @@ const MOCK_DATA = {
         NoTreatment:false, Npo:false, Allergy:false, Rrt:false,
         Chemo:false, Transport:null, Oxygen:false,
         Surgery:false, Exam:false, Consult:false,
-        MedicalRecordNo:"B889012346", BirthDate:"1962/09/01",
+        MedicalRecordNo:"B889012346", IdNo:"B8******46", BirthDate:"1962/09/01",
         Department:"一般外科", Notes:"預計轉外科觀察病房" } },
 
     { BedId:"W52-035", Status:"occupied",
@@ -382,7 +382,7 @@ const MOCK_DATA = {
         NoTreatment:false, Npo:true, Allergy:false, Rrt:false,
         Chemo:false, Transport:null, Oxygen:false, Foley:true,
         Surgery:false, Exam:false, Consult:false,
-        MedicalRecordNo:"C990123457", BirthDate:"1938/11/14",
+        MedicalRecordNo:"C990123457", IdNo:"C9******57", BirthDate:"1938/11/14",
         Department:"老人醫學科", Notes:"管灌餵食中" } },
 
     { BedId:"W52-036", Status:"occupied",
@@ -394,7 +394,7 @@ const MOCK_DATA = {
         NoTreatment:false, Npo:true, Allergy:false, Rrt:false,
         Chemo:false, Transport:null, Oxygen:false,
         Surgery:true, Exam:false, Consult:false,
-        MedicalRecordNo:"D001234568", BirthDate:"1978/03/20",
+        MedicalRecordNo:"D001234568", IdNo:"D0******68", BirthDate:"1978/03/20",
         Department:"骨科", Notes:"" } },
 
     // ── 左翼中上段（R5-R4）──
@@ -407,7 +407,7 @@ const MOCK_DATA = {
         NoTreatment:false, Npo:false, Allergy:false, Rrt:false,
         Chemo:false, Transport:null, Oxygen:false,
         Surgery:false, Exam:true, Consult:false,
-        MedicalRecordNo:"E112345679", BirthDate:"1954/08/27",
+        MedicalRecordNo:"E112345679", IdNo:"E1******79", BirthDate:"1954/08/27",
         Department:"心臟內科", Notes:"" } },
 
     { BedId:"W52-038", Status:"isolation",
@@ -419,7 +419,7 @@ const MOCK_DATA = {
         NoTreatment:false, Npo:false, Allergy:false, Rrt:false,
         Chemo:false, Transport:null, Oxygen:false,
         Surgery:false, Exam:false, Consult:true,
-        MedicalRecordNo:"F223456790", BirthDate:"1945/06/06",
+        MedicalRecordNo:"F223456790", IdNo:"F2******90", BirthDate:"1945/06/06",
         Department:"泌尿科", Notes:"接觸隔離，廣泛抗藥性菌種" } },
 
     { BedId:"W52-039", Status:"occupied",
@@ -431,7 +431,7 @@ const MOCK_DATA = {
         NoTreatment:false, Npo:false, Allergy:false, Rrt:false,
         Chemo:false, Transport:null, Oxygen:false,
         Surgery:false, Exam:false, Consult:true,
-        MedicalRecordNo:"G334567891", BirthDate:"1970/01/30",
+        MedicalRecordNo:"G334567891", IdNo:"G3******91", BirthDate:"1970/01/30",
         Department:"一般外科", Notes:"注意低血鈣症狀" } },
 
     // ── 左翼上段（R1-R3）──
@@ -444,7 +444,7 @@ const MOCK_DATA = {
         NoTreatment:false, Npo:false, Allergy:false, Rrt:false,
         Chemo:false, Transport:null, Oxygen:true, CVC:true, Foley:true,
         Surgery:true, Exam:false, Consult:false,
-        MedicalRecordNo:"H445678902", BirthDate:"1949/04/13",
+        MedicalRecordNo:"H445678902", IdNo:"H4******02", BirthDate:"1949/04/13",
         Department:"心臟外科", Notes:"" } },
 
     { BedId:"W52-051", Status:"occupied",
@@ -456,7 +456,7 @@ const MOCK_DATA = {
         NoTreatment:false, Npo:false, Allergy:false, Rrt:false,
         Chemo:false, Transport:null, Oxygen:false,
         Surgery:false, Exam:false, Consult:false,
-        MedicalRecordNo:"I556789013", BirthDate:"1964/12/08",
+        MedicalRecordNo:"I556789013", IdNo:"I5******13", BirthDate:"1964/12/08",
         Department:"腸胃科", Notes:"" } },
 
     { BedId:"W52-052", Status:"occupied",
@@ -468,7 +468,7 @@ const MOCK_DATA = {
         NoTreatment:false, Npo:false, Allergy:false, Rrt:false,
         Chemo:false, Transport:null, Oxygen:false,
         Surgery:false, Exam:false, Consult:false,
-        MedicalRecordNo:"J667890124", BirthDate:"1957/06/22",
+        MedicalRecordNo:"J667890124", IdNo:"J6******24", BirthDate:"1957/06/22",
         Department:"神經外科", Notes:"" } },
 
     { BedId:"W52-053", Status:"occupied",
@@ -480,7 +480,7 @@ const MOCK_DATA = {
         NoTreatment:false, Npo:false, Allergy:false, Rrt:false,
         Chemo:false, Transport:null, Oxygen:false,
         Surgery:false, Exam:false, Consult:true,
-        MedicalRecordNo:"K778901235", BirthDate:"1952/09/17",
+        MedicalRecordNo:"K778901235", IdNo:"K7******35", BirthDate:"1952/09/17",
         Department:"神經內科", Notes:"" } },
 
     { BedId:"W52-055", Status:"occupied",
@@ -492,7 +492,7 @@ const MOCK_DATA = {
         NoTreatment:false, Npo:true, Allergy:false, Rrt:false,
         Chemo:false, Transport:null, Oxygen:false,
         Surgery:true, Exam:false, Consult:false,
-        MedicalRecordNo:"L889012346", BirthDate:"1963/07/04",
+        MedicalRecordNo:"L889012346", IdNo:"L8******46", BirthDate:"1963/07/04",
         Department:"一般外科", Notes:"術後禁食，NG 管灌注中" } },
 
     { BedId:"W52-056", Status:"empty", Patient:null }

@@ -51,15 +51,49 @@ function renderLegendShapes() {
 }
 
 // 三班醫護人員（資料來自 MOCK_DATA.ShiftStaff，屆時改 API）
+// 標題列＝白/夜 照服員（綠）＋白/夜 醫師（藍）；內容＝各班護理師（有班別每行2名、第四班每行1名）
 function renderStaffShifts(shifts) {
+  if (!shifts) return;
+  const find = name => shifts.find(s => s.Shift === name) || {};
+  const day = find("白班"), night = find("大夜");
+
+  const title = document.getElementById("ss-title");
+  if (title) {
+    title.innerHTML = `
+      <span class="ss-title-docs ss-aides">
+        <span class="ss-td-item"><span class="ss-td-label">白</span>${day.Aide || "—"}</span>
+        <span class="ss-td-item"><span class="ss-td-label">夜</span>${night.Aide || "—"}</span>
+      </span>
+      <span class="ss-title-docs">
+        <span class="ss-td-item"><span class="ss-td-label">白</span>${day.Doctor || "—"}</span>
+        <span class="ss-td-item"><span class="ss-td-label">夜</span>${night.Doctor || "—"}</span>
+      </span>`;
+  }
+
   const body = document.getElementById("ss-body");
-  if (!body || !shifts) return;
-  body.innerHTML = shifts.map(s => `
-    <div class="ss-col">
-      <div class="ss-shift">${s.Shift} <span class="ss-time">${s.Time}</span></div>
-      <div class="ss-doctor">醫師　${s.Doctor || "—"}</div>
-      <div class="ss-charge">護理　${s.ChargeNurse || "—"}</div>
-      <div class="ss-count">在班 <b>${s.NurseCount ?? "—"}</b> 人</div>
+  if (!body) return;
+  body.innerHTML = shifts.map(s => {
+    const names = (s.Nurses && s.Nurses.length) ? s.Nurses : ["—"];
+    const per = s.Shift ? 2 : 1;
+    const rows = [];
+    for (let i = 0; i < names.length; i += per) rows.push(names.slice(i, i + per).join("／"));
+    const shiftLine = s.Shift
+      ? `${s.Shift} <span class="ss-time">${s.Time}</span>`
+      : `<span class="ss-time">${s.Time}</span>`;
+    return `<div class="ss-col"><div class="ss-shift">${shiftLine}</div>${
+      rows.map(r => `<div class="ss-charge">${r}</div>`).join("")
+    }</div>`;
+  }).join("");
+}
+
+// 各科值班醫師（資料來自 MOCK_DATA.OnCall，屆時改 API）：5×2 格，科別代碼＋醫師＋分機
+function renderOnCall(list) {
+  const grid = document.getElementById("oc-grid");
+  if (!grid || !list) return;
+  grid.innerHTML = list.map(d => `
+    <div class="oc-cell">
+      <div class="oc-dept">${d.DeptCode}<span class="oc-deptname"> ${d.DeptName}</span></div>
+      <div class="oc-doc">${d.Doctor || "—"}${d.Ext ? `<span class="oc-ext"> #${d.Ext}</span>` : ""}</div>
     </div>`).join("");
 }
 

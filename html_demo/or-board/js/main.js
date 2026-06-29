@@ -56,6 +56,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   renderStats(MOCK_DATA.Rooms);
   renderAllRooms(MOCK_DATA.Rooms);
+  document.getElementById("ward-count").textContent = getStats(MOCK_DATA.Rooms).count;   // 標題：今日 N 台
 
   updateClock();
   setInterval(updateClock, 1000);
@@ -69,6 +70,15 @@ document.addEventListener("DOMContentLoaded", () => {
   });
   document.getElementById("modalClose").addEventListener("click", closeModal);
   document.getElementById("modalCloseBtn").addEventListener("click", closeModal);
+
+  // 已完成清單 Modal：統計面板「已完成 ▸」與篩選列「已完成 ▸」皆開啟
+  document.getElementById("stat-completed-item").addEventListener("click", openCompleted);
+  document.getElementById("btn-completed").addEventListener("click", openCompleted);
+  document.getElementById("completedModal").addEventListener("click", e => {
+    if (e.target === e.currentTarget) closeCompleted();
+  });
+  document.getElementById("compClose").addEventListener("click", closeCompleted);
+  document.getElementById("compCloseBtn").addEventListener("click", closeCompleted);
 
   initTabs();
 });

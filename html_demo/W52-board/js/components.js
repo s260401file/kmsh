@@ -155,6 +155,7 @@ function openModal(bed) {
   document.getElementById("m-name").textContent    = p.PatientName;
   document.getElementById("m-basic").textContent   = `${genderTxt} / ${p.Age}歲`;
   document.getElementById("m-medrec").textContent  = p.MedicalRecordNo || "—";
+  document.getElementById("m-idno").textContent    = p.IdNo || "—";
   document.getElementById("m-birth").textContent   = p.BirthDate || "—";
   document.getElementById("m-dept").textContent    = p.Department || "—";
   document.getElementById("m-diag").textContent    = p.Diagnosis;

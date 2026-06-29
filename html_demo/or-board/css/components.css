@@ -141,3 +141,22 @@
   white-space: nowrap;
   line-height: 18px;
 }
+
+/* 卡片「今日 N 台」標記（多台刀房）*/
+.badge-count { background: #37474F; color: #fff; font-weight: 700; margin-left: auto; }
+
+/* 刀房詳情：今日台次清單（多台可切換）*/
+.or-today-list { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; padding: 8px 16px; background: #F1F5F9; border-bottom: 1px solid var(--divider); }
+.or-today-label { font-size: 13px; font-weight: 700; color: #475569; }
+.or-today-item { font-size: 13px; padding: 3px 9px; border: 1px solid #CBD5E1; border-radius: 6px; background: #fff; color: #334155; cursor: pointer; }
+.or-today-item:hover { background: #E2E8F0; }
+.or-today-item.active { background: #1976D2; color: #fff; border-color: #1976D2; font-weight: 700; }
+
+/* 今日已完成手術清單表格 */
+.surg-table { width: 100%; border-collapse: collapse; }
+.surg-table thead tr { background: #E8F4EE; }
+.surg-table th { font-size: 14px; font-weight: 700; color: var(--text-secondary); text-align: left; padding: 10px 14px; white-space: nowrap; border-bottom: 1px solid var(--divider); }
+.surg-table tbody tr { border-bottom: 1px solid var(--bg-card-empty); }
+.surg-table tbody tr:last-child { border-bottom: none; }
+.surg-table td { font-size: 16px; color: var(--text-primary); padding: 12px 14px; vertical-align: middle; white-space: nowrap; }
+.surg-td-or { font-size: 14px; font-weight: 600; color: var(--text-secondary); background: var(--bg-card-empty); padding: 2px 8px; border-radius: 4px; font-family: var(--font-num); }

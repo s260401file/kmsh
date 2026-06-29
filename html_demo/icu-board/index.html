@@ -6,7 +6,7 @@
   <title>高雄市立民生醫院 ICU 電子白板</title>
   <link rel="stylesheet" href="css/variables.css?v=19">
   <link rel="stylesheet" href="css/reset.css?v=19">
-  <link rel="stylesheet" href="css/main.css?v=19">
+  <link rel="stylesheet" href="css/main.css?v=20">
   <link rel="stylesheet" href="css/components.css?v=19">
 </head>
 <body>
@@ -37,23 +37,23 @@
     <span>2025/05/15 院內感染管制週宣導：請確實執行手部衛生，進出隔離病房務必穿戴適當防護裝備。</span>
   </div>
 
-  <!-- ── Main content ── -->
+  <!-- ── Main content（單樓層檢視，可切換 4F/3F；對齊 React）── -->
   <main class="main-content">
 
-    <!-- 4F section -->
-    <div class="floor-section floor-4f">
-      <div class="floor-title">▌ 4F　共 20 床</div>
+    <!-- 床位主區（顯示目前樓層）-->
+    <div class="floor-section floor-main">
+      <div class="floor-title">
+        <span id="floor-label">▌ 4F　共 20 床</span>
+        <button class="floor-toggle" id="floor-toggle">切換 3F ▸</button>
+      </div>
       <div class="floor-beds">
-        <div class="grid-4f" id="grid-4f"></div>
+        <div class="grid-4f" id="bed-grid"></div>
       </div>
     </div>
 
-    <!-- 3F section -->
-    <div class="floor-section floor-3f">
-      <div class="floor-title">▌ 3F　共 5 床</div>
-      <div class="floor-beds">
-        <div class="grid-3f" id="grid-3f"></div>
-      </div>
+    <!-- 統計區（目前樓層）-->
+    <div class="floor-section stats-section">
+      <div class="floor-title" id="stats-title">▌ 4F 統計</div>
       <!-- ── Ward Stats Panel ── -->
       <div class="ward-stats">
         <div class="ws-row">
@@ -107,19 +107,19 @@
         <div class="ws-row">
           <div class="ws-item" data-filter="tube-ett">
             <div class="ws-value ws-ett" id="stat-ett">—</div>
-            <div class="ws-label">氣管內管 ▾</div>
+            <div class="ws-label">氣管內管</div>
           </div>
           <div class="ws-item" data-filter="tube-ng">
             <div class="ws-value ws-ng" id="stat-ng">—</div>
-            <div class="ws-label">鼻胃管 ▾</div>
+            <div class="ws-label">鼻胃管</div>
           </div>
           <div class="ws-item" data-filter="tube-foley">
             <div class="ws-value ws-foley" id="stat-foley">—</div>
-            <div class="ws-label">導尿管 ▾</div>
+            <div class="ws-label">導尿管</div>
           </div>
           <div class="ws-item" data-filter="tube-cvc">
             <div class="ws-value ws-cvc" id="stat-cvc">—</div>
-            <div class="ws-label">中心靜脈 ▾</div>
+            <div class="ws-label">中心靜脈</div>
           </div>
         </div>
       </div>
@@ -183,6 +183,10 @@
           <div class="modal-field">
             <div class="field-label">病歷號</div>
             <div class="field-value" id="m-medrec"></div>
+          </div>
+          <div class="modal-field">
+            <div class="field-label">身分證</div>
+            <div class="field-value" id="m-idno"></div>
           </div>
           <div class="modal-field">
             <div class="field-label">生日</div>

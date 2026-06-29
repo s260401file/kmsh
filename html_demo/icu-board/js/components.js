@@ -126,24 +126,27 @@ function renderStats(beds) {
   document.getElementById("stat-cvc").textContent      = s.cvc;
 }
 
-function renderAllBeds(beds) {
-  const f4 = beds.filter(b => b.floor === 4);
-  const f3 = beds.filter(b => b.floor === 3);
+// 單樓層渲染（對齊 React）：只畫目前樓層的床位＋該樓層統計，並更新標題與切換鈕
+function renderFloor(floor) {
+  const floorBeds = MOCK_DATA.beds.filter(b => b.floor === floor);
 
-  const grid4 = document.getElementById("grid-4f");
-  const grid3 = document.getElementById("grid-3f");
-
-  grid4.innerHTML = f4.map(renderBedCard).join("");
-  grid3.innerHTML = f3.map(renderBedCard).join("");
+  const grid = document.getElementById("bed-grid");
+  grid.className = floor === 4 ? "grid-4f" : "grid-3f";
+  grid.innerHTML = floorBeds.map(renderBedCard).join("");
 
   // attach click handlers
-  document.querySelectorAll(".bed-card:not(.empty)").forEach(card => {
+  grid.querySelectorAll(".bed-card:not(.empty)").forEach(card => {
     card.addEventListener("click", () => {
-      const id = card.dataset.id;
-      const bed = beds.find(b => b.id === id);
+      const bed = floorBeds.find(b => b.id === card.dataset.id);
       if (bed) openModal(bed);
     });
   });
+
+  // 標題、切換鈕、統計
+  document.getElementById("floor-label").textContent = `▌ ${floor}F　共 ${floorBeds.length} 床`;
+  document.getElementById("stats-title").textContent = `▌ ${floor}F 統計`;
+  document.getElementById("floor-toggle").textContent = floor === 4 ? "切換 3F ▸" : "◂ 切回 4F";
+  renderStats(floorBeds);
 }
 
 function openModal(bed) {
@@ -155,6 +158,7 @@ function openModal(bed) {
   document.getElementById("m-name").textContent    = p.name;
   document.getElementById("m-basic").textContent   = `${p.gender === "M" ? "男" : "女"} / ${p.age}歲`;
   document.getElementById("m-medrec").textContent  = p.medRecord || "—";
+  document.getElementById("m-idno").textContent    = p.idNo || "—";
   document.getElementById("m-birth").textContent   = p.birthDate  || "—";
   document.getElementById("m-dept").textContent    = p.department || "—";
   document.getElementById("m-diag").textContent    = p.diagnosis;

@@ -61,6 +61,11 @@ document.addEventListener("DOMContentLoaded", () => {
   renderAllBeds(MOCK_DATA.Beds);
   renderLegendShapes();
   renderStaffShifts(MOCK_DATA.ShiftStaff);
+  renderOnCall(MOCK_DATA.OnCall);
+
+  // 死亡(N)：顯示於底部「死亡」篩選旗標旁（示意；正式版由 Board_ER_TypeE 另計、不佔床）
+  const dc = getStats(MOCK_DATA.Beds).deceased;
+  document.getElementById("deceased-count").textContent = `(${dc})`;
 
   updateClock();
   setInterval(updateClock, 1000);

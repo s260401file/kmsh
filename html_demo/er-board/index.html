@@ -6,7 +6,7 @@
   <title>高雄市立民生醫院 急診室 電子白板</title>
   <link rel="stylesheet" href="css/variables.css?v=1">
   <link rel="stylesheet" href="css/reset.css?v=1">
-  <link rel="stylesheet" href="css/main.css?v=4">
+  <link rel="stylesheet" href="css/main.css?v=5">
   <link rel="stylesheet" href="css/components.css?v=1">
 </head>
 <body>
@@ -44,7 +44,7 @@
 
     <!-- Beds panel -->
     <div class="beds-panel">
-      <div class="ward-title">▌ 急診室　共 19 床（負壓 2＋兒科留觀 1＋第一留觀 5＋第二留觀 6＋急診手術 2＋急救 3）</div>
+      <div class="ward-title">▌ 急診室　共 19 床</div>
       <div class="ward-grid" id="ward-grid">
         <div class="nursing-station">護理站</div>
 
@@ -68,10 +68,16 @@
         <div class="zone-name" style="grid-column:5/6;  grid-row:7/9">急診手術室</div>
         <div class="zone-name" style="grid-column:1/4;  grid-row:7">急救室</div>
 
-        <!-- 三班護理人員（右上空區 C7-11 × R1-2）-->
+        <!-- 三班醫護人員（右上空區 C7-11 × R1-2）：標題列＝白/夜 照服員＋醫師，內容＝各班護理師 -->
         <div class="staff-shifts" style="grid-column:7/12; grid-row:1/3">
-          <div class="ss-title">三班醫護人員</div>
+          <div class="ss-title" id="ss-title"></div>
           <div class="ss-body" id="ss-body"></div>
+        </div>
+
+        <!-- 各科值班醫師（MER09 下方空區 C7-11 × R7-8）-->
+        <div class="oncall-panel" style="grid-column:7/12; grid-row:7/9">
+          <div class="oc-title">各科值班醫師</div>
+          <div class="oc-grid" id="oc-grid"></div>
         </div>
 
       </div>
@@ -157,7 +163,7 @@
   <!-- ── Filter bar ── -->
   <div class="filter-bar">
     <button class="filter-btn active" data-filter="all">全部</button>
-    <button class="badge badge-filter" data-filter="死亡"><span class="flag-dot flag-dot-死亡"></span>死亡</button>
+    <button class="badge badge-filter" data-filter="死亡"><span class="flag-dot flag-dot-死亡"></span>死亡<span id="deceased-count"></span></button>
     <button class="badge badge-filter" data-filter="MBD"><span class="flag-dot flag-dot-MBD"></span>MBD</button>
     <button class="badge badge-filter" data-filter="AAD"><span class="flag-dot flag-dot-AAD"></span>AAD</button>
     <button class="badge badge-filter" data-filter="轉出"><span class="flag-dot flag-dot-轉出"></span>轉出</button>
@@ -261,8 +267,8 @@
     </div>
   </div>
 
-  <script src="js/mockData.js?v=3"></script>
-  <script src="js/components.js?v=3"></script>
-  <script src="js/main.js?v=3"></script>
+  <script src="js/mockData.js?v=4"></script>
+  <script src="js/components.js?v=4"></script>
+  <script src="js/main.js?v=4"></script>
 </body>
 </html>
