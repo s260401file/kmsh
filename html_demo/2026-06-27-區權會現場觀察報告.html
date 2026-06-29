@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>2026-06-27 633 戶區權會現場觀察報告</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Microsoft JhengHei", "微軟正黑體", sans-serif;
+    background: #f5f7fa;
+    color: #2c3e50;
+    line-height: 1.75;
+    padding-bottom: 60px;
+  }
+
+  /* === 側邊欄 === */
+  #sidebar {
+    position: fixed;
+    top: 0; left: 0;
+    width: 240px;
+    height: 100vh;
+    background: #1e2a38;
+    color: #ddd;
+    padding: 24px 0;
+    overflow-y: auto;
+    z-index: 100;
+  }
+  #sidebar h2 {
+    color: #6cb4ff;
+    font-size: 16px;
+    padding: 0 20px 16px;
+    border-bottom: 1px solid #3a4858;
+    margin-bottom: 12px;
+  }
+  #sidebar ul { list-style: none; padding: 0; }
+  #sidebar li a {
+    display: block;
+    color: #bcc7d4;
+    text-decoration: none;
+    padding: 9px 20px;
+    border-left: 3px solid transparent;
+    font-size: 13px;
+    transition: all 0.2s;
+  }
+  #sidebar li a:hover { background: #2a3a4e; color: #fff; }
+  #sidebar li a.active {
+    background: #2c3e54;
+    color: #6cb4ff;
+    border-left-color: #6cb4ff;
+  }
+
+  /* === 內容 === */
+  main {
+    margin-left: 240px;
+    padding: 0;
+  }
+
+  /* === 頁首 === */
+  header.hero {
+    background: linear-gradient(135deg, #1a3a6e 0%, #5e3a8e 100%);
+    color: white;
+    padding: 60px 40px 50px;
+    text-align: center;
+  }
+  header.hero h1 {
+    font-size: 36px;
+    margin-bottom: 10px;
+  }
+  header.hero p { font-size: 17px; opacity: 0.9; }
+  header.hero .meta {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    margin-top: 24px;
+    flex-wrap: wrap;
+  }
+  header.hero .meta-item {
+    background: rgba(255,255,255,0.15);
+    padding: 10px 20px;
+    border-radius: 10px;
+  }
+  header.hero .meta-item .label {
+    font-size: 12px;
+    opacity: 0.8;
+  }
+  header.hero .meta-item .value {
+    font-size: 22px;
+    font-weight: bold;
+  }
+
+  .content-wrap {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 40px 30px;
+  }
+
+  section {
+    background: white;
+    border-radius: 16px;
+    padding: 36px;
+    margin-bottom: 28px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.05);
+    scroll-margin-top: 20px;
+  }
+  section h2 {
+    font-size: 26px;
+    color: #1a3a6e;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  section h2 .num {
+    background: #1a3a6e;
+    color: white;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    font-weight: bold;
+  }
+  section .subtitle {
+    color: #7a8a9c;
+    font-size: 15px;
+    margin-bottom: 26px;
+    padding-left: 54px;
+  }
+
+  h3 {
+    font-size: 18px;
+    color: #1a3a6e;
+    margin: 20px 0 12px;
+    padding-left: 12px;
+    border-left: 4px solid #5e9bff;
+  }
+
+  /* === 流程卡 === */
+  .flow-card {
+    background: #f9fbfd;
+    border-radius: 10px;
+    padding: 20px 24px;
+    margin: 12px 0;
+    border-left: 5px solid #5e9bff;
+  }
+  .flow-card h4 {
+    color: #1a3a6e;
+    font-size: 16px;
+    margin-bottom: 10px;
+  }
+  .flow-card ul {
+    list-style: none;
+    padding: 0;
+  }
+  .flow-card ul li {
+    padding: 4px 0 4px 22px;
+    position: relative;
+    font-size: 15px;
+  }
+  .flow-card ul li::before {
+    content: "▸";
+    position: absolute;
+    left: 0;
+    color: #5e9bff;
+  }
+  .flow-card .highlight {
+    background: #fff3cd;
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: #856404;
+  }
+
+  /* === 數字凸顯 === */
+  .stat-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 14px;
+    margin: 20px 0;
+  }
+  .stat-box {
+    background: linear-gradient(135deg, #1a3a6e 0%, #3d6ab0 100%);
+    color: white;
+    border-radius: 10px;
+    padding: 16px;
+    text-align: center;
+  }
+  .stat-box .stat-label { font-size: 12px; opacity: 0.8; }
+  .stat-box .stat-value {
+    font-size: 28px;
+    font-weight: bold;
+    margin-top: 4px;
+  }
+  .stat-box .stat-desc { font-size: 11px; opacity: 0.7; margin-top: 4px; }
+
+  /* === 場景動線視覺 === */
+  .scene-track {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin: 20px 0;
+    flex-wrap: wrap;
+  }
+  .scene-step {
+    background: white;
+    border: 2px solid #5e9bff;
+    border-radius: 12px;
+    padding: 12px 16px;
+    text-align: center;
+    min-width: 100px;
+  }
+  .scene-step .icon { font-size: 28px; display: block; margin-bottom: 4px; }
+  .scene-step .label { font-size: 12px; color: #1a3a6e; font-weight: bold; }
+  .scene-arrow { font-size: 22px; color: #5e9bff; }
+
+  /* === 黃色小卡 mockup === */
+  .yellow-card-mockup {
+    background: linear-gradient(135deg, #fff9c4 0%, #fff59d 100%);
+    border: 2px dashed #f9a825;
+    border-radius: 10px;
+    padding: 20px;
+    max-width: 320px;
+    margin: 16px auto;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  }
+  .yellow-card-mockup .title {
+    font-size: 13px;
+    color: #8d6e00;
+    margin-bottom: 10px;
+    border-bottom: 1px dashed #c0a000;
+    padding-bottom: 6px;
+  }
+  .stickers {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .sticker {
+    background: white;
+    border: 2px solid #1a3a6e;
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-weight: bold;
+    color: #1a3a6e;
+    font-size: 14px;
+  }
+  .sticker.proxy {
+    border-color: #c62828;
+    color: #c62828;
+    background: #ffebee;
+  }
+
+  /* === 對照表 === */
+  .compare-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    font-size: 14px;
+  }
+  .compare-table th {
+    background: #1a3a6e;
+    color: white;
+    padding: 12px 14px;
+    text-align: left;
+  }
+  .compare-table td {
+    padding: 12px 14px;
+    border-bottom: 1px solid #e0e7ef;
+    vertical-align: top;
+  }
+  .compare-table tr:nth-child(even) td { background: #f9fbfd; }
+  .compare-table td.idx {
+    text-align: center;
+    font-weight: bold;
+    color: #5e9bff;
+    width: 40px;
+  }
+  .compare-table td.result {
+    text-align: center;
+    font-weight: bold;
+    white-space: nowrap;
+  }
+  .compare-table .res-yes { color: #2e7d32; }
+  .compare-table .res-no { color: #c62828; }
+  .compare-table .res-warn { color: #e65100; }
+  .compare-table .res-out { color: #1565c0; }
+  .compare-table code {
+    background: #f3f3f3;
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-size: 12px;
+    color: #5e3a8e;
+  }
+
+  /* === 衍生洞察 === */
+  .insight-card {
+    background: white;
+    border: 2px solid #e0e7ef;
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin: 14px 0;
+  }
+  .insight-card.priority {
+    border-color: #ff9800;
+    background: #fff8e1;
+  }
+  .insight-card h4 {
+    color: #1a3a6e;
+    font-size: 17px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .insight-card .obs {
+    background: #f0f4f8;
+    border-radius: 6px;
+    padding: 8px 12px;
+    margin: 8px 0;
+    font-size: 14px;
+    color: #555;
+  }
+  .insight-card .obs strong { color: #1a3a6e; }
+  .insight-card .impl {
+    background: #e8f5e9;
+    border-radius: 6px;
+    padding: 8px 12px;
+    margin: 8px 0;
+    font-size: 14px;
+    color: #2e7d32;
+  }
+  .insight-card .impl strong { color: #1b5e20; }
+
+  /* === 投影衝突情境 === */
+  .projector-conflict {
+    display: grid;
+    grid-template-columns: 1fr 80px 1fr;
+    align-items: center;
+    gap: 12px;
+    margin: 20px 0;
+  }
+  .proj-card {
+    background: #f9fbfd;
+    border: 2px solid #5e9bff;
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+  }
+  .proj-card h4 { color: #1a3a6e; margin-bottom: 8px; }
+  .proj-card .icon { font-size: 48px; margin: 12px 0; }
+  .proj-vs {
+    text-align: center;
+    font-size: 36px;
+    color: #c62828;
+  }
+
+  /* === 總結評分 === */
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 14px;
+    margin: 20px 0;
+  }
+  .summary-cell {
+    border-radius: 12px;
+    padding: 20px;
+    color: white;
+    text-align: center;
+  }
+  .summary-cell.good { background: linear-gradient(135deg, #2e7d32 0%, #66bb6a 100%); }
+  .summary-cell.warn { background: linear-gradient(135deg, #e65100 0%, #ff9800 100%); }
+  .summary-cell.bad { background: linear-gradient(135deg, #c62828 0%, #ef5350 100%); }
+  .summary-cell.out { background: linear-gradient(135deg, #1565c0 0%, #42a5f5 100%); }
+  .summary-cell.edu { background: linear-gradient(135deg, #6a1b9a 0%, #ab47bc 100%); }
+  .summary-cell .count {
+    font-size: 40px;
+    font-weight: bold;
+  }
+  .summary-cell .title {
+    font-size: 14px;
+    margin-top: 4px;
+  }
+  .summary-cell .items {
+    font-size: 11px;
+    opacity: 0.9;
+    margin-top: 8px;
+  }
+
+  /* === 建議調整表 === */
+  .suggestion-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+  }
+  .suggestion-table th {
+    background: #f3f0fa;
+    color: #5e3a8e;
+    padding: 12px 14px;
+    text-align: left;
+    font-size: 14px;
+  }
+  .suggestion-table td {
+    padding: 12px 14px;
+    border-bottom: 1px solid #e0e7ef;
+    font-size: 14px;
+  }
+  .suggestion-table .obs-col { width: 32%; color: #1a3a6e; font-weight: bold; }
+
+  /* === 結論卡 === */
+  .conclusion {
+    background: linear-gradient(135deg, #1a3a6e 0%, #3d6ab0 100%);
+    color: white;
+    border-radius: 14px;
+    padding: 30px;
+    margin: 20px 0;
+  }
+  .conclusion h3 {
+    border: none;
+    padding: 0;
+    color: white;
+    font-size: 22px;
+    margin-bottom: 14px;
+  }
+  .conclusion p { font-size: 16px; line-height: 1.8; }
+  .conclusion strong { color: #ffd54f; }
+
+  @media (max-width: 880px) {
+    #sidebar { display: none; }
+    main { margin-left: 0; }
+    .projector-conflict { grid-template-columns: 1fr; }
+    .proj-vs { transform: rotate(90deg); }
+  }
+</style>
+</head>
+<body>
+
+<nav id="sidebar">
+  <h2>📋 報告目錄</h2>
+  <ul>
+    <li><a href="#info" class="active">1. 基本資訊</a></li>
+    <li><a href="#flow">2. 現場流程</a></li>
+    <li><a href="#projector">2.9 投影衝突</a></li>
+    <li><a href="#compare">3. 系統對照表</a></li>
+    <li><a href="#insights">4. 衍生洞察</a></li>
+    <li><a href="#suggestions">5. 規劃更新</a></li>
+    <li><a href="#summary">6. 總結評分</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<header class="hero">
+  <h1>633 戶區權會現場觀察</h1>
+  <p>真實現場流程記錄 + ChosenVote 系統功能對照</p>
+  <div class="meta">
+    <div class="meta-item">
+      <div class="label">觀察日期</div>
+      <div class="value">2026-06-27</div>
+    </div>
+    <div class="meta-item">
+      <div class="label">社區規模</div>
+      <div class="value">633 戶</div>
+    </div>
+    <div class="meta-item">
+      <div class="label">座位</div>
+      <div class="value">360 座</div>
+    </div>
+    <div class="meta-item">
+      <div class="label">實到</div>
+      <div class="value">389 人</div>
+    </div>
+  </div>
+</header>
+
+<div class="content-wrap">
+
+<!-- ============== 1. 基本資訊 ============== -->
+<section id="info">
+  <h2><span class="num">1</span>基本資訊</h2>
+  <p class="subtitle">大會規模與場地概況</p>
+
+  <div class="stat-row">
+    <div class="stat-box">
+      <div class="stat-label">總戶數</div>
+      <div class="stat-value">633</div>
+      <div class="stat-desc">A~H 共 8 棟</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-label">座位數</div>
+      <div class="stat-value">360</div>
+      <div class="stat-desc">可再擴充</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-label">實到人數</div>
+      <div class="stat-value">389</div>
+      <div class="stat-desc">出席率約 62%</div>
+    </div>
+    <div class="stat-box" style="background:linear-gradient(135deg,#c62828 0%,#ef5350 100%);">
+      <div class="stat-label">場地超時</div>
+      <div class="stat-value">2 萬</div>
+      <div class="stat-desc">每小時 NT$</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============== 2. 現場流程記錄 ============== -->
+<section id="flow">
+  <h2><span class="num">2</span>現場流程記錄</h2>
+  <p class="subtitle">完整觀察到的人工作業流程</p>
+
+  <h3>2.1 報到動線</h3>
+  <div class="flow-card">
+    <ul>
+      <li>每棟樓一桌，A~H 共 <span class="highlight">8 個簽到桌</span></li>
+      <li>每桌配置 <span class="highlight">1 名工作人員</span></li>
+      <li><span class="highlight">不核對身份</span>（出示資料即可）</li>
+      <li>若有委託 → 在被委託人的格子上簽名</li>
+      <li>一人可委託多人，例：委託 2 人 → 拿到 <span class="highlight">3 份資料袋</span>（1 本人 + 2 委託）</li>
+    </ul>
+  </div>
+
+  <h3>2.2 資料袋內容</h3>
+  <div class="flow-card">
+    <ul>
+      <li>1 個 <strong>表決牌</strong>（議案時舉牌）</li>
+      <li>1 本 <strong>簡報手冊</strong>（紙本議案說明）</li>
+    </ul>
+  </div>
+
+  <h3>2.3 黃色小卡 + 貼紙整合（人工身份匯總）</h3>
+  <div class="flow-card">
+    <p style="margin-bottom:12px;">報到後，工作人員交付一張空白黃色小卡，依報到人 + 委託戶資訊，從預備好的貼紙堆找出對應戶別貼紙，貼在小卡上。</p>
+  </div>
+
+  <div class="yellow-card-mockup">
+    <div class="title">📝 黃色小卡（範例）</div>
+    <div class="stickers">
+      <div class="sticker">B3-32</div>
+      <div class="sticker proxy">B3-33</div>
+      <div class="sticker proxy">B3-36</div>
+    </div>
+    <div style="font-size:11px; color:#8d6e00; margin-top:10px;">藍色 = 本人，紅色 = 受託</div>
+  </div>
+  <p style="text-align:center; color:#666; font-size:13px;">↑ 這張小卡是後續抽車位的依據</p>
+
+  <h3>2.4 抽車位流程</h3>
+  <div class="flow-card">
+    <ul>
+      <li>拿黃色小卡到抽車位櫃台</li>
+      <li>依貼紙數量決定抽籤次數：<span class="highlight">3 張貼紙 = 抽 3 次</span></li>
+      <li>車位分 <strong>1F</strong> 與 <strong>B1</strong></li>
+      <li>若抽到混合（1F + B1）→ 工作人員會問「哪一戶要 1F」</li>
+      <li>同為 1F 或同為 B1 → 不再詢問</li>
+      <li>典型效率：<span class="highlight">1 分鐘 / 3 戶</span></li>
+      <li>極端案例：<span class="highlight">1 人代表 17 戶 → 約 5 分鐘</span></li>
+    </ul>
+  </div>
+
+  <h3>2.5 抽車位排隊</h3>
+  <div class="stat-row">
+    <div class="stat-box" style="background:linear-gradient(135deg,#5e3a8e 0%,#9b59b6 100%);">
+      <div class="stat-label">櫃台數</div>
+      <div class="stat-value">2</div>
+    </div>
+    <div class="stat-box" style="background:linear-gradient(135deg,#5e3a8e 0%,#9b59b6 100%);">
+      <div class="stat-label">最多排隊</div>
+      <div class="stat-value">20 人</div>
+    </div>
+    <div class="stat-box" style="background:linear-gradient(135deg,#5e3a8e 0%,#9b59b6 100%);">
+      <div class="stat-label">最多代表戶</div>
+      <div class="stat-value">17 戶</div>
+    </div>
+  </div>
+
+  <h3>2.6 大會進行</h3>
+  <div class="flow-card" style="border-left-color:#c62828; background:#ffebee;">
+    <ul>
+      <li>1 個臨時動議討論長達 <span class="highlight">1 小時</span></li>
+      <li>導致原訂的開票時程被嚴重壓縮</li>
+      <li>場地超時 → 1 小時 NT$ 20,000 → 主席壓力大</li>
+    </ul>
+  </div>
+
+  <h3>2.7 開票方式（最終未進行）</h3>
+  <div class="flow-card" style="border-left-color:#e65100;">
+    <ul>
+      <li>會場準備 <strong>每棟樓一張全開大字報</strong>（A~H 共 8 張）</li>
+      <li>預計用於人工開票記錄</li>
+      <li><span class="highlight">因時間不足，最終未進行開票</span></li>
+    </ul>
+  </div>
+
+  <h3>2.8 投票與離場行為</h3>
+  <div class="flow-card">
+    <p style="margin-bottom:8px;">部分住戶的完整動線：</p>
+    <div class="scene-track">
+      <div class="scene-step">
+        <span class="icon">📝</span>
+        <div class="label">簽到</div>
+      </div>
+      <span class="scene-arrow">➜</span>
+      <div class="scene-step">
+        <span class="icon">🗳️</span>
+        <div class="label">領選票</div>
+      </div>
+      <span class="scene-arrow">➜</span>
+      <div class="scene-step">
+        <span class="icon">✏️</span>
+        <div class="label">打勾</div>
+      </div>
+      <span class="scene-arrow">➜</span>
+      <div class="scene-step">
+        <span class="icon">📥</span>
+        <div class="label">投入箱</div>
+      </div>
+      <span class="scene-arrow">➜</span>
+      <div class="scene-step" style="border-color:#c62828;">
+        <span class="icon">🚶‍♂️</span>
+        <div class="label" style="color:#c62828;">離場</div>
+      </div>
+    </div>
+    <p style="text-align:center; color:#c62828; font-size:14px; margin-top:12px;">
+      ⚠️ 不留下參與會議，直接離開
+    </p>
+  </div>
+
+  <h3 id="projector" style="border-left-color:#9b59b6;">2.9 投影資源衝突</h3>
+  <div class="flow-card" style="border-left-color:#9b59b6; background:#f3f0fa;">
+    <p style="margin-bottom:12px;">主辦方有自行配置 <strong>簡報內容</strong>（會議流程、議案說明）需投影；系統的 <strong>大投影畫面</strong>（開票動畫、即時票數）也需要投影資源。但現場 <span class="highlight">只有一個投影畫面</span> → 兩者衝突。</p>
+  </div>
+
+  <div class="projector-conflict">
+    <div class="proj-card">
+      <h4>🎤 主辦方</h4>
+      <div class="icon">📊</div>
+      <p style="font-size:13px; color:#555;">會議簡報<br>議案說明<br>報告事項</p>
+    </div>
+    <div class="proj-vs">⚡</div>
+    <div class="proj-card">
+      <h4>💻 ChosenVote</h4>
+      <div class="icon">🗳️</div>
+      <p style="font-size:13px; color:#555;">開票畫面<br>即時票數<br>選舉動畫</p>
+    </div>
+  </div>
+
+  <div class="flow-card" style="background:#fffbf0;">
+    <h4 style="color:#e65100;">⚠️ 實務影響</h4>
+    <ul>
+      <li>同一投影機切換來源（HDMI 切換）→ 操作繁瑣、易出錯</li>
+      <li>或主辦方備兩套設備（投影機 + 大電視）→ 成本與場地配置壓力</li>
+      <li>或某一方資訊被犧牲（典型：主辦方簡報為主，系統開票畫面看不到）</li>
+    </ul>
+  </div>
+
+  <h4 style="color:#5e3a8e; margin:24px 0 12px; padding-left:12px; border-left:4px solid #9b59b6;">💡 四種可能的解決方向</h4>
+
+  <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:14px;">
+
+    <div style="background:#e8f5e9; border:2px solid #66bb6a; border-radius:10px; padding:16px;">
+      <h5 style="color:#2e7d32; margin-bottom:8px;">① 嵌入資訊條</h5>
+      <p style="font-size:13px; color:#555; margin-bottom:8px;">系統資訊以橫條方式疊加在主辦方簡報下方（80% 簡報 + 20% 資訊條）。</p>
+      <p style="font-size:12px; color:#888;">✅ 不需主辦方配合 ｜ ⏱️ 工程量：小（約 1 週）</p>
+    </div>
+
+    <div style="background:#e3f2fd; border:2px solid #42a5f5; border-radius:10px; padding:16px;">
+      <h5 style="color:#1565c0; margin-bottom:8px;">② 分割畫面</h5>
+      <p style="font-size:13px; color:#555; margin-bottom:8px;">主辦方簡報與系統開票畫面左右並列各佔一半。</p>
+      <p style="font-size:12px; color:#888;">⚠️ 需主辦方提供半屏簡報 ｜ ⏱️ 工程量：中（約 2 週）</p>
+    </div>
+
+    <div style="background:#fff3e0; border:2px solid #ff9800; border-radius:10px; padding:16px;">
+      <h5 style="color:#e65100; margin-bottom:8px;">③ 替換切換</h5>
+      <p style="font-size:13px; color:#555; margin-bottom:8px;">平時顯示主辦方簡報，開票瞬間切換到系統全螢幕（需 HDMI 切換器）。</p>
+      <p style="font-size:12px; color:#888;">⚠️ 切換瞬間易出錯 ｜ ⏱️ 工程量：極小（操作 SOP 即可）</p>
+    </div>
+
+    <div style="background:#f3e5f5; border:2px solid #ab47bc; border-radius:10px; padding:16px;">
+      <h5 style="color:#6a1b9a; margin-bottom:8px;">④ 外掛浮層</h5>
+      <p style="font-size:13px; color:#555; margin-bottom:8px;">系統資訊作為浮動小視窗疊在主辦方簡報任意位置（PowerPoint Add-in 或 OBS 來源）。</p>
+      <p style="font-size:12px; color:#888;">✨ 補助案技術亮點 ｜ ⏱️ 工程量：大（3-4 週）</p>
+    </div>
+
+  </div>
+
+  <div style="background:#e8f5e9; border-left:4px solid #2e7d32; padding:14px 18px; border-radius:8px; margin-top:16px; font-size:14px;">
+    <strong style="color:#2e7d32;">🎯 推薦方向：</strong>
+    <span style="color:#555;">
+      <strong>階段 1 做嵌入資訊條（1 週）</strong> 立刻解決現場痛點；
+      <strong>階段 2 做外掛浮層（補助案執行）</strong> 作為技術亮點。
+      分割畫面實務上主辦方少配合，不建議；切換可作為 SOP 備案。
+    </span>
+  </div>
+</section>
+
+<!-- ============== 3. 系統對照表 ============== -->
+<section id="compare">
+  <h2><span class="num">3</span>ChosenVote 系統功能對照表</h2>
+  <p class="subtitle">12 項現場流程逐項對照系統現況</p>
+
+  <div style="background:#f0f4f8; border-radius:8px; padding:12px 16px; margin-bottom:16px; font-size:13px;">
+    <strong>圖例：</strong>
+    <span style="color:#2e7d32;">✅ 系統已可取代</span> ·
+    <span style="color:#e65100;">⚠️ 部分對應 / 待完善</span> ·
+    <span style="color:#c62828;">❌ 系統缺口</span> ·
+    <span style="color:#1565c0;">🔵 超出範圍</span>
+  </div>
+
+  <table class="compare-table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>現場流程</th>
+        <th>ChosenVote 現況</th>
+        <th>對照</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="idx">1</td>
+        <td>報到時無身份核對</td>
+        <td>純掃 QR Code，無額外驗證<br><code>QrcodeController.ConfirmCheckIn</code></td>
+        <td class="result res-warn">⚠️<br>與現場一致</td>
+      </tr>
+      <tr>
+        <td class="idx">2</td>
+        <td>一人多戶（最多 17 戶）整合</td>
+        <td><code>GetBindPropertyInfoListViaQrcode</code> 支援同一掃碼取得多戶</td>
+        <td class="result res-yes">✅<br>更聰明</td>
+      </tr>
+      <tr>
+        <td class="idx">3</td>
+        <td>委託書紙本簽名</td>
+        <td>可產出含 QR Code 的 PDF 委託書<br><code>FileService.CreatDelegatePDF</code></td>
+        <td class="result res-yes">✅<br>電子化</td>
+      </tr>
+      <tr>
+        <td class="idx">4</td>
+        <td>黃色小卡 + 貼紙標記委託戶</td>
+        <td>QR Code 已內含所有綁定關係，掃一次即顯示全部</td>
+        <td class="result res-yes">✅<br>取代人工</td>
+      </tr>
+      <tr>
+        <td class="idx">5</td>
+        <td>資料袋（表決牌 + 簡報手冊）</td>
+        <td>無對應模組</td>
+        <td class="result res-no">❌<br>未涵蓋</td>
+      </tr>
+      <tr>
+        <td class="idx">6</td>
+        <td>抽車位（抽籤、1F/B1 分流）</td>
+        <td>無此功能</td>
+        <td class="result res-out">🔵<br>超出範圍</td>
+      </tr>
+      <tr>
+        <td class="idx">7</td>
+        <td>大字報實體開票</td>
+        <td>純電子計票，即時統計<br><code>MeetingStep8.js / MeetingStep9.js</code></td>
+        <td class="result res-yes">✅<br>完全取代</td>
+      </tr>
+      <tr>
+        <td class="idx">8</td>
+        <td>臨時動議 1 小時導致開票取消</td>
+        <td>無計時器 / 時長管控</td>
+        <td class="result res-no">❌<br>明確缺口</td>
+      </tr>
+      <tr>
+        <td class="idx">9</td>
+        <td>報到後拿票即離場</td>
+        <td>投票權限僅看 JWT + Device，無在場驗證</td>
+        <td class="result res-warn">⚠️<br>規劃中</td>
+      </tr>
+      <tr>
+        <td class="idx">10</td>
+        <td>實體選票劃記 + 投票箱</td>
+        <td>純電子投票</td>
+        <td class="result res-yes">✅<br>取代</td>
+      </tr>
+      <tr>
+        <td class="idx">11</td>
+        <td>場地超時致開票取消</td>
+        <td>電子計票 20-30 秒完成</td>
+        <td class="result res-yes">✅<br>根本解決</td>
+      </tr>
+      <tr style="background:#f3f0fa !important;">
+        <td class="idx" style="color:#9b59b6;">12</td>
+        <td><strong>投影資源衝突</strong>（主辦方簡報 + 系統大投影只有一個畫面）</td>
+        <td><code>MeetingOnScreen</code> 為獨佔全螢幕設計</td>
+        <td class="result res-no">❌<br>明確缺口</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ============== 4. 衍生洞察 ============== -->
+<section id="insights">
+  <h2><span class="num">4</span>衍生洞察</h2>
+  <p class="subtitle">從觀察提煉出的關鍵發現</p>
+
+  <div class="insight-card priority">
+    <h4>⚡ 4.1 真正的壓力測試 — 300 人同時投票</h4>
+    <div class="obs">
+      <strong>觀察事實：</strong>實到 389 人，扣除已離場者，現場仍可能有 <strong>300+ 人同時投票</strong>
+    </div>
+    <div style="background:#ffebee; border-radius:6px; padding:10px 14px; margin:8px 0; font-size:14px; color:#c62828;">
+      <strong>關鍵釐清：</strong>17 戶委託對單一使用者只是「UI 顯示 + 多筆寫入」（既有架構可處理），<strong>真正的壓力來自並發</strong>。
+    </div>
+    <div class="impl">
+      <strong>四個並發瓶頸：</strong>
+      <br>· <strong>DB 寫入並發</strong> — 300 人在同一秒按同意 → 300 個 INSERT + 300 個 VoteLock 檢查
+      <br>· <strong>WebSocket 廣播</strong> — 每張票進來都即時廣播給所有連線端（300+ 連線 × 300 次更新）
+      <br>· <strong>計票即時統計</strong> — 後端要在毫秒內回應目前票數
+      <br>· <strong>連線數本身</strong> — WebSocket 同時 300+ 長連線（含大投影與後台）
+    </div>
+    <div class="impl" style="background:#fff8e1; color:#856404;">
+      <strong>系統意涵：</strong>
+      <br>· 做 <strong>並發投票壓力測試</strong>：模擬 300-500 人於 5 秒內全部送出
+      <br>· 評估是否需 DB 批次寫入、連線池調整、廣播節流（throttling）
+      <br>· 大型公會（700 會員）可能要面對 <strong>400+ 並發</strong>，需提前驗證
+    </div>
+  </div>
+
+  <div class="insight-card priority">
+    <h4>🚨 4.2 臨時動議時長失控是真實風險</h4>
+    <div class="obs"><strong>觀察事實：</strong>1 個臨時動議討論 1 小時，導致整場會議節奏崩盤</div>
+    <div class="impl">
+      <strong>系統意涵：</strong>應將「時長管控」提升至 P2 路線圖 ——
+      <br>· 議題討論前可由主席設定預期時長
+      <br>· 超時時主席控制台顯示醒目提醒
+      <br>· 大投影顯示「本議題已討論 X 分鐘」
+    </div>
+  </div>
+
+  <div class="insight-card">
+    <h4>⏱️ 4.3 實體開票可被完全取代，主要痛點是「時間」</h4>
+    <div class="obs"><strong>觀察事實：</strong>場地超時導致開票直接放棄，住戶投了票卻沒計票結果</div>
+    <div class="impl">
+      <strong>系統意涵：</strong>ChosenVote 的核心價值不是「更準確」而是「更快」——
+      <br>· 數位計票 20-30 秒 vs 紙本 30+ 分鐘
+      <br>· 是說服客戶採用系統的最有力理由
+    </div>
+  </div>
+
+  <div class="insight-card">
+    <h4>🅿️ 4.4 抽車位流程的特殊邏輯（若未來開發）</h4>
+    <div class="obs"><strong>觀察事實：</strong>抽籤次數 = 委託戶數 + 本人，1F / B1 還要再分配</div>
+    <div class="impl">
+      <strong>設計意涵（若超出範圍變更）：</strong>
+      <br>· 一張小卡 → 多次抽籤
+      <br>· 抽出車位後跨房號分配
+      <br>· 1F / B1 偏好設定
+      <br>· <strong>不在當前 ChosenVote 範圍內</strong>
+    </div>
+  </div>
+
+  <div class="insight-card">
+    <h4>🛡️ 4.5「不核對身份」是業界現況</h4>
+    <div class="obs"><strong>觀察事實：</strong>8 個簽到桌均無身份核對程序</div>
+    <div class="impl">
+      <strong>系統意涵：</strong>系統不必強推身份驗證 KYC ——
+      <br>· QR Code 內含戶別綁定關係，<strong>自然避免冒用</strong>
+      <br>· 對客戶說明時可強調此設計：「不增加額外查驗步驟，但靠 QR Code 綁定戶別自動防呆」
+    </div>
+  </div>
+
+  <div class="insight-card priority">
+    <h4>📺 4.6 投影資源是稀缺資源（重要新發現）</h4>
+    <div class="obs"><strong>觀察事實：</strong>現場只有一個投影畫面，主辦方簡報已佔用，系統大投影沒有獨立位置</div>
+    <div class="impl">
+      <strong>系統意涵：</strong>目前的大投影元件採全螢幕獨佔設計，與現場「投影機只有一台、要與主辦方簡報共用」的現實不匹配。
+      <br><strong>可能的解決方向（本報告第二章已展開細節）：</strong>
+      <br>① <strong>嵌入資訊條</strong>（疊加在主辦方簡報下方，工程量小）
+      <br>② <strong>分割畫面</strong>（左右各半，需主辦方配合）
+      <br>③ <strong>替換切換</strong>（HDMI 切換 SOP，無工程）
+      <br>④ <strong>外掛浮層</strong>（PowerPoint / OBS 插件，技術亮點）
+    </div>
+    <p style="margin-top:8px; color:#e65100; font-weight:bold; font-size:14px;">
+      ⚡ 優先級判斷：此問題在每場大會都會發生 → 可能需提升至 P1 或 P2
+    </p>
+  </div>
+</section>
+
+<!-- ============== 5. 對既有規劃的更新建議 ============== -->
+<section id="suggestions">
+  <h2><span class="num">5</span>對既有規劃的更新建議</h2>
+  <p class="subtitle">本次觀察應如何反映到產品藍圖</p>
+
+  <table class="suggestion-table">
+    <thead>
+      <tr>
+        <th class="obs-col">觀察點</th>
+        <th>建議調整方向</th>
+        <th style="width:110px;">優先級</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="obs-col">300 人並發投票</td>
+        <td>投票模組加入「並發壓力測試」項目 — 模擬 300-500 人於 5 秒內同時送出投票，驗證資料庫寫入、WebSocket 廣播效能</td>
+        <td><span style="background:#c62828; color:white; padding:3px 10px; border-radius:10px; font-size:12px;">P1 高</span></td>
+      </tr>
+      <tr>
+        <td class="obs-col">臨時動議超時</td>
+        <td>新增「議題時長提醒」功能 — 議題討論前設定預期時長，超時時主席控制台與大投影顯示提醒</td>
+        <td><span style="background:#e65100; color:white; padding:3px 10px; border-radius:10px; font-size:12px;">P2 中</span></td>
+      </tr>
+      <tr>
+        <td class="obs-col">報到後離場</td>
+        <td>導入「在場驗證機制」— 投票前以驗證碼點名確認物理在場（呼應 2026-05-25 內部會議共識）</td>
+        <td><span style="background:#e65100; color:white; padding:3px 10px; border-radius:10px; font-size:12px;">P2 中</span></td>
+      </tr>
+      <tr>
+        <td class="obs-col">紙本流程強韌</td>
+        <td>客戶/主管面向的介紹文件中，可引用本觀察強調「數位系統根本性解決超時風險」的優勢</td>
+        <td><span style="background:#1565c0; color:white; padding:3px 10px; border-radius:10px; font-size:12px;">文宣</span></td>
+      </tr>
+      <tr style="background:#f3f0fa;">
+        <td class="obs-col" style="color:#9b59b6;">投影資源衝突</td>
+        <td><strong>新增「大投影共存模式」功能</strong> — 設計可與主辦方既有簡報共存的版面（嵌入資訊條 / 分割 / 切換 / 浮層四種方案）</td>
+        <td><span style="background:#c62828; color:white; padding:3px 10px; border-radius:10px; font-size:12px;">P1 高</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div style="background:#f3f0fa; border-left:4px solid #9b59b6; padding:14px 18px; border-radius:8px; margin-top:16px; font-size:14px;">
+    <strong style="color:#5e3a8e;">💡 優先級說明：</strong>
+    <span style="color:#555;">
+      P1 = 必做（影響可用性 / 合規 / 規模）；
+      P2 = 次重要（符合議事規則 / 體驗）；
+      文宣 = 業務面而非工程面項目。
+    </span>
+  </div>
+</section>
+
+<!-- ============== 6. 總結評分 ============== -->
+<section id="summary">
+  <h2><span class="num">6</span>總結評分</h2>
+  <p class="subtitle">從本次觀察的 12 項對照</p>
+
+  <div class="summary-grid">
+    <div class="summary-cell good">
+      <div class="count">5</div>
+      <div class="title">✅ 完全取代</div>
+      <div class="items">多戶整合 · 委託書 · 小卡貼紙 · 實體開票 · 超時風險</div>
+    </div>
+    <div class="summary-cell warn">
+      <div class="count">2</div>
+      <div class="title">⚠️ 部分對應 / 規劃中</div>
+      <div class="items">身份核對策略 · 報到後離場</div>
+    </div>
+    <div class="summary-cell bad">
+      <div class="count">3</div>
+      <div class="title">❌ 明確缺口</div>
+      <div class="items">紙本物資 · 議題時長管控 · 投影資源衝突</div>
+    </div>
+    <div class="summary-cell out">
+      <div class="count">1</div>
+      <div class="title">🔵 超出範圍</div>
+      <div class="items">抽車位</div>
+    </div>
+    <div class="summary-cell edu">
+      <div class="count">1</div>
+      <div class="title">⚪ 教育成本</div>
+      <div class="items">長輩電子投票習慣</div>
+    </div>
+  </div>
+
+  <div class="conclusion">
+    <h3>🎯 核心發現</h3>
+    <p>
+      ChosenVote 的設計方向與真實現場痛點 <strong>高度吻合</strong>，
+      特別是「<strong>時間效率</strong>」與「<strong>多戶整合</strong>」兩大強項；
+      可立即補強的方向是 <strong>議題時長管控</strong> 與 <strong>大投影共存模式</strong>
+      （兩者皆影響每場大會）。
+    </p>
+  </div>
+
+  <div style="text-align:center; margin-top:30px; color:#888; font-size:13px;">
+    📌 觀察日期：2026-06-27 ｜ 報告產出：天選選務系統團隊
+  </div>
+</section>
+
+</div>
+
+</main>
+
+<script>
+  const links = document.querySelectorAll('#sidebar a');
+  const sections = document.querySelectorAll('section[id]');
+  function updateActive() {
+    const scrollPos = window.scrollY + 100;
+    sections.forEach(sec => {
+      if (sec.offsetTop <= scrollPos && sec.offsetTop + sec.offsetHeight > scrollPos) {
+        const id = sec.id;
+        links.forEach(l => {
+          l.classList.remove('active');
+          if (l.getAttribute('href') === '#' + id) l.classList.add('active');
+        });
+      }
+    });
+  }
+  window.addEventListener('scroll', updateActive);
+  links.forEach(link => {
+    link.addEventListener('click', e => {
+      e.preventDefault();
+      const target = document.querySelector(link.getAttribute('href'));
+      if (target) window.scrollTo({ top: target.offsetTop - 20, behavior: 'smooth' });
+    });
+  });
+</script>
+
+</body>
+</html>
