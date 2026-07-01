@@ -115,9 +115,7 @@
 <body>
 
 <div class="topbar">
-  <h1>急診室（ER）— Demo API 規格對照</h1>
-  <div class="sub">本文件為前端 HTML Demo 所預期的後端 API 規格，用以與資訊單位提供之 API 介接清單對照</div>
-  <div class="meta">病房代碼 ER　·　急診床位 19 床（負壓 2＋急救 1＋診療 11＋留觀 2＋待床 3）　·　共 5 個 API 端點　·　<strong>PascalCase</strong> 欄位命名　·　最後更新 2026-06-29</div>
+  <h1>急診室（ER）</h1>
 </div>
 
 <div class="layout">
@@ -195,23 +193,23 @@
 
         <h4>HospitalInfo 結構</h4>
         <table class="field-table">
-          <thead><tr><th class="col-field">欄位（PascalCase）</th><th class="col-type">型別</th><th class="col-req">必填</th><th class="col-src">來源</th><th class="col-his">HIS欄位存在</th><th>說明</th></tr></thead>
+          <thead><tr><th class="col-field">欄位（PascalCase）</th><th class="col-type">型別</th><th class="col-src">來源</th><th class="col-his">HIS欄位存在</th><th>說明</th></tr></thead>
           <tbody>
-            <tr><td class="col-field">HospitalName</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>「高雄市立民生醫院」</td></tr>
-            <tr><td class="col-field">WardCode</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>「ER」</td></tr>
-            <tr><td class="col-field">WardDirector</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-no">—</td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>急診主任姓名</td></tr>
-            <tr><td class="col-field">HeadNurse</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>護理長姓名</td></tr>
+            <tr><td class="col-field">HospitalName</td><td><span class="type-tag type-string">string</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>「高雄市立民生醫院」</td></tr>
+            <tr><td class="col-field">WardCode</td><td><span class="type-tag type-string">string</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>「ER」</td></tr>
+            <tr><td class="col-field">WardDirector</td><td><span class="type-tag type-string">string</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>急診主任姓名</td></tr>
+            <tr><td class="col-field">HeadNurse</td><td><span class="type-tag type-string">string</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>護理長姓名</td></tr>
           </tbody>
         </table>
 
         <h4>Beds[] 結構</h4>
         <table class="field-table">
-          <thead><tr><th class="col-field">欄位（PascalCase）</th><th class="col-type">型別</th><th class="col-req">必填</th><th class="col-src">來源</th><th class="col-his">HIS欄位存在</th><th>說明</th></tr></thead>
+          <thead><tr><th class="col-field">欄位（PascalCase）</th><th class="col-type">型別</th><th class="col-src">來源</th><th class="col-his">HIS欄位存在</th><th>說明</th></tr></thead>
           <tbody>
-            <tr><td class="col-field">BedId</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>床位 ID（如 <code>負1</code>、<code>MER01</code>、<code>MER05</code>）</td></tr>
-            <tr><td class="col-field">Zone</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>區域：負壓隔離室 / 急救室 / 第一診療區 / 第二診療區 / 留觀區 / 待床區</td></tr>
-            <tr><td class="col-field">Status</td><td><span class="type-tag type-enum">enum</span></td><td class="col-req req-yes">Y</td><td class="col-src"><span class="src-his">資訊室</span></td><td class="col-his"><span class="his-yes">✓</span></td><td><code>occupied</code> / <code>empty</code> / <code>isolation</code> / <code>observation</code> / <code>transfer</code> / <code>awaiting</code></td></tr>
-            <tr><td class="col-field">Patient</td><td><span class="type-tag type-object">object|null</span></td><td class="col-req req-no">—</td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>空床時為 <code>null</code></td></tr>
+            <tr><td class="col-field">BedId</td><td><span class="type-tag type-string">string</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>床位 ID（如 <code>負1</code>、<code>MER01</code>、<code>MER05</code>）</td></tr>
+            <tr><td class="col-field">Zone</td><td><span class="type-tag type-string">string</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>區域：負壓隔離室 / 急救室 / 第一診療區 / 第二診療區 / 留觀區 / 待床區</td></tr>
+            <tr><td class="col-field">Status</td><td><span class="type-tag type-enum">enum</span></td><td class="col-src"><span class="src-his">資訊室</span></td><td class="col-his"><span class="his-yes">✓</span></td><td><code>occupied</code> / <code>empty</code> / <code>isolation</code> / <code>observation</code> / <code>transfer</code> / <code>awaiting</code></td></tr>
+            <tr><td class="col-field">Patient</td><td><span class="type-tag type-object">object|null</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>空床時為 <code>null</code></td></tr>
           </tbody>
         </table>
         <div class="his-map"><p class="his-map-h">可由 HIS 取得（資料表.欄位）</p><ul><li><code>Status</code> → <code>AM.HLOC.HLOCBED</code>（床位（住院急診轉床紀錄））</li></ul></div>
@@ -221,22 +219,22 @@
 
         <h4>Patient 結構（床位有病人時）</h4>
         <table class="field-table">
-          <thead><tr><th class="col-field">欄位</th><th class="col-type">型別</th><th class="col-req">必填</th><th class="col-src">來源</th><th class="col-his">HIS欄位存在</th><th>說明</th></tr></thead>
+          <thead><tr><th class="col-field">欄位</th><th class="col-type">型別</th><th class="col-src">來源</th><th class="col-his">HIS欄位存在</th><th>說明</th></tr></thead>
           <tbody>
-            <tr><td class="col-field nested">.PatientName</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td class="col-src"><span class="src-his">資訊室</span></td><td class="col-his"><span class="his-yes">✓</span></td><td>姓名（匿名化）</td></tr>
-            <tr><td class="col-field nested">.Gender</td><td><span class="type-tag type-enum">enum</span></td><td class="col-req req-yes">Y</td><td class="col-src"><span class="src-his">資訊室</span></td><td class="col-his"><span class="his-yes">✓</span></td><td><code>M</code> / <code>F</code></td></tr>
-            <tr><td class="col-field nested">.Age</td><td><span class="type-tag type-int">int</span></td><td class="col-req req-yes">Y</td><td class="col-src"><span class="src-his">資訊室</span></td><td class="col-his"><span class="his-yes">✓</span></td><td>年齡</td></tr>
-            <tr><td class="col-field nested">.MedRecord</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-no">—</td><td class="col-src"><span class="src-his">資訊室</span></td><td class="col-his"><span class="his-yes">✓</span></td><td>病歷號</td></tr>
-            <tr><td class="col-field nested">.IdNo</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-no">—</td><td class="col-src"><span class="src-his">資訊室</span></td><td class="col-his"><span class="his-yes">✓</span></td><td>身分證號／居留證號（中央遮罩）</td></tr>
-            <tr><td class="col-field nested">.BirthDate</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-no">—</td><td class="col-src"><span class="src-his">資訊室</span></td><td class="col-his"><span class="his-yes">✓</span></td><td>格式 <code>YYYY/MM/DD</code></td></tr>
-            <tr><td class="col-field nested">.ArrivalDate</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td class="col-src"><span class="src-his">資訊室</span></td><td class="col-his"><span class="his-yes">✓</span></td><td>到院日期，格式 <code>MM/DD</code></td></tr>
-            <tr><td class="col-field nested">.ArrivalTime</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td class="col-src"><span class="src-his">資訊室</span></td><td class="col-his"><span class="his-yes">✓</span></td><td>到院時間，格式 <code>HH:mm</code></td></tr>
-            <tr><td class="col-field nested">.Department</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-no">—</td><td class="col-src"><span class="src-his">資訊室</span></td><td class="col-his"><span class="his-yes">✓</span></td><td>責任科別</td></tr>
-            <tr><td class="col-field nested">.Doctor</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-no">—</td><td class="col-src"><span class="src-his">資訊室</span></td><td class="col-his"><span class="his-yes">✓</span></td><td>主責醫師</td></tr>
-            <tr><td class="col-field nested">.Nurse</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-no">—</td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>責任護理師</td></tr>
-            <tr><td class="col-field nested">.Diagnosis</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-no">—</td><td class="col-src"><span class="src-his">資訊室</span></td><td class="col-his"><span class="his-yes">✓</span></td><td>診斷（英文病名）</td></tr>
-            <tr><td class="col-field nested">.Triage</td><td><span class="type-tag type-int">int</span></td><td class="col-req req-yes">Y</td><td class="col-src"><span class="src-his">資訊室</span></td><td class="col-his"><span class="his-yes">✓</span></td><td>檢傷分級 <code>1</code>–<code>5</code>（1 最危急）</td></tr>
-            <tr><td class="col-field nested">.Notes</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-no">—</td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>備註（自由文字）</td></tr>
+            <tr><td class="col-field nested">.PatientName</td><td><span class="type-tag type-string">string</span></td><td class="col-src"><span class="src-his">資訊室</span></td><td class="col-his"><span class="his-yes">✓</span></td><td>姓名（匿名化）</td></tr>
+            <tr><td class="col-field nested">.Gender</td><td><span class="type-tag type-enum">enum</span></td><td class="col-src"><span class="src-his">資訊室</span></td><td class="col-his"><span class="his-yes">✓</span></td><td><code>M</code> / <code>F</code></td></tr>
+            <tr><td class="col-field nested">.Age</td><td><span class="type-tag type-int">int</span></td><td class="col-src"><span class="src-his">資訊室</span></td><td class="col-his"><span class="his-yes">✓</span></td><td>年齡</td></tr>
+            <tr><td class="col-field nested">.MedRecord</td><td><span class="type-tag type-string">string</span></td><td class="col-src"><span class="src-his">資訊室</span></td><td class="col-his"><span class="his-yes">✓</span></td><td>病歷號</td></tr>
+            <tr><td class="col-field nested">.IdNo</td><td><span class="type-tag type-string">string</span></td><td class="col-src"><span class="src-his">資訊室</span></td><td class="col-his"><span class="his-yes">✓</span></td><td>身分證號／居留證號（中央遮罩）</td></tr>
+            <tr><td class="col-field nested">.BirthDate</td><td><span class="type-tag type-string">string</span></td><td class="col-src"><span class="src-his">資訊室</span></td><td class="col-his"><span class="his-yes">✓</span></td><td>格式 <code>YYYY/MM/DD</code></td></tr>
+            <tr><td class="col-field nested">.ArrivalDate</td><td><span class="type-tag type-string">string</span></td><td class="col-src"><span class="src-his">資訊室</span></td><td class="col-his"><span class="his-yes">✓</span></td><td>到院日期，格式 <code>MM/DD</code></td></tr>
+            <tr><td class="col-field nested">.ArrivalTime</td><td><span class="type-tag type-string">string</span></td><td class="col-src"><span class="src-his">資訊室</span></td><td class="col-his"><span class="his-yes">✓</span></td><td>到院時間，格式 <code>HH:mm</code></td></tr>
+            <tr><td class="col-field nested">.Department</td><td><span class="type-tag type-string">string</span></td><td class="col-src"><span class="src-his">資訊室</span></td><td class="col-his"><span class="his-yes">✓</span></td><td>責任科別</td></tr>
+            <tr><td class="col-field nested">.Doctor</td><td><span class="type-tag type-string">string</span></td><td class="col-src"><span class="src-his">資訊室</span></td><td class="col-his"><span class="his-yes">✓</span></td><td>主責醫師</td></tr>
+            <tr><td class="col-field nested">.Nurse</td><td><span class="type-tag type-string">string</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>責任護理師</td></tr>
+            <tr><td class="col-field nested">.Diagnosis</td><td><span class="type-tag type-string">string</span></td><td class="col-src"><span class="src-his">資訊室</span></td><td class="col-his"><span class="his-yes">✓</span></td><td>診斷（英文病名）</td></tr>
+            <tr><td class="col-field nested">.Triage</td><td><span class="type-tag type-int">int</span></td><td class="col-src"><span class="src-his">資訊室</span></td><td class="col-his"><span class="his-yes">✓</span></td><td>檢傷分級 <code>1</code>–<code>5</code>（1 最危急）</td></tr>
+            <tr><td class="col-field nested">.Notes</td><td><span class="type-tag type-string">string</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>備註（自由文字）</td></tr>
           </tbody>
         </table>
         <div class="his-map"><p class="his-map-h">可由 HIS 取得（資料表.欄位）</p><ul><li><code>.PatientName</code> → <code>AM.HPBASIC.HNAMEC</code>（病患中文姓名）</li><li><code>.Gender</code> → <code>AM.HPBASIC.HSEX</code>（病患性別）</li><li><code>.Age</code> → <code>AM.HPBASIC.HBIRTHDT</code>（由出生日期推算）</li><li><code>.MedRecord</code> → <code>AM.HPBASIC.HHISNUM</code>（病患病歷號）</li><li><code>.IdNo</code> → <code>AM.HPBASIC.HIDNO</code>（身分證號／居留證號）</li><li><code>.BirthDate</code> → <code>AM.HPBASIC.HBIRTHDT</code>（病患出生日期）</li><li><code>.ArrivalDate</code> → <code>AM.HCASE.HEMGRDT</code>（急診掛號日期）</li><li><code>.ArrivalTime</code> → <code>AM.HCASE.HEMGRTM</code>（急診掛號時間）</li><li><code>.Department</code> → <code>AM.HSECTION.HCURSVCL</code>（科別代號）</li><li><code>.Doctor</code> → <code>AM.HDOCTOR.HDOCNAMC</code>（負責（主治）醫師中文姓名）</li><li><code>.Diagnosis</code> → <code>AM.HDIAGNOS.HDIAGTXT</code>（診斷內容（中／英文））</li><li><code>.Triage</code> → <code>ER.ETROOT.ETRANK</code>（檢傷分類等級）</li></ul></div>
@@ -298,33 +296,35 @@
 
         <h4>Exams[] 欄位</h4>
         <table class="field-table">
-          <thead><tr><th class="col-field">欄位（PascalCase）</th><th class="col-type">型別</th><th class="col-req">必填</th><th class="col-src">來源</th><th class="col-his">HIS欄位存在</th><th>說明</th></tr></thead>
+          <thead><tr><th class="col-field">欄位（PascalCase）</th><th class="col-type">型別</th><th class="col-src">來源</th><th class="col-his">HIS欄位存在</th><th>說明</th></tr></thead>
           <tbody>
-            <tr><td class="col-field">ExamId</td><td><span class="type-tag type-int">int</span></td><td class="col-req req-yes">Y</td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>檢查記錄 ID</td></tr>
-            <tr><td class="col-field">BedId</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>對應床位 ID</td></tr>
-            <tr><td class="col-field">PatientName</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>病患姓名</td></tr>
-            <tr><td class="col-field">ExamName</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>檢查項目名稱（如「胸部 X 光」「頭部 CT」）</td></tr>
-            <tr><td class="col-field">ScheduledDate</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>預定日期，格式 <code>YYYY-MM-DD</code></td></tr>
-            <tr><td class="col-field">TimeSlot</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-no">—</td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>預定時段，格式 <code>HH:mm</code></td></tr>
-            <tr><td class="col-field">Status</td><td><span class="type-tag type-enum">enum</span></td><td class="col-req req-yes">Y</td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td><code>待執行</code> / <code>執行中</code> / <code>完成</code></td></tr>
-            <tr><td class="col-field">Notes</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-no">—</td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>備註</td></tr>
+            <tr><td class="col-field">ExamId</td><td><span class="type-tag type-int">int</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>檢查記錄 ID</td></tr>
+            <tr><td class="col-field">BedId</td><td><span class="type-tag type-string">string</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>對應床位 ID</td></tr>
+            <tr><td class="col-field">PatientName</td><td><span class="type-tag type-string">string</span></td><td class="col-src"><span class="src-his">資訊室</span></td><td class="col-his"><span class="his-yes">✓</span></td><td>病患姓名</td></tr>
+            <tr><td class="col-field">ExamName</td><td><span class="type-tag type-string">string</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>檢查項目名稱（如「胸部 X 光」「頭部 CT」）</td></tr>
+            <tr><td class="col-field">ScheduledDate</td><td><span class="type-tag type-string">string</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>預定日期，格式 <code>YYYY-MM-DD</code></td></tr>
+            <tr><td class="col-field">TimeSlot</td><td><span class="type-tag type-string">string</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>預定時段，格式 <code>HH:mm</code></td></tr>
+            <tr><td class="col-field">Status</td><td><span class="type-tag type-enum">enum</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td><code>待執行</code> / <code>執行中</code> / <code>完成</code></td></tr>
+            <tr><td class="col-field">Notes</td><td><span class="type-tag type-string">string</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>備註</td></tr>
           </tbody>
         </table>
+          <div class="his-map"><p class="his-map-h">可由 HIS 取得（資料表.欄位）</p><ul><li><code>PatientName</code> → <code>AM.HPBASIC.HNAMEC</code>（病患中文姓名）</li></ul></div>
 
         <h4>Consults[] 欄位</h4>
         <table class="field-table">
-          <thead><tr><th class="col-field">欄位（PascalCase）</th><th class="col-type">型別</th><th class="col-req">必填</th><th class="col-src">來源</th><th class="col-his">HIS欄位存在</th><th>說明</th></tr></thead>
+          <thead><tr><th class="col-field">欄位（PascalCase）</th><th class="col-type">型別</th><th class="col-src">來源</th><th class="col-his">HIS欄位存在</th><th>說明</th></tr></thead>
           <tbody>
-            <tr><td class="col-field">ConsultId</td><td><span class="type-tag type-int">int</span></td><td class="col-req req-yes">Y</td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>會診記錄 ID</td></tr>
-            <tr><td class="col-field">BedId</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>對應床位 ID</td></tr>
-            <tr><td class="col-field">PatientName</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>病患姓名</td></tr>
-            <tr><td class="col-field">ConsultDept</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>會診科別</td></tr>
-            <tr><td class="col-field">ConsultDoctor</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-no">—</td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>會診醫師</td></tr>
-            <tr><td class="col-field">ConsultTime</td><td><span class="type-tag type-string">string|null</span></td><td class="col-req req-no">—</td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>回覆時間（<code>HH:mm</code>），未回覆為 <code>null</code></td></tr>
-            <tr><td class="col-field">Status</td><td><span class="type-tag type-enum">enum</span></td><td class="col-req req-yes">Y</td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td><code>待回覆</code> / <code>已回覆</code></td></tr>
-            <tr><td class="col-field">Notes</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-no">—</td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>備註</td></tr>
+            <tr><td class="col-field">ConsultId</td><td><span class="type-tag type-int">int</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>會診記錄 ID</td></tr>
+            <tr><td class="col-field">BedId</td><td><span class="type-tag type-string">string</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>對應床位 ID</td></tr>
+            <tr><td class="col-field">PatientName</td><td><span class="type-tag type-string">string</span></td><td class="col-src"><span class="src-his">資訊室</span></td><td class="col-his"><span class="his-yes">✓</span></td><td>病患姓名</td></tr>
+            <tr><td class="col-field">ConsultDept</td><td><span class="type-tag type-string">string</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>會診科別</td></tr>
+            <tr><td class="col-field">ConsultDoctor</td><td><span class="type-tag type-string">string</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>會診醫師</td></tr>
+            <tr><td class="col-field">ConsultTime</td><td><span class="type-tag type-string">string|null</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>回覆時間（<code>HH:mm</code>），未回覆為 <code>null</code></td></tr>
+            <tr><td class="col-field">Status</td><td><span class="type-tag type-enum">enum</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td><code>待回覆</code> / <code>已回覆</code></td></tr>
+            <tr><td class="col-field">Notes</td><td><span class="type-tag type-string">string</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>備註</td></tr>
           </tbody>
         </table>
+          <div class="his-map"><p class="his-map-h">可由 HIS 取得（資料表.欄位）</p><ul><li><code>PatientName</code> → <code>AM.HPBASIC.HNAMEC</code>（病患中文姓名）</li></ul></div>
       </div>
     </article>
 
@@ -379,26 +379,26 @@
 
         <h4>DutyContacts[] 欄位</h4>
         <table class="field-table">
-          <thead><tr><th class="col-field">欄位（PascalCase）</th><th class="col-type">型別</th><th class="col-req">必填</th><th class="col-src">來源</th><th class="col-his">HIS欄位存在</th><th>說明</th></tr></thead>
+          <thead><tr><th class="col-field">欄位（PascalCase）</th><th class="col-type">型別</th><th class="col-src">來源</th><th class="col-his">HIS欄位存在</th><th>說明</th></tr></thead>
           <tbody>
-            <tr><td class="col-field">ContactId</td><td><span class="type-tag type-int">int</span></td><td class="col-req req-yes">Y</td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>記錄 ID</td></tr>
-            <tr><td class="col-field">Shift</td><td><span class="type-tag type-enum">enum</span></td><td class="col-req req-yes">Y</td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td><code>白班</code> / <code>小夜</code> / <code>大夜</code></td></tr>
-            <tr><td class="col-field">ShiftTime</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>時段（如 <code>08:00–16:00</code>）</td></tr>
-            <tr><td class="col-field">Name</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>姓名（含職稱）</td></tr>
-            <tr><td class="col-field">Title</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>職務（如「護理長」「責任護理師」）</td></tr>
-            <tr><td class="col-field">Extension</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>院內分機</td></tr>
-            <tr><td class="col-field">Mobile</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-no">—</td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>手機（部分隱碼，值班護理長必填）</td></tr>
+            <tr><td class="col-field">ContactId</td><td><span class="type-tag type-int">int</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>記錄 ID</td></tr>
+            <tr><td class="col-field">Shift</td><td><span class="type-tag type-enum">enum</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td><code>白班</code> / <code>小夜</code> / <code>大夜</code></td></tr>
+            <tr><td class="col-field">ShiftTime</td><td><span class="type-tag type-string">string</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>時段（如 <code>08:00–16:00</code>）</td></tr>
+            <tr><td class="col-field">Name</td><td><span class="type-tag type-string">string</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>姓名（含職稱）</td></tr>
+            <tr><td class="col-field">Title</td><td><span class="type-tag type-string">string</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>職務（如「護理長」「責任護理師」）</td></tr>
+            <tr><td class="col-field">Extension</td><td><span class="type-tag type-string">string</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>院內分機</td></tr>
+            <tr><td class="col-field">Mobile</td><td><span class="type-tag type-string">string</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>手機（部分隱碼，值班護理長必填）</td></tr>
           </tbody>
         </table>
 
         <h4>CommonContacts[] 欄位</h4>
         <table class="field-table">
-          <thead><tr><th class="col-field">欄位（PascalCase）</th><th class="col-type">型別</th><th class="col-req">必填</th><th class="col-src">來源</th><th class="col-his">HIS欄位存在</th><th>說明</th></tr></thead>
+          <thead><tr><th class="col-field">欄位（PascalCase）</th><th class="col-type">型別</th><th class="col-src">來源</th><th class="col-his">HIS欄位存在</th><th>說明</th></tr></thead>
           <tbody>
-            <tr><td class="col-field">ContactId</td><td><span class="type-tag type-int">int</span></td><td class="col-req req-yes">Y</td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>記錄 ID</td></tr>
-            <tr><td class="col-field">Category</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-no">—</td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>分類（急診單位 / 急救 / 支援部門 / 行政）</td></tr>
-            <tr><td class="col-field">Name</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>單位 / 科室名稱</td></tr>
-            <tr><td class="col-field">Extension</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>院內分機</td></tr>
+            <tr><td class="col-field">ContactId</td><td><span class="type-tag type-int">int</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>記錄 ID</td></tr>
+            <tr><td class="col-field">Category</td><td><span class="type-tag type-string">string</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>分類（急診單位 / 急救 / 支援部門 / 行政）</td></tr>
+            <tr><td class="col-field">Name</td><td><span class="type-tag type-string">string</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>單位 / 科室名稱</td></tr>
+            <tr><td class="col-field">Extension</td><td><span class="type-tag type-string">string</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>院內分機</td></tr>
           </tbody>
         </table>
 
@@ -428,16 +428,16 @@
 
         <h4>UnitBulletins[] / HospBulletins[] 欄位</h4>
         <table class="field-table">
-          <thead><tr><th class="col-field">欄位（PascalCase）</th><th class="col-type">型別</th><th class="col-req">必填</th><th class="col-src">來源</th><th class="col-his">HIS欄位存在</th><th>說明</th></tr></thead>
+          <thead><tr><th class="col-field">欄位（PascalCase）</th><th class="col-type">型別</th><th class="col-src">來源</th><th class="col-his">HIS欄位存在</th><th>說明</th></tr></thead>
           <tbody>
-            <tr><td class="col-field">BulletinId</td><td><span class="type-tag type-int">int</span></td><td class="col-req req-yes">Y</td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>公告 ID</td></tr>
-            <tr><td class="col-field">Category</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>來源分類（「急診室」/「院方」）</td></tr>
-            <tr><td class="col-field">Title</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>公告標題</td></tr>
-            <tr><td class="col-field">Content</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>公告內容（自由文字，支援 <code>\n</code> 換行）</td></tr>
-            <tr><td class="col-field">Priority</td><td><span class="type-tag type-enum">enum</span></td><td class="col-req req-yes">Y</td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td><code>重要</code> / <code>一般</code></td></tr>
-            <tr><td class="col-field">PostedBy</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>發布者（含職稱）</td></tr>
-            <tr><td class="col-field">PostedAt</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>發布日期，格式 <code>YYYY-MM-DD</code></td></tr>
-            <tr><td class="col-field">IsActive</td><td><span class="type-tag type-bool">bool</span></td><td class="col-req req-yes">Y</td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>是否顯示（後台可停用）</td></tr>
+            <tr><td class="col-field">BulletinId</td><td><span class="type-tag type-int">int</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>公告 ID</td></tr>
+            <tr><td class="col-field">Category</td><td><span class="type-tag type-string">string</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>來源分類（「急診室」/「院方」）</td></tr>
+            <tr><td class="col-field">Title</td><td><span class="type-tag type-string">string</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>公告標題</td></tr>
+            <tr><td class="col-field">Content</td><td><span class="type-tag type-string">string</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>公告內容（自由文字，支援 <code>\n</code> 換行）</td></tr>
+            <tr><td class="col-field">Priority</td><td><span class="type-tag type-enum">enum</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td><code>重要</code> / <code>一般</code></td></tr>
+            <tr><td class="col-field">PostedBy</td><td><span class="type-tag type-string">string</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>發布者（含職稱）</td></tr>
+            <tr><td class="col-field">PostedAt</td><td><span class="type-tag type-string">string</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>發布日期，格式 <code>YYYY-MM-DD</code></td></tr>
+            <tr><td class="col-field">IsActive</td><td><span class="type-tag type-bool">bool</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>是否顯示（後台可停用）</td></tr>
           </tbody>
         </table>
       </div>
@@ -465,22 +465,22 @@
 
         <h4>Data 結構</h4>
         <table class="field-table">
-          <thead><tr><th class="col-field">欄位（PascalCase）</th><th class="col-type">型別</th><th class="col-req">必填</th><th class="col-src">來源</th><th class="col-his">HIS欄位存在</th><th>說明</th></tr></thead>
+          <thead><tr><th class="col-field">欄位（PascalCase）</th><th class="col-type">型別</th><th class="col-src">來源</th><th class="col-his">HIS欄位存在</th><th>說明</th></tr></thead>
           <tbody>
-            <tr><td class="col-field">EvacPlan</td><td><span class="type-tag type-object">object</span></td><td class="col-req req-yes">Y</td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>避難計畫基本資料</td></tr>
-            <tr><td class="col-field nested">.FloorNo</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>樓層（「1F」）</td></tr>
-            <tr><td class="col-field nested">.WardName</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>病房區域名稱</td></tr>
-            <tr><td class="col-field nested">.Description</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-no">—</td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>避難說明文字</td></tr>
-            <tr><td class="col-field nested">.UpdatedAt</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-no">—</td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>最後更新日期</td></tr>
-            <tr><td class="col-field nested">.LastDrillDate</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-no">—</td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>上次演練日期</td></tr>
-            <tr><td class="col-field">Equipment</td><td><span class="type-tag type-array">Equipment[]</span></td><td class="col-req req-yes">Y</td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>緊急設備清單（Mock 8 筆）</td></tr>
-            <tr><td class="col-field nested">.EquipmentId</td><td><span class="type-tag type-int">int</span></td><td class="col-req req-yes">Y</td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>設備 ID</td></tr>
-            <tr><td class="col-field nested">.EquipmentName</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>設備名稱</td></tr>
-            <tr><td class="col-field nested">.Location</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>位置說明</td></tr>
-            <tr><td class="col-field nested">.Quantity</td><td><span class="type-tag type-int">int</span></td><td class="col-req req-yes">Y</td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>數量</td></tr>
-            <tr><td class="col-field">EmergencyContacts</td><td><span class="type-tag type-array">Contact[]</span></td><td class="col-req req-yes">Y</td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>緊急聯絡（Mock 3 筆：保全/RRT/消防隊）</td></tr>
-            <tr><td class="col-field nested">.Name</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>聯絡人/單位名稱</td></tr>
-            <tr><td class="col-field nested">.Extension</td><td><span class="type-tag type-string">string</span></td><td class="col-req req-yes">Y</td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>院內分機或外線號碼</td></tr>
+            <tr><td class="col-field">EvacPlan</td><td><span class="type-tag type-object">object</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>避難計畫基本資料</td></tr>
+            <tr><td class="col-field nested">.FloorNo</td><td><span class="type-tag type-string">string</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>樓層（「1F」）</td></tr>
+            <tr><td class="col-field nested">.WardName</td><td><span class="type-tag type-string">string</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>病房區域名稱</td></tr>
+            <tr><td class="col-field nested">.Description</td><td><span class="type-tag type-string">string</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>避難說明文字</td></tr>
+            <tr><td class="col-field nested">.UpdatedAt</td><td><span class="type-tag type-string">string</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>最後更新日期</td></tr>
+            <tr><td class="col-field nested">.LastDrillDate</td><td><span class="type-tag type-string">string</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>上次演練日期</td></tr>
+            <tr><td class="col-field">Equipment</td><td><span class="type-tag type-array">Equipment[]</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>緊急設備清單（Mock 8 筆）</td></tr>
+            <tr><td class="col-field nested">.EquipmentId</td><td><span class="type-tag type-int">int</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>設備 ID</td></tr>
+            <tr><td class="col-field nested">.EquipmentName</td><td><span class="type-tag type-string">string</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>設備名稱</td></tr>
+            <tr><td class="col-field nested">.Location</td><td><span class="type-tag type-string">string</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>位置說明</td></tr>
+            <tr><td class="col-field nested">.Quantity</td><td><span class="type-tag type-int">int</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>數量</td></tr>
+            <tr><td class="col-field">EmergencyContacts</td><td><span class="type-tag type-array">Contact[]</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>緊急聯絡（Mock 3 筆：保全/RRT/消防隊）</td></tr>
+            <tr><td class="col-field nested">.Name</td><td><span class="type-tag type-string">string</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>聯絡人/單位名稱</td></tr>
+            <tr><td class="col-field nested">.Extension</td><td><span class="type-tag type-string">string</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>院內分機或外線號碼</td></tr>
           </tbody>
         </table>
       </div>

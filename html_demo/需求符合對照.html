@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="zh-TW"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>護理科電子白板系統 — 需求規格符合對照</title>
+<style>
+  :root{--green:#2D7A55;--bg:#F2F5F8;--card:#fff;--tx:#1A2635;--tx2:#3A5068;--mut:#7A8FA0;--div:#D0DBE5;--font:"Microsoft JhengHei UI","微軟正黑體","Noto Sans TC",sans-serif}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--bg);color:var(--tx);font-family:var(--font);line-height:1.6;font-size:15px}
+  .top{background:var(--green);color:#fff;padding:20px 32px;box-shadow:0 2px 8px rgba(0,0,0,.12)}
+  .top h1{font-size:22px;font-weight:800}
+  .top p{font-size:13px;opacity:.9;margin-top:5px}
+  .layout{display:flex;max-width:1440px;margin:0 auto;align-items:flex-start}
+  .side{width:246px;flex-shrink:0;position:sticky;top:0;max-height:100vh;overflow-y:auto;background:var(--card);border-right:1px solid var(--div);padding:18px 14px 40px}
+  .side-h{font-size:12px;font-weight:800;letter-spacing:2px;color:var(--mut);text-transform:uppercase;padding:0 8px 10px;border-bottom:1px solid var(--div);margin-bottom:10px}
+  .side-legend{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--mut);padding:0 8px 10px;margin-bottom:6px;border-bottom:1px dashed var(--div)}
+  .side-group{margin-bottom:8px}
+  .side-board{display:block;padding:8px 10px;font-size:14.5px;font-weight:800;text-decoration:none;border-left:3px solid;border-radius:6px}
+  .side-board:hover{background:#F0F8F4}
+  .side-group ul{list-style:none;margin:2px 0 6px 6px}
+  .side-group li a{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:5px 10px;font-size:13px;color:var(--tx2);text-decoration:none;border-radius:6px;border-left:2px solid transparent}
+  .side-group li a:hover{background:#E8F5EE;color:var(--green);border-left-color:var(--green)}
+  .sb-wrap{display:inline-flex;gap:4px;flex-shrink:0}
+  .side-badge{flex-shrink:0;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:#FFF4E0;color:#B7791F;font-size:11px;font-weight:800;display:inline-flex;align-items:center;justify-content:center;border:1px solid #F0D9A8}
+  .side-badge.sb-h{background:#EEF2F7;color:#546E7A;border-color:#D3DCE6}
+  .main{flex:1;min-width:0;padding:24px 26px 80px}
+  .intro{background:var(--card);border:1px solid var(--div);border-radius:10px;padding:18px 22px;margin-bottom:22px;color:var(--tx2);font-size:14px}
+  .intro b{color:var(--green)}
+  .sum{display:flex;gap:12px;flex-wrap:wrap;margin-top:12px}
+  .sum div{flex:1;min-width:130px;background:#F7FAFC;border:1px solid var(--div);border-radius:8px;padding:12px 14px;text-align:center}
+  .sum .n{font-size:26px;font-weight:800}
+  .sum .l{font-size:12px;color:var(--mut)}
+  .board-h{font-size:20px;font-weight:800;border-left:5px solid;padding-left:12px;margin:26px 0 14px;scroll-margin-top:12px}
+  .board-h .spec{font-size:13px;color:var(--mut);font-weight:600;font-family:monospace}
+  .block{display:flex;gap:20px;background:var(--card);border:1px solid var(--div);border-radius:10px;padding:18px 20px;margin-bottom:16px;align-items:flex-start;scroll-margin-top:12px}
+  .block-info{flex:1;min-width:0}
+  .block-info h3{font-size:16px;font-weight:800;margin-bottom:10px;color:var(--tx)}
+  .block-info h3 .ref{font-size:12px;color:var(--mut);font-weight:600;font-family:monospace;margin-left:6px}
+  .items{list-style:none}
+  .items li{display:flex;align-items:flex-start;gap:8px;padding:4px 0;font-size:13.5px;color:var(--tx2);border-bottom:1px dashed #EDF1F5}
+  .items li:last-child{border-bottom:none}
+  .st{flex-shrink:0;font-size:11.5px;font-weight:800;padding:1px 9px;border-radius:11px;white-space:nowrap;margin-top:2px}
+  .block-shot{flex:0 0 380px;display:block}
+  .block-shot img{width:100%;border:1px solid var(--div);border-radius:8px;box-shadow:0 1px 5px rgba(0,0,0,.1);display:block}
+  .zoomable{cursor:zoom-in;transition:box-shadow .12s}
+  .zoomable:hover{box-shadow:0 3px 14px rgba(45,122,85,.35)}
+  .shot-hint{display:block;text-align:center;font-size:11px;color:var(--mut);margin-top:5px}
+  .lightbox{display:none;position:fixed;inset:0;background:rgba(0,0,0,.86);z-index:1000;align-items:center;justify-content:center;padding:24px;cursor:zoom-out}
+  .lightbox.show{display:flex}
+  .lightbox img{max-width:96vw;max-height:92vh;border-radius:6px;box-shadow:0 6px 40px rgba(0,0,0,.6)}
+  .lb-close{position:fixed;top:16px;right:22px;color:#fff;font-size:14px;font-weight:700;background:rgba(255,255,255,.15);padding:8px 16px;border-radius:20px}
+  .note{background:#F0F8F4;border:1px solid #CFE8DB;border-left:4px solid var(--green);border-radius:8px;padding:14px 18px;margin:24px 0;font-size:13.5px;color:var(--tx2)}
+  .note b{color:var(--green)}
+  @media(max-width:900px){.layout{flex-direction:column}.side{width:auto;position:static;max-height:none;border-right:none;border-bottom:1px solid var(--div)}.block{flex-direction:column}.block-shot{flex:auto;width:100%}}
+  @media print{.side{display:none}.block{break-inside:avoid}.layout{display:block}}
+</style></head>
+<body>
+<div class="top">
+  <h1>高雄市立民生醫院 護理科電子白板系統</h1>
+  <p>需求規格符合對照（對應《需求規格書_20260508改》§7.1.2 與目前實際畫面）— 供與資訊室 / 護理科核對</p>
+</div>
+<div class="layout">
+  <nav class="side">
+    <div class="side-h">快速查詢</div>
+    <div class="side-legend"><span class="side-badge">N</span> 部分／待補　<span class="side-badge sb-h">N</span> 待院方</div>
+    
+    <div class="side-group">
+      <a class="side-board" href="#w52" style="color:#2D7A55;border-color:#2D7A55">W52 一般病房</a>
+      <ul><li><a href="#w52-0"><span>白板基本資訊 ＋ 病室動態</span></a></li><li><a href="#w52-1"><span>照護提醒</span></a></li><li><a href="#w52-2"><span>手術資訊</span></a></li><li><a href="#w52-3"><span>檢查／會診</span><span class="sb-wrap"><span class="side-badge" title="部分／待補 1 項">1</span></span></a></li><li><a href="#w52-4"><span>連絡資訊</span></a></li><li><a href="#w52-5"><span>排班資訊</span></a></li><li><a href="#w52-6"><span>醫師資訊</span></a></li><li><a href="#w52-7"><span>佈告欄</span></a></li><li><a href="#w52-8"><span>避難圖</span></a></li><li><a href="#w52-9"><span>護理交班</span></a></li><li><a href="#w52-10"><span>照護團隊</span></a></li></ul>
+    </div>
+    <div class="side-group">
+      <a class="side-board" href="#icu" style="color:#6A1B9A;border-color:#6A1B9A">ICU 加護病房</a>
+      <ul><li><a href="#icu-0"><span>病室動態</span></a></li><li><a href="#icu-1"><span>抗生素</span></a></li><li><a href="#icu-2"><span>管路明細</span></a></li><li><a href="#icu-3"><span>手術資訊</span><span class="sb-wrap"><span class="side-badge" title="部分／待補 1 項">1</span></span></a></li><li><a href="#icu-4"><span>檢查／會診</span><span class="sb-wrap"><span class="side-badge" title="部分／待補 1 項">1</span></span></a></li></ul>
+    </div>
+    <div class="side-group">
+      <a class="side-board" href="#or" style="color:#1A7040;border-color:#1A7040">手術室 OR</a>
+      <ul><li><a href="#or-0"><span>手術動態</span></a></li><li><a href="#or-1"><span>手術派班</span></a></li><li><a href="#or-2"><span>特殊交班</span></a></li></ul>
+    </div>
+    <div class="side-group">
+      <a class="side-board" href="#er" style="color:#C62828;border-color:#C62828">急診室 ER</a>
+      <ul><li><a href="#er-0"><span>病室動態</span><span class="sb-wrap"><span class="side-badge sb-h" title="待院方 1 項">1</span></span></a></li><li><a href="#er-1"><span>檢查／會診</span></a></li><li><a href="#er-2"><span>大量傷患</span><span class="sb-wrap"><span class="side-badge" title="部分／待補 1 項">1</span></span></a></li></ul>
+    </div>
+  </nav>
+  <main class="main">
+  <div class="intro">
+    本表逐項對照<b>規格書功能需求</b>與<b>目前系統實際畫面</b>，供院方核對第一階段（W52／ICU／OR／ER 四板）之完成度。
+    每個功能區塊右方為目前實際畫面截圖（點擊可放大）。狀態標示：<span class="st st-ok" style="background:#E8F5EE;color:#1B7A3E">符合</span> 已符合、<span class="st st-partial" style="background:#FFF4E0;color:#B7791F">部分</span> 部分／待補、<span class="st st-hospital" style="background:#EEF2F7;color:#546E7A">待院方</span> 待院方提供資料。
+    <div class="sum">
+      <div><div class="n" style="color:#1B7A3E">48</div><div class="l">已符合項</div></div>
+      <div><div class="n" style="color:#B7791F">4</div><div class="l">部分／待補項</div></div>
+      <div><div class="n" style="color:#546E7A">1</div><div class="l">待院方提供</div></div>
+      <div><div class="n" style="color:#1565C0">4</div><div class="l">白板（W52/ICU/OR/ER）</div></div>
+    </div>
+  </div>
+  
+<section class="board" id="w52">
+  <h2 class="board-h" style="border-color:#2D7A55;color:#2D7A55">W52 一般病房 <span class="spec">§7.1.2.1</span></h2>
+  
+  <div class="block" id="w52-0">
+    <div class="block-info">
+      <h3>白板基本資訊 ＋ 病室動態 <span class="ref">§7.1.2.1(1)(2)</span></h3>
+      <ul class="items">
+        <li><span class="st st-ok" style="background:#E8F5EE;color:#1B7A3E">符合</span><span>(1) 站別／護理長／病房主任／電子時鐘／病房跑馬燈</span></li><li><span class="st st-ok" style="background:#E8F5EE;color:#1B7A3E">符合</span><span>(2.1) 依單位配置圖顯示病床位置；基本資料（床號／姓名／性別以顏色區分）</span></li><li><span class="st st-ok" style="background:#E8F5EE;color:#1B7A3E">符合</span><span>(2.1.1) 點選病床顯示詳細（病歷號／生日／年齡／科別／診斷／主治醫師）</span></li><li><span class="st st-ok" style="background:#E8F5EE;color:#1B7A3E">符合</span><span>(2.2) 病人註記 13 項（DNR／高危跌／依賴度／隔離／保密／禁治療／禁食／過敏／RRT／化療／運送／氧氣／洗腎）</span></li><li><span class="st st-ok" style="background:#E8F5EE;color:#1B7A3E">符合</span><span>(2.3) 護理站床數統計（總床數／住院／手術／檢查／會診）</span></li><li><span class="st st-ok" style="background:#E8F5EE;color:#1B7A3E">符合</span><span>(2.4) RRT 快速反應小組</span></li><li><span class="st st-ok" style="background:#E8F5EE;color:#1B7A3E">符合</span><span>(2.5) 床位動態（空床／占床／待轉入／待轉出／待出院）</span></li><li><span class="st st-ok" style="background:#E8F5EE;color:#1B7A3E">符合</span><span>(2.6) 各管路使用狀態統計 5 項（人工血管／雙腔靜脈／導尿管／中心靜脈／心導管）</span></li>
+      </ul>
+    </div>
+    <div class="block-shot"><img class="zoomable" src="W52-board/api-shots/index.jpg" alt="白板基本資訊 ＋ 病室動態 畫面" loading="lazy"><span class="shot-hint">目前實際畫面（點擊放大）</span></div>
+  </div>
+  <div class="block" id="w52-1">
+    <div class="block-info">
+      <h3>照護提醒 <span class="ref">§7.1.2.1(3)</span></h3>
+      <ul class="items">
+        <li><span class="st st-ok" style="background:#E8F5EE;color:#1B7A3E">符合</span><span>(3) 病人關照提醒（分級與時段）</span></li>
+      </ul>
+    </div>
+    <div class="block-shot"><img class="zoomable" src="W52-board/api-shots/care.jpg" alt="照護提醒 畫面" loading="lazy"><span class="shot-hint">目前實際畫面（點擊放大）</span></div>
+  </div>
+  <div class="block" id="w52-2">
+    <div class="block-info">
+      <h3>手術資訊 <span class="ref">§7.1.2.1(4)</span></h3>
+      <ul class="items">
+        <li><span class="st st-ok" style="background:#E8F5EE;color:#1B7A3E">符合</span><span>(4) 當日手術：日期／手術間／排程時間／病床號／姓名／年齡／性別／術式／診斷／麻醉方式／主治醫師／手術狀態</span></li>
+      </ul>
+    </div>
+    <div class="block-shot"><img class="zoomable" src="W52-board/api-shots/surgery.jpg" alt="手術資訊 畫面" loading="lazy"><span class="shot-hint">目前實際畫面（點擊放大）</span></div>
+  </div>
+  <div class="block" id="w52-3">
+    <div class="block-info">
+      <h3>檢查／會診 <span class="ref">§7.1.2.1(5)</span></h3>
+      <ul class="items">
+        <li><span class="st st-ok" style="background:#E8F5EE;color:#1B7A3E">符合</span><span>(5.1)(5.2) 檢查＋會診雙清單（含床號／姓名／項目／時段／醫師／狀態／備註）</span></li><li><span class="st st-ok" style="background:#E8F5EE;color:#1B7A3E">符合</span><span>(5.3) 以最新執行時間排序（檢查依檢查時間、會診依會診時間，最新在前）</span></li><li><span class="st st-partial" style="background:#FFF4E0;color:#B7791F">部分</span><span>(5.4) 完成 24 小時後自動移除</span></li>
+      </ul>
+    </div>
+    <div class="block-shot"><img class="zoomable" src="W52-board/api-shots/exam.jpg" alt="檢查／會診 畫面" loading="lazy"><span class="shot-hint">目前實際畫面（點擊放大）</span></div>
+  </div>
+  <div class="block" id="w52-4">
+    <div class="block-info">
+      <h3>連絡資訊 <span class="ref">§7.1.2.1(6)</span></h3>
+      <ul class="items">
+        <li><span class="st st-ok" style="background:#E8F5EE;color:#1B7A3E">符合</span><span>(6) 當日值班連絡電話＋常用連絡電話（可後台維護）</span></li>
+      </ul>
+    </div>
+    <div class="block-shot"><img class="zoomable" src="W52-board/api-shots/contact.jpg" alt="連絡資訊 畫面" loading="lazy"><span class="shot-hint">目前實際畫面（點擊放大）</span></div>
+  </div>
+  <div class="block" id="w52-5">
+    <div class="block-info">
+      <h3>排班資訊 <span class="ref">§7.1.2.1(7)</span></h3>
+      <ul class="items">
+        <li><span class="st st-ok" style="background:#E8F5EE;color:#1B7A3E">符合</span><span>(7.1) 當日護理人員排班（含負責床位／緊急應變編組／點班）</span></li><li><span class="st st-ok" style="background:#E8F5EE;color:#1B7A3E">符合</span><span>(7.2) 專科護理師排班</span></li><li><span class="st st-ok" style="background:#E8F5EE;color:#1B7A3E">符合</span><span>(7.3) 住院醫師排班</span></li>
+      </ul>
+    </div>
+    <div class="block-shot"><img class="zoomable" src="W52-board/api-shots/schedule.jpg" alt="排班資訊 畫面" loading="lazy"><span class="shot-hint">目前實際畫面（點擊放大）</span></div>
+  </div>
+  <div class="block" id="w52-6">
+    <div class="block-info">
+      <h3>醫師資訊 <span class="ref">§7.1.2.1(8)</span></h3>
+      <ul class="items">
+        <li><span class="st st-ok" style="background:#E8F5EE;color:#1B7A3E">符合</span><span>(8.1) 醫師／專師負責床位</span></li><li><span class="st st-ok" style="background:#E8F5EE;color:#1B7A3E">符合</span><span>(8.2) 醫師查房時間表（日期含星期／姓名／查房時段）</span></li>
+      </ul>
+    </div>
+    <div class="block-shot"><img class="zoomable" src="W52-board/api-shots/doctor.jpg" alt="醫師資訊 畫面" loading="lazy"><span class="shot-hint">目前實際畫面（點擊放大）</span></div>
+  </div>
+  <div class="block" id="w52-7">
+    <div class="block-info">
+      <h3>佈告欄 <span class="ref">§7.1.2.1(9)</span></h3>
+      <ul class="items">
+        <li><span class="st st-ok" style="background:#E8F5EE;color:#1B7A3E">符合</span><span>(9) 護理站公告＋院方公告（可後台維護）</span></li>
+      </ul>
+    </div>
+    <div class="block-shot"><img class="zoomable" src="W52-board/api-shots/bulletin.jpg" alt="佈告欄 畫面" loading="lazy"><span class="shot-hint">目前實際畫面（點擊放大）</span></div>
+  </div>
+  <div class="block" id="w52-8">
+    <div class="block-info">
+      <h3>避難圖 <span class="ref">§7.1.2.1(10)</span></h3>
+      <ul class="items">
+        <li><span class="st st-ok" style="background:#E8F5EE;color:#1B7A3E">符合</span><span>(10) 護理站避難圖</span></li>
+      </ul>
+    </div>
+    <div class="block-shot"><img class="zoomable" src="W52-board/api-shots/evacuation.jpg" alt="避難圖 畫面" loading="lazy"><span class="shot-hint">目前實際畫面（點擊放大）</span></div>
+  </div>
+  <div class="block" id="w52-9">
+    <div class="block-info">
+      <h3>護理交班 <span class="ref">§7.1.2.1(11)</span></h3>
+      <ul class="items">
+        <li><span class="st st-ok" style="background:#E8F5EE;color:#1B7A3E">符合</span><span>(11) 交班日誌摘要（交／接班別、護理師、病人卡與事項）</span></li>
+      </ul>
+    </div>
+    <div class="block-shot"><img class="zoomable" src="W52-board/api-shots/handover.jpg" alt="護理交班 畫面" loading="lazy"><span class="shot-hint">目前實際畫面（點擊放大）</span></div>
+  </div>
+  <div class="block" id="w52-10">
+    <div class="block-info">
+      <h3>照護團隊 <span class="ref">§7.1.2.1(12)</span></h3>
+      <ul class="items">
+        <li><span class="st st-ok" style="background:#E8F5EE;color:#1B7A3E">符合</span><span>(12) 含科別／職別／姓名／電話分機（依角色分組）</span></li>
+      </ul>
+    </div>
+    <div class="block-shot"><img class="zoomable" src="W52-board/api-shots/team.jpg" alt="照護團隊 畫面" loading="lazy"><span class="shot-hint">目前實際畫面（點擊放大）</span></div>
+  </div>
+</section>
+<section class="board" id="icu">
+  <h2 class="board-h" style="border-color:#6A1B9A;color:#6A1B9A">ICU 加護病房 <span class="spec">§7.1.2.2</span></h2>
+  
+  <div class="block" id="icu-0">
+    <div class="block-info">
+      <h3>病室動態 <span class="ref">§7.1.2.2(1)</span></h3>
+      <ul class="items">
+        <li><span class="st st-ok" style="background:#E8F5EE;color:#1B7A3E">符合</span><span>(1.1) 基本資料（床號／姓名／性別顏色）＋(1.1.1) 詳細（病歷號／生日／年齡／科別／診斷／主治）</span></li><li><span class="st st-ok" style="background:#E8F5EE;color:#1B7A3E">符合</span><span>(1.2) 病患註記（同一般病房 13 項）</span></li><li><span class="st st-ok" style="background:#E8F5EE;color:#1B7A3E">符合</span><span>(1.3) 床數統計（總床／住院／手術／檢查／會診）</span></li><li><span class="st st-ok" style="background:#E8F5EE;color:#1B7A3E">符合</span><span>(1.4) 疾病嚴重程度 A／B／C（顏色區分）</span></li><li><span class="st st-ok" style="background:#E8F5EE;color:#1B7A3E">符合</span><span>(1.5) 管路統計 4 項（氣管內管／鼻胃管／導尿管／中心靜脈）</span></li>
+      </ul>
+    </div>
+    <div class="block-shot"><img class="zoomable" src="icu-board/api-shots/index.jpg" alt="病室動態 畫面" loading="lazy"><span class="shot-hint">目前實際畫面（點擊放大）</span></div>
+  </div>
+  <div class="block" id="icu-1">
+    <div class="block-info">
+      <h3>抗生素 <span class="ref">§7.1.2.2(2)</span></h3>
+      <ul class="items">
+        <li><span class="st st-ok" style="background:#E8F5EE;color:#1B7A3E">符合</span><span>(2.1) 不顯示總表，點選平面圖病床後顯示該病人抗生素</span></li><li><span class="st st-ok" style="background:#E8F5EE;color:#1B7A3E">符合</span><span>(2.2) 詳細：床號／病歷號／姓名／藥品名稱／開始時間／首次時間／結束時間</span></li>
+      </ul>
+    </div>
+    <div class="block-shot"><img class="zoomable" src="icu-board/api-shots/antibiotic.jpg" alt="抗生素 畫面" loading="lazy"><span class="shot-hint">目前實際畫面（點擊放大）</span></div>
+  </div>
+  <div class="block" id="icu-2">
+    <div class="block-info">
+      <h3>管路明細 <span class="ref">§7.1.2.2(1.5)</span></h3>
+      <ul class="items">
+        <li><span class="st st-ok" style="background:#E8F5EE;color:#1B7A3E">符合</span><span>各床管路狀態總表（氣管內管／鼻胃管／導尿管／中心靜脈／CRRT）</span></li>
+      </ul>
+    </div>
+    <div class="block-shot"><img class="zoomable" src="icu-board/api-shots/tube.jpg" alt="管路明細 畫面" loading="lazy"><span class="shot-hint">目前實際畫面（點擊放大）</span></div>
+  </div>
+  <div class="block" id="icu-3">
+    <div class="block-info">
+      <h3>手術資訊 <span class="ref">§7.1.2.2(3)</span></h3>
+      <ul class="items">
+        <li><span class="st st-ok" style="background:#E8F5EE;color:#1B7A3E">符合</span><span>(3.1) 當日手術（日期／刀房／病床／姓名／年齡／性別／術式／診斷／麻醉／主治／狀態）</span></li><li><span class="st st-ok" style="background:#E8F5EE;color:#1B7A3E">符合</span><span>(3.2) 病患前後 3 日手術資訊</span></li><li><span class="st st-partial" style="background:#FFF4E0;color:#B7791F">部分</span><span>(3.1) 刀次欄位</span></li>
+      </ul>
+    </div>
+    <div class="block-shot"><img class="zoomable" src="icu-board/api-shots/surgery.jpg" alt="手術資訊 畫面" loading="lazy"><span class="shot-hint">目前實際畫面（點擊放大）</span></div>
+  </div>
+  <div class="block" id="icu-4">
+    <div class="block-info">
+      <h3>檢查／會診 <span class="ref">§7.1.2.2(4)</span></h3>
+      <ul class="items">
+        <li><span class="st st-ok" style="background:#E8F5EE;color:#1B7A3E">符合</span><span>(4.1)(4.2) 檢查＋會診雙清單</span></li><li><span class="st st-ok" style="background:#E8F5EE;color:#1B7A3E">符合</span><span>(4.3) 以最新執行時間排序（最新在前）</span></li><li><span class="st st-partial" style="background:#FFF4E0;color:#B7791F">部分</span><span>(4.4) 完成 24 小時後自動移除</span></li>
+      </ul>
+    </div>
+    <div class="block-shot"><img class="zoomable" src="icu-board/api-shots/exam.jpg" alt="檢查／會診 畫面" loading="lazy"><span class="shot-hint">目前實際畫面（點擊放大）</span></div>
+  </div>
+</section>
+<section class="board" id="or">
+  <h2 class="board-h" style="border-color:#1A7040;color:#1A7040">手術室 OR <span class="spec">§7.1.2.3</span></h2>
+  
+  <div class="block" id="or-0">
+    <div class="block-info">
+      <h3>手術動態 <span class="ref">§7.1.2.3(1)</span></h3>
+      <ul class="items">
+        <li><span class="st st-ok" style="background:#E8F5EE;color:#1B7A3E">符合</span><span>依平面位置圖設置開刀房號（OR-01～03、OR-05～08 共 7 間）</span></li><li><span class="st st-ok" style="background:#E8F5EE;color:#1B7A3E">符合</span><span>(1.1) 基本資料（床號／姓名／手術醫師／刷手護理師／流動護理師／來源以顏色區分：急診刀／門診刀／住院刀）</span></li><li><span class="st st-ok" style="background:#E8F5EE;color:#1B7A3E">符合</span><span>(1.1.1) 詳細（病歷號／性別／年齡／科別／術式／手術醫師／麻醉方式／手術狀態／手術名稱）</span></li><li><span class="st st-ok" style="background:#E8F5EE;color:#1B7A3E">符合</span><span>(1.2) 手術統計：總手術／急診刀／門診刀／住院刀</span></li>
+      </ul>
+    </div>
+    <div class="block-shot"><img class="zoomable" src="or-board/api-shots/index.jpg" alt="手術動態 畫面" loading="lazy"><span class="shot-hint">目前實際畫面（點擊放大）</span></div>
+  </div>
+  <div class="block" id="or-1">
+    <div class="block-info">
+      <h3>手術派班 <span class="ref">§7.1.2.3(2)</span></h3>
+      <ul class="items">
+        <li><span class="st st-ok" style="background:#E8F5EE;color:#1B7A3E">符合</span><span>(2) 三班各手術室刷手／流動護理師與人員統計</span></li>
+      </ul>
+    </div>
+    <div class="block-shot"><img class="zoomable" src="or-board/api-shots/schedule.jpg" alt="手術派班 畫面" loading="lazy"><span class="shot-hint">目前實際畫面（點擊放大）</span></div>
+  </div>
+  <div class="block" id="or-2">
+    <div class="block-info">
+      <h3>特殊交班 <span class="ref">§7.1.2.3(3)</span></h3>
+      <ul class="items">
+        <li><span class="st st-ok" style="background:#E8F5EE;color:#1B7A3E">符合</span><span>(3) 術後轉病房之特殊交班（轉往／出血／輸血／引流管／注意事項）</span></li>
+      </ul>
+    </div>
+    <div class="block-shot"><img class="zoomable" src="or-board/api-shots/handover.jpg" alt="特殊交班 畫面" loading="lazy"><span class="shot-hint">目前實際畫面（點擊放大）</span></div>
+  </div>
+</section>
+<section class="board" id="er">
+  <h2 class="board-h" style="border-color:#C62828;color:#C62828">急診室 ER <span class="spec">§7.1.2.4</span></h2>
+  
+  <div class="block" id="er-0">
+    <div class="block-info">
+      <h3>病室動態 <span class="ref">§7.1.2.4(1)</span></h3>
+      <ul class="items">
+        <li><span class="st st-ok" style="background:#E8F5EE;color:#1B7A3E">符合</span><span>依位置圖 7 分區（負壓隔離／急救／第一・二診療區／第一・二留觀／兒科留觀）床位編號</span></li><li><span class="st st-ok" style="background:#E8F5EE;color:#1B7A3E">符合</span><span>(1.1) 病人基本資料（含點床詳細）</span></li><li><span class="st st-ok" style="background:#E8F5EE;color:#1B7A3E">符合</span><span>(1.2) 統計：總床／看診／留觀／留觀時間／待床（一般／加護／隔離）／重症／輕中症</span></li><li><span class="st st-ok" style="background:#E8F5EE;color:#1B7A3E">符合</span><span>(1.3) 病人註記：死亡(N)／MBD／AAD／轉院（轉入＆轉出 含醫院）／DNR／留觀／住院含床號</span></li><li><span class="st st-ok" style="background:#E8F5EE;color:#1B7A3E">符合</span><span>(1.2) 待床時間（由院方到院時間推算）</span></li><li><span class="st st-hospital" style="background:#EEF2F7;color:#546E7A">待院方</span><span>(1.2) 待床「加護／隔離」動向代碼（待院方提供）</span></li>
+      </ul>
+    </div>
+    <div class="block-shot"><img class="zoomable" src="er-board/api-shots/index.jpg" alt="病室動態 畫面" loading="lazy"><span class="shot-hint">目前實際畫面（點擊放大）</span></div>
+  </div>
+  <div class="block" id="er-1">
+    <div class="block-info">
+      <h3>檢查／會診 <span class="ref">§7.1.2.4(2)</span></h3>
+      <ul class="items">
+        <li><span class="st st-ok" style="background:#E8F5EE;color:#1B7A3E">符合</span><span>(2.1)(2.2) 檢查＋會診清單</span></li>
+      </ul>
+    </div>
+    <div class="block-shot"><img class="zoomable" src="er-board/api-shots/exam.jpg" alt="檢查／會診 畫面" loading="lazy"><span class="shot-hint">目前實際畫面（點擊放大）</span></div>
+  </div>
+  <div class="block" id="er-2">
+    <div class="block-info">
+      <h3>大量傷患 <span class="ref">§7.1.2.4(3)</span></h3>
+      <ul class="items">
+        <li><span class="st st-ok" style="background:#E8F5EE;color:#1B7A3E">符合</span><span>(3.1) 姓名／性別／年齡／病歷號／檢傷分級／科別／診斷</span></li><li><span class="st st-ok" style="background:#E8F5EE;color:#1B7A3E">符合</span><span>(3.2) 病人註記（死亡／MBD／AAD／轉院／DNR／留觀／住院含床號）</span></li><li><span class="st st-partial" style="background:#FFF4E0;color:#B7791F">部分</span><span>(3.2) 轉院顯示醫院名稱</span></li>
+      </ul>
+    </div>
+    <div class="block-shot"><img class="zoomable" src="er-board/api-shots/mass-casualty.jpg" alt="大量傷患 畫面" loading="lazy"><span class="shot-hint">目前實際畫面（點擊放大）</span></div>
+  </div>
+</section>
+  <div class="note">
+    <b>共通與階段說明：</b><br>
+    · <b>開發架構（§7.1.1）已符合</b>：Windows Server 2022／IIS／.NET 8／SQL Server／React（Web-based，支援 Chrome／Edge／Safari）。<br>
+    · <b>檢查／會診「依時間排序」與「完成 24 小時自動移除」</b>（§7.1.2.1(5.3)(5.4)、§7.1.2.2(4.3)(4.4)）為可立即補強之程式項。<br>
+    · <b>ER 待床時間、待床「加護／隔離」代碼</b>需院方提供對應動向代碼／時間欄位後補齊。<br>
+    · <b>帳號 AD 整合／真帳密驗證</b>屬與院方資訊室之整合項，另行排程。<br>
+    · <b>洗腎室（§7.1.2.5）</b>規格列為<b>第二階段</b>，本階段不含；<b>硬體（§7.1.3：55吋觸控顯示器×4、播放電腦×4、BSMI）</b>屬採購／建置項目。
+  </div>
+  </main>
+</div>
+<div class="lightbox" id="lb"><span class="lb-close">✕ 關閉（點任意處或按 Esc）</span><img id="lbimg" src="" alt="放大畫面"></div>
+<script>
+(function(){
+  var lb=document.getElementById('lb'), im=document.getElementById('lbimg');
+  document.querySelectorAll('.zoomable').forEach(function(el){
+    el.addEventListener('click', function(){ im.src=el.src; lb.classList.add('show'); });
+  });
+  lb.addEventListener('click', function(){ lb.classList.remove('show'); im.src=''; });
+  document.addEventListener('keydown', function(e){ if(e.key==='Escape'){ lb.classList.remove('show'); im.src=''; } });
+})();
+</script>
+</body></html>
