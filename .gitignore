@@ -11,6 +11,7 @@ API/**/.vs/
 API/**/*.user
 API/**/logs/
 API/**/publish/
+API/_publish/
 
 # ── 暫存 / 除錯輸出 ──
 or_resp.json

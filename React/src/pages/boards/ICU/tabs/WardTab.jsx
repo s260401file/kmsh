@@ -80,6 +80,7 @@ function BedCard({ bed, filteredOut, onClick }) {
         <span className={`patient-name ${p.gender === 'M' ? 'gender-m' : 'gender-f'}`}>{p.name}</span>
         <span className="patient-basic">{p.gender}/{p.age}</span>
       </div>
+      {p.doctor && <div className="card-row-dr">Dr {p.doctor}</div>}
       {/* 病人註記區：每個徽章對應一個 SVG 形狀旗標 */}
       <div className="dots-row">
         {allBadges.map(b => <FlagDot key={b} k={b} flagStyle={FLAG_STYLE} />)}

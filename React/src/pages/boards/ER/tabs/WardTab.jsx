@@ -57,12 +57,15 @@ function isBedVisible(bed, filter) {
 
 // 平面圖座標 → inline grid 定位（座標由床位主檔提供；後台新增床免改 CSS）
 const bedPos = bed => (bed.GridCol && bed.GridRow) ? { gridColumn: bed.GridCol, gridRow: bed.GridRow } : undefined
+// 急診手術室兩床：疊放於同一格(col6, rows7-8)並以 flex 均分等高，故不走一般平面圖座標
+const OR_STACK_IDS = ['OER01', 'OER02']
 
 // 單張床卡：空床顯示床號＋「空床」；佔床顯示檢傷級徽章、床號、姓名性別年齡、狀態旗標
-function BedCard({ bed, filteredOut, onClick }) {
+function BedCard({ bed, filteredOut, onClick, inStack }) {
+  const pos = inStack ? undefined : bedPos(bed)   // 疊放於 or-stack 內時不套用平面圖座標，改由 flex 均分
   if (bed.Status === 'empty') {
     return (
-      <div className="bed-card empty" style={bedPos(bed)}>
+      <div className="bed-card empty" style={pos}>
         <div className="empty-bed-num">{bed.BedId}</div>
         <div className="empty-label">空床</div>
       </div>
@@ -77,7 +80,7 @@ function BedCard({ bed, filteredOut, onClick }) {
   return (
     <div
       className={`bed-card ${bed.Status} ${triageCls} ${negIsoCls} ${deceasedCls}${filteredOut ? ' filtered-out' : ''}`}
-      style={bedPos(bed)}
+      style={pos}
       onClick={onClick}
     >
       <div className="card-row1">
@@ -89,6 +92,7 @@ function BedCard({ bed, filteredOut, onClick }) {
         <span className={`patient-name ${p.Gender === 'M' ? 'gender-m' : 'gender-f'}`}>{p.PatientName}</span>
         <span className="patient-basic">{p.Gender}/{p.Age}</span>
       </div>
+      {p.Doctor && <div className="card-row3">Dr {p.Doctor}</div>}
       <div className="dots-row">
         {allBadges.map(b => <FlagDot key={b} k={b} flagStyle={FLAG_STYLE} />)}
       </div>
@@ -99,13 +103,14 @@ function BedCard({ bed, filteredOut, onClick }) {
 // 點選床卡後彈出的病人詳情視窗（基本資料、診斷、檢傷分級、急診狀態、備註等）
 function BedModal({ bed, onClose }) {
   const p = bed.Patient
-  // 由到院日期＋時間推算目前留觀時長（stayStr）；overlay 未填則顯示 —
+  // 由院方到院時間（傳入日期）推算目前留觀時長（stayStr）；未帶則顯示 —
   const hasArr = !!(p.ArrivalDate && p.ArrivalTime)
-  const arrStr = hasArr ? `2026-${p.ArrivalDate.replace('/', '-')}T${p.ArrivalTime}:00` : null
+  const arrStr = hasArr ? `${new Date().getFullYear()}-${p.ArrivalDate.replace('/', '-')}T${p.ArrivalTime}:00` : null
   const diff = hasArr ? (new Date() - new Date(arrStr)) : 0
-  const stayH = Math.floor(diff / 3600000)
+  const stayD = Math.floor(diff / 86400000)
+  const stayH = Math.floor((diff % 86400000) / 3600000)
   const stayM = Math.floor((diff % 3600000) / 60000)
-  const stayStr = (hasArr && diff > 0) ? (stayH > 0 ? `${stayH}h ${stayM}m` : `${stayM}m`) : '—'
+  const stayStr = (hasArr && diff > 0) ? (stayD > 0 ? `${stayD}天 ${stayH}h` : stayH > 0 ? `${stayH}h ${stayM}m` : `${stayM}m`) : '—'
   // 組合急診狀態文字（死亡 / 留觀 / 待床 / 轉出入 / AAD / MBD / 住院）供 Modal 顯示
   const erStatuses = []
   if (p.Deceased)    erStatuses.push('死亡')
@@ -144,7 +149,7 @@ function BedModal({ bed, onClose }) {
           <div className="modal-row">
             <div className="modal-field"><div className="field-label">到院時間</div><div className="field-value">{hasArr ? `2026/${p.ArrivalDate} ${p.ArrivalTime}` : '—'}</div></div>
             <div className="modal-field"><div className="field-label">留觀時間</div><div className="field-value">{stayStr}</div></div>
-            <div className="modal-field"><div className="field-label">檢傷分級</div><div className="field-value">{p.Triage ? <><span className={`triage-badge tg-${tg.toLowerCase()}`}>{tg}級</span>　{GRADE_DESC[tg] || ''}</> : '—'}</div></div>
+            <div className="modal-field"><div className="field-label">檢傷分級</div><div className="field-value">{p.Triage ? <>{p.TriageRaw ? <b style={{ marginRight: '8px' }}>{p.TriageRaw}</b> : null}<span className={`triage-badge tg-${tg.toLowerCase()}`}>{tg}級</span>　{GRADE_DESC[tg] || ''}</> : '—'}</div></div>
           </div>
           <div className="modal-row">
             <div className="modal-field"><div className="field-label">隔離狀態</div><div className="field-value">{p.Isolation || '無'}</div></div>
@@ -265,12 +270,11 @@ export default function WardTab() {
 
             {/* 不佔床病人（床碼未建主檔）：放負1 下方空格（cols1-3×rows3-5），簡易清單點擊開詳情 */}
             {unplacedBeds.length > 0 && (
-              <div className="unplaced-panel" style={{ gridColumn: '1/4', gridRow: '3/6' }}>
-                <div className="up-panel-title">不佔床病人（{unplacedBeds.length}）</div>
+              <div className="unplaced-panel" style={{ gridColumn: '1/4', gridRow: '3/7' }}>
+                <div className="up-panel-title">不佔床病人(demo)（{unplacedBeds.length}）</div>
                 <div className="up-panel-list">
                   {unplacedBeds.map(bed => (
                     <div className="up-row" key={bed.BedId} onClick={() => setSelectedBed(bed)}>
-                      <span className="up-bed">{bed.BedId}</span>
                       <span className="up-name">{bed.Patient?.PatientName || '—'}</span>
                       <span className="up-basic">{bed.Patient?.Gender}/{bed.Patient?.Age ?? '—'}</span>
                     </div>
@@ -279,8 +283,9 @@ export default function WardTab() {
               </div>
             )}
 
-            {/* 依床位主檔鋪上床卡（含空床）；空床不可點，佔床點擊開啟詳情 Modal */}
-            {placedBeds.map(bed => (
+            {/* 依床位主檔鋪上床卡（含空床）；空床不可點，佔床點擊開啟詳情 Modal
+                OER01/OER02 例外：疊放於急診手術室(col6, rows7-8)，用 flex 均分成等高兩格（OER01 在上） */}
+            {placedBeds.filter(b => !OR_STACK_IDS.includes(b.BedId)).map(bed => (
               <BedCard
                 key={bed.BedId}
                 bed={bed}
@@ -288,6 +293,24 @@ export default function WardTab() {
                 onClick={bed.Status !== 'empty' ? () => setSelectedBed(bed) : undefined}
               />
             ))}
+            {(() => {
+              const orBeds = placedBeds
+                .filter(b => OR_STACK_IDS.includes(b.BedId))
+                .sort((a, b) => (a.BedId < b.BedId ? -1 : 1))   // OER01 在上、OER02 在下
+              return orBeds.length > 0 && (
+                <div className="or-stack" style={{ gridColumn: '6', gridRow: '7/9' }}>
+                  {orBeds.map(bed => (
+                    <BedCard
+                      key={bed.BedId}
+                      bed={bed}
+                      inStack
+                      filteredOut={!isBedVisible(bed, filter)}
+                      onClick={bed.Status !== 'empty' ? () => setSelectedBed(bed) : undefined}
+                    />
+                  ))}
+                </div>
+              )
+            })()}
           </div>
         </div>
 

@@ -22,6 +22,7 @@ public class BoardErItem
     [JsonPropertyName("診斷")]     public string? Diagnosis { get; set; } // 院方已回傳（可帶入，免後台自建）
     [JsonPropertyName("科別")]     public string? Department { get; set; } // 院方已回傳（代碼，可帶入，免後台自建）
     [JsonPropertyName("床位")]     public string? Hbed { get; set; }
+    [JsonPropertyName("傳入日期")] public string? ArrivalRaw { get; set; } // 到院時間（ISO，如 2026-06-30T00:00:00）；用於推算留觀時間
 }
 
 /// <summary>Board_ER 回應外殼：{ success, data[] }。</summary>

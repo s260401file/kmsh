@@ -3,6 +3,7 @@
 // 供大量傷患（MCI）情境快速掌握全院急診收治狀況。
 // 資料來源：後端 /api/Board/er（自建床位主檔 ＋ Board_ER 真實在室 ＋ overlay；免 F5 輪詢）。
 import { useErWard } from '../../../../hooks/useErWard'
+import BoardLoading from '../../../../components/BoardLoading'   // 院方資料載入中動畫
 import '../tabsCss/mass-casualty.css'
 
 // 檢傷分級：院方真實值 1/2/3 → A/B/C 三級（1→A 重症、2→B 中症、3→C 輕症）
@@ -23,7 +24,7 @@ function buildFlags(p) {
 }
 
 export default function MassCasualtyTab() {
-  const { beds } = useErWard('ER')
+  const { beds, loading } = useErWard('ER')
   // 取出所有佔床病人（含未配置床），攤平為含床號的病人陣列，並依檢傷級別（數字小=重）排序
   const patients = beds
     .filter(b => b.Status !== 'empty' && b.Patient)
@@ -36,6 +37,8 @@ export default function MassCasualtyTab() {
   const sevC  = patients.filter(p => p.Triage === 3).length
   const dead      = patients.filter(p => p.Deceased).length
   const transfer  = patients.filter(p => p.TransferOut).length
+
+  if (loading) return <main className="main-content"><BoardLoading /></main>   // 院方資料載入中
 
   return (
     <main className="main-content">

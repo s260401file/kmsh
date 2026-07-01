@@ -146,6 +146,7 @@
 .icu-board .card-row2{display:flex;align-items:baseline;gap:6px}
 .icu-board .patient-name{font-size:18px;font-weight:700;line-height:1}
 .icu-board .patient-basic{font-size:13px;color:var(--text-secondary);line-height:1}
+.icu-board .card-row-dr{font-size:14px;color:#1565C0;font-weight:600;line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .icu-board .card-row3{display:flex;gap:4px;flex-wrap:wrap;align-items:center;margin-top:auto}
 .icu-board .empty-label{font-size:22px;font-weight:700;color:var(--text-empty)}
 .icu-board .empty-bed-num{font-size:18px;font-weight:900;font-family:var(--font-num);color:var(--text-empty);margin-bottom:6px}

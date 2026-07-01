@@ -337,6 +337,35 @@ public class BoardController : ControllerBase
             });
         }
 
+        // ══════ 暫時 DEMO（討論用，討論後移除）：5 筆「主檔無此床碼」在室病人 → 測試負1下方「不佔床病人」面板 ══════
+        var _demoDate = DateTime.Today.ToString("MM/dd");
+        var _demo = new[]
+        {
+            new { Bed = "走廊1", Name = "歐陽○明", Sex = "M", Age = 68, Tri = "3", Dx = "發燒待觀察",       Arr = "08:30", Obs = true,  Awa = false, AwT = (string?)null },
+            new { Bed = "走廊2", Name = "林○華", Sex = "F", Age = 54, Tri = "2", Dx = "胸痛 R/O ACS",        Arr = "09:15", Obs = false, Awa = true,  AwT = (string?)"一般" },
+            new { Bed = "候診1", Name = "王○強", Sex = "M", Age = 45, Tri = "4", Dx = "腹痛待評估",          Arr = "10:00", Obs = false, Awa = false, AwT = (string?)null },
+            new { Bed = "候診2", Name = "張○美", Sex = "F", Age = 72, Tri = "3", Dx = "頭暈／姿勢性低血壓",  Arr = "10:40", Obs = true,  Awa = false, AwT = (string?)null },
+            new { Bed = "待轉1", Name = "黃○文", Sex = "M", Age = 60, Tri = "2", Dx = "急性腦中風",          Arr = "07:50", Obs = false, Awa = true,  AwT = (string?)"加護" },
+        };
+        for (int i = 0; i < _demo.Length; i++)
+        {
+            var d = _demo[i];
+            resp.Beds.Add(new ErBedDto
+            {
+                BedId = d.Bed, Ward = "MER", Zone = "未配置", Unplaced = true, SortOrder = 9100 + i,
+                Status = d.Awa ? "awaiting" : d.Obs ? "observation" : "occupied",
+                Patient = new ErBedPatientDto
+                {
+                    PatientName = d.Name, Gender = d.Sex, Age = d.Age, MedRecord = $"TDEMO0{i + 1}",
+                    Department = "EMED", Diagnosis = d.Dx,
+                    Triage = TriageLevel(d.Tri), TriageGrade = TriageToGrade(d.Tri), TriageRaw = d.Tri,
+                    ArrivalDate = _demoDate, ArrivalTime = d.Arr,
+                    Observation = d.Obs, Awaiting = d.Awa, AwaitingType = d.AwT
+                }
+            });
+        }
+        // ══════ /暫時 DEMO ══════
+
         return Ok(resp);
     }
 
@@ -347,10 +376,13 @@ public class BoardController : ControllerBase
         MedRecord = o.Hhisnum, IdNo = o.Hidno, Doctor = o.Doctor, DoctorCard = o.DoctorCard,
         Flow = o.Flow, Category = o.Category,
         Triage = TriageLevel(o.Triage), TriageGrade = TriageToGrade(o.Triage),  // 正規化為 1/2/3 層級（前端據此 A/B/C 配色）
+        TriageRaw = o.Triage?.Trim(),  // 院方原始檢傷分類（如 3），顯示於詳情
+
         Department = string.IsNullOrWhiteSpace(o.Department) ? e?.Department : o.Department, Nurse = e?.PrimaryNurse,  // 院方科別優先
         Diagnosis = string.IsNullOrWhiteSpace(o.Diagnosis) ? e?.Diagnosis : o.Diagnosis,  // 院方診斷優先
         Isolation = e?.Isolation, Notes = e?.Notes,
-        ArrivalDate = e?.ArrivalDate, ArrivalTime = e?.ArrivalTime,
+        // 到院時間＝院方「傳入日期」（優先），供前端計算留觀時間；院方未帶則用後台自填
+        ArrivalDate = ErArrivalDate(o.ArrivalRaw) ?? e?.ArrivalDate, ArrivalTime = ErArrivalTime(o.ArrivalRaw) ?? e?.ArrivalTime,
         // 留觀/待床由院方「病患動向」Flow 推導：A=留觀、4=待床(一般)；加護/隔離代碼待院方確認(待辦)
         Observation = o.Flow == "A" || (e?.Observation ?? false),
         Awaiting = o.Flow == "4" || (e?.Awaiting ?? false),
@@ -360,6 +392,13 @@ public class BoardController : ControllerBase
         Dnr = e?.Dnr ?? false, Aad = e?.Aad ?? false, Mbd = e?.Mbd ?? false, Deceased = e?.Deceased ?? false,
         FallRisk = e?.FallRisk ?? false, Allergy = e?.Allergy ?? false, Exam = e?.Exam ?? false, Consult = e?.Consult ?? false
     };
+
+    /// <summary>院方「傳入日期」(ISO) → 到院日 MM/dd；解析失敗回 null。</summary>
+    private static string? ErArrivalDate(string? raw)
+        => DateTime.TryParse(raw, out var d) ? d.ToString("MM/dd") : null;
+    /// <summary>院方「傳入日期」(ISO) → 到院時間 HH:mm；解析失敗回 null。</summary>
+    private static string? ErArrivalTime(string? raw)
+        => DateTime.TryParse(raw, out var d) ? d.ToString("HH:mm") : null;
 
     /// <summary>推導床位狀態（隔離→轉床→待床→留觀→否則 occupied）；待床/留觀含院方 Flow(4/A)。空床由呼叫端設 empty。</summary>
     private static string DeriveErStatus(BoardErItem o, WardPatientExtItem? e)
@@ -822,12 +861,19 @@ public class BoardController : ControllerBase
     public async Task<IActionResult> GetExamConsult(string unitCode, CancellationToken ct = default)
     {
         var rows = (await _ward.GetExamConsultAsync(unitCode, false, ct)).ToList();
-        var exams = rows.Where(r => r.Kind == "檢查").Select(r => new
+        // 依規格書：以執行日「最新時間」排序，最新在前（檢查＝檢查時間 ScheduledDate+TimeSlot；會診＝會診時間 CompletedTime）
+        var exams = rows.Where(r => r.Kind == "檢查")
+            .OrderByDescending(r => r.ScheduledDate ?? "")
+            .ThenByDescending(r => r.TimeSlot ?? "")
+            .Select(r => new
         {
             bedId = r.BedId, patientName = r.PatientName, gender = r.Gender, examName = r.ItemName,
             scheduledDate = r.ScheduledDate, timeSlot = r.TimeSlot, status = r.Status, notes = r.Notes
         });
-        var consults = rows.Where(r => r.Kind == "會診").Select(r => new
+        var consults = rows.Where(r => r.Kind == "會診")
+            // 未完成（待回覆）視為進行中排最前，其餘依會診完成時間新到舊
+            .OrderByDescending(r => string.IsNullOrWhiteSpace(r.CompletedTime) ? "9999-99-99 99:99" : r.CompletedTime)
+            .Select(r => new
         {
             bedId = r.BedId, patientName = r.PatientName, gender = r.Gender, consultDept = r.ItemName,
             consultDoctor = r.Doctor, completedTime = r.CompletedTime, status = r.Status, notes = r.Notes

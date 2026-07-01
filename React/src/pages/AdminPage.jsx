@@ -10,6 +10,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import '../components/BoardLoading.css'   // 借用 board-spin keyframe（後台讀取中 spinner）
 import * as marqueeApi from '../services/marqueeApi'
 import * as textApi from '../services/textApi'
 import * as contactApi from '../services/contactApi'
@@ -1017,10 +1018,12 @@ function WardExtSection({ unitCode }) {
   const [occ, setOcc]       = useState({})   // 病歷號 → 目前床號（在床對照）
   const [form, setForm]     = useState(emptyWardExtForm)
   const [editId, setEditId] = useState(null)
+  const [loading, setLoading] = useState(true)  // 讀取中（getExt 需向院方 API 取在床資料，較慢）
   const [msg, setMsg]       = useState({ text: '', error: false })
 
   const showMsg = (text, error = false) => { setMsg({ text, error }); setTimeout(() => setMsg({ text: '', error: false }), 3000) }
   const load = useCallback(async () => {
+    setLoading(true)
     try {
       const [rows, occList] = await Promise.all([
         wardApi.getExt(unitCode, true),
@@ -1030,6 +1033,7 @@ function WardExtSection({ unitCode }) {
       const m = {}; (occList ?? []).forEach(o => { if (o.hhisnum) m[o.hhisnum.trim()] = o.bed })
       setOcc(m)
     } catch { showMsg('讀取失敗', true) }
+    finally { setLoading(false) }
   }, [unitCode])
   useEffect(() => { load() }, [load])
 
@@ -1139,9 +1143,14 @@ function WardExtSection({ unitCode }) {
       </div>
       <div style={s.listCard}>
         <h4 style={s.formTitle}>臨床補充清單（共 {list.length} 筆）</h4>
-        {list.length === 0 ? <p style={{ color: '#9ca3af', fontSize: '14px' }}>尚無資料，請新增（病歷號需對應 Board_bed 在床病人才會顯示在白板）</p> : (
+        {loading ? (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', padding: '30px', color: '#6b7280', fontSize: '14px' }}>
+            <span style={{ width: '20px', height: '20px', border: '3px solid #d6e0ea', borderTopColor: '#2D7A55', borderRadius: '50%', animation: 'board-spin 0.9s linear infinite' }} />
+            讀取中…（正在向院方系統取得在床資料）
+          </div>
+        ) : list.length === 0 ? <p style={{ color: '#9ca3af', fontSize: '14px' }}>尚無資料，請新增（病歷號需對應 Board_bed 在床病人才會顯示在白板）</p> : (
           <table style={s.table}>
-            <thead><tr>{['病歷號', unitCode === 'OR' ? '刀房' : '床號', '科別','責護','病況','狀態','旗標','啟用','操作'].map(h => <th key={h} style={s.th}>{h}</th>)}</tr></thead>
+            <thead><tr>{['病歷號', unitCode === 'OR' ? '刀房' : '床號', ...(unitCode === 'OR' ? ['科別'] : []), '責護','病況','狀態','旗標','啟用','操作'].map(h => <th key={h} style={s.th}>{h}</th>)}</tr></thead>
             <tbody>
               {list.map((item, i) => {
                 const flags = WARD_BOOLS.filter(([k]) => item[k]).map(([, l]) => l)
@@ -1152,7 +1161,7 @@ function WardExtSection({ unitCode }) {
                     <td style={s.td}>{occ[item.hhisnum?.trim()]
                       ? <span style={{ ...s.badge, background: '#dbeafe', color: '#1e40af' }}>{occ[item.hhisnum.trim()]}</span>
                       : <span style={{ color: '#9ca3af', fontSize: '12px' }}>{unitCode === 'OR' ? '未排今日' : '已離床'}</span>}</td>
-                    <td style={s.td}>{item.department || '—'}</td>
+                    {unitCode === 'OR' && <td style={s.td}>{item.department || '—'}</td>}
                     <td style={s.td}>{item.primaryNurse || '—'}</td>
                     <td style={s.td}>{item.condition || '—'}</td>
                     <td style={s.td}>{item.bedStatus || 'occupied'}</td>

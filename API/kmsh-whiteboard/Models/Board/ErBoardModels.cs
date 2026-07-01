@@ -45,6 +45,7 @@ public class ErBedPatientDto
     [JsonPropertyName("Category")]    public string? Category { get; set; }   // 類別（原碼）
     [JsonPropertyName("Triage")]      public int? Triage { get; set; }        // 檢傷 1/2/3
     [JsonPropertyName("TriageGrade")] public string? TriageGrade { get; set; }// A/B/C
+    [JsonPropertyName("TriageRaw")]   public string? TriageRaw { get; set; }  // 院方原始檢傷分類（E/2/3/4/5/9）
     // ── 自建 overlay（WardPatientExt, UnitCode='ER'）──
     [JsonPropertyName("Department")]       public string? Department { get; set; }
     [JsonPropertyName("Nurse")]            public string? Nurse { get; set; }
