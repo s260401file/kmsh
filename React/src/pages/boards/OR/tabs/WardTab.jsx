@@ -23,7 +23,7 @@ function isRoomVisible(room, filter) {
     case 'op':   return p?.SurgerySource === '門診刀'
     case 'inp':  return p?.SurgerySource === '住院刀'
     case 'busy': return room.Status === 'in-surgery'
-    case 'prep': return room.Status === 'prep'
+    case 'prep': return room.Status === 'scheduled'
     case 'done': return room.Status === 'completed'
     default:     return false
   }
@@ -200,7 +200,7 @@ export default function WardTab() {
               <div className={`ws-item${filter === 'inp' ? ' active' : ''}`} data-filter="inp" onClick={() => handleFilter('inp')}><div className="ws-value ws-inpknife">{stats.inpKnife}</div><div className="ws-label">住院刀</div></div>
             </div>
             <div className="ws-row">
-              <div className={`ws-item${filter === 'prep' ? ' active' : ''}`} data-filter="prep" onClick={() => handleFilter('prep')}><div className="ws-value ws-prep">{stats.prep}</div><div className="ws-label">準備中</div></div>
+              <div className={`ws-item${filter === 'prep' ? ' active' : ''}`} data-filter="prep" onClick={() => handleFilter('prep')}><div className="ws-value ws-prep">{stats.prep}</div><div className="ws-label">排程</div></div>
               <div className="ws-item" style={{ cursor: 'pointer' }} onClick={() => setShowCompleted(true)}><div className="ws-value ws-done">{stats.completed}</div><div className="ws-label">已完成 ▸</div></div>
               <div className="ws-item"><div className="ws-value ws-empty">{stats.empty}</div><div className="ws-label">空房</div></div>
             </div>
@@ -215,7 +215,7 @@ export default function WardTab() {
         <button className={`badge badge-filter badge-op${filter === 'op' ? ' active' : ''}`} onClick={() => handleFilter('op')}>門診刀</button>
         <button className={`badge badge-filter badge-inp${filter === 'inp' ? ' active' : ''}`} onClick={() => handleFilter('inp')}>住院刀</button>
         <button className={`filter-btn${filter === 'busy' ? ' active' : ''}`} onClick={() => handleFilter('busy')}>手術中</button>
-        <button className={`filter-btn${filter === 'prep' ? ' active' : ''}`} onClick={() => handleFilter('prep')}>準備中</button>
+        <button className={`filter-btn${filter === 'prep' ? ' active' : ''}`} onClick={() => handleFilter('prep')}>排程</button>
         <button className="filter-btn" onClick={() => setShowCompleted(true)}>已完成 ▸</button>
       </div>
 

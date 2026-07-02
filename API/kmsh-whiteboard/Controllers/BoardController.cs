@@ -453,11 +453,14 @@ public class BoardController : ControllerBase
             {
                 dto.Surgeries = list.Select(d => BuildOrSurgeryFromDaily(d, ExtOf(d.Hhisnum), now)).ToList();
                 dto.TodayCount = dto.Surgeries.Count;
-                // 房卡顯示：優先進行中→準備中→未完成首台→首台
-                var current = dto.Surgeries.FirstOrDefault(s => s.SurgeryStatus == "手術中")
-                           ?? dto.Surgeries.FirstOrDefault(s => s.SurgeryStatus == "準備中")
-                           ?? dto.Surgeries.FirstOrDefault(s => s.SurgeryStatus != "已完成")
-                           ?? dto.Surgeries[0];
+                // 房卡顯示（Surgeries 已依時間排序）：手術中優先；否則顯示「第一台仍在保留期內」的刀——
+                // 每台過預定時間後房卡仍停留 OrCardHoldMinutes 分鐘，超過才換下一台；全部過保留則停在最後一台。
+                var nowMinOr = now.Hour * 60 + now.Minute;
+                var active = dto.Surgeries.Where(s => s.SurgeryStatus != "已完成").ToList();
+                var current = active.FirstOrDefault(s => s.SurgeryStatus == "手術中")
+                           ?? active.FirstOrDefault(s => { var m = HmToMin(s.ScheduledTime); return m is null || m.Value + OrCardHoldMinutes > nowMinOr; })
+                           ?? active.LastOrDefault()
+                           ?? dto.Surgeries[^1];
                 dto.Patient = current;
                 dto.Status = StatusToClass(current.SurgeryStatus);
             }
@@ -515,22 +518,27 @@ public class BoardController : ControllerBase
         Department = e?.Department, ScrubNurse = e?.ScrubNurse, CircNurse = e?.CircNurse, Notes = e?.Notes
     };
 
+    /// <summary>房卡停留（分）：某台過了預定時間、仍未登記進刀房，房卡仍停留此久；超過才換下一台。</summary>
+    private const int OrCardHoldMinutes = 60;
+
+    /// <summary>HH:mm → 當日分鐘數；空或格式錯回 null。</summary>
+    private static int? HmToMin(string? t)
+    {
+        if (string.IsNullOrWhiteSpace(t)) return null;
+        var p = t.Trim().Split(':');
+        return p.Length >= 2 && int.TryParse(p[0], out var h) && int.TryParse(p[1], out var m) ? h * 60 + m : (int?)null;
+    }
+
     /// <summary>
-    /// 手術狀態依時間自動判定（不採手填）：已填實際出刀房→已完成；已填實際進刀房且已過該時間→手術中；
-    /// 否則已過預定手術時間→準備中、未到→排程。時間為 HH:mm，已先以「手術日期＝今日」過濾。
+    /// 手術狀態自動判定（不採手填、且不使用「準備中」）：已填實際出刀房→已完成；
+    /// 已填實際進刀房且已到→手術中；其餘一律→排程（不論是否已過預定時間）。時間為 HH:mm。
     /// </summary>
     private static string DeriveOrStatus(string? sched, string? start, string? end, DateTime now)
     {
-        static int? Min(string? t)
-        {
-            if (string.IsNullOrWhiteSpace(t)) return null;
-            var p = t.Trim().Split(':');
-            return p.Length >= 2 && int.TryParse(p[0], out var h) && int.TryParse(p[1], out var m) ? h * 60 + m : (int?)null;
-        }
+        _ = sched;   // 狀態不再依預定時間變動；房卡停留由 GetOr 依 OrCardHoldMinutes 處理
         var nowMin = now.Hour * 60 + now.Minute;
-        if (Min(end) is not null) return "已完成";
-        if (Min(start) is { } st) return nowMin >= st ? "手術中" : "準備中";
-        if (Min(sched) is { } sc) return nowMin >= sc ? "準備中" : "排程";
+        if (HmToMin(end) is not null) return "已完成";
+        if (HmToMin(start) is { } st) return nowMin >= st ? "手術中" : "排程";
         return "排程";
     }
 

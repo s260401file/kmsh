@@ -1019,6 +1019,7 @@ function WardExtSection({ unitCode }) {
   const [form, setForm]     = useState(emptyWardExtForm)
   const [editId, setEditId] = useState(null)
   const [loading, setLoading] = useState(true)  // 讀取中（getExt 需向院方 API 取在床資料，較慢）
+  const [staff, setStaff]   = useState([])       // OR 刷手/流動護理師 可查詢下拉用（人員管理）
   const [msg, setMsg]       = useState({ text: '', error: false })
 
   const showMsg = (text, error = false) => { setMsg({ text, error }); setTimeout(() => setMsg({ text: '', error: false }), 3000) }
@@ -1036,6 +1037,8 @@ function WardExtSection({ unitCode }) {
     finally { setLoading(false) }
   }, [unitCode])
   useEffect(() => { load() }, [load])
+  // OR 才需要護理師清單（刷手/流動下拉）
+  useEffect(() => { if (unitCode === 'OR') wardApi.getStaff(false).then(rows => setStaff(rows ?? [])).catch(() => {}) }, [unitCode])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -1070,6 +1073,8 @@ function WardExtSection({ unitCode }) {
   const handleDelete = async id => { if (!window.confirm('確定刪除？')) return; try { await wardApi.removeExt(id); showMsg('刪除成功'); load() } catch { showMsg('刪除失敗', true) } }
 
   const setF = (k, v) => setForm(f => ({ ...f, [k]: v }))
+  // OR 刷手/流動：人員管理去重姓名，供可查詢下拉（allowFree 亦可自行輸入）
+  const nurseOpts = [...new Set((staff || []).map(p => p.name).filter(Boolean))].map(n => ({ value: n, label: n }))
 
   return (
     <div>
@@ -1115,13 +1120,13 @@ function WardExtSection({ unitCode }) {
             <>
               <label style={s.label}>手術欄位（OR；以病歷號對應 Board_OR 今日手術）</label>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0 16px', marginBottom: '4px' }}>
-                <div style={s.formRow}><label style={s.label}>刷手護理師</label><input style={s.input} value={form.scrubNurse} onChange={e => setF('scrubNurse', e.target.value)} /></div>
-                <div style={s.formRow}><label style={s.label}>流動護理師</label><input style={s.input} value={form.circNurse} onChange={e => setF('circNurse', e.target.value)} /></div>
+                <div style={s.formRow}><label style={s.label}>刷手護理師</label><NurseSelect options={nurseOpts} value={form.scrubNurse} onChange={v => setF('scrubNurse', v)} allowFree placeholder="輸入或點選護理師" /></div>
+                <div style={s.formRow}><label style={s.label}>流動護理師</label><NurseSelect options={nurseOpts} value={form.circNurse} onChange={v => setF('circNurse', v)} allowFree placeholder="輸入或點選護理師" /></div>
                 <div style={s.formRow} />
                 <div style={s.formRow}><label style={s.label}>實際進刀房(HH:mm)</label><input style={s.input} value={form.startTime} onChange={e => setF('startTime', e.target.value)} placeholder="09:05" /></div>
                 <div style={s.formRow}><label style={s.label}>實際出刀房(HH:mm)</label><input style={s.input} value={form.endTime} onChange={e => setF('endTime', e.target.value)} placeholder="10:18" /></div>
               </div>
-              <div style={{ fontSize: '12px', color: '#9ca3af', margin: '0 0 12px' }}>手術狀態由系統依時間自動判定：未到預定時間→<b>排程</b>、已過預定時間→<b>準備中</b>、已填實際進刀房且已到→<b>手術中</b>、已填實際出刀房→<b>已完成</b>。</div>
+              <div style={{ fontSize: '12px', color: '#9ca3af', margin: '0 0 12px' }}>手術狀態由系統自動判定（不使用「準備中」）：未登記進刀房一律<b>排程</b>、已填實際進刀房且已到→<b>手術中</b>、已填實際出刀房→<b>已完成</b>。房卡：某台過預定時間後仍停留 60 分鐘，之後若有下一台則改顯示下一台。</div>
             </>
           )}
           <label style={s.label}>註記旗標</label>
