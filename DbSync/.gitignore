@@ -1,0 +1,11 @@
+# 建置產物
+bin/
+obj/
+publish/
+
+# 執行期狀態與紀錄
+state/
+logs/
+
+# 實際連線設定（含帳密，勿提交）——請由 appsettings.sample.json 複製後填入
+appsettings.json

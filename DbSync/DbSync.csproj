@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>DbSync</RootNamespace>
+    <AssemblyName>DbSync</AssemblyName>
+    <!-- 不可開 InvariantGlobalization：Microsoft.Data.SqlClient 不支援 -->
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- 目標：SQL Server（含 SqlBulkCopy） -->
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="5.2.2" />
+    <!-- 來源：DB2（IBM 官方託管版，Windows 免裝完整 client） -->
+    <PackageReference Include="Net.IBM.Data.Db2" Version="8.0.0.200" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="appsettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="appsettings.sample.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="run-test.bat">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="inspect-keys.bat">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+</Project>
