@@ -1019,7 +1019,7 @@ function WardExtSection({ unitCode }) {
   const [form, setForm]     = useState(emptyWardExtForm)
   const [editId, setEditId] = useState(null)
   const [loading, setLoading] = useState(true)  // 讀取中（getExt 需向院方 API 取在床資料，較慢）
-  const [staff, setStaff]   = useState([])       // OR 刷手/流動護理師 可查詢下拉用（人員管理）
+  const nurses = useUnitNurses(unitCode)         // OR 刷手/流動：該單位護理人員（職別含「護理」）
   const [msg, setMsg]       = useState({ text: '', error: false })
 
   const showMsg = (text, error = false) => { setMsg({ text, error }); setTimeout(() => setMsg({ text: '', error: false }), 3000) }
@@ -1037,8 +1037,6 @@ function WardExtSection({ unitCode }) {
     finally { setLoading(false) }
   }, [unitCode])
   useEffect(() => { load() }, [load])
-  // OR 才需要護理師清單（刷手/流動下拉）
-  useEffect(() => { if (unitCode === 'OR') wardApi.getStaff(false).then(rows => setStaff(rows ?? [])).catch(() => {}) }, [unitCode])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -1073,8 +1071,8 @@ function WardExtSection({ unitCode }) {
   const handleDelete = async id => { if (!window.confirm('確定刪除？')) return; try { await wardApi.removeExt(id); showMsg('刪除成功'); load() } catch { showMsg('刪除失敗', true) } }
 
   const setF = (k, v) => setForm(f => ({ ...f, [k]: v }))
-  // OR 刷手/流動：人員管理去重姓名，供可查詢下拉（allowFree 亦可自行輸入）
-  const nurseOpts = [...new Set((staff || []).map(p => p.name).filter(Boolean))].map(n => ({ value: n, label: n }))
+  // OR 刷手/流動：該單位護理人員去重姓名，供可查詢下拉（allowFree 亦可自行輸入）
+  const nurseOpts = [...new Set((nurses || []).map(n => n.name).filter(Boolean))].map(n => ({ value: n, label: n }))
 
   return (
     <div>
