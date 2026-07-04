@@ -3,6 +3,7 @@ using kmsh_whiteboard.Models.Board;
 using kmsh_whiteboard.Models.Db;
 using kmsh_whiteboard.Repositories;
 using kmsh_whiteboard.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace kmsh_whiteboard.Controllers;
@@ -19,14 +20,16 @@ public class BoardController : ControllerBase
     private readonly IWardRepository _ward;
     private readonly IPersonnelRepository _staff;
     private readonly ILdapAuthenticator _ldap;
+    private readonly IJwtTokenService _jwt;
     private readonly ILogger<BoardController> _logger;
 
-    public BoardController(IBoardApiService board, IWardRepository ward, IPersonnelRepository staff, ILdapAuthenticator ldap, ILogger<BoardController> logger)
+    public BoardController(IBoardApiService board, IWardRepository ward, IPersonnelRepository staff, ILdapAuthenticator ldap, IJwtTokenService jwt, ILogger<BoardController> logger)
     {
         _board = board;
         _ward = ward;
         _staff = staff;
         _ldap = ldap;
+        _jwt = jwt;
         _logger = logger;
     }
 
@@ -338,35 +341,6 @@ public class BoardController : ControllerBase
                 SortOrder = 9000, Status = DeriveErStatus(kv.Value, e), Patient = BuildErPatient(kv.Value, e)
             });
         }
-
-        // ══════ 暫時 DEMO（討論用，討論後移除）：5 筆「主檔無此床碼」在室病人 → 測試負1下方「不佔床病人」面板 ══════
-        var _demoDate = DateTime.Today.ToString("MM/dd");
-        var _demo = new[]
-        {
-            new { Bed = "走廊1", Name = "歐陽○明", Sex = "M", Age = 68, Tri = "3", Dx = "發燒待觀察",       Arr = "08:30", Obs = true,  Awa = false, AwT = (string?)null },
-            new { Bed = "走廊2", Name = "林○華", Sex = "F", Age = 54, Tri = "2", Dx = "胸痛 R/O ACS",        Arr = "09:15", Obs = false, Awa = true,  AwT = (string?)"一般" },
-            new { Bed = "候診1", Name = "王○強", Sex = "M", Age = 45, Tri = "4", Dx = "腹痛待評估",          Arr = "10:00", Obs = false, Awa = false, AwT = (string?)null },
-            new { Bed = "候診2", Name = "張○美", Sex = "F", Age = 72, Tri = "3", Dx = "頭暈／姿勢性低血壓",  Arr = "10:40", Obs = true,  Awa = false, AwT = (string?)null },
-            new { Bed = "待轉1", Name = "黃○文", Sex = "M", Age = 60, Tri = "2", Dx = "急性腦中風",          Arr = "07:50", Obs = false, Awa = true,  AwT = (string?)"加護" },
-        };
-        for (int i = 0; i < _demo.Length; i++)
-        {
-            var d = _demo[i];
-            resp.Beds.Add(new ErBedDto
-            {
-                BedId = d.Bed, Ward = "MER", Zone = "未配置", Unplaced = true, SortOrder = 9100 + i,
-                Status = d.Awa ? "awaiting" : d.Obs ? "observation" : "occupied",
-                Patient = new ErBedPatientDto
-                {
-                    PatientName = d.Name, Gender = d.Sex, Age = d.Age, MedRecord = $"TDEMO0{i + 1}",
-                    Department = "EMED", Diagnosis = d.Dx,
-                    Triage = TriageLevel(d.Tri), TriageGrade = TriageToGrade(d.Tri), TriageRaw = d.Tri,
-                    ArrivalDate = _demoDate, ArrivalTime = d.Arr,
-                    Observation = d.Obs, Awaiting = d.Awa, AwaitingType = d.AwT
-                }
-            });
-        }
-        // ══════ /暫時 DEMO ══════
 
         return Ok(resp);
     }
@@ -963,12 +937,15 @@ public class BoardController : ControllerBase
     public async Task<IActionResult> DeleteStaff(int id, CancellationToken ct = default)
         => await _staff.DeleteStaffAsync(id, ct) ? NoContent() : NotFound();
 
-    /// <summary>員編登入：回人員＋可管理單位（IsAdmin→四站；否則 IsManager=1 的單位）。現階段免密碼。</summary>
-    [HttpGet("personnel/auth/{employeeNo}")]
-    public async Task<IActionResult> AuthByEmployeeNo(string employeeNo, CancellationToken ct = default)
+    /// <summary>驗證目前 token 並回最新身分（前端啟動時呼叫；token 過期/無效回 401）。</summary>
+    [HttpGet("personnel/me")]
+    [Authorize]
+    public async Task<IActionResult> Me(CancellationToken ct = default)
     {
-        var s = await _staff.GetStaffByEmployeeNoAsync(employeeNo, ct);
-        if (s is null) return NotFound(new { message = "查無此員編或已停用" });
+        var empNo = User.Identity?.Name;
+        if (string.IsNullOrWhiteSpace(empNo)) return Unauthorized();
+        var s = await _staff.GetStaffByEmployeeNoAsync(empNo, ct);
+        if (s is null) return Unauthorized(new { message = "查無此員編或已停用" });
         var roles = (await _staff.GetUnitRolesAsync(s.Id, null, false, ct)).ToList();
         var allUnits = new[] { "W52", "ICU", "OR", "ER" };
         var manageUnits = s.IsAdmin ? allUnits
@@ -984,8 +961,10 @@ public class BoardController : ControllerBase
     /// <summary>
     /// 登入：以 LDAP（LLDAP@101）驗帳密，成功後以員編對應本地 Staff/StaffUnitRole 取權限。
     /// LDAP 未啟用（過渡期）時不驗密碼、僅以員編查在職人員。無論成敗寫登入稽核。
+    /// 成功回傳 JWT token；後續修改類請求（POST/PUT/DELETE）皆須帶 Authorization: Bearer {token}。
     /// </summary>
     [HttpPost("personnel/login")]
+    [AllowAnonymous]
     public async Task<IActionResult> Login([FromBody] LoginRequest req, CancellationToken ct = default)
     {
         var empNo = req.EmployeeNo?.Trim() ?? "";
@@ -1013,16 +992,19 @@ public class BoardController : ControllerBase
             : roles.Where(r => r.IsManager).Select(r => r.UnitCode).Distinct().ToArray();
 
         await _staff.AddLoginAuditAsync(empNo, true, ip, "login", ct);
+        var token = _jwt.CreateToken(s.Id, s.EmployeeNo ?? empNo, s.Name ?? empNo, s.IsAdmin, manageUnits);
         return Ok(new
         {
+            token,
             staffId = s.Id, employeeNo = s.EmployeeNo, name = s.Name, isAdmin = s.IsAdmin,
             units = manageUnits,
             roles = roles.Select(r => new { r.UnitCode, r.Role, r.IsManager, r.Department })
         });
     }
 
-    /// <summary>登出：寫登出稽核。</summary>
+    /// <summary>登出：寫登出稽核。免驗 token（token 已過期也允許記登出）。</summary>
     [HttpPost("personnel/logout")]
+    [AllowAnonymous]
     public async Task<IActionResult> Logout([FromBody] LogoutRequest req, CancellationToken ct = default)
     {
         var ip = HttpContext.Connection.RemoteIpAddress?.ToString();

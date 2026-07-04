@@ -1,12 +1,51 @@
+using System.Text;
 using kmsh_whiteboard.Data;
 using kmsh_whiteboard.Repositories;
+using kmsh_whiteboard.Security;
 using kmsh_whiteboard.Services;
 using kmsh_whiteboard.Settings;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 
 // ── 建立 WebApplication Builder 與註冊 MVC Controllers ──────────
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers();
+builder.Services.AddControllers(o =>
+{
+    // 全域防護：非 GET 一律要求已登入（[AllowAnonymous] 例外）；詳 MutationAuthorizationFilter
+    o.Filters.Add<MutationAuthorizationFilter>();
+    // 全域操作稽核：修改類請求自動記錄操作者/內容/結果；詳 OperationAuditFilter
+    o.Filters.Add<OperationAuditFilter>();
+});
+
+// ── JWT 認證（後台登入 token；登入端點簽發，白板 GET 不需要）────
+builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection(JwtOptions.Section));
+builder.Services.AddSingleton<IJwtTokenService, JwtTokenService>();
+
+var jwtOptions = builder.Configuration.GetSection(JwtOptions.Section).Get<JwtOptions>()
+    ?? throw new InvalidOperationException("Jwt 設定未提供");
+if (string.IsNullOrWhiteSpace(jwtOptions.SigningKey) || jwtOptions.SigningKey.Length < 32)
+    throw new InvalidOperationException("Jwt:SigningKey 未設定或長度不足（至少 32 字元）");
+
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(o =>
+    {
+        o.MapInboundClaims = false;   // 保留原始 claim 名稱（sub/name/role/unit）
+        o.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = jwtOptions.Issuer,
+            ValidateAudience = true,
+            ValidAudience = jwtOptions.Audience,
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.FromMinutes(2),
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.SigningKey)),
+            NameClaimType = "sub",    // User.Identity.Name = 員編
+            RoleClaimType = "role",   // [Authorize(Roles="Admin")]
+        };
+    });
+builder.Services.AddAuthorization();
 
 // ── CORS ───────────────────────────────────────────────────────
 builder.Services.AddCors(options =>
@@ -22,6 +61,7 @@ builder.Services.AddScoped<IContactRepository, ContactRepository>();
 builder.Services.AddScoped<IEvacRepository, EvacRepository>();
 builder.Services.AddScoped<IWardRepository, WardRepository>();
 builder.Services.AddScoped<IPersonnelRepository, PersonnelRepository>();
+builder.Services.AddScoped<IAuditRepository, AuditRepository>();
 // LDAP／AD 認證（LLDAP@101；設定檔驅動，Enabled=false 時為過渡期員編登入）
 builder.Services.Configure<kmsh_whiteboard.Settings.LdapOptions>(
     builder.Configuration.GetSection(kmsh_whiteboard.Settings.LdapOptions.Section));
@@ -45,6 +85,31 @@ builder.Services.AddSwaggerGen(c =>
     var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
     if (File.Exists(xmlPath))
         c.IncludeXmlComments(xmlPath, includeControllerXmlComments: true);
+
+    // Bearer 認證：Swagger 測試修改類端點時，右上 Authorize 貼上登入回傳的 token
+    c.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+        Description = "登入（POST /api/Board/personnel/login）回傳的 token。",
+    });
+    c.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
+    {
+        {
+            new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+            {
+                Reference = new Microsoft.OpenApi.Models.OpenApiReference
+                {
+                    Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
+                    Id = "Bearer",
+                },
+            },
+            Array.Empty<string>()
+        },
+    });
 });
 
 // ── 高榮 AMDR Service ──────────────────────────────────────────
@@ -119,9 +184,10 @@ app.UseSwaggerUI(c =>
     c.DocumentTitle = "護理白板 API — Swagger";
 });
 
-// ── Middleware Pipeline（順序：HTTPS 轉址 → CORS → 授權 → 路由至 Controller）──
+// ── Middleware Pipeline（順序：HTTPS 轉址 → CORS → 認證 → 授權 → 路由至 Controller）──
 app.UseHttpsRedirection();
 app.UseCors();
+app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 

@@ -10,15 +10,30 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { useCrudSection } from '../hooks/useCrudSection'
 import '../components/BoardLoading.css'   // 借用 board-spin keyframe（後台讀取中 spinner）
 import * as marqueeApi from '../services/marqueeApi'
 import * as textApi from '../services/textApi'
 import * as contactApi from '../services/contactApi'
 import * as evacuationApi from '../services/evacuationApi'
 import * as wardApi from '../services/wardApi'
+import * as auditApi from '../services/auditApi'
 
 // 單位代碼 → 顯示名稱對照（用於各 Manager 的單位切換 tab）
 const UNIT_LABELS = { W52: 'W52 病房', ICU: 'ICU 加護', OR: 'OR 手術室', ER: 'ER 急診室' }
+
+// 共用單位切換 tab 列（各 Manager 與跨單位人員管理區塊共用）
+function UnitTabs({ units, active, onChange }) {
+  return (
+    <div style={s.unitTabs}>
+      {units.map(u => (
+        <button key={u} style={{ ...s.unitTab, ...(active === u ? s.unitTabActive : {}) }} onClick={() => onChange(u)}>
+          {UNIT_LABELS[u] ?? u}
+        </button>
+      ))}
+    </div>
+  )
+}
 
 // ── Menu 設定（新增功能只改這裡）──────────────────────────
 // Sidebar 選單結構：上層分組 + 下層 leaf；available=false 會顯示「預計」且不可點。
@@ -100,6 +115,7 @@ const MENU_CONFIG = [
     id: 'system', label: '系統管理', adminOnly: true,   // 帳號與權限：僅系統管理員可見
     children: [
       { id: 'staff', label: '帳號設定', available: true },  // 人員＋單位角色＋管理員/管理者權限
+      { id: 'audit', label: '操作稽核', available: true },  // 資料異動記錄查詢（唯讀；寫入由後端自動）
     ]
   },
 ]
@@ -112,54 +128,15 @@ const emptyForm = { title: '', content: '', sortOrder: 0, isActive: true }
 
 // 單一單位的跑馬燈 CRUD：表單新增/編輯 + 清單顯示，呼叫 marqueeApi
 function MarqueeTab({ unitCode }) {
-  const [list, setList]   = useState([])          // 清單資料
-  const [form, setForm]   = useState(emptyForm)    // 新增/編輯表單欄位
-  const [editId, setEditId] = useState(null)       // null=新增模式，有值=編輯該 id
-  const [msg, setMsg]     = useState({ text: '', error: false })  // 操作提示訊息
-
-  // 顯示提示訊息，3 秒後自動清除
-  const showMsg = (text, error = false) => {
-    setMsg({ text, error })
-    setTimeout(() => setMsg({ text: '', error: false }), 3000)
-  }
-
-  // 讀取此單位的跑馬燈清單（unitCode 改變時 callback 會重建）
-  const load = useCallback(async () => {
-    try   { setList((await marqueeApi.getAll(unitCode)) ?? []) }
-    catch { showMsg('讀取失敗', true) }
-  }, [unitCode])
-
-  // 載入 / 切換單位時重新取得資料
-  useEffect(() => { load() }, [load])
-
-  // 送出表單：有 editId 走更新，否則新增；成功後清空表單並重新載入
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    try {
-      if (editId) {
-        await marqueeApi.update(editId, { ...form, unitCode, category: 'marquee' })
-        showMsg('修改成功')
-      } else {
-        await marqueeApi.create(unitCode, form)
-        showMsg('新增成功')
-      }
-      setForm(emptyForm); setEditId(null); load()
-    } catch { showMsg('操作失敗', true) }
-  }
-
-  // 將清單某筆帶入表單進入編輯模式
-  const handleEdit   = item  => { setEditId(item.id); setForm({ title: item.title ?? '', content: item.content, sortOrder: item.sortOrder, isActive: item.isActive }) }
-  // 刪除（先二次確認）
-  const handleDelete = async id => {
-    if (!window.confirm('確定刪除？')) return
-    try { await marqueeApi.remove(id); showMsg('刪除成功'); load() }
-    catch { showMsg('刪除失敗', true) }
-  }
-  // 切換啟用/停用狀態
-  const handleToggle = async item => {
-    try { await marqueeApi.update(item.id, { ...item, isActive: !item.isActive, unitCode, category: 'marquee' }); load() }
-    catch { showMsg('操作失敗', true) }
-  }
+  const { list, form, setForm, editId, msg, handleSubmit, handleEdit, handleDelete, handleToggle, resetForm } = useCrudSection({
+    emptyForm,
+    fetchList: () => marqueeApi.getAll(unitCode),
+    create: (payload) => marqueeApi.create(unitCode, payload),
+    update: (id, payload) => marqueeApi.update(id, payload),
+    remove: (id) => marqueeApi.remove(id),
+    toPayload: (form) => ({ ...form, unitCode, category: 'marquee' }),
+    toForm: (item) => ({ title: item.title ?? '', content: item.content, sortOrder: item.sortOrder, isActive: item.isActive }),
+  })
 
   return (
     <div>
@@ -189,7 +166,7 @@ function MarqueeTab({ unitCode }) {
           </div>
           <div style={{ marginTop: '16px', display: 'flex', gap: '8px' }}>
             <button type="submit" style={s.btnPrimary}>{editId ? '儲存修改' : '+ 新增'}</button>
-            {editId && <button type="button" style={s.btnSecondary} onClick={() => { setForm(emptyForm); setEditId(null) }}>取消</button>}
+            {editId && <button type="button" style={s.btnSecondary} onClick={resetForm}>取消</button>}
           </div>
         </form>
       </div>
@@ -232,14 +209,7 @@ function MarqueeManager({ units }) {
   const [activeUnit, setActiveUnit] = useState(units[0] ?? 'W52')
   return (
     <div>
-      <div style={s.unitTabs}>
-        {units.map(u => (
-          <button key={u} style={{ ...s.unitTab, ...(activeUnit === u ? s.unitTabActive : {}) }}
-            onClick={() => setActiveUnit(u)}>
-            {UNIT_LABELS[u]}
-          </button>
-        ))}
-      </div>
+      <UnitTabs units={units} active={activeUnit} onChange={setActiveUnit} />
       <MarqueeTab key={activeUnit} unitCode={activeUnit} />
     </div>
   )
@@ -255,30 +225,15 @@ const SHIFT_OPTS = ['', '白班', '小夜', '大夜']
 
 // 單一單位的值班人員 CRUD（讀取時 includeAll=true，後台需顯示停用資料）
 function DutySection({ unitCode }) {
-  const [list, setList]     = useState([])
-  const [form, setForm]     = useState(emptyDutyForm)
-  const [editId, setEditId] = useState(null)
-  const [msg, setMsg]       = useState({ text: '', error: false })
-
-  const showMsg = (text, error = false) => { setMsg({ text, error }); setTimeout(() => setMsg({ text: '', error: false }), 3000) }
-  const load = useCallback(async () => {
-    try   { setList((await contactApi.getDuty(unitCode, true)) ?? []) }
-    catch { showMsg('讀取失敗', true) }
-  }, [unitCode])
-  useEffect(() => { load() }, [load])
-
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    const payload = { unitCode, ...form, shiftType: form.shiftType || null }
-    try {
-      if (editId) { await contactApi.updateDuty(editId, payload); showMsg('修改成功') }
-      else        { await contactApi.createDuty(payload); showMsg('新增成功') }
-      setForm(emptyDutyForm); setEditId(null); load()
-    } catch { showMsg('操作失敗', true) }
-  }
-  const handleEdit   = item => { setEditId(item.id); setForm({ dutyTitle: item.dutyTitle, name: item.name, shiftType: item.shiftType ?? '', timeSlot: item.timeSlot ?? '', extension: item.extension ?? '', mobile: item.mobile ?? '', sortOrder: item.sortOrder, isActive: item.isActive }) }
-  const handleDelete = async id => { if (!window.confirm('確定刪除？')) return; try { await contactApi.removeDuty(id); showMsg('刪除成功'); load() } catch { showMsg('刪除失敗', true) } }
-  const handleToggle = async item => { try { await contactApi.updateDuty(item.id, { unitCode, dutyTitle: item.dutyTitle, name: item.name, shiftType: item.shiftType, timeSlot: item.timeSlot, extension: item.extension, mobile: item.mobile, sortOrder: item.sortOrder, isActive: !item.isActive }); load() } catch { showMsg('操作失敗', true) } }
+  const { list, form, setForm, editId, msg, handleSubmit, handleEdit, handleDelete, handleToggle, resetForm } = useCrudSection({
+    emptyForm: emptyDutyForm,
+    fetchList: () => contactApi.getDuty(unitCode, true),
+    create: (payload) => contactApi.createDuty(payload),
+    update: (id, payload) => contactApi.updateDuty(id, payload),
+    remove: (id) => contactApi.removeDuty(id),
+    toPayload: (form) => ({ unitCode, ...form, shiftType: form.shiftType || null }),
+    toForm: (item) => ({ dutyTitle: item.dutyTitle, name: item.name, shiftType: item.shiftType ?? '', timeSlot: item.timeSlot ?? '', extension: item.extension ?? '', mobile: item.mobile ?? '', sortOrder: item.sortOrder, isActive: item.isActive }),
+  })
 
   return (
     <div style={{ marginBottom: '24px' }}>
@@ -325,7 +280,7 @@ function DutySection({ unitCode }) {
           </div>
           <div style={{ marginTop: '14px', display: 'flex', gap: '8px' }}>
             <button type="submit" style={s.btnPrimary}>{editId ? '儲存修改' : '+ 新增'}</button>
-            {editId && <button type="button" style={s.btnSecondary} onClick={() => { setForm(emptyDutyForm); setEditId(null) }}>取消</button>}
+            {editId && <button type="button" style={s.btnSecondary} onClick={resetForm}>取消</button>}
           </div>
         </form>
       </div>
@@ -367,9 +322,7 @@ function DutyManager({ units }) {
   const [activeUnit, setActiveUnit] = useState(units[0] ?? 'W52')
   return (
     <div>
-      <div style={s.unitTabs}>
-        {units.map(u => <button key={u} style={{ ...s.unitTab, ...(activeUnit === u ? s.unitTabActive : {}) }} onClick={() => setActiveUnit(u)}>{UNIT_LABELS[u]}</button>)}
-      </div>
+      <UnitTabs units={units} active={activeUnit} onChange={setActiveUnit} />
       <DutySection key={activeUnit} unitCode={activeUnit} />
     </div>
   )
@@ -377,30 +330,15 @@ function DutyManager({ units }) {
 
 // 單一單位的常用電話 CRUD（讀取時 includeAll=true）
 function CommonSection({ unitCode }) {
-  const [list, setList]     = useState([])
-  const [form, setForm]     = useState(emptyCommonForm)
-  const [editId, setEditId] = useState(null)
-  const [msg, setMsg]       = useState({ text: '', error: false })
-
-  const showMsg = (text, error = false) => { setMsg({ text, error }); setTimeout(() => setMsg({ text: '', error: false }), 3000) }
-  const load = useCallback(async () => {
-    try   { setList((await contactApi.getCommon(unitCode, true)) ?? []) }
-    catch { showMsg('讀取失敗', true) }
-  }, [unitCode])
-  useEffect(() => { load() }, [load])
-
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    const payload = { unitCode, ...form }
-    try {
-      if (editId) { await contactApi.updateCommon(editId, payload); showMsg('修改成功') }
-      else        { await contactApi.createCommon(payload); showMsg('新增成功') }
-      setForm(emptyCommonForm); setEditId(null); load()
-    } catch { showMsg('操作失敗', true) }
-  }
-  const handleEdit   = item => { setEditId(item.id); setForm({ name: item.name, extension: item.extension, sortOrder: item.sortOrder, isActive: item.isActive }) }
-  const handleDelete = async id => { if (!window.confirm('確定刪除？')) return; try { await contactApi.removeCommon(id); showMsg('刪除成功'); load() } catch { showMsg('刪除失敗', true) } }
-  const handleToggle = async item => { try { await contactApi.updateCommon(item.id, { unitCode, name: item.name, extension: item.extension, sortOrder: item.sortOrder, isActive: !item.isActive }); load() } catch { showMsg('操作失敗', true) } }
+  const { list, form, setForm, editId, msg, handleSubmit, handleEdit, handleDelete, handleToggle, resetForm } = useCrudSection({
+    emptyForm: emptyCommonForm,
+    fetchList: () => contactApi.getCommon(unitCode, true),
+    create: (payload) => contactApi.createCommon(payload),
+    update: (id, payload) => contactApi.updateCommon(id, payload),
+    remove: (id) => contactApi.removeCommon(id),
+    toPayload: (form) => ({ unitCode, ...form }),
+    toForm: (item) => ({ name: item.name, extension: item.extension, sortOrder: item.sortOrder, isActive: item.isActive }),
+  })
 
   return (
     <div>
@@ -429,7 +367,7 @@ function CommonSection({ unitCode }) {
           </div>
           <div style={{ marginTop: '14px', display: 'flex', gap: '8px' }}>
             <button type="submit" style={s.btnPrimary}>{editId ? '儲存修改' : '+ 新增'}</button>
-            {editId && <button type="button" style={s.btnSecondary} onClick={() => { setForm(emptyCommonForm); setEditId(null) }}>取消</button>}
+            {editId && <button type="button" style={s.btnSecondary} onClick={resetForm}>取消</button>}
           </div>
         </form>
       </div>
@@ -469,9 +407,7 @@ function CommonManager({ units }) {
   const [activeUnit, setActiveUnit] = useState(units[0] ?? 'W52')
   return (
     <div>
-      <div style={s.unitTabs}>
-        {units.map(u => <button key={u} style={{ ...s.unitTab, ...(activeUnit === u ? s.unitTabActive : {}) }} onClick={() => setActiveUnit(u)}>{UNIT_LABELS[u]}</button>)}
-      </div>
+      <UnitTabs units={units} active={activeUnit} onChange={setActiveUnit} />
       <CommonSection key={activeUnit} unitCode={activeUnit} />
     </div>
   )
@@ -496,49 +432,16 @@ const fmtRange = (startAt, endAt) =>
 
 // 單一 category 的公告 CRUD：category 決定資料分類，sectionTitle 為區塊標題
 function BulletinSection({ unitCode, category, sectionTitle }) {
-  const [list, setList]     = useState([])
-  const [form, setForm]     = useState(emptyBulletinForm)
-  const [editId, setEditId] = useState(null)
-  const [msg, setMsg]       = useState({ text: '', error: false })
-
-  const showMsg = (text, error = false) => {
-    setMsg({ text, error })
-    setTimeout(() => setMsg({ text: '', error: false }), 3000)
-  }
-
-  const load = useCallback(async () => {
-    try   { setList((await textApi.getAll(unitCode, category, true)) ?? []) }
-    catch { showMsg('讀取失敗', true) }
-  }, [unitCode, category])
-
-  useEffect(() => { load() }, [load])
-
-  const handleSubmit = async (e) => {
-    e.preventDefault()
+  const { list, form, setForm, editId, msg, handleSubmit, handleEdit, handleDelete, handleToggle, resetForm } = useCrudSection({
+    emptyForm: emptyBulletinForm,
+    fetchList: () => textApi.getAll(unitCode, category, true),
+    create: (payload) => textApi.create(payload),
+    update: (id, payload) => textApi.update(id, payload),
+    remove: (id) => textApi.remove(id),
     // 起迄空字串轉 null（不限）
-    const payload = { ...form, unitCode, category, startAt: form.startAt || null, endAt: form.endAt || null }
-    try {
-      if (editId) {
-        await textApi.update(editId, payload)
-        showMsg('修改成功')
-      } else {
-        await textApi.create(payload)
-        showMsg('新增成功')
-      }
-      setForm(emptyBulletinForm); setEditId(null); load()
-    } catch { showMsg('操作失敗', true) }
-  }
-
-  const handleEdit   = item => { setEditId(item.id); setForm({ title: item.title ?? '', content: item.content, priority: item.priority ?? '一般', sortOrder: item.sortOrder, isActive: item.isActive, startAt: toLocalInput(item.startAt), endAt: toLocalInput(item.endAt) }) }
-  const handleDelete = async id => {
-    if (!window.confirm('確定刪除？')) return
-    try { await textApi.remove(id); showMsg('刪除成功'); load() }
-    catch { showMsg('刪除失敗', true) }
-  }
-  const handleToggle = async item => {
-    try { await textApi.update(item.id, { ...item, isActive: !item.isActive, unitCode, category }); load() }
-    catch { showMsg('操作失敗', true) }
-  }
+    toPayload: (form) => ({ ...form, unitCode, category, startAt: form.startAt || null, endAt: form.endAt || null }),
+    toForm: (item) => ({ title: item.title ?? '', content: item.content, priority: item.priority ?? '一般', sortOrder: item.sortOrder, isActive: item.isActive, startAt: toLocalInput(item.startAt), endAt: toLocalInput(item.endAt) }),
+  })
 
   return (
     <div style={{ marginBottom: '28px' }}>
@@ -599,7 +502,7 @@ function BulletinSection({ unitCode, category, sectionTitle }) {
           </div>
           <div style={{ marginTop: '16px', display: 'flex', gap: '8px' }}>
             <button type="submit" style={s.btnPrimary}>{editId ? '儲存修改' : '+ 新增'}</button>
-            {editId && <button type="button" style={s.btnSecondary} onClick={() => { setForm(emptyBulletinForm); setEditId(null) }}>取消</button>}
+            {editId && <button type="button" style={s.btnSecondary} onClick={resetForm}>取消</button>}
           </div>
         </form>
       </div>
@@ -649,14 +552,7 @@ function BulletinManager({ units }) {
   const [activeUnit, setActiveUnit] = useState(units[0] ?? 'W52')
   return (
     <div>
-      <div style={s.unitTabs}>
-        {units.map(u => (
-          <button key={u} style={{ ...s.unitTab, ...(activeUnit === u ? s.unitTabActive : {}) }}
-            onClick={() => setActiveUnit(u)}>
-            {UNIT_LABELS[u]}
-          </button>
-        ))}
-      </div>
+      <UnitTabs units={units} active={activeUnit} onChange={setActiveUnit} />
       {/* 科內公告：隨選定單位變動（bulletin_unit） */}
       <BulletinSection key={`unit-${activeUnit}`} unitCode={activeUnit} category="bulletin_unit" sectionTitle={`科內公告（${UNIT_LABELS[activeUnit]}）`} />
       {/* 院方公告：全院共用、固定 unitCode="ALL"（bulletin_hosp） */}
@@ -762,28 +658,15 @@ function EvacImageSection({ unitCode }) {
 
 // 單一單位的避難設備清單 CRUD（名稱/位置/數量）
 function EvacEquipSection({ unitCode }) {
-  const [list, setList]     = useState([])
-  const [form, setForm]     = useState(emptyEvacEquipForm)
-  const [editId, setEditId] = useState(null)
-  const [msg, setMsg]       = useState({ text: '', error: false })
-  const showMsg = (t, e=false) => { setMsg({text:t,error:e}); setTimeout(()=>setMsg({text:'',error:false}),3000) }
-  const load = useCallback(async () => {
-    try { setList((await evacuationApi.getEquipment(unitCode, true)) ?? []) } catch { showMsg('讀取失敗',true) }
-  }, [unitCode])
-  useEffect(() => { load() }, [load])
-
-  const handleSubmit = async e => {
-    e.preventDefault()
-    const payload = { unitCode, ...form }
-    try {
-      if (editId) { await evacuationApi.updateEquipment(editId, payload); showMsg('修改成功') }
-      else        { await evacuationApi.createEquipment(payload); showMsg('新增成功') }
-      setForm(emptyEvacEquipForm); setEditId(null); load()
-    } catch { showMsg('操作失敗',true) }
-  }
-  const handleEdit   = item => { setEditId(item.id); setForm({ equipmentName:item.equipmentName, location:item.location??'', quantity:item.quantity, sortOrder:item.sortOrder, isActive:item.isActive }) }
-  const handleDelete = async id => { if (!window.confirm('確定刪除？')) return; try { await evacuationApi.removeEquipment(id); showMsg('刪除成功'); load() } catch { showMsg('刪除失敗',true) } }
-  const handleToggle = async item => { try { await evacuationApi.updateEquipment(item.id, { unitCode, equipmentName:item.equipmentName, location:item.location, quantity:item.quantity, sortOrder:item.sortOrder, isActive:!item.isActive }); load() } catch { showMsg('操作失敗',true) } }
+  const { list, form, setForm, editId, msg, handleSubmit, handleEdit, handleDelete, handleToggle, resetForm } = useCrudSection({
+    emptyForm: emptyEvacEquipForm,
+    fetchList: () => evacuationApi.getEquipment(unitCode, true),
+    create: (payload) => evacuationApi.createEquipment(payload),
+    update: (id, payload) => evacuationApi.updateEquipment(id, payload),
+    remove: (id) => evacuationApi.removeEquipment(id),
+    toPayload: (form) => ({ unitCode, ...form }),
+    toForm: (item) => ({ equipmentName: item.equipmentName, location: item.location ?? '', quantity: item.quantity, sortOrder: item.sortOrder, isActive: item.isActive }),
+  })
 
   return (
     <div style={{ marginBottom: '20px' }}>
@@ -802,7 +685,7 @@ function EvacEquipSection({ unitCode }) {
           </div>
           <div style={{marginTop:'14px',display:'flex',gap:'8px'}}>
             <button type="submit" style={s.btnPrimary}>{editId?'儲存修改':'+ 新增'}</button>
-            {editId && <button type="button" style={s.btnSecondary} onClick={()=>{setForm(emptyEvacEquipForm);setEditId(null)}}>取消</button>}
+            {editId && <button type="button" style={s.btnSecondary} onClick={resetForm}>取消</button>}
           </div>
         </form>
       </div>
@@ -829,27 +712,15 @@ function EvacEquipSection({ unitCode }) {
 
 // 單一單位的緊急聯絡 CRUD（名稱/分機）
 function EvacContactSection({ unitCode }) {
-  const [list, setList]     = useState([])
-  const [form, setForm]     = useState(emptyEvacContactForm)
-  const [editId, setEditId] = useState(null)
-  const [msg, setMsg]       = useState({ text:'', error:false })
-  const showMsg = (t,e=false)=>{setMsg({text:t,error:e});setTimeout(()=>setMsg({text:'',error:false}),3000)}
-  const load = useCallback(async()=>{
-    try{setList((await evacuationApi.getContact(unitCode,true))??[])}catch{showMsg('讀取失敗',true)}
-  },[unitCode])
-  useEffect(()=>{load()},[load])
-
-  const handleSubmit = async e => {
-    e.preventDefault()
-    try {
-      if (editId){await evacuationApi.updateContact(editId,{unitCode,...form});showMsg('修改成功')}
-      else{await evacuationApi.createContact({unitCode,...form});showMsg('新增成功')}
-      setForm(emptyEvacContactForm);setEditId(null);load()
-    }catch{showMsg('操作失敗',true)}
-  }
-  const handleEdit=(item)=>{setEditId(item.id);setForm({name:item.name,extension:item.extension,sortOrder:item.sortOrder,isActive:item.isActive})}
-  const handleDelete=async id=>{if(!window.confirm('確定刪除？'))return;try{await evacuationApi.removeContact(id);showMsg('刪除成功');load()}catch{showMsg('刪除失敗',true)}}
-  const handleToggle=async item=>{try{await evacuationApi.updateContact(item.id,{unitCode,name:item.name,extension:item.extension,sortOrder:item.sortOrder,isActive:!item.isActive});load()}catch{showMsg('操作失敗',true)}}
+  const { list, form, setForm, editId, msg, handleSubmit, handleEdit, handleDelete, handleToggle, resetForm } = useCrudSection({
+    emptyForm: emptyEvacContactForm,
+    fetchList: () => evacuationApi.getContact(unitCode, true),
+    create: (payload) => evacuationApi.createContact(payload),
+    update: (id, payload) => evacuationApi.updateContact(id, payload),
+    remove: (id) => evacuationApi.removeContact(id),
+    toPayload: (form) => ({ unitCode, ...form }),
+    toForm: (item) => ({ name: item.name, extension: item.extension, sortOrder: item.sortOrder, isActive: item.isActive }),
+  })
 
   return (
     <div>
@@ -867,7 +738,7 @@ function EvacContactSection({ unitCode }) {
           </div>
           <div style={{marginTop:'14px',display:'flex',gap:'8px'}}>
             <button type="submit" style={s.btnPrimary}>{editId?'儲存修改':'+ 新增'}</button>
-            {editId && <button type="button" style={s.btnSecondary} onClick={()=>{setForm(emptyEvacContactForm);setEditId(null)}}>取消</button>}
+            {editId && <button type="button" style={s.btnSecondary} onClick={resetForm}>取消</button>}
           </div>
         </form>
       </div>
@@ -896,9 +767,7 @@ function EvacManager({ units }) {
   const [activeUnit, setActiveUnit] = useState(units[0] ?? 'W52')
   return (
     <div>
-      <div style={s.unitTabs}>
-        {units.map(u => <button key={u} style={{...s.unitTab,...(activeUnit===u?s.unitTabActive:{})}} onClick={()=>setActiveUnit(u)}>{UNIT_LABELS[u]}</button>)}
-      </div>
+      <UnitTabs units={units} active={activeUnit} onChange={setActiveUnit} />
       <div style={s.sectionSub}>圖片管理</div>
       <EvacImageSection key={`img-${activeUnit}`} unitCode={activeUnit} />
       <div style={{...s.sectionSub, marginTop:'20px'}}>避難設備清單</div>
@@ -1187,30 +1056,17 @@ function WardExtSection({ unitCode }) {
 const emptyOnCallForm = { deptCode: '', deptName: '', doctorName: '', ext: '', empNo: '', sortOrder: 0, isActive: true }
 
 function ErOnCallSection() {
-  const [list, setList]     = useState([])
-  const [form, setForm]     = useState(emptyOnCallForm)
-  const [editId, setEditId] = useState(null)
-  const [msg, setMsg]       = useState({ text: '', error: false })
-
-  const showMsg = (text, error = false) => { setMsg({ text, error }); setTimeout(() => setMsg({ text: '', error: false }), 3000) }
-  const load = useCallback(async () => {
-    try   { setList((await wardApi.getOnCall('ER', true)) ?? []) }
-    catch { showMsg('讀取失敗', true) }
-  }, [])
-  useEffect(() => { load() }, [load])
-
-  const setF = (k, v) => setForm(f => ({ ...f, [k]: v }))
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    const payload = { ...form, unitCode: 'ER' }
-    try {
-      if (editId) { await wardApi.updateOnCall(editId, payload); showMsg('修改成功') }
-      else        { await wardApi.createOnCall(payload); showMsg('新增成功') }
-      setForm(emptyOnCallForm); setEditId(null); load()
-    } catch { showMsg('操作失敗（科別代碼是否重複？）', true) }
-  }
-  const handleEdit = item => { setEditId(item.id); setForm({ deptCode: item.deptCode, deptName: item.deptName ?? '', doctorName: item.doctorName ?? '', ext: item.ext ?? '', empNo: item.empNo ?? '', sortOrder: item.sortOrder, isActive: item.isActive }) }
-  const handleDelete = async id => { if (!window.confirm('確定刪除？')) return; try { await wardApi.removeOnCall(id); showMsg('刪除成功'); load() } catch { showMsg('刪除失敗', true) } }
+  const { list, form, setField, editId, msg, handleSubmit, handleEdit, handleDelete, resetForm } = useCrudSection({
+    emptyForm: emptyOnCallForm,
+    fetchList: () => wardApi.getOnCall('ER', true),
+    create: (payload) => wardApi.createOnCall(payload),
+    update: (id, payload) => wardApi.updateOnCall(id, payload),
+    remove: (id) => wardApi.removeOnCall(id),
+    toPayload: (form) => ({ ...form, unitCode: 'ER' }),
+    toForm: (item) => ({ deptCode: item.deptCode, deptName: item.deptName ?? '', doctorName: item.doctorName ?? '', ext: item.ext ?? '', empNo: item.empNo ?? '', sortOrder: item.sortOrder, isActive: item.isActive }),
+    failMsg: '操作失敗（科別代碼是否重複？）',
+  })
+  const setF = setField
 
   return (
     <div>
@@ -1232,7 +1088,7 @@ function ErOnCallSection() {
           </label>
           <div style={{ marginTop: '14px', display: 'flex', gap: '8px' }}>
             <button type="submit" style={s.btnPrimary}>{editId ? '儲存修改' : '+ 新增'}</button>
-            {editId && <button type="button" style={s.btnSecondary} onClick={() => { setForm(emptyOnCallForm); setEditId(null) }}>取消</button>}
+            {editId && <button type="button" style={s.btnSecondary} onClick={resetForm}>取消</button>}
           </div>
         </form>
       </div>
@@ -1281,25 +1137,16 @@ const emptyShiftRoomForm = { shiftType: '白班', roomId: 'OR-01', scrubNurse: '
 
 // 班級人員 CRUD
 function OrShiftStaffSection() {
-  const [list, setList] = useState([])
-  const [form, setForm] = useState(emptyShiftStaffForm)
-  const [editId, setEditId] = useState(null)
-  const [msg, setMsg] = useState({ text: '', error: false })
-  const showMsg = (text, error = false) => { setMsg({ text, error }); setTimeout(() => setMsg({ text: '', error: false }), 3000) }
-  const load = useCallback(async () => { try { setList((await wardApi.getShiftStaff('OR', true)) ?? []) } catch { showMsg('讀取失敗', true) } }, [])
-  useEffect(() => { load() }, [load])
-  const setF = (k, v) => setForm(f => ({ ...f, [k]: v }))
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    const payload = { ...form, unitCode: 'OR' }
-    try {
-      if (editId) { await wardApi.updateShiftStaff(editId, payload); showMsg('修改成功') }
-      else { await wardApi.createShiftStaff(payload); showMsg('新增成功') }
-      setForm(emptyShiftStaffForm); setEditId(null); load()
-    } catch { showMsg('操作失敗', true) }
-  }
-  const handleEdit = i => { setEditId(i.id); setForm({ shiftType: i.shiftType, role: i.role, name: i.name ?? '', roleTitle: i.roleTitle ?? '', ext: i.ext ?? '', sortOrder: i.sortOrder, isActive: i.isActive }) }
-  const handleDelete = async id => { if (!window.confirm('確定刪除？')) return; try { await wardApi.removeShiftStaff(id); showMsg('刪除成功'); load() } catch { showMsg('刪除失敗', true) } }
+  const { list, form, setField, editId, msg, handleSubmit, handleEdit, handleDelete, resetForm } = useCrudSection({
+    emptyForm: emptyShiftStaffForm,
+    fetchList: () => wardApi.getShiftStaff('OR', true),
+    create: (payload) => wardApi.createShiftStaff(payload),
+    update: (id, payload) => wardApi.updateShiftStaff(id, payload),
+    remove: (id) => wardApi.removeShiftStaff(id),
+    toPayload: (form) => ({ ...form, unitCode: 'OR' }),
+    toForm: (i) => ({ shiftType: i.shiftType, role: i.role, name: i.name ?? '', roleTitle: i.roleTitle ?? '', ext: i.ext ?? '', sortOrder: i.sortOrder, isActive: i.isActive }),
+  })
+  const setF = setField
   return (
     <div>
       {msg.text && <div style={{ ...s.msg, background: msg.error ? '#fee2e2' : '#d1fae5', color: msg.error ? '#991b1b' : '#065f46' }}>{msg.text}</div>}
@@ -1318,7 +1165,7 @@ function OrShiftStaffSection() {
           <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '14px', cursor: 'pointer', marginTop: '4px' }}><input type="checkbox" checked={form.isActive} onChange={e => setF('isActive', e.target.checked)} />啟用</label>
           <div style={{ marginTop: '14px', display: 'flex', gap: '8px' }}>
             <button type="submit" style={s.btnPrimary}>{editId ? '儲存修改' : '+ 新增'}</button>
-            {editId && <button type="button" style={s.btnSecondary} onClick={() => { setForm(emptyShiftStaffForm); setEditId(null) }}>取消</button>}
+            {editId && <button type="button" style={s.btnSecondary} onClick={resetForm}>取消</button>}
           </div>
         </form>
       </div>
@@ -1345,25 +1192,17 @@ function OrShiftStaffSection() {
 
 // 房×班 刷手/流動 CRUD
 function OrShiftRoomSection() {
-  const [list, setList] = useState([])
-  const [form, setForm] = useState(emptyShiftRoomForm)
-  const [editId, setEditId] = useState(null)
-  const [msg, setMsg] = useState({ text: '', error: false })
-  const showMsg = (text, error = false) => { setMsg({ text, error }); setTimeout(() => setMsg({ text: '', error: false }), 3000) }
-  const load = useCallback(async () => { try { setList((await wardApi.getShiftRoom('OR', true)) ?? []) } catch { showMsg('讀取失敗', true) } }, [])
-  useEffect(() => { load() }, [load])
-  const setF = (k, v) => setForm(f => ({ ...f, [k]: v }))
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    const payload = { ...form, unitCode: 'OR' }
-    try {
-      if (editId) { await wardApi.updateShiftRoom(editId, payload); showMsg('修改成功') }
-      else { await wardApi.createShiftRoom(payload); showMsg('新增成功') }
-      setForm(emptyShiftRoomForm); setEditId(null); load()
-    } catch { showMsg('操作失敗（班別＋刀房是否重複？）', true) }
-  }
-  const handleEdit = i => { setEditId(i.id); setForm({ shiftType: i.shiftType, roomId: i.roomId, scrubNurse: i.scrubNurse ?? '', circNurse: i.circNurse ?? '', ext: i.ext ?? '', sortOrder: i.sortOrder, isActive: i.isActive }) }
-  const handleDelete = async id => { if (!window.confirm('確定刪除？')) return; try { await wardApi.removeShiftRoom(id); showMsg('刪除成功'); load() } catch { showMsg('刪除失敗', true) } }
+  const { list, form, setField, editId, msg, handleSubmit, handleEdit, handleDelete, resetForm } = useCrudSection({
+    emptyForm: emptyShiftRoomForm,
+    fetchList: () => wardApi.getShiftRoom('OR', true),
+    create: (payload) => wardApi.createShiftRoom(payload),
+    update: (id, payload) => wardApi.updateShiftRoom(id, payload),
+    remove: (id) => wardApi.removeShiftRoom(id),
+    toPayload: (form) => ({ ...form, unitCode: 'OR' }),
+    toForm: (i) => ({ shiftType: i.shiftType, roomId: i.roomId, scrubNurse: i.scrubNurse ?? '', circNurse: i.circNurse ?? '', ext: i.ext ?? '', sortOrder: i.sortOrder, isActive: i.isActive }),
+    failMsg: '操作失敗（班別＋刀房是否重複？）',
+  })
+  const setF = setField
   return (
     <div>
       {msg.text && <div style={{ ...s.msg, background: msg.error ? '#fee2e2' : '#d1fae5', color: msg.error ? '#991b1b' : '#065f46' }}>{msg.text}</div>}
@@ -1381,7 +1220,7 @@ function OrShiftRoomSection() {
           <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '14px', cursor: 'pointer', marginTop: '4px' }}><input type="checkbox" checked={form.isActive} onChange={e => setF('isActive', e.target.checked)} />啟用</label>
           <div style={{ marginTop: '14px', display: 'flex', gap: '8px' }}>
             <button type="submit" style={s.btnPrimary}>{editId ? '儲存修改' : '+ 新增'}</button>
-            {editId && <button type="button" style={s.btnSecondary} onClick={() => { setForm(emptyShiftRoomForm); setEditId(null) }}>取消</button>}
+            {editId && <button type="button" style={s.btnSecondary} onClick={resetForm}>取消</button>}
           </div>
         </form>
       </div>
@@ -1421,39 +1260,27 @@ function OrScheduleManager() {
 const emptyHandoverForm = { hhisnum: '', roomId: 'OR-01', patientName: '', gender: 'M', age: '', surgeryName: '', surgerySource: '門診刀', surgeonName: '', destWard: '', destBed: '', endTime: '', bloodLoss: '', bloodTransfusion: '', drainDetails: '', specialNotes: '', sortOrder: 0, isActive: true }
 
 function OrHandoverSection() {
-  const [list, setList] = useState([])
-  const [form, setForm] = useState(emptyHandoverForm)
-  const [editId, setEditId] = useState(null)
-  const [msg, setMsg] = useState({ text: '', error: false })
-  const showMsg = (text, error = false) => { setMsg({ text, error }); setTimeout(() => setMsg({ text: '', error: false }), 3000) }
-  const load = useCallback(async () => { try { setList((await wardApi.getHandoverList('OR', true)) ?? []) } catch { showMsg('讀取失敗', true) } }, [])
-  useEffect(() => { load() }, [load])
-  const setF = (k, v) => setForm(f => ({ ...f, [k]: v }))
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    const payload = {
+  const { list, form, setField, editId, msg, handleSubmit, handleEdit, handleDelete, resetForm } = useCrudSection({
+    emptyForm: emptyHandoverForm,
+    fetchList: () => wardApi.getHandoverList('OR', true),
+    create: (payload) => wardApi.createHandover(payload),
+    update: (id, payload) => wardApi.updateHandover(id, payload),
+    remove: (id) => wardApi.removeHandover(id),
+    toPayload: (form) => ({
       ...form, unitCode: 'OR',
       age: form.age === '' ? null : Number(form.age),
       bloodLoss: form.bloodLoss === '' ? null : Number(form.bloodLoss),
       bloodTransfusion: form.bloodTransfusion === '' ? null : Number(form.bloodTransfusion),
-    }
-    try {
-      if (editId) { await wardApi.updateHandover(editId, payload); showMsg('修改成功') }
-      else { await wardApi.createHandover(payload); showMsg('新增成功') }
-      setForm(emptyHandoverForm); setEditId(null); load()
-    } catch { showMsg('操作失敗', true) }
-  }
-  const handleEdit = i => {
-    setEditId(i.id)
-    setForm({
+    }),
+    toForm: (i) => ({
       hhisnum: i.hhisnum ?? '', roomId: i.roomId ?? 'OR-01', patientName: i.patientName ?? '', gender: i.gender ?? 'M',
       age: i.age ?? '', surgeryName: i.surgeryName ?? '', surgerySource: i.surgerySource ?? '門診刀', surgeonName: i.surgeonName ?? '',
       destWard: i.destWard ?? '', destBed: i.destBed ?? '', endTime: i.endTime ?? '', bloodLoss: i.bloodLoss ?? '',
       bloodTransfusion: i.bloodTransfusion ?? '', drainDetails: i.drainDetails ?? '', specialNotes: i.specialNotes ?? '',
       sortOrder: i.sortOrder, isActive: i.isActive,
-    })
-  }
-  const handleDelete = async id => { if (!window.confirm('確定刪除？')) return; try { await wardApi.removeHandover(id); showMsg('刪除成功'); load() } catch { showMsg('刪除失敗', true) } }
+    }),
+  })
+  const setF = setField
   return (
     <div>
       {msg.text && <div style={{ ...s.msg, background: msg.error ? '#fee2e2' : '#d1fae5', color: msg.error ? '#991b1b' : '#065f46' }}>{msg.text}</div>}
@@ -1481,7 +1308,7 @@ function OrHandoverSection() {
           <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '14px', cursor: 'pointer' }}><input type="checkbox" checked={form.isActive} onChange={e => setF('isActive', e.target.checked)} />啟用</label>
           <div style={{ marginTop: '14px', display: 'flex', gap: '8px' }}>
             <button type="submit" style={s.btnPrimary}>{editId ? '儲存修改' : '+ 新增'}</button>
-            {editId && <button type="button" style={s.btnSecondary} onClick={() => { setForm(emptyHandoverForm); setEditId(null) }}>取消</button>}
+            {editId && <button type="button" style={s.btnSecondary} onClick={resetForm}>取消</button>}
           </div>
         </form>
       </div>
@@ -1571,29 +1398,17 @@ const CONSULT_STATUS_OPTS = ['待回覆', '已回覆', '進行中', '待安排',
 const emptyExamConsultForm = { kind: '檢查', hhisnum: '', bedId: '', patientName: '', gender: 'M', itemName: '', doctor: '', scheduledDate: '', timeSlot: '', completedTime: '', status: '待執行', notes: '', sortOrder: 0, isActive: true }
 
 function ExamConsultSection({ unitCode }) {
-  const [list, setList] = useState([])
-  const [form, setForm] = useState(emptyExamConsultForm)
-  const [editId, setEditId] = useState(null)
-  const [msg, setMsg] = useState({ text: '', error: false })
-  const showMsg = (text, error = false) => { setMsg({ text, error }); setTimeout(() => setMsg({ text: '', error: false }), 3000) }
-  const load = useCallback(async () => { try { setList((await wardApi.getExamConsultList(unitCode, true)) ?? []) } catch { showMsg('讀取失敗', true) } }, [unitCode])
-  useEffect(() => { load() }, [load])
-  const setF = (k, v) => setForm(f => ({ ...f, [k]: v }))
+  const { list, form, setField, editId, msg, handleSubmit, handleEdit, handleDelete, resetForm } = useCrudSection({
+    emptyForm: emptyExamConsultForm,
+    fetchList: () => wardApi.getExamConsultList(unitCode, true),
+    create: (payload) => wardApi.createExamConsult(payload),
+    update: (id, payload) => wardApi.updateExamConsult(id, payload),
+    remove: (id) => wardApi.removeExamConsult(id),
+    toPayload: (form) => ({ ...form, unitCode }),
+    toForm: (i) => ({ kind: i.kind, hhisnum: i.hhisnum ?? '', bedId: i.bedId ?? '', patientName: i.patientName ?? '', gender: i.gender ?? 'M', itemName: i.itemName ?? '', doctor: i.doctor ?? '', scheduledDate: i.scheduledDate ?? '', timeSlot: i.timeSlot ?? '', completedTime: i.completedTime ?? '', status: i.status ?? '', notes: i.notes ?? '', sortOrder: i.sortOrder, isActive: i.isActive }),
+  })
+  const setF = setField
   const isExam = form.kind === '檢查'
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    const payload = { ...form, unitCode }
-    try {
-      if (editId) { await wardApi.updateExamConsult(editId, payload); showMsg('修改成功') }
-      else { await wardApi.createExamConsult(payload); showMsg('新增成功') }
-      setForm(emptyExamConsultForm); setEditId(null); load()
-    } catch { showMsg('操作失敗', true) }
-  }
-  const handleEdit = i => {
-    setEditId(i.id)
-    setForm({ kind: i.kind, hhisnum: i.hhisnum ?? '', bedId: i.bedId ?? '', patientName: i.patientName ?? '', gender: i.gender ?? 'M', itemName: i.itemName ?? '', doctor: i.doctor ?? '', scheduledDate: i.scheduledDate ?? '', timeSlot: i.timeSlot ?? '', completedTime: i.completedTime ?? '', status: i.status ?? '', notes: i.notes ?? '', sortOrder: i.sortOrder, isActive: i.isActive })
-  }
-  const handleDelete = async id => { if (!window.confirm('確定刪除？')) return; try { await wardApi.removeExamConsult(id); showMsg('刪除成功'); load() } catch { showMsg('刪除失敗', true) } }
   return (
     <div>
       {msg.text && <div style={{ ...s.msg, background: msg.error ? '#fee2e2' : '#d1fae5', color: msg.error ? '#991b1b' : '#065f46' }}>{msg.text}</div>}
@@ -1622,7 +1437,7 @@ function ExamConsultSection({ unitCode }) {
           <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '14px', cursor: 'pointer' }}><input type="checkbox" checked={form.isActive} onChange={e => setF('isActive', e.target.checked)} />啟用</label>
           <div style={{ marginTop: '14px', display: 'flex', gap: '8px' }}>
             <button type="submit" style={s.btnPrimary}>{editId ? '儲存修改' : '+ 新增'}</button>
-            {editId && <button type="button" style={s.btnSecondary} onClick={() => { setForm(emptyExamConsultForm); setEditId(null) }}>取消</button>}
+            {editId && <button type="button" style={s.btnSecondary} onClick={resetForm}>取消</button>}
           </div>
         </form>
       </div>
@@ -1653,28 +1468,16 @@ function ExamConsultSection({ unitCode }) {
 const emptyAbxForm = { hhisnum: '', drugName: '', startDateTime: '', firstDoseDateTime: '', endDateTime: '', sortOrder: 0, isActive: true }
 
 function AntibioticSection() {
-  const [list, setList] = useState([])
-  const [form, setForm] = useState(emptyAbxForm)
-  const [editId, setEditId] = useState(null)
-  const [msg, setMsg] = useState({ text: '', error: false })
-  const showMsg = (text, error = false) => { setMsg({ text, error }); setTimeout(() => setMsg({ text: '', error: false }), 3000) }
-  const load = useCallback(async () => { try { setList((await wardApi.getAntibiotic('ICU', true)) ?? []) } catch { showMsg('讀取失敗', true) } }, [])
-  useEffect(() => { load() }, [load])
-  const setF = (k, v) => setForm(f => ({ ...f, [k]: v }))
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    const payload = { ...form, unitCode: 'ICU' }
-    try {
-      if (editId) { await wardApi.updateAntibiotic(editId, payload); showMsg('修改成功') }
-      else { await wardApi.createAntibiotic(payload); showMsg('新增成功') }
-      setForm(emptyAbxForm); setEditId(null); load()
-    } catch { showMsg('操作失敗', true) }
-  }
-  const handleEdit = i => {
-    setEditId(i.id)
-    setForm({ hhisnum: i.hhisnum ?? '', drugName: i.drugName ?? '', startDateTime: i.startDateTime ?? '', firstDoseDateTime: i.firstDoseDateTime ?? '', endDateTime: i.endDateTime ?? '', sortOrder: i.sortOrder, isActive: i.isActive })
-  }
-  const handleDelete = async id => { if (!window.confirm('確定刪除？')) return; try { await wardApi.removeAntibiotic(id); showMsg('刪除成功'); load() } catch { showMsg('刪除失敗', true) } }
+  const { list, form, setField, editId, msg, handleSubmit, handleEdit, handleDelete, resetForm } = useCrudSection({
+    emptyForm: emptyAbxForm,
+    fetchList: () => wardApi.getAntibiotic('ICU', true),
+    create: (payload) => wardApi.createAntibiotic(payload),
+    update: (id, payload) => wardApi.updateAntibiotic(id, payload),
+    remove: (id) => wardApi.removeAntibiotic(id),
+    toPayload: (form) => ({ ...form, unitCode: 'ICU' }),
+    toForm: (i) => ({ hhisnum: i.hhisnum ?? '', drugName: i.drugName ?? '', startDateTime: i.startDateTime ?? '', firstDoseDateTime: i.firstDoseDateTime ?? '', endDateTime: i.endDateTime ?? '', sortOrder: i.sortOrder, isActive: i.isActive }),
+  })
+  const setF = setField
   return (
     <div>
       {msg.text && <div style={{ ...s.msg, background: msg.error ? '#fee2e2' : '#d1fae5', color: msg.error ? '#991b1b' : '#065f46' }}>{msg.text}</div>}
@@ -1693,7 +1496,7 @@ function AntibioticSection() {
           <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '14px', cursor: 'pointer' }}><input type="checkbox" checked={form.isActive} onChange={e => setF('isActive', e.target.checked)} />啟用</label>
           <div style={{ marginTop: '14px', display: 'flex', gap: '8px' }}>
             <button type="submit" style={s.btnPrimary}>{editId ? '儲存修改' : '+ 新增'}</button>
-            {editId && <button type="button" style={s.btnSecondary} onClick={() => { setForm(emptyAbxForm); setEditId(null) }}>取消</button>}
+            {editId && <button type="button" style={s.btnSecondary} onClick={resetForm}>取消</button>}
           </div>
         </form>
       </div>
@@ -2517,6 +2320,104 @@ function ErShiftPanelSection() {
 }
 
 
+// ── 操作稽核（系統管理；唯讀查詢）────────────────────────────
+// 資料異動記錄由後端全域 OperationAuditFilter 自動寫入（所有 POST/PUT/DELETE）；
+// 此處僅查詢：日期區間＋員編篩選、分頁。查詢端點限系統管理員（後端 Roles=Admin）。
+function OperationAuditSection() {
+  const PAGE_SIZE = 50
+  const [rows, setRows] = useState([])
+  const [total, setTotal] = useState(0)
+  const [page, setPage] = useState(1)
+  const [from, setFrom] = useState('')     // 起日（含）
+  const [to, setTo] = useState('')         // 迄日（含；送出時 +1 天換成排除上界）
+  const [empNo, setEmpNo] = useState('')
+  const [msg, setMsg] = useState('')
+
+  // 迄日 +1 天 → 後端的排除上界（CreatedAt < to）
+  const toExclusive = (d) => {
+    if (!d) return ''
+    const t = new Date(d); t.setDate(t.getDate() + 1)
+    return t.toISOString().slice(0, 10)
+  }
+
+  const load = useCallback(async (p = 1) => {
+    try {
+      const r = await auditApi.getOperations({ from, to: toExclusive(to), empNo: empNo.trim(), page: p, pageSize: PAGE_SIZE })
+      setRows(r?.rows ?? []); setTotal(r?.total ?? 0); setPage(p); setMsg('')
+    } catch { setMsg('讀取失敗（僅系統管理員可查詢）') }
+  }, [from, to, empNo])
+
+  useEffect(() => { load(1) }, [])  // eslint-disable-line react-hooks/exhaustive-deps
+
+  const pages = Math.max(1, Math.ceil(total / PAGE_SIZE))
+  const fmtTime = (t) => (t ?? '').replace('T', ' ')
+  const methodBadge = (m) => ({
+    POST:   { background: '#dcfce7', color: '#166534' },
+    PUT:    { background: '#dbeafe', color: '#1e40af' },
+    DELETE: { background: '#fee2e2', color: '#991b1b' },
+  }[m] ?? { background: '#f3f4f6', color: '#374151' })
+
+  return (
+    <div>
+      <div style={s.formCard}>
+        <h3 style={s.formTitle}>操作稽核查詢</h3>
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-end', flexWrap: 'wrap' }}>
+          <div>
+            <label style={s.label}>起日</label>
+            <input style={s.input} type="date" value={from} onChange={e => setFrom(e.target.value)} />
+          </div>
+          <div>
+            <label style={s.label}>迄日（含當天）</label>
+            <input style={s.input} type="date" value={to} onChange={e => setTo(e.target.value)} />
+          </div>
+          <div>
+            <label style={s.label}>員編</label>
+            <input style={s.input} placeholder="全部" value={empNo} onChange={e => setEmpNo(e.target.value)} />
+          </div>
+          <button style={s.btnPrimary} onClick={() => load(1)}>查詢</button>
+        </div>
+      </div>
+
+      {msg && <div style={{ ...s.msg, background: '#fee2e2', color: '#991b1b' }}>{msg}</div>}
+
+      <div style={s.listCard}>
+        <h3 style={s.formTitle}>異動記錄（共 {total} 筆）</h3>
+        <div style={{ overflowX: 'auto' }}>
+          <table style={s.table}>
+            <thead><tr>
+              <th style={s.th}>時間</th><th style={s.th}>員編</th><th style={s.th}>姓名</th>
+              <th style={s.th}>動作</th><th style={s.th}>端點</th><th style={s.th}>結果</th><th style={s.th}>IP</th><th style={s.th}>內容</th>
+            </tr></thead>
+            <tbody>
+              {rows.map(r => (
+                <tr key={r.id}>
+                  <td style={{ ...s.td, whiteSpace: 'nowrap' }}>{fmtTime(r.createdAt)}</td>
+                  <td style={s.td}>{r.employeeNo}</td>
+                  <td style={s.td}>{r.name}</td>
+                  <td style={s.td}><span style={{ ...s.badge, cursor: 'default', ...methodBadge(r.method) }}>{r.method}</span></td>
+                  <td style={{ ...s.td, fontFamily: 'monospace', fontSize: '13px' }}>{r.path}</td>
+                  <td style={s.td}>{r.statusCode}</td>
+                  <td style={s.td}>{r.ip}</td>
+                  <td style={{ ...s.td, maxWidth: '360px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: '12px', color: '#6b7280' }}
+                      title={r.body ?? ''}>{r.body}</td>
+                </tr>
+              ))}
+              {rows.length === 0 && <tr><td style={s.td} colSpan={8}>（無記錄）</td></tr>}
+            </tbody>
+          </table>
+        </div>
+        {pages > 1 && (
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginTop: '14px' }}>
+            <button style={s.btnSecondary} disabled={page <= 1} onClick={() => load(page - 1)}>上一頁</button>
+            <span style={{ fontSize: '13px', color: '#6b7280' }}>{page} / {pages}</span>
+            <button style={s.btnSecondary} disabled={page >= pages} onClick={() => load(page + 1)}>下一頁</button>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 // 佔位元件（Phase 2/3 預留）
 function ComingSoon({ label }) {
   return (
@@ -2635,6 +2536,7 @@ export default function AdminPage() {
       case 'or-handover':    return <OrHandoverManager />
       // 人員管理（跨單位）
       case 'staff':          return <StaffSection />
+      case 'audit':          return <OperationAuditSection />
       case 'bed-nurse':      return <BedNurseAdminSection units={units} />
       case 'schedule':       return <ScheduleSection units={units} />
       case 'bedassign':      return <BedAssignSection units={['W52']} />   // W52 專屬
