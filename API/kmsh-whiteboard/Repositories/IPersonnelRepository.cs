@@ -12,6 +12,8 @@ public interface IPersonnelRepository
     Task<IEnumerable<StaffItem>> GetStaffAsync(bool includeAll = true, CancellationToken ct = default);
     Task<StaffItem?> GetStaffByIdAsync(int id, CancellationToken ct = default);
     Task<StaffItem?> GetStaffByEmployeeNoAsync(string employeeNo, CancellationToken ct = default);
+    /// <summary>登入稽核：記錄登入(成功/失敗)/登出，含員編、IP、時間。</summary>
+    Task AddLoginAuditAsync(string? employeeNo, bool success, string? ip, string @event, CancellationToken ct = default);
     Task<int> CreateStaffAsync(StaffUpsertRequest req, CancellationToken ct = default);
     Task<bool> UpdateStaffAsync(int id, StaffUpsertRequest req, CancellationToken ct = default);
     Task<bool> DeleteStaffAsync(int id, CancellationToken ct = default);

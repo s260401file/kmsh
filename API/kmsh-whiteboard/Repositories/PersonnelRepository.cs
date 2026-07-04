@@ -36,6 +36,15 @@ public class PersonnelRepository : IPersonnelRepository
             new CommandDefinition($"SELECT {StaffCols} FROM [dbo].[Staff] WHERE EmployeeNo=@No AND IsActive=1", new { No = employeeNo }, cancellationToken: ct));
     }
 
+    public async Task AddLoginAuditAsync(string? employeeNo, bool success, string? ip, string @event, CancellationToken ct = default)
+    {
+        const string sql = @"INSERT INTO [dbo].[LoginAudit] (EmployeeNo, Success, [Event], Ip, CreatedAt)
+                             VALUES (@EmployeeNo, @Success, @Event, @Ip, GETDATE())";
+        using var conn = _db.Create();
+        await conn.ExecuteAsync(new CommandDefinition(sql,
+            new { EmployeeNo = employeeNo, Success = success, Event = @event, Ip = ip }, cancellationToken: ct));
+    }
+
     public async Task<int> CreateStaffAsync(StaffUpsertRequest req, CancellationToken ct = default)
     {
         var sql = @"INSERT INTO [dbo].[Staff] (EmployeeNo, Name, Ext, Mobile, IsAdmin, IsActive, SortOrder, UpdatedAt, CreatedAt)

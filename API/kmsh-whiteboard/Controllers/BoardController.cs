@@ -18,13 +18,15 @@ public class BoardController : ControllerBase
     private readonly IBoardApiService _board;
     private readonly IWardRepository _ward;
     private readonly IPersonnelRepository _staff;
+    private readonly ILdapAuthenticator _ldap;
     private readonly ILogger<BoardController> _logger;
 
-    public BoardController(IBoardApiService board, IWardRepository ward, IPersonnelRepository staff, ILogger<BoardController> logger)
+    public BoardController(IBoardApiService board, IWardRepository ward, IPersonnelRepository staff, ILdapAuthenticator ldap, ILogger<BoardController> logger)
     {
         _board = board;
         _ward = ward;
         _staff = staff;
+        _ldap = ldap;
         _logger = logger;
     }
 
@@ -977,6 +979,55 @@ public class BoardController : ControllerBase
             units = manageUnits,
             roles = roles.Select(r => new { r.UnitCode, r.Role, r.IsManager, r.Department })
         });
+    }
+
+    /// <summary>
+    /// 登入：以 LDAP（LLDAP@101）驗帳密，成功後以員編對應本地 Staff/StaffUnitRole 取權限。
+    /// LDAP 未啟用（過渡期）時不驗密碼、僅以員編查在職人員。無論成敗寫登入稽核。
+    /// </summary>
+    [HttpPost("personnel/login")]
+    public async Task<IActionResult> Login([FromBody] LoginRequest req, CancellationToken ct = default)
+    {
+        var empNo = req.EmployeeNo?.Trim() ?? "";
+        var ip = HttpContext.Connection.RemoteIpAddress?.ToString();
+        if (string.IsNullOrWhiteSpace(empNo))
+            return BadRequest(new { message = "請輸入員編" });
+
+        // 1) 認證（LDAP bind；未啟用時為員編-only 過渡）
+        if (!_ldap.Authenticate(empNo, req.Password ?? "", out var authErr))
+        {
+            await _staff.AddLoginAuditAsync(empNo, false, ip, "login", ct);
+            return Unauthorized(new { message = authErr ?? "帳號或密碼錯誤" });
+        }
+
+        // 2) 授權：以員編對應本地在職人員 → 可管理單位 / isAdmin
+        var s = await _staff.GetStaffByEmployeeNoAsync(empNo, ct);
+        if (s is null)
+        {
+            await _staff.AddLoginAuditAsync(empNo, false, ip, "login", ct);
+            return Unauthorized(new { message = "查無此員編或已停用" });
+        }
+        var roles = (await _staff.GetUnitRolesAsync(s.Id, null, false, ct)).ToList();
+        var allUnits = new[] { "W52", "ICU", "OR", "ER" };
+        var manageUnits = s.IsAdmin ? allUnits
+            : roles.Where(r => r.IsManager).Select(r => r.UnitCode).Distinct().ToArray();
+
+        await _staff.AddLoginAuditAsync(empNo, true, ip, "login", ct);
+        return Ok(new
+        {
+            staffId = s.Id, employeeNo = s.EmployeeNo, name = s.Name, isAdmin = s.IsAdmin,
+            units = manageUnits,
+            roles = roles.Select(r => new { r.UnitCode, r.Role, r.IsManager, r.Department })
+        });
+    }
+
+    /// <summary>登出：寫登出稽核。</summary>
+    [HttpPost("personnel/logout")]
+    public async Task<IActionResult> Logout([FromBody] LogoutRequest req, CancellationToken ct = default)
+    {
+        var ip = HttpContext.Connection.RemoteIpAddress?.ToString();
+        await _staff.AddLoginAuditAsync(req.EmployeeNo?.Trim(), true, ip, "logout", ct);
+        return Ok(new { ok = true });
     }
 
     // ── 人員×單位×角色 ──

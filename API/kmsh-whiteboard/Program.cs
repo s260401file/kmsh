@@ -22,6 +22,10 @@ builder.Services.AddScoped<IContactRepository, ContactRepository>();
 builder.Services.AddScoped<IEvacRepository, EvacRepository>();
 builder.Services.AddScoped<IWardRepository, WardRepository>();
 builder.Services.AddScoped<IPersonnelRepository, PersonnelRepository>();
+// LDAP／AD 認證（LLDAP@101；設定檔驅動，Enabled=false 時為過渡期員編登入）
+builder.Services.Configure<kmsh_whiteboard.Settings.LdapOptions>(
+    builder.Configuration.GetSection(kmsh_whiteboard.Settings.LdapOptions.Section));
+builder.Services.AddSingleton<kmsh_whiteboard.Services.ILdapAuthenticator, kmsh_whiteboard.Services.LdapAuthenticator>();
 builder.Services.AddEndpointsApiExplorer();
 // ── Swagger / OpenAPI 文件（含 XML 註解）───────────────────────
 builder.Services.AddSwaggerGen(c =>

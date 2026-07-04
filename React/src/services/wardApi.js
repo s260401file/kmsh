@@ -108,6 +108,18 @@ export async function getHandover(unit, date, shift) {
 export async function getTeam(unit) { return handle(await fetch(`${BASE}/${unit}/team`)) }
 // 員編登入（免密碼，回可管理單位）
 export async function authStaff(empNo) { return handle(await fetch(`${BASE}/personnel/auth/${encodeURIComponent(empNo)}`)) }
+// 登入：員編＋密碼（LDAP 驗證；過渡期 LDAP 未啟用時密碼可空）。回身分＋可管理單位；失敗丟出 message。
+export async function login(employeeNo, password) {
+  const res = await fetch(`${BASE}/personnel/login`, { method: 'POST', headers, body: JSON.stringify({ employeeNo, password }) })
+  if (res.ok) return res.json()
+  let msg = '登入失敗'
+  try { const j = await res.json(); msg = j.message || msg } catch { /* 非 JSON 忽略 */ }
+  throw new Error(msg)
+}
+// 登出：寫登出稽核（失敗不影響前端登出）
+export async function logout(employeeNo) {
+  try { await fetch(`${BASE}/personnel/logout`, { method: 'POST', headers, body: JSON.stringify({ employeeNo }) }) } catch { /* ignore */ }
+}
 // 人員主檔 CRUD
 export async function getStaff(includeAll = true) {
   return handle(await fetch(`${BASE}/personnel?includeAll=${includeAll ? 'true' : 'false'}`))

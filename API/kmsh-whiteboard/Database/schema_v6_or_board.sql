@@ -27,21 +27,30 @@ BEGIN
 END
 GO
 
-/* 種子：7 房，R{n}→第 n 個 UI 房（跳過已撤 OR-04；使用者確認）。已存在則略過。 */
+/* 種子：7 房。院方房號 R{n} 對民生 OR-0{n}（院方 Board_OR 實測送 R1,R2,R3,R5,R6,R7…，
+   與民生同樣跳過 4 號）→ 號碼對號碼，不可順序位移。已存在則略過。 */
 MERGE [dbo].[OrRoom] AS t
 USING (VALUES
   ('OR', N'OR-01', N'R1', 10),
   ('OR', N'OR-02', N'R2', 20),
   ('OR', N'OR-03', N'R3', 30),
-  ('OR', N'OR-05', N'R4', 40),
-  ('OR', N'OR-06', N'R5', 50),
-  ('OR', N'OR-07', N'R6', 60),
-  ('OR', N'OR-08', N'R7', 70)
+  ('OR', N'OR-05', N'R5', 40),
+  ('OR', N'OR-06', N'R6', 50),
+  ('OR', N'OR-07', N'R7', 60),
+  ('OR', N'OR-08', N'R8', 70)
 ) AS s (UnitCode,RoomId,ApiRoom,SortOrder)
 ON (t.UnitCode=s.UnitCode AND t.RoomId=s.RoomId)
 WHEN NOT MATCHED THEN
   INSERT (UnitCode,RoomId,ApiRoom,SortOrder,IsActive,UpdatedAt,CreatedAt)
   VALUES (s.UnitCode,s.RoomId,s.ApiRoom,s.SortOrder,1,GETDATE(),GETDATE());
+GO
+
+/* 修正舊資料：原本誤排成順序（R4→OR-05）造成 R4 之後位移一格（R5→OR-06…）。
+   改為號碼對號碼 R{n}→OR-0{n}。MERGE 只 INSERT 不 UPDATE，故既有資料庫需此段。冪等。 */
+UPDATE [dbo].[OrRoom] SET ApiRoom=N'R5', UpdatedAt=GETDATE() WHERE UnitCode='OR' AND RoomId='OR-05' AND ApiRoom<>N'R5';
+UPDATE [dbo].[OrRoom] SET ApiRoom=N'R6', UpdatedAt=GETDATE() WHERE UnitCode='OR' AND RoomId='OR-06' AND ApiRoom<>N'R6';
+UPDATE [dbo].[OrRoom] SET ApiRoom=N'R7', UpdatedAt=GETDATE() WHERE UnitCode='OR' AND RoomId='OR-07' AND ApiRoom<>N'R7';
+UPDATE [dbo].[OrRoom] SET ApiRoom=N'R8', UpdatedAt=GETDATE() WHERE UnitCode='OR' AND RoomId='OR-08' AND ApiRoom<>N'R8';
 GO
 
 /* ── 2. WardPatientExt 補 OR 專屬欄位（UnitCode='OR' 用；其他單位留空）── */
