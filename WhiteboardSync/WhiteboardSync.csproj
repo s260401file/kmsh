@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>WhiteboardSync</RootNamespace>
+    <AssemblyName>WhiteboardSync</AssemblyName>
+    <!-- 不可開 InvariantGlobalization：Microsoft.Data.SqlClient 不支援 -->
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- 來源(DB2_DUMP) 與 目標(本地 Whiteboard) 皆 SQL Server；含 SqlBulkCopy -->
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="5.2.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="appsettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="appsettings.sample.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+</Project>
