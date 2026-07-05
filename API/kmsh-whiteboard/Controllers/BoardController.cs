@@ -21,15 +21,17 @@ public class BoardController : ControllerBase
     private readonly IPersonnelRepository _staff;
     private readonly ILdapAuthenticator _ldap;
     private readonly IJwtTokenService _jwt;
+    private readonly IOrReportRepository _orReport;
     private readonly ILogger<BoardController> _logger;
 
-    public BoardController(IBoardApiService board, IWardRepository ward, IPersonnelRepository staff, ILdapAuthenticator ldap, IJwtTokenService jwt, ILogger<BoardController> logger)
+    public BoardController(IBoardApiService board, IWardRepository ward, IPersonnelRepository staff, ILdapAuthenticator ldap, IJwtTokenService jwt, IOrReportRepository orReport, ILogger<BoardController> logger)
     {
         _board = board;
         _ward = ward;
         _staff = staff;
         _ldap = ldap;
         _jwt = jwt;
+        _orReport = orReport;
         _logger = logger;
     }
 
@@ -101,7 +103,7 @@ public class BoardController : ControllerBase
                 Patient = new WardPatientDto
                 {
                     // 基本（Board_bed 真實資料）
-                    PatientName = o.Hnamec,
+                    PatientName = MaskName(o.Hnamec),   // 公開看板：病人姓名去識別化
                     Gender = o.Hsex,
                     BirthDate = FormatBirth(o.Hbirthdt),
                     Age = CalcAge(o.Hbirthdt),
@@ -185,7 +187,7 @@ public class BoardController : ControllerBase
                     bed.Status = string.IsNullOrWhiteSpace(e?.BedStatus) ? "occupied" : e!.BedStatus!;
                     bed.Patient = new IcuPatientDto
                     {
-                        Name = o.Hnamec, Gender = o.Hsex, BirthDate = FormatBirth(o.Hbirthdt), Age = CalcAge(o.Hbirthdt),
+                        Name = MaskName(o.Hnamec), Gender = o.Hsex, BirthDate = FormatBirth(o.Hbirthdt), Age = CalcAge(o.Hbirthdt),
                         MedRecord = o.Hhisnum, IdNo = o.Hidno,
                         Department = string.IsNullOrWhiteSpace(o.Department) ? e?.Department : o.Department, Admission = FormatBirth(o.AdmitDate) ?? e?.AdmissionDate,
                         Diagnosis = string.IsNullOrWhiteSpace(o.Diagnosis) ? e?.Diagnosis : o.Diagnosis,  // 院方診斷優先
@@ -348,7 +350,7 @@ public class BoardController : ControllerBase
     /// <summary>合併 Board_ER 真實病人 ＋ WardPatientExt overlay → ER 病人卡 DTO。</summary>
     private static ErBedPatientDto BuildErPatient(BoardErItem o, WardPatientExtItem? e) => new()
     {
-        PatientName = o.Hnamec, Gender = o.Hsex, BirthDate = FormatBirth(o.Hbirthdt), Age = CalcAge(o.Hbirthdt),
+        PatientName = MaskName(o.Hnamec), Gender = o.Hsex, BirthDate = FormatBirth(o.Hbirthdt), Age = CalcAge(o.Hbirthdt),
         MedRecord = o.Hhisnum, IdNo = o.Hidno, Doctor = o.Doctor, DoctorCard = o.DoctorCard,
         Flow = o.Flow, Category = o.Category,
         Triage = TriageLevel(o.Triage), TriageGrade = TriageToGrade(o.Triage),  // 正規化為 1/2/3 層級（前端據此 A/B/C 配色）
@@ -485,7 +487,7 @@ public class BoardController : ControllerBase
     /// <summary>當日快照 ＋ WardPatientExt overlay → OR 手術 DTO；Completed→已完成、否則時間/overlay 推導。</summary>
     private static OrSurgeryDto BuildOrSurgeryFromDaily(OrDailySurgeryItem d, WardPatientExtItem? e, DateTime now) => new()
     {
-        PatientName = d.PatientName, Gender = d.Gender, Age = CalcAge(d.BirthDate), BirthDate = FormatBirth(d.BirthDate),
+        PatientName = MaskName(d.PatientName), Gender = d.Gender, Age = CalcAge(d.BirthDate), BirthDate = FormatBirth(d.BirthDate),
         MedRecord = d.Hhisnum, Diagnosis = string.IsNullOrWhiteSpace(d.Diagnosis) ? e?.Diagnosis : d.Diagnosis,
         SurgeryName = d.SurgeryName, Doctor = d.Doctor, AnesType = d.AnesType, SurgerySource = SourceToLabel(d.Source),
         ScheduledTime = d.OpTime,
@@ -734,12 +736,74 @@ public class BoardController : ControllerBase
         var resp = new OrHandoverResponse { Data = new OrHandoverData { QueryDate = DateTime.Today.ToString("yyyy-MM-dd") } };
         resp.Data.Items = list.Select(h => new OrHandoverDto
         {
-            HandoverId = h.Id, RoomId = h.RoomId, SurgerySource = h.SurgerySource, PatientName = h.PatientName,
+            HandoverId = h.Id, RoomId = h.RoomId, SurgerySource = h.SurgerySource, PatientName = MaskName(h.PatientName),
             Gender = h.Gender, Age = h.Age, MedRecord = h.Hhisnum, SurgeryName = h.SurgeryName, SurgeonName = h.SurgeonName,
             DestWard = h.DestWard, DestBed = h.DestBed, EndTime = h.EndTime, BloodLoss = h.BloodLoss,
             BloodTransfusion = h.BloodTransfusion, DrainDetails = h.DrainDetails, SpecialNotes = h.SpecialNotes
         }).ToList();
         return Ok(resp);
+    }
+
+    /// <summary>
+    /// OR 月清單／統計（雛形）：直接讀資訊室同步庫 DB2_DUMP 的 OPORDER_4A0（含過去已完成刀，Board_OR API 拿不到），
+    /// 不經 Board_* API。參數 ym=2026-06（整月）或 from/to（[from,to) 半開區間）。
+    /// 回 { from, to, stats{總/住/門/急/各刀房…}, rows[] }。
+    /// </summary>
+    [HttpGet("or/monthly")]
+    public async Task<IActionResult> GetOrMonthly([FromQuery] string? ym, [FromQuery] DateTime? from, [FromQuery] DateTime? to, CancellationToken ct = default)
+    {
+        DateTime f, t;
+        if (!string.IsNullOrWhiteSpace(ym) && DateTime.TryParse(ym + "-01", out var m))
+        { f = m.Date; t = f.AddMonths(1); }
+        else if (from.HasValue)
+        { f = from.Value.Date; t = (to ?? from.Value).Date.AddDays(to.HasValue ? 0 : 1); if (t <= f) t = f.AddDays(1); }
+        else
+        { f = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1); t = f.AddMonths(1); }   // 預設本月
+
+        if ((t - f).TotalDays > 92) return BadRequest(new { message = "查詢區間過長（上限約 3 個月）" });
+        try
+        {
+            return Ok(await _orReport.GetMonthlyAsync(f, t, ct));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "OR 月清單查詢失敗 {From}~{To}", f, t);
+            return StatusCode(502, new { message = "同步庫（DB2_DUMP）查詢失敗", detail = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// OR 手術清單（頁籤用）：讀本地清洗表 [dbo].[OrSurgery]（由 WhiteboardSync ETL 落地，快）。
+    /// 參數 from/to（皆含，yyyy-MM-dd）；省略→本月。回 { from, to, stats{總/住/門/急/各刀房}, rows[] }。
+    /// </summary>
+    [HttpGet("or/surgerylist")]
+    public async Task<IActionResult> GetOrSurgeryList([FromQuery] DateTime? from, [FromQuery] DateTime? to, CancellationToken ct = default)
+    {
+        var today = DateTime.Today;
+        var f = from?.Date ?? new DateTime(today.Year, today.Month, 1);
+        var t = to?.Date ?? f.AddMonths(1).AddDays(-1);       // 預設當月月底
+        if (t < f) (f, t) = (t, f);
+        if ((t - f).TotalDays > 92) return BadRequest(new { message = "查詢區間過長（上限約 3 個月）" });
+
+        var rows = (await _ward.GetOrSurgeryListAsync(f, t, ct)).ToList();
+        foreach (var r in rows) r.PatientName = MaskName(r.PatientName);   // 公開看板：病人姓名去識別化（統計不受影響）
+        var stats = new OrMonthlyStats
+        {
+            Total = rows.Count,
+            Inpatient = rows.Count(x => x.CaseType == "A"),
+            Outpatient = rows.Count(x => x.CaseType == "O"),
+            Emergency = rows.Count(x => x.CaseType == "E"),
+            Status82 = rows.Count(x => x.StatusCode == "82"),
+            ByRoom = rows.GroupBy(x => x.RoomId ?? x.Room ?? "").OrderBy(g => g.Key)
+                         .Select(g => new CodeCount { Key = g.Key, Count = g.Count() }).ToList(),
+        };
+        return Ok(new OrSurgeryListResult
+        {
+            From = f.ToString("yyyy-MM-dd"),
+            To = t.ToString("yyyy-MM-dd"),
+            Stats = stats,
+            Rows = rows,
+        });
     }
 
     /// <summary>OR 手術清單（全部排程，攤平）：供 ICU/W52「手術資訊」分頁；狀態依時間推導。</summary>
@@ -754,7 +818,7 @@ public class BoardController : ControllerBase
         var list = daily.Select(d => new OrSurgeryListItem
         {
             OrRoom = d.RoomId ?? d.ApiRoom, Date = d.SurgeryDate.ToString("yyyy-MM-dd"), ScheduledTime = d.OpTime,
-            PatientName = d.PatientName, Gender = d.Gender, Age = CalcAge(d.BirthDate),
+            PatientName = MaskName(d.PatientName), Gender = d.Gender, Age = CalcAge(d.BirthDate),
             Procedure = d.SurgeryName, Diagnosis = d.Diagnosis, AnesthesiaMethod = d.AnesType,
             AttendingSurgeon = d.Doctor,
             Status = d.Completed ? "已完成" : DeriveSurgeryStatus(d.SurgeryDate, d.OpTime, now, today)
@@ -851,7 +915,7 @@ public class BoardController : ControllerBase
             .ThenByDescending(r => r.TimeSlot ?? "")
             .Select(r => new
         {
-            bedId = r.BedId, patientName = r.PatientName, gender = r.Gender, examName = r.ItemName,
+            bedId = r.BedId, patientName = MaskName(r.PatientName), gender = r.Gender, examName = r.ItemName,
             scheduledDate = r.ScheduledDate, timeSlot = r.TimeSlot, status = r.Status, notes = r.Notes
         });
         var consults = rows.Where(r => r.Kind == "會診")
@@ -859,7 +923,7 @@ public class BoardController : ControllerBase
             .OrderByDescending(r => string.IsNullOrWhiteSpace(r.CompletedTime) ? "9999-99-99 99:99" : r.CompletedTime)
             .Select(r => new
         {
-            bedId = r.BedId, patientName = r.PatientName, gender = r.Gender, consultDept = r.ItemName,
+            bedId = r.BedId, patientName = MaskName(r.PatientName), gender = r.Gender, consultDept = r.ItemName,
             consultDoctor = r.Doctor, completedTime = r.CompletedTime, status = r.Status, notes = r.Notes
         });
         return Ok(new { exams, consults });
@@ -904,7 +968,12 @@ public class BoardController : ControllerBase
     /// <summary>看板＋後台共用：某站照護提醒（camelCase，含責任護理師姓名；includeAll=false 僅啟用）。</summary>
     [HttpGet("{unitCode}/care-reminder")]
     public async Task<IActionResult> GetCareReminder(string unitCode, [FromQuery] bool includeAll = false, CancellationToken ct = default)
-        => Ok(await _ward.GetCareReminderAsync(unitCode, includeAll, ct));
+    {
+        var rows = (await _ward.GetCareReminderAsync(unitCode, includeAll, ct)).ToList();
+        // includeAll=false＝公開看板顯示 → 病人姓名去識別化；includeAll=true＝後台管理 → 保留真實姓名
+        if (!includeAll) foreach (var r in rows) r.PatientName = MaskName(r.PatientName);
+        return Ok(rows);
+    }
     [HttpGet("care-reminder/{id:int}")]
     public async Task<IActionResult> GetCareReminderById(int id, CancellationToken ct = default)
     { var x = await _ward.GetCareReminderByIdAsync(id, ct); return x is null ? NotFound() : Ok(x); }
@@ -1167,7 +1236,7 @@ public class BoardController : ControllerBase
         {
             var items = (await _staff.GetHandoverNotesAsync(p.Id, ct)).Select(n => new { category = n.Category, content = n.Content });
             patients.Add(new {
-                handoverId = p.Id, bedNo = p.BedNo, patientName = p.PatientName, gender = p.Gender, age = p.Age,
+                handoverId = p.Id, bedNo = p.BedNo, patientName = MaskName(p.PatientName), gender = p.Gender, age = p.Age,
                 diagnosis = p.Diagnosis, priority = p.Priority, items
             });
         }
@@ -1296,5 +1365,18 @@ public class BoardController : ControllerBase
         var age = today.Year - b.Year;
         if (b.Date > today.AddYears(-age)) age--;
         return age < 0 || age > 130 ? null : age;
+    }
+
+    /// <summary>
+    /// 病人姓名去識別化（公開看板用）：保留首末字、中間全 O；2 字→首+O；≤1 字或空→原值。
+    /// 只套用於「病人」姓名；員工/醫護/醫師姓名不套用。管理後台端點不呼叫此函式。
+    /// </summary>
+    private static string? MaskName(string? name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return name;
+        var s = name.Trim();
+        if (s.Length <= 1) return s;
+        if (s.Length == 2) return s[0] + "O";
+        return s[0] + new string('O', s.Length - 2) + s[^1];
     }
 }

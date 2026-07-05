@@ -204,6 +204,13 @@ export async function saveUnitInfo(data) { return handle(await apiFetch(`${BASE}
 export async function getOrSchedule() { return handle(await apiFetch(`${BASE}/or/schedule`)) }
 export async function getOrHandover() { return handle(await apiFetch(`${BASE}/or/handover`)) }
 export async function getOrSurgeries() { return handle(await apiFetch(`${BASE}/or/surgeries`)) }  // 全部 OR 手術清單（ICU/W52 手術資訊）
+// GET /api/Board/or/surgerylist?from=&to=（皆含 yyyy-MM-dd；省略→本月）→ { from,to,stats,rows[] }（本地 OrSurgery，快）
+export async function getOrSurgeryList(from, to) {
+  const p = new URLSearchParams()
+  if (from) p.set('from', from)
+  if (to) p.set('to', to)
+  return handle(await apiFetch(`${BASE}/or/surgerylist?${p}`))
+}
 // 後台 CRUD：班級人員 OrShiftStaff
 export async function getShiftStaff(unitCode = 'OR', includeAll = true) {
   const p = new URLSearchParams({ includeAll: includeAll ? 'true' : 'false' })

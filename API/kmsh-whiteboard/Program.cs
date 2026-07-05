@@ -62,6 +62,7 @@ builder.Services.AddScoped<IEvacRepository, EvacRepository>();
 builder.Services.AddScoped<IWardRepository, WardRepository>();
 builder.Services.AddScoped<IPersonnelRepository, PersonnelRepository>();
 builder.Services.AddScoped<IAuditRepository, AuditRepository>();
+builder.Services.AddScoped<IOrReportRepository, OrReportRepository>();   // OR 月報：直接讀 DB2_DUMP OPORDER
 // LDAP／AD 認證（LLDAP@101；設定檔驅動，Enabled=false 時為過渡期員編登入）
 builder.Services.Configure<kmsh_whiteboard.Settings.LdapOptions>(
     builder.Configuration.GetSection(kmsh_whiteboard.Settings.LdapOptions.Section));

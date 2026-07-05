@@ -102,4 +102,7 @@ public interface IWardRepository
     Task<int> UpsertOrDailyAsync(OrDailySurgeryItem it, CancellationToken ct = default);
     Task<int> MarkOrDailyCompletedAsync(DateTime date, IEnumerable<string> presentKeys, CancellationToken ct = default);
     Task<int> PurgeOrDailyAsync(DateTime beforeDate, CancellationToken ct = default);
+
+    // ── OR 清洗手術清單 [dbo].[OrSurgery]（由 WhiteboardSync ETL 落地；表不存在時回空）──
+    Task<IEnumerable<OrSurgeryListRow>> GetOrSurgeryListAsync(DateTime fromDate, DateTime toDate, CancellationToken ct = default);
 }

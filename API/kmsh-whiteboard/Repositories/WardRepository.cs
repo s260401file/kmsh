@@ -651,6 +651,26 @@ public class WardRepository : IWardRepository
             new CommandDefinition(sql, new { From = fromDate.Date, To = toDate.Date }, cancellationToken: ct));
     }
 
+    // ── OR 清洗手術清單 [dbo].[OrSurgery]（WhiteboardSync ETL 落地）─────
+    private const string OrSurgeryCols = @"OpDate, OpTime, Room, RoomId, CaseType, CaseTypeText, ChartNo, CaseNo,
+        PatientName, Sex, Age, SourceWard, SourceBed, SurgeonNo, SurgeonName, MentorName, AssistantNames,
+        SurgeryName, Anesthesia, NhiCodes, IcdCodes, StatusCode, CancelReason, EndDate, EndTime";
+
+    public async Task<IEnumerable<OrSurgeryListRow>> GetOrSurgeryListAsync(DateTime fromDate, DateTime toDate, CancellationToken ct = default)
+    {
+        using var conn = _db.Create();
+        // 表由外部工具 WhiteboardSync 建立/餵入；尚未建立時回空清單，避免 500。
+        var exists = await conn.ExecuteScalarAsync<int?>(
+            new CommandDefinition("SELECT OBJECT_ID(N'dbo.OrSurgery', N'U')", cancellationToken: ct));
+        if (exists is null) return Enumerable.Empty<OrSurgeryListRow>();
+
+        var sql = $@"SELECT {OrSurgeryCols} FROM [dbo].[OrSurgery]
+                     WHERE OpDate >= @From AND OpDate <= @To AND IsActive = 1
+                     ORDER BY OpDate, OpTime, Room";
+        return await conn.QueryAsync<OrSurgeryListRow>(
+            new CommandDefinition(sql, new { From = fromDate.Date, To = toDate.Date }, cancellationToken: ct));
+    }
+
     /// <summary>依唯一鍵(日期+刀房+病歷號+時間) upsert；存在則更新欄位＋LastSeen、Completed 歸 0。</summary>
     public async Task<int> UpsertOrDailyAsync(OrDailySurgeryItem it, CancellationToken ct = default)
     {

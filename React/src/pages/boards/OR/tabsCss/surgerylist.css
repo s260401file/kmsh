@@ -1,0 +1,95 @@
+/* surgerylist.css — OR「手術清單」分頁（第 7 頁籤）
+   版面：上方統計列 + 中間可捲動表格 + 下方查詢控制列；欄位參考紙本 orschedule.jpg。 */
+
+.or-board .sl-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--bg-card-occ);
+  border: 1px solid var(--divider);
+  border-radius: var(--radius-card);
+  overflow: hidden;
+}
+
+/* ── 上方：期間 + 統計 ── */
+.or-board .sl-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--divider);
+  background: #F1F8F4;
+  flex-shrink: 0;
+}
+.or-board .sl-title { font-size: 20px; font-weight: 800; color: var(--accent-green); letter-spacing: .5px; }
+.or-board .sl-stats { display: flex; gap: 10px; align-items: center; }
+.or-board .sl-stat { font-size: 17px; font-weight: 700; padding: 4px 12px; border-radius: var(--radius-pill); }
+.or-board .sl-stat-total { background: var(--accent-green); color: #fff; }
+.or-board .sl-stats .sl-t-in  { background: #E6F4EA; color: #1B7A3D; }
+.or-board .sl-stats .sl-t-out { background: #E3F0FB; color: #1565C0; }
+.or-board .sl-stats .sl-t-emg { background: #FBE4E4; color: #CC3333; }
+
+/* ── 中間：表格（可捲動、表頭 sticky）── */
+.or-board .sl-table-wrap { flex: 1; overflow-y: auto; min-height: 0; }
+.or-board .sl-table { width: 100%; border-collapse: collapse; }
+.or-board .sl-table thead th {
+  position: sticky; top: 0; z-index: 1;
+  background: #E8F4EE; color: var(--text-secondary);
+  font-size: 14px; font-weight: 700; text-align: left;
+  padding: 9px 10px; border-bottom: 1px solid var(--divider); white-space: nowrap;
+}
+.or-board .sl-table td {
+  padding: 8px 10px; font-size: 15px; color: var(--text-primary);
+  border-bottom: 1px solid var(--bg-card-empty); vertical-align: middle;
+}
+.or-board .sl-table tbody tr:nth-child(even) { background: #F8FAF9; }
+.or-board .sl-table tbody tr:hover { background: #EEF6F1; }
+
+.or-board .sl-col-date { width: 108px; }
+.or-board .sl-col-op { min-width: 220px; }
+.or-board .sl-date { font-weight: 700; font-family: var(--font-num); }
+.or-board .sl-time { font-size: 13px; color: var(--text-muted); font-family: var(--font-num); }
+.or-board .sl-mono { font-family: var(--font-num); color: var(--text-secondary); }
+.or-board .sl-room { font-weight: 800; color: var(--accent-green); font-family: var(--font-num); }
+
+.or-board .sl-ward { margin-right: 6px; }
+.or-board .sl-badge { display: inline-block; padding: 1px 7px; border-radius: var(--radius-badge); font-size: 12px; font-weight: 700; white-space: nowrap; }
+.or-board .sl-badge.sl-t-in  { background: #27AE60; color: #fff; }
+.or-board .sl-badge.sl-t-out { background: #1976D2; color: #fff; }
+.or-board .sl-badge.sl-t-emg { background: #CC3333; color: #fff; }
+
+.or-board .sl-name { font-weight: 700; margin-right: 6px; }
+.or-board .sl-name.sl-m { color: #1565C0; }
+.or-board .sl-name.sl-f { color: #C2185B; }
+.or-board .sl-basic { font-size: 13px; color: var(--text-muted); font-family: var(--font-num); }
+
+.or-board .sl-empty-col { background: repeating-linear-gradient(45deg, transparent, transparent 6px, #F0F3F1 6px, #F0F3F1 7px); }
+
+/* 取消刀（狀態 82）*/
+.or-board .sl-cancelled { opacity: .5; }
+.or-board .sl-cancelled .sl-col-op { text-decoration: line-through; }
+.or-board .sl-cancel-tag { display: inline-block; margin-left: 6px; padding: 0 6px; border-radius: 3px; background: #CC3333; color: #fff; font-size: 11px; font-weight: 700; }
+
+.or-board .sl-empty td { text-align: center; color: var(--text-muted); padding: 40px 0; font-size: 16px; }
+
+/* ── 下方：查詢控制列 ── */
+.or-board .sl-controls {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 16px; border-top: 1px solid var(--divider);
+  background: var(--bg-filter); flex-shrink: 0; flex-wrap: wrap;
+}
+.or-board .sl-btn {
+  padding: 6px 18px; border-radius: var(--radius-pill); font-size: 16px; font-weight: 600;
+  border: 1.5px solid var(--filter-border); color: var(--text-secondary);
+  background: transparent; cursor: pointer; transition: background .15s, color .15s;
+}
+.or-board .sl-btn:hover { background: var(--filter-active-bg); color: var(--filter-active-text); }
+.or-board .sl-btn-go { background: var(--accent-green); color: #fff; border-color: var(--accent-green); }
+.or-board .sl-sep { width: 1px; height: 24px; background: var(--divider); margin: 0 4px; }
+.or-board .sl-custom-label { font-size: 16px; color: var(--text-muted); }
+.or-board .sl-date-input {
+  padding: 5px 10px; border: 1.5px solid var(--filter-border); border-radius: 8px;
+  font-size: 15px; font-family: var(--font-num); color: var(--text-primary); background: #fff;
+}
+.or-board .sl-tilde { color: var(--text-muted); }

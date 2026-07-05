@@ -45,6 +45,7 @@ import OrHandoverTab from './pages/boards/OR/tabs/HandoverTab'
 import OrContactTab from './pages/boards/OR/tabs/ContactTab'
 import OrBulletinTab from './pages/boards/OR/tabs/BulletinTab'
 import OrEvacuationTab from './pages/boards/OR/tabs/EvacuationTab'
+import OrSurgeryListTab from './pages/boards/OR/tabs/SurgeryListTab'
 
 // ER Layout + Tabs
 import ErLayout from './pages/boards/ER/ErLayout'
@@ -113,6 +114,7 @@ function App() {
         <Route path="contact"    element={<OrContactTab />} />
         <Route path="bulletin"   element={<OrBulletinTab />} />
         <Route path="evacuation" element={<OrEvacuationTab />} />
+        <Route path="surgerylist" element={<OrSurgeryListTab />} />
       </Route>
 
       {/* ER 巢狀路由 */}

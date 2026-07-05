@@ -16,6 +16,7 @@ const TABS = [
   { path: 'contact',    label: '連絡電話' },
   { path: 'bulletin',   label: '佈告欄' },
   { path: 'evacuation', label: '避難圖' },
+  { path: 'surgerylist', label: '手術清單' },
 ]
 
 export default function OrLayout() {
