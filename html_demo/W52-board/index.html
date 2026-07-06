@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="css/reset.css">
   <link rel="stylesheet" href="css/main.css">
   <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/duty.css">
 </head>
 <body>
 
@@ -121,6 +122,57 @@
             <div class="ws-item" data-filter="tube-cardiac">
               <div class="ws-value ws-cardiac" id="stat-cardiac">—</div>
               <div class="ws-label">心導管 ▾</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── 值班表面板（056 下方 4×8 空間；原型，mock 對照實體白板）── -->
+        <div class="duty-panel" style="grid-column:4/8;grid-row:3/11">
+          <div class="duty-head">
+            <span class="duty-title">值班表</span>
+            <span class="duty-date">115/06/22（日）</span>
+          </div>
+          <div class="duty-body">
+            <!-- ① 值班醫療團隊 -->
+            <div class="duty-sec">
+              <div class="duty-sec-t">值班醫療團隊</div>
+              <div class="duty-rows">
+                <div class="duty-r"><span class="duty-role">骨科醫師</span><span class="duty-name">林建宏</span><span class="duty-ext">0265509</span></div>
+                <div class="duty-r"><span class="duty-role">內科醫師</span><span class="duty-name">郭玉哲</span><span class="duty-ext">0267290</span></div>
+                <div class="duty-r"><span class="duty-role">護理長</span><span class="duty-name">蔡秀男</span><span class="duty-ext">0939-336816</span></div>
+                <div class="duty-r"><span class="duty-role">專科護理師</span><span class="duty-name">黃乙宸</span><span class="duty-ext">0977750257</span></div>
+                <div class="duty-r"><span class="duty-role">書記</span><span class="duty-name">張聖宗</span><span class="duty-ext">0265166</span></div>
+              </div>
+            </div>
+            <!-- ② 三班護理師 -->
+            <div class="duty-sec">
+              <div class="duty-sec-t">三班護理師</div>
+              <div class="duty-shift">
+                <div class="duty-sh"><span class="duty-sh-k sh-n">大夜 N1</span><span class="duty-sh-n">黃婉芊</span></div>
+                <div class="duty-sh"><span class="duty-sh-k sh-d">白班 D1</span><span class="duty-sh-n">王婉婷</span></div>
+                <div class="duty-sh"><span class="duty-sh-k sh-e">小夜 E1</span><span class="duty-sh-n">曾子豪</span></div>
+              </div>
+            </div>
+            <!-- ③ 緊急應變編組 -->
+            <div class="duty-sec">
+              <div class="duty-sec-t">緊急應變編組</div>
+              <div class="duty-grid2">
+                <div class="duty-g"><span class="duty-g-k">救護班</span><span class="duty-g-n">陳慧盈</span></div>
+                <div class="duty-g"><span class="duty-g-k">滅火班</span><span class="duty-g-n">莊惠媛</span></div>
+                <div class="duty-g"><span class="duty-g-k">安全防護</span><span class="duty-g-n">曾子豪</span></div>
+                <div class="duty-g"><span class="duty-g-k">避難引導</span><span class="duty-g-n">鐘雅琪</span></div>
+              </div>
+            </div>
+            <!-- ④ 照服員電話 -->
+            <div class="duty-sec">
+              <div class="duty-sec-t">照服員電話</div>
+              <div class="duty-aides">
+                <span class="duty-aide"><b>春花</b><span>0988818966</span></span>
+                <span class="duty-aide"><b>瑞雲</b><span>0915821732</span></span>
+                <span class="duty-aide"><b>佳誉</b><span>0955155023</span></span>
+                <span class="duty-aide"><b>覆晴</b><span>0988383132</span></span>
+                <span class="duty-aide"><b>永美</b><span>0920401127</span></span>
+              </div>
             </div>
           </div>
         </div>

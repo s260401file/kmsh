@@ -29,23 +29,8 @@ BEGIN
 END
 GO
 
-IF NOT EXISTS (SELECT 1 FROM [dbo].[IcuAntibiotic])
-BEGIN
-    INSERT INTO [dbo].[IcuAntibiotic]
-      (UnitCode, Hhisnum, DrugName, StartDateTime, FirstDoseDateTime, EndDateTime, SortOrder) VALUES
-    -- 劉財華 (F4-03)
-    (N'ICU', N'13592170', N'Vancomycin',              N'2026-06-20 08:00', N'2026-06-20 09:30', NULL, 10),
-    (N'ICU', N'13592170', N'Meropenem',               N'2026-06-21 14:00', N'2026-06-21 15:00', NULL, 20),
-    -- 趙建伸 (F4-11)
-    (N'ICU', N'19028218', N'Piperacillin/Tazobactam', N'2026-06-22 06:00', N'2026-06-22 07:00', NULL, 10),
-    -- 吳振興 (F4-01)
-    (N'ICU', N'13276970', N'Meropenem',               N'2026-06-19 10:00', N'2026-06-19 11:00', N'2026-06-23 10:00', 10),
-    -- 陳月理 (F4-13)
-    (N'ICU', N'12222910', N'Ceftriaxone',             N'2026-06-23 08:00', N'2026-06-23 09:00', NULL, 10),
-    -- 張哲雄 (F4-17)
-    (N'ICU', N'16352030', N'Vancomycin',              N'2026-06-22 20:00', N'2026-06-22 21:30', NULL, 10);
-END
-GO
+-- 註：不再植入示範種子。抗生素改由後台「ICU 抗生素」以當前在床病人清單逐一設定
+-- （比照病人臨床補充 roster 模式）；避免固定病歷號的假資料出現在白板。
 
-PRINT N'[dbo].[IcuAntibiotic] 建立並植入 ICU 抗生素種子（掛真實在床病歷號）。';
+PRINT N'[dbo].[IcuAntibiotic] 已建立（無種子；資料由後台維護）。';
 GO

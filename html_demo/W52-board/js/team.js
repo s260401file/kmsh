@@ -24,7 +24,6 @@ function renderTeamGroupCard(group) {
         <td>${m.Name}</td>
         <td class="tm-td-dept">${m.Department}</td>
         <td class="tm-td-ext">${m.Ext}</td>
-        <td class="tm-td-mobile">${m.Mobile || "—"}</td>
       </tr>`;
   }).join("");
 
@@ -40,9 +39,8 @@ function renderTeamGroupCard(group) {
           <tr>
             <th>職別</th>
             <th>姓名</th>
-            <th>科別 / 專長</th>
+            <th>科別/專長</th>
             <th>分機</th>
-            <th>手機</th>
           </tr>
         </thead>
         <tbody>${rowsHtml}</tbody>
@@ -64,8 +62,7 @@ function renderTeamGrid(groups) {
 
   // 標題列總人數
   const total = groups.reduce((sum, g) => sum + g.Members.length, 0);
-  const groupCount = groups.length;
-  document.getElementById("tm-total").textContent = `共 ${groupCount} 群組・${total} 位成員`;
+  document.getElementById("tm-total").textContent = `共 ${total} 人`;
 }
 
 // ── 入口 ──

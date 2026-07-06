@@ -41,7 +41,10 @@ function renderTubeList(beds) {
     return `
       <tr>
         <td class="tb-td-bed">${fmtBed(b.id)}</td>
-        <td class="tb-td-name">${p.name}</td>
+        <td class="tb-td-name">
+          <span style="color:${p.gender === 'M' ? '#1565C0' : '#AD1457'};font-weight:700;">${p.name}</span>
+          <span style="font-size:13px;color:#7A8FA0;margin-left:6px;">${p.gender}/${p.age}</span>
+        </td>
         <td>${tubeCell(p.ventilator)}</td>
         <td>${tubeCell(p.ng)}</td>
         <td>${tubeCell(p.foley)}</td>
@@ -60,19 +63,19 @@ function renderTubeList(beds) {
 
   stats.innerHTML = `
     <div class="tb-stat-item tb-stat-ett">
-      <span class="tb-stat-label">呼吸器 (ETT)</span>
+      <span class="tb-stat-label">呼吸器</span>
       <span class="tb-stat-value">${ett}</span>
     </div>
     <div class="tb-stat-item tb-stat-ng">
-      <span class="tb-stat-label">鼻胃管 (NG)</span>
+      <span class="tb-stat-label">鼻胃管</span>
       <span class="tb-stat-value">${ng}</span>
     </div>
     <div class="tb-stat-item tb-stat-foley">
-      <span class="tb-stat-label">導尿管 (Foley)</span>
+      <span class="tb-stat-label">導尿管</span>
       <span class="tb-stat-value">${foley}</span>
     </div>
     <div class="tb-stat-item tb-stat-cvc">
-      <span class="tb-stat-label">中心靜脈 (CVC)</span>
+      <span class="tb-stat-label">中心靜脈</span>
       <span class="tb-stat-value">${cvc}</span>
     </div>
     <div class="tb-stat-item tb-stat-crrt">

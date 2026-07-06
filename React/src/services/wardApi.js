@@ -8,7 +8,12 @@ const headers = { 'Content-Type': 'application/json' }
 
 async function handle(res) {
   if (res.status === 204) return null
-  if (!res.ok) { const t = await res.text(); throw new Error(t || `HTTP ${res.status}`) }
+  if (!res.ok) {
+    const t = await res.text()
+    let msg = t
+    try { const j = JSON.parse(t); if (j && j.message) msg = j.message } catch { /* 非 JSON，用原文 */ }
+    throw new Error(msg || `HTTP ${res.status}`)
+  }
   return res.json()
 }
 
@@ -26,6 +31,10 @@ export async function getExt(unitCode, includeAll = true) {
 // GET /api/Board/{unitCode}/occupancy → 目前在床對照 [{hhisnum, bed}]（標示在床/已離床）
 export async function getOccupancy(unitCode) {
   return handle(await apiFetch(`${BASE}/${unitCode}/occupancy`))
+}
+// GET /api/Board/{unitCode}/roster → 當前在床病人（真實姓名，後台臨床補充用；需登入）
+export async function getRoster(unitCode) {
+  return handle(await apiFetch(`${BASE}/${unitCode}/roster`))
 }
 
 // ── 各科值班醫師（ER 面板 + 後台 CRUD）──────────────────────────────
@@ -204,6 +213,24 @@ export async function saveUnitInfo(data) { return handle(await apiFetch(`${BASE}
 export async function getOrSchedule() { return handle(await apiFetch(`${BASE}/or/schedule`)) }
 export async function getOrHandover() { return handle(await apiFetch(`${BASE}/or/handover`)) }
 export async function getOrSurgeries() { return handle(await apiFetch(`${BASE}/or/surgeries`)) }  // 全部 OR 手術清單（ICU/W52 手術資訊）
+
+// ── 全院共用主檔：科別 Department ──────────────────────────────────
+export async function getDepartments(includeAll = true) {
+  return handle(await apiFetch(`${BASE}/department?includeAll=${includeAll ? 'true' : 'false'}`))
+}
+export async function createDepartment(data) { return handle(await apiFetch(`${BASE}/department`, { method: 'POST', headers, body: JSON.stringify(data) })) }
+export async function updateDepartment(id, data) { return handle(await apiFetch(`${BASE}/department/${id}`, { method: 'PUT', headers, body: JSON.stringify(data) })) }
+export async function removeDepartment(id) { return handle(await apiFetch(`${BASE}/department/${id}`, { method: 'DELETE' })) }
+
+// ── 全院共用主檔：醫師 Doctor（deptCode 可篩選）──────────────────────
+export async function getDoctors(deptCode = null, includeAll = true) {
+  const p = new URLSearchParams({ includeAll: includeAll ? 'true' : 'false' })
+  if (deptCode) p.set('deptCode', deptCode)
+  return handle(await apiFetch(`${BASE}/doctor?${p}`))
+}
+export async function createDoctor(data) { return handle(await apiFetch(`${BASE}/doctor`, { method: 'POST', headers, body: JSON.stringify(data) })) }
+export async function updateDoctor(id, data) { return handle(await apiFetch(`${BASE}/doctor/${id}`, { method: 'PUT', headers, body: JSON.stringify(data) })) }
+export async function removeDoctor(id) { return handle(await apiFetch(`${BASE}/doctor/${id}`, { method: 'DELETE' })) }
 // GET /api/Board/or/surgerylist?from=&to=（皆含 yyyy-MM-dd；省略→本月）→ { from,to,stats,rows[] }（本地 OrSurgery，快）
 export async function getOrSurgeryList(from, to) {
   const p = new URLSearchParams()

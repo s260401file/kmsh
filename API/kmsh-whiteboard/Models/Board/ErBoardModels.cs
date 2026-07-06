@@ -59,7 +59,8 @@ public class ErBedPatientDto
     [JsonPropertyName("AwaitingType")]     public string? AwaitingType { get; set; }
     [JsonPropertyName("TransferIn")]       public bool TransferIn { get; set; }
     [JsonPropertyName("TransferOut")]      public bool TransferOut { get; set; }
-    [JsonPropertyName("TransferHospital")] public string? TransferHospital { get; set; }
+    [JsonPropertyName("TransferHospital")] public string? TransferHospital { get; set; }     // 轉出醫院
+    [JsonPropertyName("TransferInHospital")] public string? TransferInHospital { get; set; } // 轉入醫院
     [JsonPropertyName("Admitted")]         public bool Admitted { get; set; }
     [JsonPropertyName("AdmBedNo")]         public string? AdmBedNo { get; set; }
     [JsonPropertyName("Dnr")]              public bool Dnr { get; set; }

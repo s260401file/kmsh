@@ -25,9 +25,9 @@ function renderDutyContacts(items) {
     <tr>
       <td>${item.DutyTitle}</td>
       <td>${item.Name}</td>
-      <td class="ct-ext">分機 ${item.Extension}</td>
+      <td class="ct-ext">${item.Extension || "—"}</td>
       <td class="ct-mobile">${item.Mobile || "—"}</td>
-      <td class="ct-slot">${item.TimeSlot}</td>
+      <td class="ct-slot">${item.TimeSlot || "—"}</td>
     </tr>`
   ).join("");
 }
@@ -44,7 +44,7 @@ function renderCommonContacts(items) {
   document.getElementById("common-list").innerHTML = items.map(item => `
     <tr>
       <td>${item.Name}</td>
-      <td class="ct-ext ct-col-ext">分機 ${item.Extension}</td>
+      <td class="ct-ext ct-col-ext">${item.Extension}</td>
     </tr>`
   ).join("");
 }

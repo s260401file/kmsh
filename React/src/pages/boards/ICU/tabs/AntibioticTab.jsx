@@ -8,6 +8,7 @@ import { useIcuWard } from '../../../../hooks/useIcuWard'
 import { usePolling } from '../../../../hooks/usePolling'
 import * as wardApi from '../../../../services/wardApi'
 import { CENSUS_MS } from '../../../../config/pollingConfig'
+import BoardLoading from '../../../../components/BoardLoading'   // 院方資料載入中動畫（同病室動態）
 
 const norm = v => (v ?? '').toString().trim()
 
@@ -91,7 +92,7 @@ export default function AntibioticTab() {
   const [selectedBed, setSelectedBed] = useState(null)   // 目前開啟清單的床（null=未開）
   const [floor, setFloor] = useState(4)                  // 目前顯示樓層（4F 為主，可切 3F）
 
-  const { beds } = useIcuWard('ICU')                     // 床位/病人＝真實在床
+  const { beds, loading } = useIcuWard('ICU')            // 床位/病人＝真實在床
   const { data: abxRows } = usePolling(                  // 抗生素＝自建表
     () => wardApi.getAntibiotic('ICU'),
     { intervalMs: CENSUS_MS, deps: ['ICU-abx'] },
@@ -111,6 +112,8 @@ export default function AntibioticTab() {
 
   const floorBeds = useMemo(() => beds.filter(b => b.floor === floor), [beds, floor])
   const toggleFloor = () => { setFloor(f => (f === 4 ? 3 : 4)); setSelectedBed(null) }
+  // 開著的清單彈窗：每次輪詢後用 id 從最新 beds 重新取回，內容跟著自動更新（約20秒）；病人離床則自動關閉
+  const liveSelectedBed = selectedBed ? beds.find(b => b.id === selectedBed.id) : null
 
   // 統計：由在床病人 × 其抗生素即時計算（4F/3F 依床所在樓層；藥別以名稱比對）
   const stats = useMemo(() => {
@@ -132,6 +135,8 @@ export default function AntibioticTab() {
     const total = f4 + f3
     return { total, f4, f3, beds: bedsUsed, vanc, mero, pip, other: Math.max(0, total - vanc - mero - pip) }
   }, [beds, byHis])
+
+  if (loading) return <main className="main-content"><BoardLoading /></main>   // 院方資料載入中（同病室動態）
 
   return (
     <main className="main-content">
@@ -175,7 +180,7 @@ export default function AntibioticTab() {
       </div>
 
       {/* 有選取床位時才渲染抗生素清單彈窗 */}
-      {selectedBed && <AbxModal bed={selectedBed} abxList={getAbx(selectedBed.patient?.medRecord)} onClose={() => setSelectedBed(null)} />}
+      {liveSelectedBed && liveSelectedBed.patient && <AbxModal bed={liveSelectedBed} abxList={getAbx(liveSelectedBed.patient?.medRecord)} onClose={() => setSelectedBed(null)} />}
     </main>
   )
 }

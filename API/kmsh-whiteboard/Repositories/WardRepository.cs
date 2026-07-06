@@ -17,7 +17,7 @@ public class WardRepository : IWardRepository
         Condition, BedStatus, AdmissionDate, Dnr, Isolation, FallRisk, Dependency, Confidential, NoTreatment,
         Npo, Allergy, Rrt, Chemo, Transport, Oxygen, Renal, PortCath, DLVC, Foley, CVC, CardiacCath,
         Ventilator, Crrt, Ng, Surgery, Exam, Consult, Notes,
-        Observation, Awaiting, AwaitingType, TransferIn, TransferOut, TransferHospital, Admitted, AdmBedNo,
+        Observation, Awaiting, AwaitingType, TransferIn, TransferOut, TransferHospital, TransferInHospital, Admitted, AdmBedNo,
         Aad, Mbd, Deceased, ArrivalDate, ArrivalTime,
         ScrubNurse, CircNurse, SurgeryStatus, StartTime, EndTime,
         IsActive, UpdatedAt, CreatedAt";
@@ -47,7 +47,7 @@ public class WardRepository : IWardRepository
              AdmissionDate, Dnr, Isolation, FallRisk, Dependency, Confidential, NoTreatment, Npo, Allergy,
              Rrt, Chemo, Transport, Oxygen, Renal, PortCath, DLVC, Foley, CVC, CardiacCath,
              Ventilator, Crrt, Ng, Surgery, Exam, Consult, Notes,
-             Observation, Awaiting, AwaitingType, TransferIn, TransferOut, TransferHospital, Admitted, AdmBedNo,
+             Observation, Awaiting, AwaitingType, TransferIn, TransferOut, TransferHospital, TransferInHospital, Admitted, AdmBedNo,
              Aad, Mbd, Deceased, ArrivalDate, ArrivalTime,
              ScrubNurse, CircNurse, SurgeryStatus, StartTime, EndTime,
              IsActive, UpdatedAt, CreatedAt)
@@ -57,7 +57,7 @@ public class WardRepository : IWardRepository
              @AdmissionDate, @Dnr, @Isolation, @FallRisk, @Dependency, @Confidential, @NoTreatment, @Npo, @Allergy,
              @Rrt, @Chemo, @Transport, @Oxygen, @Renal, @PortCath, @DLVC, @Foley, @CVC, @CardiacCath,
              @Ventilator, @Crrt, @Ng, @Surgery, @Exam, @Consult, @Notes,
-             @Observation, @Awaiting, @AwaitingType, @TransferIn, @TransferOut, @TransferHospital, @Admitted, @AdmBedNo,
+             @Observation, @Awaiting, @AwaitingType, @TransferIn, @TransferOut, @TransferHospital, @TransferInHospital, @Admitted, @AdmBedNo,
              @Aad, @Mbd, @Deceased, @ArrivalDate, @ArrivalTime,
              @ScrubNurse, @CircNurse, @SurgeryStatus, @StartTime, @EndTime,
              @IsActive, GETDATE(), GETDATE())";
@@ -76,7 +76,7 @@ public class WardRepository : IWardRepository
             CVC=@CVC, CardiacCath=@CardiacCath, Ventilator=@Ventilator, Crrt=@Crrt, Ng=@Ng,
             Surgery=@Surgery, Exam=@Exam, Consult=@Consult, Notes=@Notes,
             Observation=@Observation, Awaiting=@Awaiting, AwaitingType=@AwaitingType, TransferIn=@TransferIn,
-            TransferOut=@TransferOut, TransferHospital=@TransferHospital, Admitted=@Admitted, AdmBedNo=@AdmBedNo,
+            TransferOut=@TransferOut, TransferHospital=@TransferHospital, TransferInHospital=@TransferInHospital, Admitted=@Admitted, AdmBedNo=@AdmBedNo,
             Aad=@Aad, Mbd=@Mbd, Deceased=@Deceased, ArrivalDate=@ArrivalDate, ArrivalTime=@ArrivalTime,
             ScrubNurse=@ScrubNurse, CircNurse=@CircNurse, SurgeryStatus=@SurgeryStatus, StartTime=@StartTime, EndTime=@EndTime,
             IsActive=@IsActive, UpdatedAt=GETDATE()
@@ -88,7 +88,7 @@ public class WardRepository : IWardRepository
             req.Confidential, req.NoTreatment, req.Npo, req.Allergy, req.Rrt, req.Chemo, req.Transport, req.Oxygen,
             req.Renal, req.PortCath, req.DLVC, req.Foley, req.CVC, req.CardiacCath, req.Ventilator, req.Crrt, req.Ng,
             req.Surgery, req.Exam, req.Consult, req.Notes,
-            req.Observation, req.Awaiting, req.AwaitingType, req.TransferIn, req.TransferOut, req.TransferHospital,
+            req.Observation, req.Awaiting, req.AwaitingType, req.TransferIn, req.TransferOut, req.TransferHospital, req.TransferInHospital,
             req.Admitted, req.AdmBedNo, req.Aad, req.Mbd, req.Deceased, req.ArrivalDate, req.ArrivalTime,
             req.ScrubNurse, req.CircNurse, req.SurgeryStatus, req.StartTime, req.EndTime,
             req.IsActive, Id = id

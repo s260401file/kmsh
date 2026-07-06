@@ -1,0 +1,64 @@
+/* 值班表面板 — W52 病室動態 056 下方 4×8 空間（原型；資料為 mock，對照實體白板）
+   放在 .ward-grid 內，grid-column:4/8; grid-row:3/11（4 欄 × 8 列，往下一格避開五人房） */
+.duty-panel {
+  background: #fff;
+  border: 1.5px solid var(--accent-green);
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+  box-shadow: 0 1px 5px rgba(0,0,0,.08);
+}
+
+/* 標題列 */
+.duty-head {
+  display: flex; align-items: baseline; justify-content: space-between;
+  background: var(--accent-green); color: #fff; padding: 7px 12px;
+}
+.duty-title { font-size: 22px; font-weight: 800; letter-spacing: 4px; }
+.duty-date  { font-size: 15px; font-weight: 600; opacity: .95; }
+
+/* 內容：四區塊垂直排列 */
+.duty-body {
+  flex: 1; min-height: 0; overflow: hidden;
+  display: flex; flex-direction: column; gap: 9px; padding: 10px 13px;
+}
+.duty-sec-t {
+  font-size: 15px; font-weight: 800; color: var(--accent-green);
+  border-bottom: 1.5px solid #DCE8E1; padding-bottom: 3px; margin-bottom: 6px;
+}
+
+/* ① 值班醫療團隊 */
+.duty-rows { display: flex; flex-direction: column; gap: 4px; }
+.duty-r {
+  display: grid; grid-template-columns: 84px 1fr auto; align-items: baseline;
+  font-size: 16px; column-gap: 6px;
+}
+.duty-role { color: var(--text-muted); }
+.duty-name { font-weight: 700; color: var(--text-primary); }
+.duty-ext  { font-family: var(--font-num); font-size: 15px; color: var(--text-secondary); }
+
+/* ② 三班護理師 */
+.duty-shift { display: flex; gap: 8px; }
+.duty-sh {
+  flex: 1; display: flex; flex-direction: column; align-items: center;
+  background: var(--bg-card-empty); border-radius: 7px; padding: 7px 3px;
+}
+.duty-sh-k { font-size: 12.5px; font-weight: 700; color: #fff; padding: 2px 9px; border-radius: 10px; margin-bottom: 4px; }
+.sh-n { background: #37474F; }  /* 大夜 */
+.sh-d { background: #0288D1; }  /* 白班 */
+.sh-e { background: #7B1FA2; }  /* 小夜 */
+.duty-sh-n { font-size: 18px; font-weight: 700; color: var(--text-primary); }
+
+/* ③ 緊急應變編組 */
+.duty-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 5px 16px; }
+.duty-g { display: flex; align-items: baseline; gap: 6px; font-size: 16px; }
+.duty-g-k { color: var(--accent-red); font-weight: 700; white-space: nowrap; }
+.duty-g-n { font-weight: 700; color: var(--text-primary); }
+
+/* ④ 照服員電話 */
+.duty-aides { display: flex; flex-wrap: wrap; gap: 4px 18px; }
+.duty-aide { font-size: 15px; color: var(--text-secondary); }
+.duty-aide b { color: var(--text-primary); font-weight: 700; margin-right: 4px; }
+.duty-aide span { font-family: var(--font-num); }

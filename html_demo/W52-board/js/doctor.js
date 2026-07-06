@@ -85,8 +85,7 @@ function renderRoundSchedule(rounds) {
     const { display, day, isToday } = parseRoundDate(r.RoundDate);
 
     if (r.RoundDate !== lastDate) {
-      const label = isToday ? `${display} ${day} 今日` : `${display} ${day}`;
-      rows.push(`<tr class="dr-date-sep"><td colspan="5">${label}</td></tr>`);
+      rows.push(`<tr class="dr-date-sep"><td colspan="5">${display} ${day}</td></tr>`);
       lastDate = r.RoundDate;
     }
 
@@ -95,7 +94,7 @@ function renderRoundSchedule(rounds) {
       : r.EstimatedTime;
 
     const status = r.IsCompleted
-      ? `<span class="dr-status-done">✓</span>`
+      ? `<span class="dr-status-done">✓ 完成</span>`
       : `<span class="dr-status-pending">待查房</span>`;
 
     const rowCls = r.IsCompleted ? "dr-row-done" : "";

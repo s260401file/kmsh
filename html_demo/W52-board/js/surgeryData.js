@@ -125,8 +125,8 @@ const _MOCK_SURGERY_INFO = {
 };
 
 // ── API 模擬函式 ──────────────────────────────────────────────
-// React 遷移：useEffect(() => { getSurgeryInfo(wardCode, date).then(setData) }, [wardCode, date])
-// TODO 正式上線：return fetch(`/api/wards/${wardCode}/surgery-info?date=${date}`).then(r => r.json())
-async function getSurgeryInfo(wardCode, date) {
+// React 遷移：usePolling(() => wardApi.getOrSurgeries()) — 全院 OR 手術清單，前端依日期過濾
+// TODO 正式上線：return fetch(`/api/Board/or/surgeries`).then(r => r.json())
+async function getSurgeryInfo(wardCode) {
   return Promise.resolve(_MOCK_SURGERY_INFO);
 }

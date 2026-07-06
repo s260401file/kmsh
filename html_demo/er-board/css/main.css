@@ -163,11 +163,11 @@ body { flex-direction: column; }
 .ward-grid .triage-badge { font-size: 12px; padding: 2px 5px; line-height: 17px; }
 
 /* ── 負壓隔離室（R1-R2，C1）── */
-.bed-neg2  { grid-column: 1; grid-row: 1; }
-.bed-neg1  { grid-column: 1; grid-row: 2; }
+.bed-MER101  { grid-column: 1; grid-row: 1; }
+.bed-MER102  { grid-column: 1; grid-row: 2; }
 
 /* ── 急救室（R2，C5）── */
-.bed-MER01  { grid-column: 5; grid-row: 2; }
+.bed-MER001  { grid-column: 5; grid-row: 2; }
 
 /* ── 分區標示（區帶背景 + 區名，鋪在床位後方）── */
 .zone-band {
@@ -320,11 +320,11 @@ body { flex-direction: column; }
 }
 
 /* ── 第一診療區（R3，C7-C11）── */
-.bed-MER02 { grid-column:  7; grid-row: 3; }
-.bed-MER03 { grid-column:  8; grid-row: 3; }
-.bed-MER05 { grid-column:  9; grid-row: 3; }
-.bed-MER06 { grid-column: 10; grid-row: 3; }
-.bed-MER07 { grid-column: 11; grid-row: 3; }
+.bed-MER002 { grid-column:  7; grid-row: 3; }
+.bed-MER003 { grid-column:  8; grid-row: 3; }
+.bed-MER005 { grid-column:  9; grid-row: 3; }
+.bed-MER006 { grid-column: 10; grid-row: 3; }
+.bed-MER007 { grid-column: 11; grid-row: 3; }
 
 /* ── 櫃檯（ㄇ字型，C4，R4頂＋R5主體，底邊開口）── */
 .nursing-station {
@@ -347,16 +347,16 @@ body { flex-direction: column; }
 }
 
 /* ── 第二診療區（R5，C6-C11）── */
-.bed-MER08 { grid-column:  6; grid-row: 5; }
-.bed-MER09 { grid-column:  7; grid-row: 5; }
-.bed-MER10 { grid-column:  8; grid-row: 5; }
-.bed-MER11 { grid-column:  9; grid-row: 5; }
-.bed-MER12 { grid-column: 10; grid-row: 5; }
-.bed-MER13 { grid-column: 11; grid-row: 5; }
+.bed-MER008 { grid-column:  6; grid-row: 5; }
+.bed-MER009 { grid-column:  7; grid-row: 5; }
+.bed-MER010 { grid-column:  8; grid-row: 5; }
+.bed-MER011 { grid-column:  9; grid-row: 5; }
+.bed-MER012 { grid-column: 10; grid-row: 5; }
+.bed-MER013 { grid-column: 11; grid-row: 5; }
 
 /* ── 留觀區（R7-R8，C6）── */
-.bed-OER01 { grid-column: 6; grid-row: 7; }
-.bed-OER02 { grid-column: 6; grid-row: 8; }
+.bed-OER001 { grid-column: 6; grid-row: 7; }
+.bed-OER002 { grid-column: 6; grid-row: 8; }
 
 /* ── 待床/特殊留觀（R8，C1-C3）── */
 .bed-MER993 { grid-column: 1; grid-row: 8; }

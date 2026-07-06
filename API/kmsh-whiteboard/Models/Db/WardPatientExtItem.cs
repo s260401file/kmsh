@@ -48,7 +48,8 @@ public class WardPatientExtItem
     public string? AwaitingType { get; set; }         // 待床型態（一般/加護/隔離）
     public bool TransferIn { get; set; }              // 轉入
     public bool TransferOut { get; set; }             // 轉出
-    public string? TransferHospital { get; set; }     // 轉出/入醫院
+    public string? TransferHospital { get; set; }     // 轉出醫院
+    public string? TransferInHospital { get; set; }   // 轉入醫院
     public bool Admitted { get; set; }                // 已住院
     public string? AdmBedNo { get; set; }             // 住院床號
     public bool Aad { get; set; }                     // 違反醫囑離院(AAD)

@@ -22,7 +22,12 @@ export default function ErLayout() {
   const { date, time } = useClock()
   // 跑馬燈：第一參數為站別代碼，第二參數為預設公告文字
   const marquee = useMarquee('ER', '2026/05/24 急診分流提醒：目前二級重症病人待床中，ICU 床位有限，請優先處理急救室病人轉出作業。')
-  const info = useUnitInfo('ER')   // 頁首主任/護理（自建；無資料時以 mock 備援）
+  const info = useUnitInfo('ER')   // 頁首主任/護理（自建）
+  // 有存過紀錄→用存的值（空白即空白、不套 mock）；從未設定(null)→用預設。整格皆空則不顯示。
+  const dLbl = info ? info.directorLabel : '急診主任'
+  const dNam = info ? info.directorName : MOCK_DATA.HospitalInfo.WardDirector
+  const hLbl = info ? info.headNurseLabel : '護理長'
+  const hNam = info ? info.headNurseName : MOCK_DATA.HospitalInfo.HeadNurse
 
   return (
     <div className="er-board">
@@ -30,14 +35,14 @@ export default function ErLayout() {
       <header className="page-header">
         <div className="header-left">ER<span className="ward-sub">急診室</span></div>
         <div className="header-center">
-          <div className="staff-block">
-            <div className="staff-label">{info?.directorLabel || '急診主任'}</div>
-            <div className="staff-name">{info?.directorName || MOCK_DATA.HospitalInfo.WardDirector}</div>
-          </div>
-          <div className="staff-block">
-            <div className="staff-label">{info?.headNurseLabel || '護理長'}</div>
-            <div className="staff-name">{info?.headNurseName || MOCK_DATA.HospitalInfo.HeadNurse}</div>
-          </div>
+          {(dLbl || dNam) && <div className="staff-block">
+            <div className="staff-label">{dLbl}</div>
+            <div className="staff-name">{dNam}</div>
+          </div>}
+          {(hLbl || hNam) && <div className="staff-block">
+            <div className="staff-label">{hLbl}</div>
+            <div className="staff-name">{hNam}</div>
+          </div>}
         </div>
         <div className="header-right">
           <div className="update-label">資料更新時間：剛剛</div>

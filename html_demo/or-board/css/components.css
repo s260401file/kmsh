@@ -119,6 +119,7 @@
 
 /* Surgery status badges */
 .badge-手術中 { background: #1DBF5E; color: #0A1E10; font-weight: 800; }
+.badge-排程   { background: #90A4AE; color: #fff; }
 .badge-準備中 { background: #F5B942; color: #1E1A0A; }
 .badge-已完成 { background: #607D8B; color: #fff; }
 .badge-取消   { background: #CC3333; color: #fff; }

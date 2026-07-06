@@ -171,6 +171,8 @@ export default function WardTab() {
   const handleFilter = f => setFilter(prev => (prev === f && f !== 'all') ? 'all' : f)
   // 切換樓層：重置篩選、關閉開啟中的詳情
   const toggleFloor = () => { setFloor(f => (f === 4 ? 3 : 4)); setFilter('all'); setSelectedBed(null) }
+  // 開著的詳情彈窗：每次輪詢後用 id 從最新 beds 重新取回，內容跟著自動更新（約20秒）；病人離床則自動關閉
+  const liveSelectedBed = selectedBed ? beds.find(b => b.id === selectedBed.id) : null
 
   if (loading) return <main className="main-content"><BoardLoading /></main>   // 院方資料載入中
 
@@ -235,7 +237,7 @@ export default function WardTab() {
       </div>
 
       {/* 有選取床位時才渲染病人詳情彈窗 */}
-      {selectedBed && <BedModal bed={selectedBed} onClose={()=>setSelectedBed(null)} />}
+      {liveSelectedBed && liveSelectedBed.patient && <BedModal bed={liveSelectedBed} onClose={()=>setSelectedBed(null)} />}
     </>
   )
 }

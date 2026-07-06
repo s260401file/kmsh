@@ -46,26 +46,34 @@ function renderAbxBedCard(bed) {
   </div>`;
 }
 
-// ── 渲染所有床位（4F / 3F）──
-function renderAllAbxBeds(beds) {
-  const f4 = beds.filter(b => b.floor === 4);
-  const f3 = beds.filter(b => b.floor === 3);
+// ── 單樓層渲染（對齊 React）：只畫目前樓層床位，並更新標題與切換鈕 ──
+let currentFloor = 4;
 
-  const grid4 = document.getElementById("ab-grid-4f");
-  const grid3 = document.getElementById("ab-grid-3f");
+function renderFloor(floor) {
+  const floorBeds = MOCK_DATA.beds.filter(b => b.floor === floor);
 
-  grid4.innerHTML = f4.map(renderAbxBedCard).join("");
-  grid3.innerHTML = f3.map(renderAbxBedCard).join("");
+  const grid = document.getElementById("ab-bed-grid");
+  grid.className = floor === 4 ? "grid-4f" : "grid-3f";
+  grid.innerHTML = floorBeds.map(renderAbxBedCard).join("");
 
   // 綁定點擊事件（含或不含抗生素的有病人床位都可點）
-  document.querySelectorAll("#ab-grid-4f .bed-card:not(.empty), #ab-grid-3f .bed-card:not(.empty)").forEach(card => {
+  grid.querySelectorAll(".bed-card:not(.empty)").forEach(card => {
     card.style.cursor = "pointer";
     card.addEventListener("click", () => {
-      const id  = card.dataset.id;
-      const bed = MOCK_DATA.beds.find(b => b.id === id);
+      const bed = floorBeds.find(b => b.id === card.dataset.id);
       if (bed) openAbxModal(bed);
     });
   });
+
+  // 標題與切換鈕
+  document.getElementById("floor-label").textContent  = `▌ ${floor}F　共 ${floorBeds.length} 床`;
+  document.getElementById("floor-toggle").textContent = floor === 4 ? "切換 3F ▸" : "◂ 切回 4F";
+}
+
+// ── 樓層切換（4F ↔ 3F）──
+function switchFloor() {
+  currentFloor = currentFloor === 4 ? 3 : 4;
+  renderFloor(currentFloor);
 }
 
 // ── 抗生素統計面板 ──
@@ -134,10 +142,13 @@ document.addEventListener("DOMContentLoaded", () => {
   updateClock();
   setInterval(updateClock, 1000);
 
-  // 渲染床位（使用 MOCK_DATA，同 index.html）
-  renderAllAbxBeds(MOCK_DATA.beds);
+  // 渲染床位（預設顯示 4F，可切換）
+  renderFloor(currentFloor);
 
-  // 渲染抗生素統計
+  // 樓層切換
+  document.getElementById("floor-toggle").addEventListener("click", switchFloor);
+
+  // 渲染抗生素統計（統計涵蓋全病房 4F+3F）
   renderAbxStats();
 
   // Modal 關閉事件

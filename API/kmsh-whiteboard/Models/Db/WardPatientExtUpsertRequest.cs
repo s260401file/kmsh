@@ -45,7 +45,8 @@ public class WardPatientExtUpsertRequest
     public string? AwaitingType { get; set; }
     public bool TransferIn { get; set; }
     public bool TransferOut { get; set; }
-    public string? TransferHospital { get; set; }
+    public string? TransferHospital { get; set; }     // 轉出醫院
+    public string? TransferInHospital { get; set; }   // 轉入醫院
     public bool Admitted { get; set; }
     public string? AdmBedNo { get; set; }
     public bool Aad { get; set; }

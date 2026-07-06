@@ -6,9 +6,9 @@
   <title>高雄市立民生醫院 ICU 電子白板 — 抗生素</title>
   <link rel="stylesheet" href="css/variables.css?v=19">
   <link rel="stylesheet" href="css/reset.css?v=19">
-  <link rel="stylesheet" href="css/main.css?v=19">
+  <link rel="stylesheet" href="css/main.css?v=20">
   <link rel="stylesheet" href="css/components.css?v=19">
-  <link rel="stylesheet" href="css/antibiotic.css">
+  <link rel="stylesheet" href="css/antibiotic.css?v=20">
 </head>
 <body>
 
@@ -32,25 +32,24 @@
     <span>2025/05/15 院內感染管制週宣導：請確實執行手部衛生，進出隔離病房務必穿戴適當防護裝備。</span>
   </div>
 
-  <!-- Main content（與 index.html 結構完全相同）-->
+  <!-- Main content（單樓層檢視，可切換 4F/3F；對齊 React）-->
   <main class="main-content">
 
-    <!-- 4F section -->
-    <div class="floor-section floor-4f">
-      <div class="floor-title">▌ 4F　共 20 床</div>
+    <!-- 床位主區（顯示目前樓層）-->
+    <div class="floor-section floor-main">
+      <div class="floor-title">
+        <span id="floor-label">▌ 4F　共 20 床</span>
+        <button class="floor-toggle" id="floor-toggle">切換 3F ▸</button>
+      </div>
       <div class="floor-beds">
-        <div class="grid-4f" id="ab-grid-4f"></div>
+        <div class="grid-4f" id="ab-bed-grid"></div>
       </div>
     </div>
 
-    <!-- 3F section -->
-    <div class="floor-section floor-3f">
-      <div class="floor-title">▌ 3F　共 5 床</div>
-      <div class="floor-beds">
-        <div class="grid-3f" id="ab-grid-3f"></div>
-      </div>
-
-      <!-- 抗生素統計面板（取代 ward-stats）-->
+    <!-- 抗生素統計區 -->
+    <div class="floor-section stats-section">
+      <div class="floor-title">▌ 抗生素統計</div>
+      <!-- 抗生素統計面板 -->
       <div class="ward-stats">
         <div class="ws-row">
           <div class="ws-item">

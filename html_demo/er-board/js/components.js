@@ -59,14 +59,15 @@ function renderStaffShifts(shifts) {
 
   const title = document.getElementById("ss-title");
   if (title) {
+    // 醫師（藍）在左、照服員（綠）在右；白班／夜班 用語（與 React 一致）
     title.innerHTML = `
-      <span class="ss-title-docs ss-aides">
-        <span class="ss-td-item"><span class="ss-td-label">白</span>${day.Aide || "—"}</span>
-        <span class="ss-td-item"><span class="ss-td-label">夜</span>${night.Aide || "—"}</span>
-      </span>
       <span class="ss-title-docs">
-        <span class="ss-td-item"><span class="ss-td-label">白</span>${day.Doctor || "—"}</span>
-        <span class="ss-td-item"><span class="ss-td-label">夜</span>${night.Doctor || "—"}</span>
+        <span class="ss-td-item"><span class="ss-td-label">白班</span>${day.Doctor || "—"}</span>
+        <span class="ss-td-item"><span class="ss-td-label">夜班</span>${night.Doctor || "—"}</span>
+      </span>
+      <span class="ss-title-docs ss-aides">
+        <span class="ss-td-item"><span class="ss-td-label">白班</span>${day.Aide || "—"}</span>
+        <span class="ss-td-item"><span class="ss-td-label">夜班</span>${night.Aide || "—"}</span>
       </span>`;
   }
 
@@ -192,9 +193,10 @@ function renderAllBeds(beds) {
   });
 }
 
-// 檢傷分級：Triage 1-5 → A/B/C 三級（A 重症 1-2、B 中症 3、C 輕症 4-5）
-function triageGrade(t) { return t <= 2 ? "A" : (t === 3 ? "B" : "C"); }
+// 檢傷分級：院方真實值 1/2/3 → A/B/C 三級（1→A 重症、2→B 中症、3→C 輕症）
+function triageGrade(t) { return t === 1 ? "A" : (t === 2 ? "B" : "C"); }
 const GRADE_LABEL = { A: "A級 重症", B: "B級 中症", C: "C級 輕症" };
+const GRADE_DESC  = { A: "重症", B: "中症", C: "輕症" };
 
 function openModal(bed) {
   const p = bed.Patient;
@@ -208,16 +210,14 @@ function openModal(bed) {
   const stayM = Math.floor((diff % 3600000) / 60000);
   const stayStr = diff > 0 ? (stayH > 0 ? `${stayH}h ${stayM}m` : `${stayM}m`) : "—";
 
-  // 急診狀態
+  // 急診狀態（死亡 / 留觀 / 待床 / AAD / MBD）
+  // 轉出/轉入/住院不列此處，改由下方「轉出醫院 / 轉入醫院 / 住院」欄位各別顯示
   const erStatuses = [];
   if (p.Deceased)    erStatuses.push("死亡");
   if (p.Observation) erStatuses.push("留觀");
   if (p.Awaiting) erStatuses.push(`待床${p.AwaitingType ? "（"+p.AwaitingType+"）" : ""}`);
-  if (p.TransferOut) erStatuses.push(p.TransferHospital ? `轉出（${p.TransferHospital}）` : "轉出");
-  if (p.TransferIn)  erStatuses.push(p.TransferHospital ? `轉入（${p.TransferHospital}）` : "轉入");
   if (p.Aad) erStatuses.push("AAD");
   if (p.Mbd) erStatuses.push("MBD");
-  if (p.Admitted) erStatuses.push(p.AdmBedNo ? `住院（${p.AdmBedNo}）` : "住院");
 
   document.getElementById("m-bedid").textContent   = bed.BedId;
   document.getElementById("m-name").textContent    = p.PatientName;
@@ -231,14 +231,29 @@ function openModal(bed) {
   document.getElementById("m-arrival").textContent = `2026/${p.ArrivalDate} ${p.ArrivalTime}`;
   document.getElementById("m-stay").textContent    = stayStr;
 
+  // 檢傷分級：原始值(粗體) + A/B/C 徽章 + 中文病況描述（與 React 一致）
   const triageEl = document.getElementById("m-triage");
   const tg = triageGrade(p.Triage);
-  triageEl.textContent  = GRADE_LABEL[tg] || "—";
-  triageEl.className = `field-value triage-val tg-${tg.toLowerCase()}`;
+  triageEl.className = "field-value triage-val";
+  triageEl.innerHTML = p.Triage
+    ? `${p.TriageRaw ? `<b style="margin-right:8px">${p.TriageRaw}</b>` : ""}<span class="triage-badge tg-${tg.toLowerCase()}">${tg}級</span>　${GRADE_DESC[tg] || ""}`
+    : "—";
 
   document.getElementById("m-iso").textContent      = p.Isolation || "無";
   document.getElementById("m-dnr").textContent      = p.Dnr ? "是 ✓" : "否";
   document.getElementById("m-er-status").textContent= erStatuses.length > 0 ? erStatuses.join("、") : "看診中";
+
+  // 轉出醫院 / 轉入醫院 / 住院：任一有值才顯示該列
+  const transferRow = document.getElementById("m-transfer-row");
+  if (p.TransferHospital || p.TransferInHospital || p.Admitted) {
+    document.getElementById("m-transfer-out").textContent = p.TransferHospital   || "—";
+    document.getElementById("m-transfer-in").textContent  = p.TransferInHospital || "—";
+    document.getElementById("m-admitted").textContent     = p.Admitted ? (p.AdmBedNo || "是 ✓") : "否";
+    transferRow.style.display = "";
+  } else {
+    transferRow.style.display = "none";
+  }
+
   document.getElementById("m-notes").textContent    = p.Notes || "無";
   document.getElementById("m-badges").innerHTML     = badgeHTML(buildBadges(p));
 

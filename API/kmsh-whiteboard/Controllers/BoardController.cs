@@ -22,9 +22,10 @@ public class BoardController : ControllerBase
     private readonly ILdapAuthenticator _ldap;
     private readonly IJwtTokenService _jwt;
     private readonly IOrReportRepository _orReport;
+    private readonly IMasterDataRepository _master;
     private readonly ILogger<BoardController> _logger;
 
-    public BoardController(IBoardApiService board, IWardRepository ward, IPersonnelRepository staff, ILdapAuthenticator ldap, IJwtTokenService jwt, IOrReportRepository orReport, ILogger<BoardController> logger)
+    public BoardController(IBoardApiService board, IWardRepository ward, IPersonnelRepository staff, ILdapAuthenticator ldap, IJwtTokenService jwt, IOrReportRepository orReport, IMasterDataRepository master, ILogger<BoardController> logger)
     {
         _board = board;
         _ward = ward;
@@ -32,6 +33,7 @@ public class BoardController : ControllerBase
         _ldap = ldap;
         _jwt = jwt;
         _orReport = orReport;
+        _master = master;
         _logger = logger;
     }
 
@@ -266,6 +268,58 @@ public class BoardController : ControllerBase
     }
 
     /// <summary>
+    /// 後台「病人臨床補充」用：某站**當前在床病人**（真實姓名，不遮罩；僅登入者可取）。
+    /// 供以「在床病人」為對象逐一設定補充，離床者不列。目前實作 ICU（AICU 4F＋CICU 3F）。
+    /// </summary>
+    [HttpGet("{unitCode}/roster")]
+    [Authorize]
+    public async Task<IActionResult> GetRoster(string unitCode, CancellationToken ct = default)
+    {
+        var u = unitCode.ToUpperInvariant();
+        // 病床類（Board_bed）：ICU（AICU 4F＋CICU 3F）、W52
+        if (u == "ICU" || u == "W52")
+        {
+            var beds = new List<(string BedId, BoardBedItem O)>();
+            if (u == "ICU")
+            {
+                foreach (var o in await SafeBoardAsync("AICU", ct))
+                    if (!string.IsNullOrWhiteSpace(o.Hhisnum) && int.TryParse(o.Hbed, out var n)) beds.Add(($"F4-{n:00}", o));
+                foreach (var o in await SafeBoardAsync("CICU", ct))
+                    if (!string.IsNullOrWhiteSpace(o.Hhisnum) && int.TryParse(o.Hbed, out var n)) beds.Add(($"F3-{n:00}", o));
+            }
+            else // W52
+            {
+                foreach (var o in await SafeBoardAsync("W52", ct))
+                    if (!string.IsNullOrWhiteSpace(o.Hhisnum)) beds.Add(($"W52-{o.Hbed}", o));
+            }
+            var rows = beds.OrderBy(b => b.BedId, StringComparer.Ordinal).Select(b => new
+            {
+                bedId = b.BedId, hhisnum = b.O.Hhisnum!.Trim(), patientName = b.O.Hnamec,   // 真實姓名（後台，不遮）
+                gender = b.O.Hsex, birthDate = FormatBirth(b.O.Hbirthdt), age = CalcAge(b.O.Hbirthdt),
+                department = b.O.Department, diagnosis = b.O.Diagnosis, doctor = b.O.Doctor,
+            });
+            return Ok(rows);
+        }
+        // 急診（Board_ER）：以病房＋床位映射白板床碼
+        if (u == "ER")
+        {
+            List<BoardErItem> occ;
+            try { occ = await _board.GetErListAsync(ct); }
+            catch (Exception ex) { _logger.LogWarning(ex, "Board_ER roster 取得失敗"); occ = new(); }
+            var rows = occ.Where(o => !string.IsNullOrWhiteSpace(o.Hhisnum))
+                .Select(o => new
+                {
+                    bedId = MapErBedId(o.Ward, o.Hbed), hhisnum = o.Hhisnum!.Trim(), patientName = o.Hnamec,
+                    gender = o.Hsex, birthDate = FormatBirth(o.Hbirthdt), age = CalcAge(o.Hbirthdt),
+                    department = o.Department, diagnosis = o.Diagnosis, doctor = o.Doctor,
+                })
+                .OrderBy(r => r.bedId, StringComparer.Ordinal);
+            return Ok(rows);
+        }
+        return BadRequest(new { message = $"roster 目前僅支援 ICU / W52 / ER（{unitCode} 待擴充）" });
+    }
+
+    /// <summary>
     /// ER 病室動態：自建床位主檔(ErBed)鋪平面圖 ＋ Board_ER 真實在室病人(以 bedId merge)
     /// ＋ WardPatientExt(ER) overlay 補臨床/狀態。空床顯示；床碼未建主檔的在室病人落 Unplaced（提示後台補建）。
     /// </summary>
@@ -365,8 +419,12 @@ public class BoardController : ControllerBase
         Observation = o.Flow == "A" || (e?.Observation ?? false),
         Awaiting = o.Flow == "4" || (e?.Awaiting ?? false),
         AwaitingType = o.Flow == "4" ? "一般" : e?.AwaitingType,
-        TransferIn = e?.TransferIn ?? false, TransferOut = e?.TransferOut ?? false, TransferHospital = e?.TransferHospital,
-        Admitted = e?.Admitted ?? false, AdmBedNo = e?.AdmBedNo,
+        // 設定了轉入/轉出醫院時，視同已勾轉入/轉出（讓看板旗標、篩選、急診統計一致對應）
+        TransferIn = (e?.TransferIn ?? false) || !string.IsNullOrWhiteSpace(e?.TransferInHospital),
+        TransferOut = (e?.TransferOut ?? false) || !string.IsNullOrWhiteSpace(e?.TransferHospital),
+        TransferHospital = e?.TransferHospital, TransferInHospital = e?.TransferInHospital,
+        // 設定了住院床號時，視同已勾住院（讓看板旗標、篩選、急診統計一致對應）
+        Admitted = (e?.Admitted ?? false) || !string.IsNullOrWhiteSpace(e?.AdmBedNo), AdmBedNo = e?.AdmBedNo,
         Dnr = e?.Dnr ?? false, Aad = e?.Aad ?? false, Mbd = e?.Mbd ?? false, Deceased = e?.Deceased ?? false,
         FallRisk = e?.FallRisk ?? false, Allergy = e?.Allergy ?? false, Exam = e?.Exam ?? false, Consult = e?.Consult ?? false
     };
@@ -1098,6 +1156,38 @@ public class BoardController : ControllerBase
     public async Task<IActionResult> DeleteUnitRole(int id, CancellationToken ct = default)
         => await _staff.DeleteUnitRoleAsync(id, ct) ? NoContent() : NotFound();
 
+    // ── 全院共用主檔：科別 Department（先建科別、再建醫師）────────────
+    [HttpGet("department")]
+    public async Task<IActionResult> GetDepartments([FromQuery] bool includeAll = true, CancellationToken ct = default)
+        => Ok(await _master.GetDepartmentsAsync(includeAll, ct));
+    [HttpPost("department")]
+    public async Task<IActionResult> CreateDepartment([FromBody] DepartmentUpsertRequest req, CancellationToken ct = default)
+    { var id = await _master.CreateDepartmentAsync(req, ct); return Ok(new { id }); }
+    [HttpPut("department/{id:int}")]
+    public async Task<IActionResult> UpdateDepartment(int id, [FromBody] DepartmentUpsertRequest req, CancellationToken ct = default)
+        => await _master.UpdateDepartmentAsync(id, req, ct) ? NoContent() : NotFound();
+    [HttpDelete("department/{id:int}")]
+    public async Task<IActionResult> DeleteDepartment(int id, CancellationToken ct = default)
+    {
+        var (deleted, reason) = await _master.DeleteDepartmentAsync(id, ct);
+        if (deleted) return NoContent();
+        return reason is null ? NotFound() : Conflict(new { message = reason });   // 已被醫師使用 → 409＋原因
+    }
+
+    // ── 全院共用主檔：醫師 Doctor（DeptCode 對應 Department.Code）─────
+    [HttpGet("doctor")]
+    public async Task<IActionResult> GetDoctors([FromQuery] bool includeAll = true, [FromQuery] string? deptCode = null, CancellationToken ct = default)
+        => Ok(await _master.GetDoctorsAsync(includeAll, deptCode, ct));
+    [HttpPost("doctor")]
+    public async Task<IActionResult> CreateDoctor([FromBody] DoctorUpsertRequest req, CancellationToken ct = default)
+    { var id = await _master.CreateDoctorAsync(req, ct); return Ok(new { id }); }
+    [HttpPut("doctor/{id:int}")]
+    public async Task<IActionResult> UpdateDoctor(int id, [FromBody] DoctorUpsertRequest req, CancellationToken ct = default)
+        => await _master.UpdateDoctorAsync(id, req, ct) ? NoContent() : NotFound();
+    [HttpDelete("doctor/{id:int}")]
+    public async Task<IActionResult> DeleteDoctor(int id, CancellationToken ct = default)
+        => await _master.DeleteDoctorAsync(id, ct) ? NoContent() : NotFound();
+
     // ── 排班：看板組裝（ScheduleTab）──
     /// <summary>排班資訊：依班別分組，護理師帶其負責床位（主護指派聚合）。</summary>
     [HttpGet("{unitCode}/schedule")]
@@ -1318,16 +1408,16 @@ public class BoardController : ControllerBase
     }
 
     /// <summary>
-    /// ER 床號對應：病房(英文前綴) ＋ 床位 → 白板床號。
-    /// 床位為數字則去前導零、不足兩位補零（MER+007→MER07、MER+022→MER22、MER+991→MER991）；
-    /// 前綴直接用 Board_ER 回傳的「病房」值（負壓/OER 等亦同，待院方確認其英文代碼）。
+    /// ER 床號對應：病房(去頭尾空白) ＋ 床位(原樣) 直接串接 → 白板床號。
+    /// 院方回傳 病房="MER " ＋ 床位="006" → "MER006"（床位維持院方 3 碼補零，不再正規化）；
+    /// 平面圖主檔(ErBed.BedId)亦以相同格式建立，直接對應。
     /// </summary>
     private static string? MapErBedId(string? ward, string? bed)
     {
         var w = ward?.Trim();
         var b = bed?.Trim();
         if (string.IsNullOrWhiteSpace(w) || string.IsNullOrWhiteSpace(b)) return null;
-        return int.TryParse(b, out var n) ? w + (n < 100 ? n.ToString("00") : n.ToString()) : w + b;
+        return w + b;
     }
 
     /// <summary>檢傷分類 1–5 → A/B/C（A:1-2 重症、B:3 中症、C:4-5 輕症）；無法解析回 null。</summary>

@@ -1,14 +1,17 @@
 /* 大量傷患 — ER */
 .er-board .mc-panel { flex: 1; display: flex; flex-direction: column; overflow: hidden; gap: 12px; }
 .er-board .mc-stats-row { display: flex; gap: 10px; flex-shrink: 0; }
-.er-board .mc-stat-card { flex: 1; background: var(--bg-card-occ); border: 1px solid var(--divider); border-radius: 8px; padding: 10px; text-align: center; }
+.er-board .mc-stat-card { flex: 1; background: var(--bg-card-occ); border: 1px solid var(--divider); border-radius: 8px; padding: 10px; text-align: center; cursor: pointer; user-select: none; transition: border-color .12s, box-shadow .12s, background .12s; }
+.er-board .mc-stat-card:hover { border-color: var(--accent-green); }
+.er-board .mc-stat-card.active { border-color: var(--accent-green); background: #EAF5EF; box-shadow: inset 0 0 0 2px rgba(45,122,85,.35); }
 .er-board .mc-stat-val { font-size: 30px; font-weight: 900; font-family: var(--font-num); line-height: 1; }
 .er-board .mc-stat-val.val-critical { color: #C62828; }
 .er-board .mc-stat-val.val-mid      { color: #E65100; }
 .er-board .mc-stat-val.val-moderate { color: #2E7D32; }
 .er-board .mc-stat-val.val-total    { color: var(--accent-green); }
 .er-board .mc-stat-val.val-dead     { color: var(--text-muted); }
-.er-board .mc-stat-val.val-transfer { color: #1565C0; }
+.er-board .mc-stat-val.val-transfer { color: #E65100; }
+.er-board .mc-stat-val.val-transfer-in { color: #1565C0; }
 .er-board .mc-stat-lbl { font-size: 13px; color: var(--text-muted); margin-top: 3px; }
 .er-board .mc-table-wrap { flex: 1; overflow-y: auto; border: 1px solid var(--divider); border-radius: 8px; }
 .er-board .mc-table-wrap::-webkit-scrollbar { width: 4px; }

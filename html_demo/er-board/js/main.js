@@ -28,9 +28,9 @@ function applyFilter() {
     const badges = JSON.parse(card.dataset.badges || "[]");
     let show = false;
     switch (currentFilter) {
-      case "sev-a":      show = parseInt(card.dataset.triage || "0") <= 2; break;
-      case "sev-b":      show = parseInt(card.dataset.triage || "0") === 3; break;
-      case "sev-c":      show = parseInt(card.dataset.triage || "0") >= 4; break;
+      case "sev-a":      show = parseInt(card.dataset.triage || "0") === 1; break;
+      case "sev-b":      show = parseInt(card.dataset.triage || "0") === 2; break;
+      case "sev-c":      show = parseInt(card.dataset.triage || "0") === 3; break;
       case "obs":        show = card.dataset.observation === "1"; break;
       case "transfer":   show = card.dataset.transfer === "1"; break;
       case "await-gen":  show = card.dataset.awaitingType === "一般"; break;

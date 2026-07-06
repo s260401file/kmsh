@@ -27,7 +27,12 @@ export default function W52Layout() {
   const { date, time } = useClock()
   // 跑馬燈內容：優先取後台設定的 W52 公告，第二參數為無資料時的預設文字
   const marquee = useMarquee('W52', '院內感染管制週宣導：請確實執行手部衛生，進出隔離病房務必穿戴適當防護裝備。')
-  const info = useUnitInfo('W52')   // 頁首主任/護理（自建；無資料時以 mock 備援）
+  const info = useUnitInfo('W52')   // 頁首主任/護理（自建）
+  // 有存過紀錄→用存的值（空白即空白、不套 mock）；從未設定(null)→用預設。整格皆空則不顯示。
+  const dLbl = info ? info.directorLabel : '病房主任'
+  const dNam = info ? info.directorName : MOCK_DATA.HospitalInfo.WardDirector
+  const hLbl = info ? info.headNurseLabel : '單位護理長'
+  const hNam = info ? info.headNurseName : MOCK_DATA.HospitalInfo.HeadNurse
 
   return (
     <div className="w52-board">
@@ -35,8 +40,8 @@ export default function W52Layout() {
       <header className="page-header">
         <div className="header-left">W52<span className="ward-sub">一般病房</span></div>
         <div className="header-center">
-          <div className="staff-block"><div className="staff-label">{info?.directorLabel || '病房主任'}</div><div className="staff-name">{info?.directorName || MOCK_DATA.HospitalInfo.WardDirector}</div></div>
-          <div className="staff-block"><div className="staff-label">{info?.headNurseLabel || '單位護理長'}</div><div className="staff-name">{info?.headNurseName || MOCK_DATA.HospitalInfo.HeadNurse}</div></div>
+          {(dLbl || dNam) && <div className="staff-block"><div className="staff-label">{dLbl}</div><div className="staff-name">{dNam}</div></div>}
+          {(hLbl || hNam) && <div className="staff-block"><div className="staff-label">{hLbl}</div><div className="staff-name">{hNam}</div></div>}
         </div>
         <div className="header-right">
           <div className="update-label">資料更新時間：剛剛</div>

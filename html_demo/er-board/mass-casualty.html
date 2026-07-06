@@ -30,31 +30,35 @@
   <main class="main-content">
     <div class="mc-panel">
 
-      <!-- 統計橫列 -->
+      <!-- 統計橫列（點卡片可篩選下方清單，再點一次取消） -->
       <div class="mc-stats-row">
-        <div class="mc-stat-card">
+        <div class="mc-stat-card active" data-filter="all">
           <div class="mc-stat-val val-total"   id="mc-stat-total">—</div>
           <div class="mc-stat-lbl">病患總數</div>
         </div>
-        <div class="mc-stat-card">
+        <div class="mc-stat-card" data-filter="sevA">
           <div class="mc-stat-val val-critical" id="mc-stat-sev-a">—</div>
           <div class="mc-stat-lbl">A級 重症</div>
         </div>
-        <div class="mc-stat-card">
+        <div class="mc-stat-card" data-filter="sevB">
           <div class="mc-stat-val val-mid" id="mc-stat-sev-b">—</div>
           <div class="mc-stat-lbl">B級 中症</div>
         </div>
-        <div class="mc-stat-card">
+        <div class="mc-stat-card" data-filter="sevC">
           <div class="mc-stat-val val-moderate" id="mc-stat-sev-c">—</div>
           <div class="mc-stat-lbl">C級 輕症</div>
         </div>
-        <div class="mc-stat-card">
+        <div class="mc-stat-card" data-filter="dead">
           <div class="mc-stat-val val-dead"     id="mc-stat-dead">—</div>
           <div class="mc-stat-lbl">死亡</div>
         </div>
-        <div class="mc-stat-card">
+        <div class="mc-stat-card" data-filter="transferOut">
           <div class="mc-stat-val val-transfer" id="mc-stat-transfer">—</div>
           <div class="mc-stat-lbl">轉出</div>
+        </div>
+        <div class="mc-stat-card" data-filter="transferIn">
+          <div class="mc-stat-val val-transfer-in" id="mc-stat-transfer-in">—</div>
+          <div class="mc-stat-lbl">轉入</div>
         </div>
       </div>
 

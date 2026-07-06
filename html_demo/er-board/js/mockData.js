@@ -8,7 +8,7 @@ const MOCK_DATA = {
   },
   Beds: [
     // ── 負壓隔離室 ──
-    { BedId:"負2", Zone:"負壓隔離室", Status:"isolation",
+    { BedId:"MER101", Zone:"負壓隔離室", Status:"isolation",
       Patient:{ PatientName:"陳○文", Gender:"M", Age:58,
                 ArrivalDate:"05/24", ArrivalTime:"06:40",
                 Diagnosis:"Pulmonary TB suspected, Hemoptysis",
@@ -23,7 +23,7 @@ const MOCK_DATA = {
                 FallRisk:false, Allergy:false, Exam:false, Consult:true,
                 Notes:"疑似肺結核，需感染科會診確認，接觸史調查中" } },
 
-    { BedId:"負1", Zone:"負壓隔離室", Status:"isolation",
+    { BedId:"MER102", Zone:"負壓隔離室", Status:"isolation",
       Patient:{ PatientName:"劉○婷", Gender:"F", Age:44,
                 ArrivalDate:"05/24", ArrivalTime:"09:15",
                 Diagnosis:"COVID-19 suspected, Fever, Cough",
@@ -39,7 +39,7 @@ const MOCK_DATA = {
                 Notes:"COVID-19 快篩陽性，PCR送驗中，飛沫/空氣標準防護" } },
 
     // ── 急救室 ──
-    { BedId:"MER01", Zone:"急救室", Status:"occupied",
+    { BedId:"MER001", Zone:"急救室", Status:"occupied",
       Patient:{ PatientName:"王○進", Gender:"M", Age:73,
                 ArrivalDate:"05/24", ArrivalTime:"11:08",
                 Diagnosis:"Cardiac arrest, ROSC achieved, Post-CPR care",
@@ -55,7 +55,7 @@ const MOCK_DATA = {
                 Notes:"CPR 後恢復自主心跳，心臟科會診，準備轉 CCU" } },
 
     // ── 第一診療區 ──
-    { BedId:"MER02", Zone:"第一診療區", Status:"occupied",
+    { BedId:"MER002", Zone:"第一診療區", Status:"occupied",
       Patient:{ PatientName:"蔡○明", Gender:"M", Age:35,
                 ArrivalDate:"05/24", ArrivalTime:"09:55",
                 Diagnosis:"Acute appendicitis R/O, Abd pain RLQ",
@@ -70,14 +70,14 @@ const MOCK_DATA = {
                 FallRisk:false, Allergy:false, Exam:true, Consult:true,
                 Notes:"腹部 CT 待回報，外科住院已申請，床號 W52-031" } },
 
-    { BedId:"MER03", Zone:"第一診療區", Status:"occupied",
+    { BedId:"MER003", Zone:"第一診療區", Status:"occupied",
       Patient:{ PatientName:"許○雯", Gender:"F", Age:28,
                 ArrivalDate:"05/24", ArrivalTime:"10:30",
                 Diagnosis:"Ankle fracture, R/O Malleolus #",
                 Doctor:"林○泰醫師", Nurse:"周○娟護理師",
                 Department:"骨科",
                 MedRecord:"E601234571", BirthDate:"1998/09/11",
-                Triage:4,
+                Triage:3,
                 Dnr:false, Isolation:"無",
                 Observation:false, Awaiting:false, AwaitingType:null,
                 TransferOut:false, TransferIn:false,
@@ -85,7 +85,7 @@ const MOCK_DATA = {
                 FallRisk:false, Allergy:true, Exam:true, Consult:false,
                 Notes:"X光回報左側踝關節骨折，骨科門診安排後續" } },
 
-    { BedId:"MER05", Zone:"第一診療區", Status:"occupied",
+    { BedId:"MER005", Zone:"第一診療區", Status:"occupied",
       Patient:{ PatientName:"張○義", Gender:"M", Age:68,
                 ArrivalDate:"05/24", ArrivalTime:"08:22",
                 Diagnosis:"Acute ischemic stroke, NIHSS 14, LKW 07:45",
@@ -95,12 +95,12 @@ const MOCK_DATA = {
                 Triage:2,
                 Dnr:false, Isolation:"無",
                 Observation:false, Awaiting:true, AwaitingType:"加護",
-                TransferOut:false, TransferIn:true,
+                TransferOut:false, TransferIn:true, TransferInHospital:"高雄榮總",
                 Aad:false, Mbd:false,
                 FallRisk:false, Allergy:false, Exam:true, Consult:true,
                 Notes:"tPA 治療中，神經外科評估中，轉 ICU 申請中" } },
 
-    { BedId:"MER06", Zone:"第一診療區", Status:"observation",
+    { BedId:"MER006", Zone:"第一診療區", Status:"observation",
       Patient:{ PatientName:"林○淑", Gender:"F", Age:62,
                 ArrivalDate:"05/24", ArrivalTime:"07:18",
                 Diagnosis:"Chest pain, R/O ACS, Typical angina",
@@ -115,10 +115,10 @@ const MOCK_DATA = {
                 FallRisk:false, Allergy:false, Exam:true, Consult:false,
                 Notes:"Troponin 序列追蹤，心電圖監測中，第二次抽血待回報" } },
 
-    { BedId:"MER07", Zone:"第一診療區", Status:"empty", Patient:null },
+    { BedId:"MER007", Zone:"第一診療區", Status:"empty", Patient:null },
 
     // ── 第二診療區 ──
-    { BedId:"MER08", Zone:"第二診療區", Status:"occupied",
+    { BedId:"MER008", Zone:"第二診療區", Status:"occupied",
       Patient:{ PatientName:"吳○偉", Gender:"M", Age:55,
                 ArrivalDate:"05/24", ArrivalTime:"10:05",
                 Diagnosis:"Bowel obstruction, Abd distension, N/V",
@@ -133,14 +133,14 @@ const MOCK_DATA = {
                 FallRisk:false, Allergy:false, Exam:true, Consult:true,
                 Notes:"NG 置入，腹部 CT 完成，外科住院安排中" } },
 
-    { BedId:"MER09", Zone:"第二診療區", Status:"observation",
+    { BedId:"MER009", Zone:"第二診療區", Status:"observation",
       Patient:{ PatientName:"黃○珠", Gender:"F", Age:48,
                 ArrivalDate:"05/24", ArrivalTime:"08:50",
                 Diagnosis:"UTI, Pyelonephritis R/O, Fever 38.8°C",
                 Doctor:"林○泰醫師", Nurse:"張○惠護理師",
                 Department:"腎臟內科",
                 MedRecord:"I001234575", BirthDate:"1978/04/06",
-                Triage:4,
+                Triage:3,
                 Dnr:false, Isolation:"無",
                 Observation:true, Awaiting:false, AwaitingType:null,
                 TransferOut:false, TransferIn:false,
@@ -148,9 +148,9 @@ const MOCK_DATA = {
                 FallRisk:false, Allergy:true, Exam:true, Consult:false,
                 Notes:"靜脈抗生素治療中，尿液培養送驗" } },
 
-    { BedId:"MER10", Zone:"第二診療區", Status:"empty", Patient:null },
+    { BedId:"MER010", Zone:"第二診療區", Status:"empty", Patient:null },
 
-    { BedId:"MER11", Zone:"第二診療區", Status:"observation",
+    { BedId:"MER011", Zone:"第二診療區", Status:"observation",
       Patient:{ PatientName:"彭○霞", Gender:"F", Age:76,
                 ArrivalDate:"05/24", ArrivalTime:"05:30",
                 Diagnosis:"Drug overdose, Benzodiazepine ingestion",
@@ -165,7 +165,7 @@ const MOCK_DATA = {
                 FallRisk:true, Allergy:false, Exam:false, Consult:true,
                 Notes:"意識已恢復，精神科會診中，家屬在場" } },
 
-    { BedId:"MER12", Zone:"第二診療區", Status:"awaiting",
+    { BedId:"MER012", Zone:"第二診療區", Status:"awaiting",
       Patient:{ PatientName:"謝○宏", Gender:"M", Age:52,
                 ArrivalDate:"05/24", ArrivalTime:"07:55",
                 Diagnosis:"DKA, Blood glucose 680mg/dL, pH 7.18",
@@ -180,14 +180,14 @@ const MOCK_DATA = {
                 FallRisk:false, Allergy:false, Exam:true, Consult:true,
                 Notes:"胰島素靜滴中，ICU 床位待確認，目前由 ER 持續追蹤" } },
 
-    { BedId:"MER13", Zone:"第二診療區", Status:"occupied",
+    { BedId:"MER013", Zone:"第二診療區", Status:"occupied",
       Patient:{ PatientName:"洪○成", Gender:"M", Age:22,
                 ArrivalDate:"05/24", ArrivalTime:"11:40",
                 Diagnosis:"Laceration wound, Right hand 2cm",
                 Doctor:"陳○科醫師", Nurse:"李○婷護理師",
                 Department:"急診外科",
                 MedRecord:"J101234576", BirthDate:"2004/12/05",
-                Triage:5,
+                Triage:3,
                 Dnr:false, Isolation:"無",
                 Observation:false, Awaiting:false, AwaitingType:null,
                 TransferOut:false, TransferIn:false,
@@ -196,14 +196,14 @@ const MOCK_DATA = {
                 Notes:"傷口清創縫合完成，破傷風注射，衛教後離院" } },
 
     // ── 第一留觀區 ──
-    { BedId:"OER01", Zone:"第一留觀區", Status:"observation",
+    { BedId:"OER001", Zone:"第一留觀區", Status:"observation",
       Patient:{ PatientName:"楊○美", Gender:"F", Age:71,
                 ArrivalDate:"05/24", ArrivalTime:"04:20",
                 Diagnosis:"Dizziness, Vertigo, R/O BPPV vs Central",
                 Doctor:"陳○科醫師", Nurse:"李○婷護理師",
                 Department:"神經內科",
                 MedRecord:"M401234579", BirthDate:"1955/03/25",
-                Triage:4,
+                Triage:3,
                 Dnr:false, Isolation:"無",
                 Observation:true, Awaiting:false, AwaitingType:null,
                 TransferOut:false, TransferIn:false,
@@ -211,7 +211,7 @@ const MOCK_DATA = {
                 FallRisk:true, Allergy:false, Exam:true, Consult:false,
                 Notes:"頭部 MRI 待安排，症狀已明顯改善，觀察中" } },
 
-    { BedId:"OER02", Zone:"第一留觀區", Status:"awaiting",
+    { BedId:"OER002", Zone:"第一留觀區", Status:"awaiting",
       Patient:{ PatientName:"許○輝", Gender:"M", Age:80,
                 ArrivalDate:"05/24", ArrivalTime:"03:10",
                 Diagnosis:"Hip fracture, Left femoral neck # (displaced)",
@@ -251,7 +251,7 @@ const MOCK_DATA = {
                 Doctor:"陳○科醫師", Nurse:"李○婷護理師",
                 Department:"胸腔內科",
                 MedRecord:"P701234582", BirthDate:"1959/07/29",
-                Triage:4,
+                Triage:3,
                 Dnr:false, Isolation:"無",
                 Observation:false, Awaiting:true, AwaitingType:"一般",
                 TransferOut:false, TransferIn:false,
@@ -292,9 +292,9 @@ function getStats(beds) {
   const observation  = occupied.filter(b => b.Patient?.Observation).length;
   const transferIn   = occupied.filter(b => b.Patient?.TransferIn).length;
   const transferOut  = occupied.filter(b => b.Patient?.TransferOut).length;
-  const sevA         = occupied.filter(b => b.Patient?.Triage <= 2).length;   // A 重症（1-2級）
-  const sevB         = occupied.filter(b => b.Patient?.Triage === 3).length;  // B 中症（3級）
-  const sevC         = occupied.filter(b => b.Patient?.Triage >= 4).length;   // C 輕症（4-5級）
+  const sevA         = occupied.filter(b => b.Patient?.Triage === 1).length;  // A 重症（1級）
+  const sevB         = occupied.filter(b => b.Patient?.Triage === 2).length;  // B 中症（2級）
+  const sevC         = occupied.filter(b => b.Patient?.Triage === 3).length;  // C 輕症（3級）
   const dnr          = occupied.filter(b => b.Patient?.Dnr).length;
   const admitted     = occupied.filter(b => b.Patient?.Admitted).length;
   const awaitGen     = occupied.filter(b => b.Patient?.Awaiting && b.Patient?.AwaitingType === "一般").length;

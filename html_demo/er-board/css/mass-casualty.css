@@ -52,6 +52,15 @@
   border-radius: 8px;
   padding: 10px;
   text-align: center;
+  cursor: pointer;
+  user-select: none;
+  transition: border-color .12s, box-shadow .12s, background .12s;
+}
+.mc-stat-card:hover { border-color: var(--accent-green); }
+.mc-stat-card.active {
+  border-color: var(--accent-green);
+  background: #EAF5EF;
+  box-shadow: inset 0 0 0 2px rgba(45,122,85,.35);
 }
 .mc-stat-val {
   font-size: 30px;
@@ -64,7 +73,8 @@
 .mc-stat-val.val-moderate { color: #2E7D32; }
 .mc-stat-val.val-total    { color: var(--accent-green); }
 .mc-stat-val.val-dead     { color: var(--text-muted); }
-.mc-stat-val.val-transfer { color: var(--accent-blue); }
+.mc-stat-val.val-transfer { color: #E65100; }
+.mc-stat-val.val-transfer-in { color: #1565C0; }
 .mc-stat-lbl { font-size: 13px; color: var(--text-muted); margin-top: 3px; }
 
 /* 表格 */

@@ -150,6 +150,8 @@ export default function WardTab() {
   const [selectedRoom, setSelectedRoom] = useState(null) // 目前開啟詳情的刀房
   const [showCompleted, setShowCompleted] = useState(false) // 今日已完成清單 Modal
   const { rooms, count, loading } = useOrWard('OR')     // 後端聚合看板（當日快照＋overlay）
+  // 開著的刀房詳情彈窗：每次輪詢後用 RoomId 從最新 rooms 重新取回，內容跟著自動更新（約20秒）
+  const liveSelectedRoom = selectedRoom ? rooms.find(r => r.RoomId === selectedRoom.RoomId) : null
   // 統計改以「刀數」計（由各房今日手術聯集；今日總刀＝後端穩定 count）
   const allSurgeries = useMemo(() => rooms.flatMap(r => r.Surgeries || []), [rooms])
   const completedList = useMemo(
@@ -219,7 +221,7 @@ export default function WardTab() {
         <button className="filter-btn" onClick={() => setShowCompleted(true)}>已完成 ▸</button>
       </div>
 
-      {selectedRoom && <RoomModal room={selectedRoom} onClose={() => setSelectedRoom(null)} />}
+      {liveSelectedRoom && <RoomModal room={liveSelectedRoom} onClose={() => setSelectedRoom(null)} />}
       {showCompleted && <CompletedModal items={completedList} onClose={() => setShowCompleted(false)} />}
     </>
   )

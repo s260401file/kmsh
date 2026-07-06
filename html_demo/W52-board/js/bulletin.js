@@ -30,13 +30,12 @@ function renderBulletinCard(item) {
       <div class="bl-priority-bar ${barClass}"></div>
       <div class="bl-card-body">
         <div class="bl-card-top">
-          <span class="bl-badge ${badgeClass}">${item.Priority}</span>
+          <span class="bl-badge ${badgeClass}">${item.Priority ?? "一般"}</span>
           <span class="bl-card-title">${item.Title}</span>
         </div>
         <div class="bl-card-content">${item.Content}</div>
         <div class="bl-card-meta">
           <span class="bl-meta-date">${fmtDate(item.PostedAt)}</span>
-          <span class="bl-meta-author">${item.PostedBy}</span>
         </div>
       </div>
     </div>`;

@@ -1,31 +1,40 @@
 // ──────────────────────────────────────────────────────────────
 // 手術資訊 渲染邏輯
-// §7.1.2 (4.1) 當日手術 — 表格列顯示（與檢查／會診一致）
-// React 對應：<SurgeryTable />
+// §7.1.2 (4.1) 當日手術 — 接 Board_OR 全院手術清單
+// React 對應：<SurgeryTab />（頂部日期列今天±3 天，下方全院 OR 手術表）
 // ──────────────────────────────────────────────────────────────
+
+const DAYS = ["日","一","二","三","四","五","六"];
+const STATUS_ORDER = ["手術中","待手術","已完成","取消"];   // 列表排序優先序
 
 function updateClock() {
   const now  = new Date();
-  const days = ["日","一","二","三","四","五","六"];
-  const dateStr = `${now.getFullYear()}/${String(now.getMonth()+1).padStart(2,"0")}/${String(now.getDate()).padStart(2,"0")} (${days[now.getDay()]})`;
+  const dateStr = `${now.getFullYear()}/${String(now.getMonth()+1).padStart(2,"0")}/${String(now.getDate()).padStart(2,"0")} (${DAYS[now.getDay()]})`;
   const timeStr = `${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")}:${String(now.getSeconds()).padStart(2,"0")}`;
   document.getElementById("clock-date").textContent = dateStr;
   document.getElementById("clock-time").textContent = timeStr;
 }
 
-// 床號顯示（含 W52 前綴，與檢查／會診一致）
-function fmtBed(bedNo) {
-  return `W52-${bedNo}`;
+// 本地日期 → yyyy-MM-dd（避免 toISOString 的 UTC 時區位移）
+function isoLocal(d) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
 }
 
-// 排序：手術中 → 待手術 → 已完成 → 取消，同狀態內依排程時間升序
+// 以「真實今天」為中心、前後各 3 天的日期列
+function buildDateRange() {
+  const today = new Date();
+  const dates = [];
+  for (let i = -3; i <= 3; i++) {
+    const d = new Date(today);
+    d.setDate(d.getDate() + i);
+    dates.push({ iso: isoLocal(d), label: `${d.getMonth()+1}/${d.getDate()}`, day: DAYS[d.getDay()], isToday: i === 0 });
+  }
+  return dates;
+}
+
+// 排序：手術中 → 待手術 → 已完成 → 取消
 function sortSurgeries(items) {
-  const order = { "手術中": 0, "待手術": 1, "已完成": 2, "取消": 3 };
-  return [...items].sort((a, b) => {
-    const p = (order[a.Status] ?? 99) - (order[b.Status] ?? 99);
-    if (p !== 0) return p;
-    return a.ScheduledTime.localeCompare(b.ScheduledTime);
-  });
+  return [...items].sort((a, b) => STATUS_ORDER.indexOf(a.Status) - STATUS_ORDER.indexOf(b.Status));
 }
 
 // ── 單筆手術列 ──
@@ -37,13 +46,12 @@ function renderSurgeryRow(item) {
 
   return `
     <tr class="${rowCls}">
-      <td class="surg-td-bed">${fmtBed(item.BedNo)}</td>
+      <td><span class="surg-td-or">${item.OrRoom}</span></td>
+      <td class="surg-td-time">${item.ScheduledTime}</td>
       <td class="surg-td-name">
         <span class="surg-name ${genderClass}">${item.PatientName}</span>
         <span class="surg-basic">${genderText}/${item.Age}</span>
       </td>
-      <td class="surg-td-time">${item.ScheduledTime}</td>
-      <td><span class="surg-td-or">${item.OrRoom}</span></td>
       <td class="surg-td-procedure">${item.Procedure}</td>
       <td class="surg-td-diagnosis">${item.Diagnosis}</td>
       <td class="surg-td-anesthesia">${item.AnesthesiaMethod}</td>
@@ -54,18 +62,33 @@ function renderSurgeryRow(item) {
     </tr>`;
 }
 
-// ── 手術表格 ──
+// ── 手術表格（依當前選取日期過濾）──
 // React 對應：<SurgeryTable items={items} />
-function renderSurgeryList(items) {
+function renderSurgeryList(allItems, activeDate) {
   const el = document.getElementById("surgery-list");
-  document.getElementById("surg-count").textContent = items.length ? `${items.length} 筆` : "";
+  const items = sortSurgeries(allItems.filter(i => i.Date === activeDate));
+
+  // 標頭計數：不含取消，單位「台」
+  const active = items.filter(i => i.Status !== "取消").length;
+  document.getElementById("surg-count").textContent = `${active} 台`;
 
   if (!items.length) {
-    el.innerHTML = `<tr class="surg-empty-row"><td colspan="9">今日無手術排程</td></tr>`;
+    el.innerHTML = `<tr class="surg-empty-row"><td colspan="8">本日無手術排程</td></tr>`;
     return;
   }
+  el.innerHTML = items.map(renderSurgeryRow).join("");
+}
 
-  el.innerHTML = sortSurgeries(items).map(renderSurgeryRow).join("");
+// ── 日期切換列 ──
+function renderDateBar(dates, activeDate, onPick) {
+  const bar = document.getElementById("sr-date-bar");
+  bar.innerHTML = dates.map(d => `
+    <button class="sr-date-btn${d.isToday ? " is-today" : ""}${d.iso === activeDate ? " active" : ""}" data-iso="${d.iso}">
+      ${d.label}<span class="sr-date-weekday">(${d.day})</span>
+    </button>`).join("");
+  bar.querySelectorAll(".sr-date-btn").forEach(btn => {
+    btn.addEventListener("click", () => onPick(btn.dataset.iso));
+  });
 }
 
 // ── 入口 ──
@@ -76,12 +99,22 @@ document.addEventListener("DOMContentLoaded", async () => {
   updateClock();
   setInterval(updateClock, 1000);
 
-  const res = await getSurgeryInfo("W52", "2026-06-03");
+  const res = await getSurgeryInfo("W52");
   if (!res.Success) {
     document.getElementById("surgery-list").innerHTML =
-      `<tr class="surg-empty-row"><td colspan="9">資料載入失敗：${res.Message}</td></tr>`;
+      `<tr class="surg-empty-row"><td colspan="8">資料載入失敗：${res.Message}</td></tr>`;
     return;
   }
 
-  renderSurgeryList(res.Data.Items);
+  const dates = buildDateRange();
+  const todayIso = isoLocal(new Date());
+  // 假資料統一掛在「今天」，讓預設檢視即可看到手術清單
+  const allItems = res.Data.Items.map(i => ({ ...i, Date: todayIso }));
+
+  let activeDate = todayIso;
+  const rerender = () => {
+    renderDateBar(dates, activeDate, iso => { activeDate = iso; rerender(); });
+    renderSurgeryList(allItems, activeDate);
+  };
+  rerender();
 });

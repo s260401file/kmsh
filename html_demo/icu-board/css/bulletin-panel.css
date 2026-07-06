@@ -1,0 +1,64 @@
+/* AICU 值班表面板 — 病室動態 4F-01 下方 4×3 空間（原型；mock 對照實體白板 aicu.jpg 左半）
+   由 components.js 於 4F 渲染後 append 進 #bed-grid；grid 位置 欄4-7 × 列2-4 */
+.icu-duty-panel {
+  grid-column: 4 / 8;
+  grid-row: 2 / 5;
+  background: #fff;
+  border: 1.5px solid var(--accent-green);
+  border-radius: 10px;
+  display: flex; flex-direction: column;
+  overflow: hidden; min-height: 0;
+  box-shadow: 0 1px 5px rgba(0,0,0,.08);
+}
+
+/* 標題列 */
+.icu-duty-head {
+  display: flex; align-items: baseline; justify-content: space-between;
+  background: var(--accent-green); color: #fff; padding: 5px 12px;
+}
+.icu-duty-title { font-size: 18px; font-weight: 800; letter-spacing: 3px; }
+.icu-duty-date  { font-size: 13px; opacity: .92; }
+
+/* 內容：三欄 */
+.icu-duty-body {
+  flex: 1; min-height: 0; overflow: hidden; padding: 7px 11px;
+  display: grid; grid-template-columns: 1.05fr 1fr 1.12fr; gap: 0 13px;
+}
+.icu-duty-col { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.icu-duty-col + .icu-duty-col { border-left: 1px solid #E3EAE6; padding-left: 12px; }
+.icu-duty-sec-t {
+  font-size: 12px; font-weight: 800; color: var(--accent-green);
+  border-bottom: 1px solid #DCE8E1; padding-bottom: 1px; margin-bottom: 1px;
+}
+
+/* 人員列：職稱 姓名 …分機 */
+.icu-duty-r { display: flex; align-items: baseline; gap: 5px; font-size: 13px; line-height: 1.25; }
+.icu-duty-role { color: var(--text-muted); flex-shrink: 0; min-width: 40px; }
+.icu-duty-name { font-weight: 700; color: var(--text-primary); white-space: nowrap; }
+.icu-duty-ext  { font-family: var(--font-num); color: var(--text-secondary); font-size: 12px; margin-left: auto; }
+
+/* 三班（大夜/白/小夜）*/
+.icu-duty-shift { display: flex; gap: 4px; }
+.icu-sh { flex: 1; text-align: center; background: var(--bg-card-empty); border-radius: 5px; padding: 3px 1px; }
+.icu-sh-k { font-size: 10px; font-weight: 700; color: #fff; padding: 1px 6px; border-radius: 8px; display: inline-block; margin-bottom: 2px; }
+.icu-sh-k.n { background: #37474F; }
+.icu-sh-k.d { background: #0288D1; }
+.icu-sh-k.e { background: #7B1FA2; }
+.icu-sh-n { font-size: 12.5px; font-weight: 700; color: var(--text-primary); display: block; }
+
+/* 應變編組 */
+.icu-resp { display: flex; flex-wrap: wrap; gap: 2px 6px; }
+.icu-resp span { font-size: 12px; font-weight: 700; color: var(--accent-red); }
+
+/* 值班專科護理師 三班列 */
+.icu-np-r { display: flex; align-items: baseline; gap: 5px; font-size: 12.5px; line-height: 1.25; }
+.icu-np-k { font-size: 10px; font-weight: 700; color: #fff; padding: 0 6px; border-radius: 8px; flex-shrink: 0; }
+.icu-np-k.n { background: #37474F; }
+.icu-np-k.d { background: #0288D1; }
+.icu-np-k.e { background: #7B1FA2; }
+.icu-np-n { color: var(--text-primary); font-weight: 600; }
+
+/* 電話 */
+.icu-tel { font-size: 12px; color: var(--text-secondary); line-height: 1.4; }
+.icu-tel b { color: var(--text-primary); font-weight: 700; }
+.icu-tel span { font-family: var(--font-num); }

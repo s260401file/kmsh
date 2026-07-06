@@ -44,7 +44,7 @@ export function useCrudSection({ emptyForm, fetchList, create, update, remove, t
   const handleDelete = async (id, confirmMsg = '確定刪除？') => {
     if (!window.confirm(confirmMsg)) return
     try { await remove(id); showMsg('刪除成功'); load() }
-    catch { showMsg('刪除失敗', true) }
+    catch (e) { showMsg(e?.message || '刪除失敗', true) }   // 顯示後端原因（如科別已被醫師使用）
   }
 
   // 僅切換 isActive；沿用 toPayload 附加該 Section 固定的情境欄位（如 unitCode/category）

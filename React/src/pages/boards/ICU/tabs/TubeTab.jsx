@@ -3,9 +3,10 @@
 //   管路類別：呼吸器(ETT 氣管內管)、鼻胃管(NG)、導尿管(Foley)、中心靜脈導管(CVC)、CRRT(連續性腎臟替代療法)。
 import { useMemo } from 'react'
 import { useIcuWard } from '../../../../hooks/useIcuWard'   // 與病室動態同源（真實在床＋後台管路勾選）
+import BoardLoading from '../../../../components/BoardLoading'   // 院方資料載入中動畫（同病室動態）
 
 export default function TubeTab() {
-  const { beds } = useIcuWard('ICU')   // 管路旗標來自後台「病人臨床補充」overlay，免 F5 輪詢
+  const { beds, loading } = useIcuWard('ICU')   // 管路旗標來自後台「病人臨床補充」overlay，免 F5 輪詢
   // 取出所有非空床且有病人的床位
   const patients = useMemo(() =>
     beds.filter(b => b.status !== 'empty' && b.patient),
@@ -24,6 +25,8 @@ export default function TubeTab() {
   // 表格中表示「有/無」的小元件
   const Check = () => <span className="tb-check">✓</span>
   const None  = () => <span className="tb-none">—</span>
+
+  if (loading) return <main className="main-content"><BoardLoading /></main>   // 院方資料載入中（同病室動態）
 
   return (
     <main className="main-content">

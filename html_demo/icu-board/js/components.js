@@ -126,6 +126,50 @@ function renderStats(beds) {
   document.getElementById("stat-cvc").textContent      = s.cvc;
 }
 
+// AICU 值班表（原型；資料為 mock，對照實體白板 aicu.jpg 左半，右半病床資訊不納入）
+// 顯示於 4F 平面 4F-01 下方 4×3 空區。部分手寫姓名為最佳判讀、待院方核對。
+function dutyRosterPanelHTML() {
+  return `<div class="icu-duty-panel">
+      <div class="icu-duty-head"><span class="icu-duty-title">AICU 值班表</span><span class="icu-duty-date">115/07/02（四）</span></div>
+      <div class="icu-duty-body">
+        <div class="icu-duty-col">
+          <div class="icu-duty-sec-t">醫療團隊</div>
+          <div class="icu-duty-r"><span class="icu-duty-role">主任</span><span class="icu-duty-name">張雅淳</span><span class="icu-duty-ext">0266027</span></div>
+          <div class="icu-duty-r"><span class="icu-duty-role">內科</span><span class="icu-duty-name">林芸仟</span><span class="icu-duty-ext">0264638</span></div>
+          <div class="icu-duty-r"><span class="icu-duty-role">外科</span><span class="icu-duty-name">林士助</span><span class="icu-duty-ext">0261594</span></div>
+          <div class="icu-duty-r"><span class="icu-duty-role">值班</span><span class="icu-duty-name">陳蕙君</span><span class="icu-duty-ext">0264632</span></div>
+          <div class="icu-duty-r"><span class="icu-duty-role">護理長</span><span class="icu-duty-name">吳美瑞</span></div>
+          <div class="icu-duty-r"><span class="icu-duty-role">行政總值</span><span class="icu-duty-ext">0262207</span></div>
+          <div class="icu-duty-r"><span class="icu-duty-role">專科師</span><span class="icu-duty-name">楊鈞漢</span><span class="icu-duty-ext">0267595</span></div>
+          <div class="icu-duty-r"><span class="icu-duty-role">透析師</span><span class="icu-duty-name">江雅惠</span><span class="icu-duty-ext">0269325</span></div>
+        </div>
+        <div class="icu-duty-col">
+          <div class="icu-duty-sec-t">三班護理師</div>
+          <div class="icu-duty-shift">
+            <div class="icu-sh"><span class="icu-sh-k n">大夜</span><span class="icu-sh-n">葉怡廷</span></div>
+            <div class="icu-sh"><span class="icu-sh-k d">白班</span><span class="icu-sh-n">—</span></div>
+            <div class="icu-sh"><span class="icu-sh-k e">小夜</span><span class="icu-sh-n">劉妍伶</span></div>
+          </div>
+          <div class="icu-duty-sec-t">緊急應變編組</div>
+          <div class="icu-resp"><span>滅火班</span><span>避難引導</span><span>安全防護</span><span>通報班</span><span>救護班</span></div>
+          <div class="icu-duty-sec-t">書記 / 傳送</div>
+          <div class="icu-duty-r"><span class="icu-duty-role">書記</span><span class="icu-duty-name">田雅芬</span></div>
+          <div class="icu-duty-r"><span class="icu-duty-role">傳送</span><span class="icu-duty-ext">0262577</span></div>
+        </div>
+        <div class="icu-duty-col">
+          <div class="icu-duty-sec-t">值班專科護理師</div>
+          <div class="icu-np-r"><span class="icu-np-k n">N</span><span class="icu-np-n">蘇紋如、陳月惠</span></div>
+          <div class="icu-np-r"><span class="icu-np-k d">D</span><span class="icu-np-n">鄭婷、高佩君、李妍萱</span></div>
+          <div class="icu-np-r"><span class="icu-np-k e">E</span><span class="icu-np-n">江延衛、林玉筠、張惠雯</span></div>
+          <div class="icu-duty-sec-t">聯絡電話</div>
+          <div class="icu-tel"><b>警衛</b> <span>0262016</span>　<b>救護車</b> <span>0918527590</span></div>
+          <div class="icu-tel"><b>訂床</b> <span>5216、2134</span>　<b>轉診</b> <span>6710</span></div>
+          <div class="icu-tel"><b>超音波管理</b> <span>4090-4091</span></div>
+        </div>
+      </div>
+    </div>`;
+}
+
 // 單樓層渲染（對齊 React）：只畫目前樓層的床位＋該樓層統計，並更新標題與切換鈕
 function renderFloor(floor) {
   const floorBeds = MOCK_DATA.beds.filter(b => b.floor === floor);
@@ -141,6 +185,9 @@ function renderFloor(floor) {
       if (bed) openModal(bed);
     });
   });
+
+  // 4F 平面 4F-01 下方 4×3 空區放 AICU 值班表面板（3F 版面不同，不顯示）
+  if (floor === 4) grid.insertAdjacentHTML("beforeend", dutyRosterPanelHTML());
 
   // 標題、切換鈕、統計
   document.getElementById("floor-label").textContent = `▌ ${floor}F　共 ${floorBeds.length} 床`;

@@ -160,6 +160,8 @@ export default function WardTab() {
   const stats = useMemo(() => getStats(beds), [beds])   // 統計面板數值（總床/住院/各類別計數）
   // 點同一篩選鈕再按一次可取消（回到 all）；'all' 鈕本身不切回
   const handleFilter = f => setFilter(prev => (prev === f && f !== 'all') ? 'all' : f)
+  // 開著的詳情彈窗：每次輪詢後用 BedId 從最新 beds 重新取回，內容跟著自動更新（約20秒）；病人離床則自動關閉
+  const liveSelectedBed = selectedBed ? beds.find(b => b.BedId === selectedBed.BedId) : null
 
   if (loading) return <main className="main-content"><BoardLoading /></main>   // 院方資料載入中
 
@@ -226,7 +228,7 @@ export default function WardTab() {
       </div>
 
       {/* 有選取床位時才掛載病人詳情彈窗 */}
-      {selectedBed && <BedModal bed={selectedBed} onClose={()=>setSelectedBed(null)} />}
+      {liveSelectedBed && liveSelectedBed.Patient && <BedModal bed={liveSelectedBed} onClose={()=>setSelectedBed(null)} />}
     </>
   )
 }

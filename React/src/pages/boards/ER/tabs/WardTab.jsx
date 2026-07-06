@@ -58,7 +58,7 @@ function isBedVisible(bed, filter) {
 // 平面圖座標 → inline grid 定位（座標由床位主檔提供；後台新增床免改 CSS）
 const bedPos = bed => (bed.GridCol && bed.GridRow) ? { gridColumn: bed.GridCol, gridRow: bed.GridRow } : undefined
 // 急診手術室兩床：疊放於同一格(col6, rows7-8)並以 flex 均分等高，故不走一般平面圖座標
-const OR_STACK_IDS = ['OER01', 'OER02']
+const OR_STACK_IDS = ['OER001', 'OER002']
 
 // 單張床卡：空床顯示床號＋「空床」；佔床顯示檢傷級徽章、床號、姓名性別年齡、狀態旗標
 function BedCard({ bed, filteredOut, onClick, inStack }) {
@@ -111,16 +111,14 @@ function BedModal({ bed, onClose }) {
   const stayH = Math.floor((diff % 86400000) / 3600000)
   const stayM = Math.floor((diff % 3600000) / 60000)
   const stayStr = (hasArr && diff > 0) ? (stayD > 0 ? `${stayD}天 ${stayH}h` : stayH > 0 ? `${stayH}h ${stayM}m` : `${stayM}m`) : '—'
-  // 組合急診狀態文字（死亡 / 留觀 / 待床 / 轉出入 / AAD / MBD / 住院）供 Modal 顯示
+  // 組合急診狀態文字（死亡 / 留觀 / 待床 / AAD / MBD）供 Modal 顯示
+  // 轉出/轉入/住院不列此處，改由下方「轉出醫院 / 轉入醫院 / 住院床號」欄位各別顯示
   const erStatuses = []
   if (p.Deceased)    erStatuses.push('死亡')
   if (p.Observation) erStatuses.push('留觀')
   if (p.Awaiting)    erStatuses.push(`待床${p.AwaitingType ? '（' + p.AwaitingType + '）' : ''}`)
-  if (p.TransferOut) erStatuses.push(p.TransferHospital ? `轉出（${p.TransferHospital}）` : '轉出')
-  if (p.TransferIn)  erStatuses.push(p.TransferHospital ? `轉入（${p.TransferHospital}）` : '轉入')
   if (p.Aad)         erStatuses.push('AAD')
   if (p.Mbd)         erStatuses.push('MBD')
-  if (p.Admitted)    erStatuses.push(p.AdmBedNo ? `住院（${p.AdmBedNo}）` : '住院')
   const allBadges = buildBadges(p)
   const tg = triageGrade(p.Triage)
   return (
@@ -156,6 +154,11 @@ function BedModal({ bed, onClose }) {
             <div className="modal-field"><div className="field-label">DNR</div><div className="field-value">{p.Dnr ? '是 ✓' : '否'}</div></div>
             <div className="modal-field"><div className="field-label">急診狀態</div><div className="field-value">{erStatuses.length > 0 ? erStatuses.join('、') : '看診中'}</div></div>
           </div>
+          {(p.TransferHospital || p.TransferInHospital || p.Admitted) && <div className="modal-row">
+            <div className="modal-field"><div className="field-label">轉出醫院</div><div className="field-value">{p.TransferHospital || '—'}</div></div>
+            <div className="modal-field"><div className="field-label">轉入醫院</div><div className="field-value">{p.TransferInHospital || '—'}</div></div>
+            <div className="modal-field"><div className="field-label">住院</div><div className="field-value">{p.Admitted ? (p.AdmBedNo || '是 ✓') : '否'}</div></div>
+          </div>}
           <div className="modal-row"><div className="modal-field full"><div className="field-label">備註</div><div className="field-value" style={{ fontSize: '15px', fontWeight: '400' }}>{p.Notes || '無'}</div></div></div>
         </div>
         <div className="modal-footer"><button className="btn-close-modal" onClick={onClose}>關閉</button></div>
@@ -195,6 +198,8 @@ export default function WardTab() {
   const nightAide = shifts.find(s => s.shift === '大夜')?.aide
   // 再次點同一篩選即取消（回到 all）；點 all 維持 all
   const handleFilter = f => setFilter(prev => (prev === f && f !== 'all') ? 'all' : f)
+  // 開著的詳情彈窗：每次輪詢後用 BedId 從最新 beds 重新取回，內容跟著自動更新（約20秒）；病人離床則自動關閉
+  const liveSelectedBed = selectedBed ? beds.find(b => b.BedId === selectedBed.BedId) : null
 
   if (loading) return <main className="main-content"><BoardLoading /></main>   // 院方資料載入中
 
@@ -230,13 +235,13 @@ export default function WardTab() {
             {/* 三班醫護人員面板（右上空區）：列出大夜/白班/小夜各班醫師、值班護理長 */}
             <div className="staff-shifts" style={{gridColumn:'7/12',gridRow:'1/3'}}>
               <div className="ss-title">
-                <span className="ss-title-docs ss-aides">
-                  <span className="ss-td-item"><span className="ss-td-label">白</span>{dayAide || '—'}</span>
-                  <span className="ss-td-item"><span className="ss-td-label">夜</span>{nightAide || '—'}</span>
-                </span>
                 <span className="ss-title-docs">
-                  <span className="ss-td-item"><span className="ss-td-label">白</span>{dayDoc || '—'}</span>
-                  <span className="ss-td-item"><span className="ss-td-label">夜</span>{nightDoc || '—'}</span>
+                  <span className="ss-td-item"><span className="ss-td-label">白班</span>{dayDoc || '—'}</span>
+                  <span className="ss-td-item"><span className="ss-td-label">夜班</span>{nightDoc || '—'}</span>
+                </span>
+                <span className="ss-title-docs ss-aides">
+                  <span className="ss-td-item"><span className="ss-td-label">白班</span>{dayAide || '—'}</span>
+                  <span className="ss-td-item"><span className="ss-td-label">夜班</span>{nightAide || '—'}</span>
                 </span>
               </div>
               <div className="ss-body">
@@ -271,7 +276,7 @@ export default function WardTab() {
             {/* 不佔床病人（床碼未建主檔）：放負1 下方空格（cols1-3×rows3-5），簡易清單點擊開詳情 */}
             {unplacedBeds.length > 0 && (
               <div className="unplaced-panel" style={{ gridColumn: '1/4', gridRow: '3/7' }}>
-                <div className="up-panel-title">不佔床病人(demo)（{unplacedBeds.length}）</div>
+                <div className="up-panel-title">不佔床病人（{unplacedBeds.length}）</div>
                 <div className="up-panel-list">
                   {unplacedBeds.map(bed => (
                     <div className="up-row" key={bed.BedId} onClick={() => setSelectedBed(bed)}>
@@ -355,7 +360,7 @@ export default function WardTab() {
         ))}
       </div>
 
-      {selectedBed && <BedModal bed={selectedBed} onClose={() => setSelectedBed(null)} />}
+      {liveSelectedBed && liveSelectedBed.Patient && <BedModal bed={liveSelectedBed} onClose={() => setSelectedBed(null)} />}
     </>
   )
 }
