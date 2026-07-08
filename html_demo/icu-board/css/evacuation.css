@@ -306,3 +306,13 @@
   color: #C62828;
   letter-spacing: -0.5px;
 }
+
+/* 緊急應變編組（由 AICU 值班表移入避難圖右欄）：班別（紅）+ 指派人員，比照聯絡列樣式 */
+.ev-resp { display: flex; flex-direction: column; }
+.ev-resp-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 11px 18px; border-bottom: 1px solid var(--bg-card-empty);
+}
+.ev-resp-row:last-child { border-bottom: none; }
+.ev-resp-k { font-size: 15px; font-weight: 700; color: #C62828; }
+.ev-resp-n { font-size: 17px; font-weight: 700; color: var(--text-primary); }

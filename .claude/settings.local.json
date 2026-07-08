@@ -421,7 +421,11 @@
       "Bash(node --check components.js)",
       "Bash(node --check main.js)",
       "Bash(node -e \"global.MOCK_DATA=null; eval\\(require\\('fs'\\).readFileSync\\('mockData.js','utf8'\\)\\); console.log\\('beds:', MOCK_DATA.Beds.length, 'stats:', JSON.stringify\\(getStats\\(MOCK_DATA.Beds\\)\\)\\);\")",
-      "Bash(node -e \"const src=require\\('fs'\\).readFileSync\\('mockData.js','utf8'\\); const m=eval\\('\\(function\\(\\){'+src+'; return {MOCK_DATA, getStats};}\\)\\(\\)'\\); console.log\\('beds:', m.MOCK_DATA.Beds.length\\); console.log\\('stats:', JSON.stringify\\(m.getStats\\(m.MOCK_DATA.Beds\\)\\)\\);\")"
+      "Bash(node -e \"const src=require\\('fs'\\).readFileSync\\('mockData.js','utf8'\\); const m=eval\\('\\(function\\(\\){'+src+'; return {MOCK_DATA, getStats};}\\)\\(\\)'\\); console.log\\('beds:', m.MOCK_DATA.Beds.length\\); console.log\\('stats:', JSON.stringify\\(m.getStats\\(m.MOCK_DATA.Beds\\)\\)\\);\")",
+      "Read(//c/c/**)",
+      "PowerShell(& sqlcmd -S \".\\\\SQLEXPRESS\" -d Whiteboard -U sa -P \"KmshX54883958\" -C -h -1 -W -Q \"SET NOCOUNT ON; SELECT COLUMN_NAME+' '+DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='Staff' ORDER BY ORDINAL_POSITION\")",
+      "PowerShell(\"=== �{�� Staff ���� ===\")",
+      "Bash(grep -nA6 \"INSERT INTO \\\\[dbo\\\\].\\\\[StaffUnitRole\\\\]\" Repositories/PersonnelRepository.cs)"
     ],
     "additionalDirectories": [
       "\\mnt\\c\\WorkDir\\Nursing Whiteboard\\React\\src\\pages"

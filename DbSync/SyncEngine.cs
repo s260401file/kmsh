@@ -2,6 +2,11 @@ using System.Diagnostics;
 
 namespace DbSync;
 
+// ── SyncEngine — 流程第 2 站：本層別的「逐表迴圈」總管 ──────────────────────
+// 從 appsettings 挑出「Enabled 且屬本 tier」的表，一張一張交給 TableSyncer 處理。
+// 關鍵設計：每張表包在獨立 try/catch，某表失敗只記 log、failed++、續跑下一張，
+// 不讓單表問題(如某表結構異動)拖垮整輪。回傳失敗表數供 Program 決定退出碼。
+
 /// <summary>依層別挑出啟用的表，逐表同步。每表獨立 try/catch：單表失敗不中斷其他表，最後彙整回報。</summary>
 public sealed class SyncEngine
 {

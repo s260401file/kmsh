@@ -11,8 +11,19 @@ public class ErBoardResponse
 {
     [JsonPropertyName("Count")]   public int Count { get; set; }    // 在室佔床數
     [JsonPropertyName("DeceasedCount")] public int DeceasedCount { get; set; }  // 死亡類別(Board_ER_TypeE，不佔床)筆數
+    [JsonPropertyName("Deceased")] public List<ErDeceasedDto> Deceased { get; set; } = new();  // 死亡類別明細（點「死亡」彈窗用）
     [JsonPropertyName("Version")] public long Version { get; set; }
     [JsonPropertyName("Beds")]    public List<ErBedDto> Beds { get; set; } = new();
+}
+
+/// <summary>ER 死亡類別（Board_ER_TypeE，不佔床）一筆：欄位少，僅病歷號＋轉出(死亡)日期時間＋病房床。</summary>
+public class ErDeceasedDto
+{
+    [JsonPropertyName("MedRecord")] public string? MedRecord { get; set; }   // 病歷號
+    [JsonPropertyName("OutDate")]   public string? OutDate { get; set; }     // 轉出(死亡)日期
+    [JsonPropertyName("OutTime")]   public string? OutTime { get; set; }     // 轉出(死亡)時間
+    [JsonPropertyName("Ward")]      public string? Ward { get; set; }        // 病房
+    [JsonPropertyName("Bed")]       public string? Bed { get; set; }         // 病床
 }
 
 /// <summary>一張床（含平面圖座標）；空床 Patient=null；床碼不在主檔的在室病人 Unplaced=true。</summary>

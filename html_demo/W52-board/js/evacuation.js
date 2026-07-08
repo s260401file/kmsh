@@ -19,25 +19,7 @@ function renderFloorInfo(evacPlan) {
     `${evacPlan.FloorNo}・${evacPlan.WardName}・上次演練 ${evacPlan.LastDrillDate}`;
 }
 
-// ── 設備清單 ──
-// React 對應：<EquipmentList items={items} />
-function renderEquipment(items) {
-  const el = document.getElementById("equip-list");
-  document.getElementById("ev-equip-count").textContent = items.length ? `${items.length} 項` : "";
-
-  if (!items.length) {
-    el.innerHTML = `<div style="padding:24px;text-align:center;color:var(--text-muted);">無設備清單</div>`;
-    return;
-  }
-
-  el.innerHTML = items.map(it => `
-    <div class="ev-equip-row">
-      <span class="ev-equip-name">${it.EquipmentName}</span>
-      <span class="ev-equip-loc">${it.Location}</span>
-      <span class="ev-equip-qty">×${it.Quantity}</span>
-    </div>`
-  ).join("");
-}
+// 設備清單、圖例卡片已移除；平面圖本身仍保留。
 
 // ── 緊急聯絡 ──
 // React 對應：<EmergencyContacts items={items} />
@@ -67,12 +49,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   const res = await getEvacuation("W52");
   if (!res.Success) {
-    document.getElementById("equip-list").innerHTML =
+    document.getElementById("emerg-contacts").innerHTML =
       `<div style="padding:24px;text-align:center;color:var(--text-muted);">資料載入失敗</div>`;
     return;
   }
 
   renderFloorInfo(res.Data.EvacPlan);
-  renderEquipment(res.Data.Equipment);
   renderEmergencyContacts(res.Data.EmergencyContacts);
 });

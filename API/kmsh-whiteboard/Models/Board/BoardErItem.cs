@@ -31,3 +31,20 @@ public class BoardErResponse
     [JsonPropertyName("success")] public bool Success { get; set; }
     [JsonPropertyName("data")]    public List<BoardErItem> Data { get; set; } = new();
 }
+
+/// <summary>Board_ER_TypeE（死亡類別，不佔床）一筆：欄位較少，僅病歷號＋轉出(死亡)時間＋病房床。</summary>
+public class BoardErTypeEItem
+{
+    [JsonPropertyName("病歷號")]   public string? Hhisnum { get; set; }
+    [JsonPropertyName("轉出日期")] public string? OutDate { get; set; }
+    [JsonPropertyName("轉出時間")] public string? OutTime { get; set; }
+    [JsonPropertyName("病房")]     public string? Ward { get; set; }
+    [JsonPropertyName("病床")]     public string? Bed { get; set; }
+}
+
+/// <summary>Board_ER_TypeE 回應外殼：{ success, data[] }。</summary>
+public class BoardErTypeEResponse
+{
+    [JsonPropertyName("success")] public bool Success { get; set; }
+    [JsonPropertyName("data")]    public List<BoardErTypeEItem> Data { get; set; } = new();
+}

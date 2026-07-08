@@ -14,6 +14,7 @@ export function useErWard(unitCode = 'ER') {
     beds: data?.Beds ?? [],
     count: data?.Count ?? 0,
     deceasedCount: data?.DeceasedCount ?? 0,   // 死亡(不佔床)筆數，顯示於「死亡」篩選
+    deceased: data?.Deceased ?? [],            // 死亡類別(不佔床)明細，點「死亡」彈窗顯示
     stale,
     loading,
   }

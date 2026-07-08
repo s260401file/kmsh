@@ -3,6 +3,25 @@ using Microsoft.Data.SqlClient;
 
 namespace DbSync;
 
+// ═══════════════════════════════════════════════════════════════════════════
+// SqlTarget.cs — 目標端(SQL Server 的 DB2_DUMP 庫)的「寫入」封裝
+// ---------------------------------------------------------------------------
+// 白板前端讀的就是這個 DB2_DUMP 庫；本檔負責把來源資料安全地套用進去。
+// 慣用流程(由 TableSyncer 呼叫)：
+//   GetColumns → RecreateStaging → BulkCopy(串流灌暫存) → MergeUpsert/ReplaceGroups/MergeFull → DropStaging
+//
+// 暫存表(staging)：dbo._stg_{schema}_{name}，用「SELECT TOP 0 * INTO」複製目標結構建空表，
+//   來源資料先落此表，再用 MERGE 一次做集合運算套用到正式表 → 對正式表的變更是「原子且最小」。
+//
+// 三種套用手法(對應 TableSyncer 的 Mode)：
+//   MergeUpsert   ── 以鍵 upsert(可只 INSERT)。給 incremental / append。
+//   ReplaceGroups ── 案群組整組刪除後重寫(單一交易)。給 replacekey。
+//   MergeFull     ── 整列 SHA2_256 雜湊比對 upsert + 刪除來源已無列。給 full。
+//
+// 欄名一律用中括號 [ ] 限定(SQL Server 慣例)；SQL 以字串組出但「欄名來自目標系統目錄、
+// 非使用者輸入」，值一律走 SqlBulkCopy/參數，無 Injection 風險。
+// ═══════════════════════════════════════════════════════════════════════════
+
 /// <summary>目標端（SQL Server / DB2_DUMP）操作：欄位查詢、staging、SqlBulkCopy、MERGE。</summary>
 public sealed class SqlTarget
 {
@@ -87,6 +106,8 @@ public sealed class SqlTarget
         string matched;
         if (nonKey.Count > 0)
         {
+            // 把所有「非鍵欄」串成一字串(以 || 分隔)再取 SHA2_256 雜湊，比對目標(T)與來源(S)。
+            // 只有雜湊不同(＝內容真的變了)才 UPDATE，避免每輪把沒變的列也重寫、徒增 log 與鎖競爭。
             string Hash(string a) => $"HASHBYTES('SHA2_256', CONCAT_WS('||', {string.Join(", ", nonKey.Select(c => $"CONVERT(nvarchar(max),{a}.[{c}])"))}))";
             matched = $"WHEN MATCHED AND {Hash("T")} <> {Hash("S")} THEN UPDATE SET {string.Join(", ", nonKey.Select(c => $"T.[{c}]=S.[{c}]"))}\n";
         }

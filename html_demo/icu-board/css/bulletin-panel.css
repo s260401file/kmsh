@@ -44,7 +44,8 @@
 .icu-sh-k.n { background: #37474F; }
 .icu-sh-k.d { background: #0288D1; }
 .icu-sh-k.e { background: #7B1FA2; }
-.icu-sh-n { font-size: 12.5px; font-weight: 700; color: var(--text-primary); display: block; }
+.icu-sh-n { font-size: 12.5px; font-weight: 700; color: var(--text-primary); display: block; line-height: 1.3; }
+.icu-sh-n + .icu-sh-n { margin-top: 1px; }
 
 /* 應變編組 */
 .icu-resp { display: flex; flex-wrap: wrap; gap: 2px 6px; }

@@ -3,6 +3,20 @@ using IBM.Data.Db2;
 
 namespace DbSync;
 
+// ═══════════════════════════════════════════════════════════════════════════
+// Db2Source.cs — 來源端(真實 DB2 / 高榮 HIS)的「讀取」封裝
+// ---------------------------------------------------------------------------
+// 只負責產生 SELECT 並回傳 IDataReader；由 SqlTarget.BulkCopy 邊讀邊灌入目標暫存表。
+// 三個 DB2 眉角(維護時務必注意)：
+//   • 欄名用雙引號 " " 限定：DB2 對「未加引號」的識別字會自動轉大寫，
+//     若目標欄名是混合大小寫會對不上，故一律引用以保持與目標一致(見 ColList)。
+//   • 增量條件靠「Z* 欄」：HIS 每張表有一個記錄「該列最後異動時間」的欄位(命名多為 Z 開頭)，
+//     即 appsettings 的 WatermarkCol；WHERE Z* > ? 就能只撈上次之後變動的資料。
+//   • CommandBehavior.SequentialAccess：叫 reader 逐列「串流」而非整包載入記憶體，
+//     大表也不會吃爆記憶體(配合 SqlBulkCopy 的 BatchSize)。
+// 參數一律用 DB2Parameter 綁定(? 佔位)，不字串拼接 → 防 SQL Injection、型別正確。
+// ═══════════════════════════════════════════════════════════════════════════
+
 /// <summary>來源端（DB2）讀取：以 Z* 浮水印撈增量，或全表撈取。回傳 DataReader 供 SqlBulkCopy 串流。</summary>
 public sealed class Db2Source
 {

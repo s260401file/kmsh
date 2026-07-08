@@ -91,6 +91,10 @@ public class BoardApiService : IBoardApiService
 
     /// <summary>Board_ER_TypeE（死亡類別在室，不佔床）筆數；失敗回 0（白板不中斷）。</summary>
     public async Task<int> GetErTypeECountAsync(CancellationToken ct = default)
+        => (await GetErTypeEListAsync(ct)).Count;
+
+    /// <summary>Board_ER_TypeE（死亡類別，不佔床）清單；失敗回空清單（白板不中斷）。</summary>
+    public async Task<List<BoardErTypeEItem>> GetErTypeEListAsync(CancellationToken ct = default)
     {
         try
         {
@@ -100,10 +104,10 @@ public class BoardApiService : IBoardApiService
             var resp = await _http.SendAsync(req, ct);
             resp.EnsureSuccessStatusCode();
             var raw = await resp.Content.ReadAsStringAsync(ct);
-            var parsed = JsonSerializer.Deserialize<BoardErResponse>(raw, _json);
-            return parsed?.Data?.Count ?? 0;
+            var parsed = JsonSerializer.Deserialize<BoardErTypeEResponse>(raw, _json);
+            return parsed?.Data ?? new();
         }
-        catch (Exception ex) { _logger.LogWarning(ex, "Board_ER_TypeE 取得失敗，死亡數以 0 續行"); return 0; }
+        catch (Exception ex) { _logger.LogWarning(ex, "Board_ER_TypeE 取得失敗，死亡清單以空續行"); return new(); }
     }
 
     public async Task<List<BoardOrItem>> GetOrListAsync(CancellationToken ct = default)

@@ -167,6 +167,46 @@ function BedModal({ bed, onClose }) {
   )
 }
 
+// 死亡類別（Board_ER_TypeE，不佔床）彈窗：點底部「死亡」旗標開啟，列出病歷號＋轉出(死亡)時間＋病房床
+function DeceasedModal({ list, onClose }) {
+  const th = { textAlign: 'left', padding: '8px 12px', background: '#F4F8F6', color: '#3A5068', fontWeight: 700, fontSize: '14px', whiteSpace: 'nowrap', borderBottom: '1px solid #D6E0E8' }
+  const td = { padding: '9px 12px', borderBottom: '1px solid #EEF2F5', fontSize: '15px' }
+  return (
+    <div className="modal-overlay show" onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className="modal-box">
+        <div className="modal-header">
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+            <span className="modal-patient">死亡類別（不佔床）</span>
+            <span className="modal-basic">共 {list.length} 筆</span>
+          </div>
+          <button className="modal-close" onClick={onClose}>✕</button>
+        </div>
+        <div className="modal-body">
+          {list.length === 0
+            ? <div style={{ padding: '24px', textAlign: 'center', color: '#7A8FA0' }}>目前無死亡類別資料</div>
+            : (
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'var(--font-num, inherit)' }}>
+                <thead><tr>{['病歷號', '轉出日期', '轉出時間', '病房', '病床'].map(h => <th key={h} style={th}>{h}</th>)}</tr></thead>
+                <tbody>
+                  {list.map((d, i) => (
+                    <tr key={i}>
+                      <td style={{ ...td, fontWeight: 700 }}>{d.MedRecord || '—'}</td>
+                      <td style={td}>{d.OutDate || '—'}</td>
+                      <td style={td}>{d.OutTime || '—'}</td>
+                      <td style={td}>{d.Ward || '—'}</td>
+                      <td style={td}>{d.Bed || '—'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+        </div>
+        <div className="modal-footer"><button className="btn-close-modal" onClick={onClose}>關閉</button></div>
+      </div>
+    </div>
+  )
+}
+
 // 底部篩選列要顯示的旗標按鈕清單（f 為篩選 key，label 為顯示文字）
 const FILTER_BADGES = [
   { f: '死亡', cls: 'badge-死亡', label: '死亡' }, { f: 'MBD', cls: 'badge-MBD', label: 'MBD' },
@@ -179,7 +219,8 @@ const FLAG_STYLE = makeFlagStyle(FILTER_BADGES.map(x => x.label))
 export default function WardTab() {
   const [filter, setFilter] = useState('all')          // 目前選取的篩選類別
   const [selectedBed, setSelectedBed] = useState(null)  // 目前開啟詳情的床位
-  const { beds, deceasedCount, loading } = useErWard('ER')  // 後端聚合看板（床位主檔＋真實病人＋overlay）；死亡數另由 Board_ER_TypeE 計
+  const [showDeceased, setShowDeceased] = useState(false)  // 死亡類別彈窗開關
+  const { beds, deceasedCount, deceased, loading } = useErWard('ER')  // 後端聚合看板；死亡(不佔床)由 Board_ER_TypeE 計並帶明細
   const placedBeds = useMemo(() => beds.filter(b => !b.Unplaced), [beds])    // 有平面圖座標
   const unplacedBeds = useMemo(() => beds.filter(b => b.Unplaced), [beds])   // 不佔床病人（床碼未建主檔）→ 負1 下方面板
   const stats = useMemo(() => getStats(beds), [beds])  // 統計面板數值（由床位推導）
@@ -354,13 +395,16 @@ export default function WardTab() {
       <div className="filter-bar">
         <button className={`filter-btn${filter==='all'?' active':''}`} onClick={() => handleFilter('all')}>全部</button>
         {FILTER_BADGES.map(({ f, label }) => (
-          <button key={f} className={`badge badge-filter${filter===f?' active':''}`} onClick={() => handleFilter(f)}>
+          // 「死亡」＝不佔床類別，點擊改開明細彈窗（非床位篩選）；其餘照舊反白床位
+          <button key={f} className={`badge badge-filter${f !== '死亡' && filter===f?' active':''}`}
+            onClick={() => f === '死亡' ? setShowDeceased(true) : handleFilter(f)}>
             <FlagDot k={label} flagStyle={FLAG_STYLE} title={false} />{label}{f === '死亡' ? `(${deceasedCount})` : ''}
           </button>
         ))}
       </div>
 
       {liveSelectedBed && liveSelectedBed.Patient && <BedModal bed={liveSelectedBed} onClose={() => setSelectedBed(null)} />}
+      {showDeceased && <DeceasedModal list={deceased} onClose={() => setShowDeceased(false)} />}
     </>
   )
 }

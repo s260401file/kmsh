@@ -146,21 +146,19 @@ function dutyRosterPanelHTML() {
         <div class="icu-duty-col">
           <div class="icu-duty-sec-t">三班護理師</div>
           <div class="icu-duty-shift">
-            <div class="icu-sh"><span class="icu-sh-k n">大夜</span><span class="icu-sh-n">葉怡廷</span></div>
-            <div class="icu-sh"><span class="icu-sh-k d">白班</span><span class="icu-sh-n">—</span></div>
-            <div class="icu-sh"><span class="icu-sh-k e">小夜</span><span class="icu-sh-n">劉妍伶</span></div>
+            <div class="icu-sh"><span class="icu-sh-k n">大夜</span><span class="icu-sh-n">葉怡廷</span><span class="icu-sh-n">蘇紋如</span></div>
+            <div class="icu-sh"><span class="icu-sh-k d">白班</span><span class="icu-sh-n">鄭婷</span><span class="icu-sh-n">高佩君</span><span class="icu-sh-n">李妍萱</span><span class="icu-sh-n">林碧霞</span></div>
+            <div class="icu-sh"><span class="icu-sh-k e">小夜</span><span class="icu-sh-n">劉妍伶</span><span class="icu-sh-n">江延衛</span></div>
           </div>
-          <div class="icu-duty-sec-t">緊急應變編組</div>
-          <div class="icu-resp"><span>滅火班</span><span>避難引導</span><span>安全防護</span><span>通報班</span><span>救護班</span></div>
           <div class="icu-duty-sec-t">書記 / 傳送</div>
           <div class="icu-duty-r"><span class="icu-duty-role">書記</span><span class="icu-duty-name">田雅芬</span></div>
           <div class="icu-duty-r"><span class="icu-duty-role">傳送</span><span class="icu-duty-ext">0262577</span></div>
         </div>
         <div class="icu-duty-col">
-          <div class="icu-duty-sec-t">值班專科護理師</div>
-          <div class="icu-np-r"><span class="icu-np-k n">N</span><span class="icu-np-n">蘇紋如、陳月惠</span></div>
-          <div class="icu-np-r"><span class="icu-np-k d">D</span><span class="icu-np-n">鄭婷、高佩君、李妍萱</span></div>
-          <div class="icu-np-r"><span class="icu-np-k e">E</span><span class="icu-np-n">江延衛、林玉筠、張惠雯</span></div>
+          <div class="icu-duty-sec-t">照服員</div>
+          <div class="icu-duty-r"><span class="icu-duty-name">何美妹</span><span class="icu-duty-ext">分機 2681</span></div>
+          <div class="icu-duty-r"><span class="icu-duty-name">周淑英</span><span class="icu-duty-ext">分機 2682</span></div>
+          <div class="icu-duty-r"><span class="icu-duty-name">蔡秀滿</span><span class="icu-duty-ext">分機 2683</span></div>
           <div class="icu-duty-sec-t">聯絡電話</div>
           <div class="icu-tel"><b>警衛</b> <span>0262016</span>　<b>救護車</b> <span>0918527590</span></div>
           <div class="icu-tel"><b>訂床</b> <span>5216、2134</span>　<b>轉診</b> <span>6710</span></div>

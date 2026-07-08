@@ -2,9 +2,19 @@ using DbSync;
 using System.Runtime.InteropServices;
 
 // ── 進入點 ───────────────────────────────────────────────────────────────
-// 用法：DbSync.exe --tier fast|slow
+// 本工具＝把「真實 DB2(HIS)」的白板所需表，每幾分鐘增量同步到「SQL Server 的 DB2_DUMP」，
+// 讓白板前端讀得到近即時資料。整體流程：Program(進入點/防重疊) → SyncEngine(逐表迴圈)
+//   → TableSyncer(單表:暫存表流程) → Db2Source(讀來源) / SqlTarget(寫目標) / WatermarkStore(記進度)。
+//
+// 命令列參數：
+//   --tier fast|slow      要跑哪一層(必填，預設 fast)。哪些表屬哪層看 appsettings 的 Tier。
+//   --inspect-keys        唯讀診斷：印出各表在 DB2 的主鍵/唯一索引，供校正 KeyCols(不做同步)。
+//   --reprocess-hours N   忽略浮水印，強制從「N 小時前」重新撈(測試/回補漏資料用)。
+//   --no-pause            跑完不暫停(排程情境；見下方 MaybePause)。
+//   --pause-seconds N     雙擊執行時，跑完停留 N 秒(預設 15)後自動關閉。
+//
 //   由 Windows 工作排程器每 5 分鐘(fast) / 30 分鐘(slow) 觸發。
-//   退出碼：0=全成功、1=有表失敗或發生例外（供排程器判讀）。
+//   退出碼：0=全成功、1=有表失敗或發生例外、2=參數錯誤（供排程器判讀）。
 // 防重疊：每層別一個具名 Mutex；若上一輪還沒跑完，本輪直接跳過（回 0）。
 // 資源釋放：Mutex 於 finally 釋放；Logger 與各連線以 using 釋放；即使中途例外也保證釋放。
 

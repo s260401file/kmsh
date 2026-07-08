@@ -358,10 +358,16 @@ public class BoardController : ControllerBase
             return e;
         }
 
+        var deceased = await _board.GetErTypeEListAsync(ct);   // 死亡類別(不佔床)清單（Board_ER_TypeE）
         var resp = new ErBoardResponse
         {
             Count = occ.Count,
-            DeceasedCount = await _board.GetErTypeECountAsync(ct),   // 死亡(不佔床)筆數
+            DeceasedCount = deceased.Count,   // 死亡(不佔床)筆數
+            Deceased = deceased.Select(d => new ErDeceasedDto
+            {
+                MedRecord = d.Hhisnum?.Trim(), OutDate = d.OutDate?.Trim(), OutTime = d.OutTime?.Trim(),
+                Ward = d.Ward?.Trim(), Bed = d.Bed?.Trim()
+            }).ToList(),
             Version = extList.Count > 0
                 ? new DateTimeOffset(extList.Max(e => e.UpdatedAt), TimeSpan.Zero).ToUnixTimeSeconds()
                 : 0
@@ -880,6 +886,57 @@ public class BoardController : ControllerBase
             Procedure = d.SurgeryName, Diagnosis = d.Diagnosis, AnesthesiaMethod = d.AnesType,
             AttendingSurgeon = d.Doctor,
             Status = d.Completed ? "已完成" : DeriveSurgeryStatus(d.SurgeryDate, d.OpTime, now, today)
+        }).OrderBy(x => x.Date).ThenBy(x => x.ScheduledTime).ToList();
+        return Ok(list);
+    }
+
+    /// <summary>
+    /// 單位「手術資訊」分頁：只回「該單位目前在床病人」的手術（以在床病歷號(ChartNo)比對）。
+    /// 讀本地清洗表 [dbo].[OrSurgery]（WhiteboardSync 落地）。院方在床 API 失敗 → 回空（絕不退回全院）。
+    /// 日期區間 from/to（含，yyyy-MM-dd）；省略→當日。W52 前台不帶參數（當日）、ICU 帶今天±3。
+    /// 在床來源：W52＝Board_bed W52；ICU＝AICU(F4)＋CICU(F3)。
+    /// </summary>
+    [HttpGet("{unitCode}/surgeries")]
+    public async Task<IActionResult> GetUnitSurgeries(string unitCode, [FromQuery] DateTime? from, [FromQuery] DateTime? to, CancellationToken ct = default)
+    {
+        var u = unitCode.ToUpperInvariant();
+        // 取該單位目前在床病歷號集合（SafeBoardAsync 內含 try/catch，失敗回空）
+        HashSet<string> inBed;
+        if (u == "W52")
+            inBed = (await SafeBoardAsync("W52", ct))
+                .Where(o => !string.IsNullOrWhiteSpace(o.Hhisnum))
+                .Select(o => o.Hhisnum!.Trim())
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        else if (u == "ICU")
+            inBed = (await SafeBoardAsync("AICU", ct)).Concat(await SafeBoardAsync("CICU", ct))
+                .Where(o => !string.IsNullOrWhiteSpace(o.Hhisnum))
+                .Select(o => o.Hhisnum!.Trim())
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        else
+            return BadRequest(new { message = $"尚未支援單位 {unitCode} 的手術過濾（目前僅 W52 / ICU）" });
+
+        if (inBed.Count == 0) return Ok(new List<OrSurgeryListItem>());   // 無在床病人 → 無內容
+
+        var now = DateTime.Now; var today = DateTime.Today;
+        var f = from?.Date ?? today;
+        var t = to?.Date ?? today;
+        if (t < f) (f, t) = (t, f);
+        if ((t - f).TotalDays > 14) return BadRequest(new { message = "查詢區間過長（上限 14 天）" });
+
+        // 查區間本地手術表，再過濾成「病歷號屬該單位在床病人」者
+        var rows = (await _ward.GetOrSurgeryListAsync(f, t, ct))
+            .Where(r => !string.IsNullOrWhiteSpace(r.ChartNo) && inBed.Contains(r.ChartNo!.Trim()))
+            .ToList();
+
+        var list = rows.Select(r => new OrSurgeryListItem
+        {
+            OrRoom = r.RoomId ?? r.Room, Date = r.OpDate.ToString("yyyy-MM-dd"), ScheduledTime = r.OpTime,
+            PatientName = MaskName(r.PatientName), Gender = r.Sex, Age = r.Age,
+            Procedure = r.SurgeryName, Diagnosis = r.IcdCodes, AnesthesiaMethod = r.Anesthesia,
+            AttendingSurgeon = r.SurgeonName,
+            Status = (r.StatusCode == "82" || !string.IsNullOrWhiteSpace(r.CancelReason)) ? "取消"
+                     : !string.IsNullOrWhiteSpace(r.EndTime) ? "已完成"
+                     : DeriveSurgeryStatus(r.OpDate, r.OpTime, now, today)
         }).OrderBy(x => x.Date).ThenBy(x => x.ScheduledTime).ToList();
         return Ok(list);
     }

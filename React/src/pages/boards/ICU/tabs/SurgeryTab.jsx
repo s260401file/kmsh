@@ -1,10 +1,11 @@
 // SurgeryTab.jsx — ICU 手術分頁
 // 角色：頂部日期列（今天前後各 3 天共 7 天）可切換，下方表格列出該日手術排程。
+//       只顯示「目前 ICU 在床病人(AICU+CICU)」的手術（後端以在床病歷號過濾，讀本地 OrSurgery）。
 //       依手術狀態排序（手術中 → 待手術 → 已完成 → 取消），取消列加刪除線樣式。
 import { useState, useMemo } from 'react'
 import { usePolling } from '../../../../hooks/usePolling'
 import * as wardApi from '../../../../services/wardApi'
-import { BULLETIN_MS } from '../../../../config/pollingConfig'
+import { CENSUS_MS } from '../../../../config/pollingConfig'
 import '../tabsCss/surgery.css'
 
 const DAYS = ['日','一','二','三','四','五','六']            // 星期顯示字
@@ -28,8 +29,9 @@ function buildDateRange() {
 export default function SurgeryTab() {
   const dates = useMemo(() => buildDateRange(), [])          // 日期列（只算一次）
   const [activeDate, setActiveDate] = useState(() => isoLocal(new Date())) // 預設真實今天
-  // 全部 OR 手術（Board_OR），免 F5 輪詢
-  const { data } = usePolling(() => wardApi.getOrSurgeries(), { intervalMs: BULLETIN_MS, deps: ['OR'] })
+  const from = dates[0].iso, to = dates[dates.length - 1].iso   // 今天-3 ~ 今天+3
+  // 只取 ICU 在床病人（AICU+CICU）在此區間的手術；與在床名單同頻(20s)輪詢
+  const { data } = usePolling(() => wardApi.getUnitSurgeries('ICU', from, to), { intervalMs: CENSUS_MS, deps: ['ICU', from, to] })
 
   // 取出選取日期的手術並依狀態排序；隨 activeDate / data 變動重算
   const items = useMemo(() => {

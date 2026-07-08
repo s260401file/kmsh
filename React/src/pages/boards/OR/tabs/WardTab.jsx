@@ -80,8 +80,12 @@ function RoomCard({ room, filteredOut, onClick }) {
 // 點擊刀房卡片後彈出的病患詳情視窗（今日台次清單可切換；顯示診斷、術式、派班、麻醉、時間、備註）
 function RoomModal({ room, onClose }) {
   const list = room.Surgeries?.length ? room.Surgeries : (room.Patient ? [room.Patient] : [])
-  const initIdx = Math.max(0, list.findIndex(s => s.SurgeryStatus === '手術中'))
-  const [idx, setIdx] = useState(initIdx < 0 ? 0 : initIdx)
+  // 預設停在「房卡目前顯示的那一台」(room.Patient，後端已依手術中/保留期選定)，與卡片一致；
+  // 找不到時再退回：手術中 → 第一台。以病歷號＋排程時間比對（房間內唯一）。
+  const cur = room.Patient
+  const curIdx = cur ? list.findIndex(s => s.MedRecord === cur.MedRecord && s.ScheduledTime === cur.ScheduledTime) : -1
+  const initIdx = curIdx >= 0 ? curIdx : Math.max(0, list.findIndex(s => s.SurgeryStatus === '手術中'))
+  const [idx, setIdx] = useState(initIdx)
   const p = list[idx] || room.Patient
   const status = p.SurgeryStatus || '排程'
   const duration = calcDuration(p.StartTime, p.EndTime)

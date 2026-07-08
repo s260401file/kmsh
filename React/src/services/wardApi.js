@@ -212,7 +212,15 @@ export async function saveUnitInfo(data) { return handle(await apiFetch(`${BASE}
 // 看板：組裝三班 / 交班清單
 export async function getOrSchedule() { return handle(await apiFetch(`${BASE}/or/schedule`)) }
 export async function getOrHandover() { return handle(await apiFetch(`${BASE}/or/handover`)) }
-export async function getOrSurgeries() { return handle(await apiFetch(`${BASE}/or/surgeries`)) }  // 全部 OR 手術清單（ICU/W52 手術資訊）
+export async function getOrSurgeries() { return handle(await apiFetch(`${BASE}/or/surgeries`)) }  // 全部 OR 手術清單（ICU 手術資訊）
+// 該單位在床病人手術（依在床病歷號過濾）。from/to 可選(yyyy-MM-dd)；省略→當日。W52 當日、ICU 帶今天±3。
+export async function getUnitSurgeries(unitCode, from, to) {
+  const p = new URLSearchParams()
+  if (from) p.set('from', from)
+  if (to) p.set('to', to)
+  const qs = p.toString()
+  return handle(await apiFetch(`${BASE}/${unitCode}/surgeries${qs ? '?' + qs : ''}`))
+}
 
 // ── 全院共用主檔：科別 Department ──────────────────────────────────
 export async function getDepartments(includeAll = true) {
