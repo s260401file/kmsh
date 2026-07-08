@@ -31,6 +31,8 @@ public interface IPersonnelRepository
     Task<int> CreateScheduleAsync(StaffScheduleUpsertRequest req, CancellationToken ct = default);
     Task<bool> UpdateScheduleAsync(int id, StaffScheduleUpsertRequest req, CancellationToken ct = default);
     Task<bool> DeleteScheduleAsync(int id, CancellationToken ct = default);
+    Task<int> AddShiftRosterAsync(string unitCode, DateTime from, DateTime to,
+        IReadOnlyList<(string shift, IReadOnlyList<int> staffIds)> shifts, CancellationToken ct = default);
 
     // ── 床位指派 ──
     Task<IEnumerable<BedStaffAssignmentItem>> GetBedAssignAsync(string unitCode, string? date = null, string? assignType = null, bool includeAll = false, CancellationToken ct = default);

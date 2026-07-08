@@ -1296,6 +1296,20 @@ public class BoardController : ControllerBase
     public async Task<IActionResult> DeleteSchedule(int id, CancellationToken ct = default)
         => await _staff.DeleteScheduleAsync(id, ct) ? NoContent() : NotFound();
 
+    /// <summary>值班表三班護理師批次排班：日期區間 × 各班 × 有序護理師，疊加 upsert（不刪未選）。</summary>
+    [HttpPost("{unitCode}/shift-roster")]
+    public async Task<IActionResult> SetShiftRoster(string unitCode, [FromBody] ShiftRosterRequest req, CancellationToken ct = default)
+    {
+        if (!DateTime.TryParse(req.From, out var from) || !DateTime.TryParse(req.To, out var to))
+            return BadRequest(new { message = "日期格式錯誤（yyyy-MM-dd）" });
+        if ((to.Date - from.Date).TotalDays > 92) return BadRequest(new { message = "日期區間過長（上限約 3 個月）" });
+        var shifts = (req.Shifts ?? new())
+            .Where(x => !string.IsNullOrWhiteSpace(x.Shift))
+            .Select(x => (x.Shift, (IReadOnlyList<int>)(x.StaffIds ?? new()))).ToList();
+        var n = await _staff.AddShiftRosterAsync(unitCode, from, to, shifts, ct);
+        return Ok(new { affected = n });
+    }
+
     // ── 床位指派 CRUD（主護勾床／醫師-床）──
     [HttpGet("{unitCode}/bedassign")]
     public async Task<IActionResult> GetBedAssign(string unitCode, [FromQuery] string? date, [FromQuery] string? type, [FromQuery] bool includeAll = true, CancellationToken ct = default)
@@ -1328,16 +1342,20 @@ public class BoardController : ControllerBase
     public async Task<IActionResult> GetDoctorBoard(string unitCode, [FromQuery] string? date, CancellationToken ct = default)
     {
         var d = string.IsNullOrWhiteSpace(date) ? DateTime.Today.ToString("yyyy-MM-dd") : date;
-        var roles = (await _staff.GetUnitRolesAsync(null, unitCode, false, ct))
-            .Where(r => r.Role != null && r.Role.Contains("主治")).ToList();
-        var beds = (await _staff.GetBedAssignAsync(unitCode, d, "主治", false, ct)).ToList();
-        var bedsByStaff = beds.GroupBy(b => b.StaffId)
-            .ToDictionary(g => g.Key, g => g.OrderBy(x => x.SortOrder).Select(x => x.BedId).ToList());
-        var doctorBeds = roles.Select(r => new {
-            doctorId = r.StaffId, doctorNo = r.EmployeeNo, doctorName = r.Name, role = r.Role,
-            specialty = r.Department, ext = r.Ext,
-            bedNos = bedsByStaff.TryGetValue(r.StaffId, out var bn) ? bn : new List<string>()
-        });
+        // 醫師-床：改由院方 HIS 在床清單（負責醫師/科別/床號）分組，取代自建的主治指派
+        List<BoardBedItem> occ;
+        try { occ = await _board.GetBedListAsync(unitCode, ct); }
+        catch (Exception ex) { _logger.LogWarning(ex, "Board_bed {u} 取得失敗，醫師資訊以空續行", unitCode); occ = new(); }
+        var doctorBeds = occ
+            .Where(o => !string.IsNullOrWhiteSpace(o.Doctor) && !string.IsNullOrWhiteSpace(o.Hbed))
+            .GroupBy(o => o.Doctor!.Trim())
+            .Select(g => new {
+                doctorName = g.Key,
+                specialty = g.Select(x => x.Department?.Trim()).FirstOrDefault(x => !string.IsNullOrWhiteSpace(x)) ?? "",
+                bedNos = g.Select(x => x.Hbed!.Trim()).OrderBy(x => x, StringComparer.Ordinal).ToList()
+            })
+            .OrderBy(x => x.doctorName, StringComparer.Ordinal)
+            .ToList();
         var rounds = (await _staff.GetRoundAsync(unitCode, d, false, ct)).Select(x => new {
             roundId = x.Id, roundDate = x.RoundDate.ToString("yyyyMMdd"), doctorName = x.DoctorName, specialty = x.Specialty,
             estimatedTime = x.EstimatedTime, actualTime = x.ActualTime, isCompleted = x.IsCompleted, remark = x.Remark

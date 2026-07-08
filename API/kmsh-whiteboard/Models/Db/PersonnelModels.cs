@@ -256,3 +256,16 @@ public class HandoverNoteUpsertRequest
     public string? Content { get; set; }
     public int SortOrder { get; set; }
 }
+
+// ── 9. 三班護理師批次排班（值班表用）：日期區間 × 各班 × 有序護理師，疊加 upsert ──
+public class ShiftRosterRequest
+{
+    [Required] public string From { get; set; } = "";   // yyyy-MM-dd（含）
+    [Required] public string To { get; set; } = "";     // yyyy-MM-dd（含）
+    public List<ShiftRosterEntry> Shifts { get; set; } = new();
+}
+public class ShiftRosterEntry
+{
+    public string Shift { get; set; } = "";             // 大夜/白班/小夜
+    public List<int> StaffIds { get; set; } = new();    // 依點擊順序（索引→SortOrder）
+}

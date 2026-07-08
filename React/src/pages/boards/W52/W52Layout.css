@@ -454,3 +454,50 @@
 .w52-board .legend-item.modal-flag:hover {
   transform: none; border-color: var(--divider); color: var(--text-secondary); box-shadow: none;
 }
+
+/* ── 值班表面板（病室動態 056 下方 4×8 空區；目前靜態 mock，日後改後台）── */
+.w52-board .duty-panel {
+  background: #fff; border: 1.5px solid var(--accent-green); border-radius: 10px;
+  display: flex; flex-direction: column; overflow: hidden; min-height: 0;
+  box-shadow: 0 1px 5px rgba(0,0,0,.08);
+}
+.w52-board .duty-head {
+  display: flex; align-items: baseline; justify-content: space-between;
+  background: var(--accent-green); color: #fff; padding: 7px 12px;
+}
+.w52-board .duty-title { font-size: 22px; font-weight: 800; letter-spacing: 4px; }
+.w52-board .duty-date  { font-size: 15px; font-weight: 600; opacity: .95; }
+.w52-board .duty-body {
+  flex: 1; min-height: 0; overflow: hidden;
+  display: flex; flex-direction: column; gap: 9px; padding: 10px 13px;
+}
+.w52-board .duty-sec-t {
+  font-size: 15px; font-weight: 800; color: var(--accent-green);
+  border-bottom: 1.5px solid #DCE8E1; padding-bottom: 3px; margin-bottom: 6px;
+}
+/* ① 值班醫療團隊 */
+.w52-board .duty-rows { display: flex; flex-direction: column; gap: 4px; }
+.w52-board .duty-r {
+  display: grid; grid-template-columns: 84px 1fr auto; align-items: baseline;
+  font-size: 16px; column-gap: 6px;
+}
+.w52-board .duty-role { color: var(--text-muted); }
+.w52-board .duty-name { font-weight: 700; color: var(--text-primary); }
+.w52-board .duty-ext  { font-family: var(--font-num); font-size: 15px; color: var(--text-secondary); }
+/* ② 三班護理師（每班可多人；欄內姓名縱向堆疊） */
+.w52-board .duty-shift { display: flex; gap: 8px; align-items: stretch; }
+.w52-board .duty-sh {
+  flex: 1; display: flex; flex-direction: column; align-items: center;
+  background: var(--bg-card-empty); border-radius: 7px; padding: 7px 3px 8px;
+}
+.w52-board .duty-sh-k { font-size: 12.5px; font-weight: 700; color: #fff; padding: 2px 9px; border-radius: 10px; margin-bottom: 5px; }
+.w52-board .sh-n { background: #37474F; }  /* 大夜 */
+.w52-board .sh-d { background: #0288D1; }  /* 白班 */
+.w52-board .sh-e { background: #7B1FA2; }  /* 小夜 */
+.w52-board .duty-sh-n { font-size: 16.5px; font-weight: 700; color: var(--text-primary); line-height: 1.3; }
+.w52-board .duty-sh-n + .duty-sh-n { margin-top: 2px; }
+/* ③ 照服員電話 */
+.w52-board .duty-aides { display: flex; flex-wrap: wrap; gap: 4px 18px; }
+.w52-board .duty-aide { font-size: 15px; color: var(--text-secondary); }
+.w52-board .duty-aide b { color: var(--text-primary); font-weight: 700; margin-right: 4px; }
+.w52-board .duty-aide span { font-family: var(--font-num); }

@@ -155,6 +155,8 @@ export async function getScheduleList(unit, date, includeAll = true) {
 export async function createSchedule(d) { return handle(await apiFetch(`${BASE}/schedule`, { method: 'POST', headers, body: JSON.stringify(d) })) }
 export async function updateSchedule(id, d) { return handle(await apiFetch(`${BASE}/schedule/${id}`, { method: 'PUT', headers, body: JSON.stringify(d) })) }
 export async function removeSchedule(id) { return handle(await apiFetch(`${BASE}/schedule/${id}`, { method: 'DELETE' })) }
+// 值班表三班護理師批次排班：{ from, to, shifts:[{shift, staffIds:[有序]}] } 疊加到區間每日
+export async function setShiftRoster(unit, body) { return handle(await apiFetch(`${BASE}/${unit}/shift-roster`, { method: 'POST', headers, body: JSON.stringify(body) })) }
 // 床位指派 CRUD
 export async function getBedAssign(unit, date, type, includeAll = true) {
   const p = new URLSearchParams({ includeAll: includeAll ? 'true' : 'false' }); if (date) p.set('date', date); if (type) p.set('type', type)

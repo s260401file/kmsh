@@ -185,6 +185,46 @@ public class PersonnelRepository : IPersonnelRepository
         return rows > 0;
     }
 
+    /// <summary>
+    /// 值班表三班護理師批次排班：日期區間 [from,to] 每一天 × 各班 × 有序護理師，做「疊加」。
+    /// 每個 (Unit,Date,Shift)：既有列<b>保留原順序不動</b>；未在名單者<b>依點選順序接在最後</b>
+    /// （SortOrder＝該班現有 MAX 之後遞增）。已存在者略過。不刪除任何既有列。單一交易。
+    /// </summary>
+    public async Task<int> AddShiftRosterAsync(string unitCode, DateTime from, DateTime to,
+        IReadOnlyList<(string shift, IReadOnlyList<int> staffIds)> shifts, CancellationToken ct = default)
+    {
+        if (to < from) (from, to) = (to, from);
+        const string existSql = "SELECT StaffId FROM [dbo].[StaffSchedule] WHERE UnitCode=@U AND WorkDate=@D AND Shift=@S";
+        const string maxSql = "SELECT MAX(SortOrder) FROM [dbo].[StaffSchedule] WHERE UnitCode=@U AND WorkDate=@D AND Shift=@S";
+        const string insSql = @"INSERT INTO [dbo].[StaffSchedule] (StaffId, UnitCode, WorkDate, Shift, SortOrder, IsActive, UpdatedAt, CreatedAt)
+                                VALUES (@StaffId, @UnitCode, @WorkDate, @Shift, @SortOrder, 1, GETDATE(), GETDATE())";
+        using var conn = _db.Create();
+        conn.Open();
+        using var tx = conn.BeginTransaction();
+        int n = 0;
+        try
+        {
+            for (var d = from.Date; d <= to.Date; d = d.AddDays(1))
+                foreach (var (shift, ids) in shifts)
+                {
+                    var p = new { U = unitCode, D = d, S = shift };
+                    var existing = (await conn.QueryAsync<int>(new CommandDefinition(existSql, p, tx, cancellationToken: ct))).ToHashSet();
+                    var order = await conn.ExecuteScalarAsync<int?>(new CommandDefinition(maxSql, p, tx, cancellationToken: ct)) ?? 0;
+                    foreach (var staffId in ids ?? (IReadOnlyList<int>)Array.Empty<int>())
+                    {
+                        if (!existing.Add(staffId)) continue;   // 已在該班→保留原序、不重複
+                        order++;                                 // 接在最後
+                        n += await conn.ExecuteAsync(new CommandDefinition(insSql,
+                            new { StaffId = staffId, UnitCode = unitCode, WorkDate = d, Shift = shift, SortOrder = order },
+                            tx, cancellationToken: ct));
+                    }
+                }
+            tx.Commit();
+        }
+        catch { tx.Rollback(); throw; }
+        return n;
+    }
+
     // ── 床位指派 ───────────────────────────────────────────────
     private const string BsaCols = @"bsa.Id, bsa.UnitCode, bsa.BedId, bsa.WorkDate, bsa.Shift, bsa.StaffId, bsa.AssignType,
         bsa.SortOrder, bsa.IsActive, bsa.UpdatedAt, bsa.CreatedAt, s.EmployeeNo, s.Name";

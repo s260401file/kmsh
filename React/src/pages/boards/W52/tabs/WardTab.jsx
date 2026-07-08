@@ -7,8 +7,14 @@
 import { useState, useMemo } from 'react'
 import { getStats } from '../mockData'                            // 統計函式（mockData 保留備援）
 import { useWard } from '../../../../hooks/useWard'               // 病室動態：Board_bed 真實在床＋自建臨床，輪詢
+import { usePolling } from '../../../../hooks/usePolling'         // 值班表三班護理師：定時輪詢後台設定
+import * as wardApi from '../../../../services/wardApi'
+import { CENSUS_MS } from '../../../../config/pollingConfig'
 import BoardLoading from '../../../../components/BoardLoading'     // 院方資料載入中動畫
 import { FlagDot, makeFlagStyle } from '../../../../utils/flagShapes' // 共用 SVG 旗標形狀系統
+
+// 值班表三班：班別中文 → 色塊 class ＋ 代碼字母
+const SHIFT_META = { '大夜': { cls: 'sh-n', letter: 'N' }, '白班': { cls: 'sh-d', letter: 'D' }, '小夜': { cls: 'sh-e', letter: 'E' } }
 
 // 由病人資料 + 床位狀態組出該床要顯示的註記字串陣列（順序即顯示順序）
 function buildBadges(patient, bedStatus = '') {
@@ -158,6 +164,12 @@ export default function WardTab() {
   const [selectedBed, setSelectedBed] = useState(null) // 目前開啟詳情的床位，null 為未開啟
   const { beds, loading } = useWard('W52')              // 後端聚合看板（真實在床＋自建臨床），定時輪詢
   const stats = useMemo(() => getStats(beds), [beds])   // 統計面板數值（總床/住院/各類別計數）
+  // 值班表三班護理師：讀「當日」排班(StaffSchedule；後台「W52 管理→三班護理師」設定)，依班別分組、SortOrder＝點選順序
+  const { data: schedData } = usePolling(() => wardApi.getSchedule('W52'), { intervalMs: CENSUS_MS, deps: ['W52-sched'] })
+  const shifts = useMemo(() => {
+    const byType = {}; (schedData?.shifts ?? []).forEach(s => { byType[s.shiftType] = s })
+    return ['大夜', '白班', '小夜'].map(k => ({ shift: k, nurses: (byType[k]?.nurses ?? []).map(n => n.peName).filter(Boolean) }))
+  }, [schedData])
   // 點同一篩選鈕再按一次可取消（回到 all）；'all' 鈕本身不切回
   const handleFilter = f => setFilter(prev => (prev === f && f !== 'all') ? 'all' : f)
   // 開著的詳情彈窗：每次輪詢後用 BedId 從最新 beds 重新取回，內容跟著自動更新（約20秒）；病人離床則自動關閉
@@ -212,6 +224,52 @@ export default function WardTab() {
               <BedCard key={bed.BedId} bed={bed} filteredOut={!isBedVisible(bed, filter)}
                 onClick={bed.Status !== 'empty' ? () => setSelectedBed(bed) : undefined} />
             ))}
+
+            {/* 值班表面板（056 下方 4×8 空區；目前為靜態 mock，日後改後台設定） */}
+            <div className="duty-panel" style={{ gridColumn: '4 / 8', gridRow: '3 / 11' }}>
+              <div className="duty-head">
+                <span className="duty-title">值班表</span>
+                <span className="duty-date">115/06/22（日）</span>
+              </div>
+              <div className="duty-body">
+                {/* ① 三班護理師（置最上；每班可多人；資料由後台「W52 管理→三班護理師」設定） */}
+                <div className="duty-sec">
+                  <div className="duty-sec-t">三班護理師</div>
+                  <div className="duty-shift">
+                    {shifts.map(sh => {
+                      const meta = SHIFT_META[sh.shift] || { cls: '', letter: '' }
+                      const names = (sh.nurses && sh.nurses.length) ? sh.nurses : ['—']
+                      return (
+                        <div className="duty-sh" key={sh.shift}>
+                          <span className={`duty-sh-k ${meta.cls}`}>{sh.shift} {meta.letter}</span>
+                          {names.map((n, i) => <span className="duty-sh-n" key={i}>{n}</span>)}
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+                {/* ② 值班醫療團隊（護理長在頁首、專科護理師配於各床，故不列） */}
+                <div className="duty-sec">
+                  <div className="duty-sec-t">值班醫療團隊</div>
+                  <div className="duty-rows">
+                    <div className="duty-r"><span className="duty-role">骨科醫師</span><span className="duty-name">林建宏</span><span className="duty-ext">0265509</span></div>
+                    <div className="duty-r"><span className="duty-role">內科醫師</span><span className="duty-name">郭玉哲</span><span className="duty-ext">0267290</span></div>
+                    <div className="duty-r"><span className="duty-role">書記</span><span className="duty-name">張聖宗</span><span className="duty-ext">0265166</span></div>
+                  </div>
+                </div>
+                {/* ③ 照服員電話 */}
+                <div className="duty-sec">
+                  <div className="duty-sec-t">照服員電話</div>
+                  <div className="duty-aides">
+                    <span className="duty-aide"><b>春花</b><span>0988818966</span></span>
+                    <span className="duty-aide"><b>瑞雲</b><span>0915821732</span></span>
+                    <span className="duty-aide"><b>佳誉</b><span>0955155023</span></span>
+                    <span className="duty-aide"><b>覆晴</b><span>0988383132</span></span>
+                    <span className="duty-aide"><b>永美</b><span>0920401127</span></span>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </main>

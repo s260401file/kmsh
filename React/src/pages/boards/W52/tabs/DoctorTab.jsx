@@ -1,5 +1,5 @@
 // DoctorTab：醫師資訊分頁
-// 角色：左欄列出醫師/專師各自負責的床位與分機；右欄為當日起的查房時間表（依日期分組）。
+// 角色：左欄依院方 HIS 負責醫師分組列出 科別/負責床位；右欄為當日起的查房時間表（依日期分組）。
 import { Fragment } from 'react'
 import { usePolling } from '../../../../hooks/usePolling'
 import * as wardApi from '../../../../services/wardApi'
@@ -41,19 +41,17 @@ export default function DoctorTab() {
           {/* 左：負責床位 */}
           <div className="dr-card">
             <div className="dr-card-header">
-              醫師 / 專師負責床位
+              醫師負責床位
               <span className="dr-card-count">{DoctorBeds.length} 人</span>
             </div>
             <div className="dr-table-wrap">
               <table className="dr-table">
-                <thead><tr><th>姓名</th><th>職別</th><th>專科</th><th>分機</th><th>負責床位</th></tr></thead>
+                <thead><tr><th>姓名</th><th>科別</th><th>負責床位</th></tr></thead>
                 <tbody>
                   {DoctorBeds.map(d => (
-                    <tr key={d.doctorId}>
+                    <tr key={d.doctorName}>
                       <td>{d.doctorName}</td>
-                      <td><span className={`dr-role-badge dr-role-${d.role}`}>{d.role}</span></td>
                       <td className="dr-td-specialty">{d.specialty}</td>
-                      <td className="dr-td-ext">{d.ext}</td>
                       <td>
                         <div className="dr-beds">
                           {d.bedNos.map(b => <span key={b} className="dr-bed-tag">{b}</span>)}
