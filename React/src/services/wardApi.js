@@ -51,6 +51,29 @@ export async function updateOnCall(id, data) {
 export async function removeOnCall(id) {
   return handle(await apiFetch(`${BASE}/oncall/${id}`, { method: 'DELETE' }))
 }
+// ── 各科值班醫師「每日輪值排程」（OnCallDept 科別設定 + OnCallRoster 每日輪值）──
+export async function getOnCallDepts(includeAll = true) {
+  return handle(await apiFetch(`${BASE}/oncall-dept?includeAll=${includeAll ? 'true' : 'false'}`))
+}
+export async function createOnCallDept(d) { return handle(await apiFetch(`${BASE}/oncall-dept`, { method: 'POST', headers, body: JSON.stringify(d) })) }
+export async function updateOnCallDept(id, d) { return handle(await apiFetch(`${BASE}/oncall-dept/${id}`, { method: 'PUT', headers, body: JSON.stringify(d) })) }
+export async function removeOnCallDept(id) { return handle(await apiFetch(`${BASE}/oncall-dept/${id}`, { method: 'DELETE' })) }
+export async function getOnCallRoster(deptCode, from, to) {
+  const p = new URLSearchParams(); if (deptCode) p.set('deptCode', deptCode); if (from) p.set('from', from); if (to) p.set('to', to)
+  return handle(await apiFetch(`${BASE}/oncall-roster?${p}`))
+}
+export async function getOnCallDay(date) {
+  const p = date ? `?date=${date}` : ''
+  return handle(await apiFetch(`${BASE}/oncall-roster/day${p}`))
+}
+// 看板「各科值班醫師」面板：每科一位（內科依當下時間帶當前時段醫師）
+export async function getOnCallBoard(date) {
+  const p = date ? `?date=${date}` : ''
+  return handle(await apiFetch(`${BASE}/oncall-board${p}`))
+}
+export async function saveOnCallMonth(body) {
+  return handle(await apiFetch(`${BASE}/oncall-roster/month`, { method: 'POST', headers, body: JSON.stringify(body) }))
+}
 // ── ER 床位主檔（病室動態平面圖 + 後台 CRUD）──────────────────────
 // GET /api/Board/{unitCode}/bed?includeAll= → 該單位 ER 床位主檔（含座標/分區）
 export async function getErBeds(unitCode, includeAll = false) {
@@ -247,6 +270,10 @@ export async function getOrSurgeryList(from, to) {
   if (from) p.set('from', from)
   if (to) p.set('to', to)
   return handle(await apiFetch(`${BASE}/or/surgerylist?${p}`))
+}
+// 逐台刀 刷手/流動/備註 批次存檔（後台月曆）
+export async function saveOrSurgeryNurseBatch(entries) {
+  return handle(await apiFetch(`${BASE}/or/surgery-nurse/batch`, { method: 'POST', headers, body: JSON.stringify({ entries }) }))
 }
 // 後台 CRUD：班級人員 OrShiftStaff
 export async function getShiftStaff(unitCode = 'OR', includeAll = true) {

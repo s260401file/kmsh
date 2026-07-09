@@ -9,6 +9,64 @@ import { getStats } from '../mockData'                          // 統計函式�
 import { useIcuWard } from '../../../../hooks/useIcuWard'        // 病室動態：Board_bed(AICU/CICU) 真實在床＋自建臨床，輪詢
 import BoardLoading from '../../../../components/BoardLoading'   // 院方資料載入中動畫
 import { FlagDot, makeFlagStyle } from '../../../../utils/flagShapes'
+import { usePolling } from '../../../../hooks/usePolling'        // AICU 值班表：三班護理師輪詢
+import * as wardApi from '../../../../services/wardApi'
+import { CENSUS_MS } from '../../../../config/pollingConfig'
+
+// AICU 值班表三班色票：大夜=n(深灰) 白班=d(藍) 小夜=e(紫)
+const ICU_SHIFT_META = { '大夜': 'n', '白班': 'd', '小夜': 'e' }
+
+// AICU 值班表面板（4F-01 下方 4×3 空區）。三班護理師接後台 getSchedule('ICU')；其餘先靜態
+function IcuDutyPanel({ shifts }) {
+  return (
+    <div className="icu-duty-panel">
+      <div className="icu-duty-head"><span className="icu-duty-title">AICU 值班表</span><span className="icu-duty-date">115/07/02（四）</span></div>
+      <div className="icu-duty-body">
+        {/* ① 醫療團隊（靜態，待後台） */}
+        <div className="icu-duty-col">
+          <div className="icu-duty-sec-t">醫療團隊</div>
+          <div className="icu-duty-r"><span className="icu-duty-role">主任</span><span className="icu-duty-name">張雅淳</span><span className="icu-duty-ext">0266027</span></div>
+          <div className="icu-duty-r"><span className="icu-duty-role">內科</span><span className="icu-duty-name">林芸仟</span><span className="icu-duty-ext">0264638</span></div>
+          <div className="icu-duty-r"><span className="icu-duty-role">外科</span><span className="icu-duty-name">林士助</span><span className="icu-duty-ext">0261594</span></div>
+          <div className="icu-duty-r"><span className="icu-duty-role">值班</span><span className="icu-duty-name">陳蕙君</span><span className="icu-duty-ext">0264632</span></div>
+          <div className="icu-duty-r"><span className="icu-duty-role">護理長</span><span className="icu-duty-name">吳美瑞</span></div>
+          <div className="icu-duty-r"><span className="icu-duty-role">行政總值</span><span className="icu-duty-ext">0262207</span></div>
+          <div className="icu-duty-r"><span className="icu-duty-role">專科師</span><span className="icu-duty-name">楊鈞漢</span><span className="icu-duty-ext">0267595</span></div>
+          <div className="icu-duty-r"><span className="icu-duty-role">透析師</span><span className="icu-duty-name">江雅惠</span><span className="icu-duty-ext">0269325</span></div>
+        </div>
+        {/* ② 三班護理師（接後台）＋書記/傳送（靜態） */}
+        <div className="icu-duty-col">
+          <div className="icu-duty-sec-t">三班護理師</div>
+          <div className="icu-duty-shift">
+            {shifts.map(sh => {
+              const names = (sh.nurses && sh.nurses.length) ? sh.nurses : ['—']
+              return (
+                <div className="icu-sh" key={sh.shift}>
+                  <span className={`icu-sh-k ${ICU_SHIFT_META[sh.shift] || ''}`}>{sh.shift}</span>
+                  {names.map((n, i) => <span className="icu-sh-n" key={i}>{n}</span>)}
+                </div>
+              )
+            })}
+          </div>
+          <div className="icu-duty-sec-t">書記 / 傳送</div>
+          <div className="icu-duty-r"><span className="icu-duty-role">書記</span><span className="icu-duty-name">田雅芬</span></div>
+          <div className="icu-duty-r"><span className="icu-duty-role">傳送</span><span className="icu-duty-ext">0262577</span></div>
+        </div>
+        {/* ③ 照服員 ＋ 聯絡電話（靜態，待後台） */}
+        <div className="icu-duty-col">
+          <div className="icu-duty-sec-t">照服員</div>
+          <div className="icu-duty-r"><span className="icu-duty-name">何美妹</span><span className="icu-duty-ext">分機 2681</span></div>
+          <div className="icu-duty-r"><span className="icu-duty-name">周淑英</span><span className="icu-duty-ext">分機 2682</span></div>
+          <div className="icu-duty-r"><span className="icu-duty-name">蔡秀滿</span><span className="icu-duty-ext">分機 2683</span></div>
+          <div className="icu-duty-sec-t">聯絡電話</div>
+          <div className="icu-tel"><b>警衛</b> <span>0262016</span>　<b>救護車</b> <span>0918527590</span></div>
+          <div className="icu-tel"><b>訂床</b> <span>5216、2134</span>　<b>轉診</b> <span>6710</span></div>
+          <div className="icu-tel"><b>超音波管理</b> <span>4090-4091</span></div>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 // 病況等級顯示對照：資料值 → 畫面徽章文字（穩定=C、重症=B、危急=A）
 const CONDITION_LABEL = { '穩定': 'C級', '重症': 'B級', '危急': 'A級' }
@@ -164,6 +222,12 @@ export default function WardTab() {
   const [selectedBed, setSelectedBed] = useState(null)  // 目前開啟詳情的床（null=未開）
   const [floor, setFloor] = useState(4)                 // 目前顯示樓層（4F 為主，可切 3F）
   const { beds, loading } = useIcuWard('ICU')           // 後端聚合看板（真實在床＋自建臨床），定時輪詢
+  // AICU 值班表三班護理師：後台排班（今日），依大夜→白班→小夜分組
+  const { data: schedData } = usePolling(() => wardApi.getSchedule('ICU'), { intervalMs: CENSUS_MS, deps: ['ICU-sched'] })
+  const shifts = useMemo(() => {
+    const byType = {}; (schedData?.shifts ?? []).forEach(s => { byType[s.shiftType] = s })
+    return ['大夜', '白班', '小夜'].map(k => ({ shift: k, nurses: (byType[k]?.nurses ?? []).map(n => n.peName).filter(Boolean) }))
+  }, [schedData])
   // 只顯示當前樓層；統計亦只計當前樓層（總床數 4F=20、3F=5）
   const floorBeds = useMemo(() => beds.filter(b => b.floor === floor), [beds, floor])
   const stats = useMemo(() => getStats(floorBeds), [floorBeds])
@@ -192,6 +256,7 @@ export default function WardTab() {
                 <BedCard key={bed.id} bed={bed} filteredOut={!isBedVisible(bed, filter)}
                   onClick={bed.status !== 'empty' ? () => setSelectedBed(bed) : undefined} />
               ))}
+              {floor === 4 && <IcuDutyPanel shifts={shifts} />}
             </div>
           </div>
         </div>

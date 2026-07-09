@@ -7,7 +7,7 @@
 // 各 Section 為單一單位的 CRUD 表單＋清單，透過對應的 *Api 服務存取後端。
 // 多數 Section 共用模式：list/form/editId/msg 四個 state，load() 讀取資料，
 // useEffect 依 unitCode 變動重新載入，handleSubmit/Edit/Delete/Toggle 處理增改刪與啟用切換。
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, Fragment } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useCrudSection } from '../hooks/useCrudSection'
@@ -98,6 +98,7 @@ const MENU_CONFIG = [
       { id: 'or-acct',     label: '帳號設定', available: true },
       { id: 'or-ext',      label: '病人臨床補充', available: true },  // 手術狀態/刷手/流動 overlay
       { id: 'or-schedule', label: 'OR 手術派班', available: true },
+      { id: 'or-scrub',    label: '刷手/流動設定', available: true },   // 逐台刀（月曆）
       { id: 'or-handover', label: 'OR 特殊交班', available: true },
     ]
   },
@@ -108,9 +109,9 @@ const MENU_CONFIG = [
       { id: 'er-acct',   label: '帳號設定', available: true },
       { id: 'er-ext',    label: '病人臨床補充', available: true },
       { id: 'er-exam',   label: '檢查/會診', available: true },
-      { id: 'er-oncall', label: '各科值班醫師', available: true },
-      { id: 'er-shift',  label: '三班醫護人員', available: true },
-      { id: 'er-shift-roster', label: '三班護理師', available: true },   // W52 式（與「三班醫護人員」並存）
+      { id: 'er-oncall-roster', label: '值班醫師排程', available: true },   // 每日輪值月曆（全院共用；已取代舊「各科值班醫師」）
+      { id: 'er-shift',  label: '醫師/照服員設定', available: true },   // 原「三班醫護人員」；護理師改由三班護理師供給
+      { id: 'er-shift-roster', label: '三班護理師', available: true },   // 護理師來源（餵 ER 看板三班面板）
     ]
   },
   {
@@ -1141,102 +1142,171 @@ function WardExtSection({ unitCode }) {
   )
 }
 
-// ── 急診各科值班醫師（ErOnCallDoctor）─────────────────────────────
-// 對應實體急診白板右半「各科值班醫師」；一科一列，維護當日值班醫師/分機/員編。
-const emptyOnCallForm = { deptCode: '', deptName: '', doctorName: '', ext: '', empNo: '', sortOrder: 0, isActive: true }
+// 註：舊「各科值班醫師」(ErOnCallSection/ErOnCallManager) 已退場，改由「值班醫師排程」供給、
+// ER 看板改讀 GET /oncall-board（今日各科；內科依時段）。ErOnCallDoctor 表與 /oncall 端點保留但不再使用。
 
-function ErOnCallSection() {
-  const { list, form, setField, editId, msg, handleSubmit, handleEdit, handleDelete, resetForm } = useCrudSection({
-    emptyForm: emptyOnCallForm,
-    fetchList: () => wardApi.getOnCall('ER', true),
-    create: (payload) => wardApi.createOnCall(payload),
-    update: (id, payload) => wardApi.updateOnCall(id, payload),
-    remove: (id) => wardApi.removeOnCall(id),
-    toPayload: (form) => ({ ...form, unitCode: 'ER' }),
-    toForm: (item) => ({ deptCode: item.deptCode, deptName: item.deptName ?? '', doctorName: item.doctorName ?? '', ext: item.ext ?? '', empNo: item.empNo ?? '', sortOrder: item.sortOrder, isActive: item.isActive }),
-    failMsg: '操作失敗（科別代碼是否重複？）',
-  })
-  const setF = setField
-  // 全院共用主檔：科別、醫師（醫師含 deptCode/deptName/ext/employeeNo）
-  const [depts, setDepts] = useState([])
-  const [doctors, setDoctors] = useState([])
-  useEffect(() => {
-    wardApi.getDepartments(true).then(d => setDepts(d ?? [])).catch(() => {})
-    wardApi.getDoctors(null, true).then(d => setDoctors(d ?? [])).catch(() => {})
-  }, [])
-  const deptOptions = depts.map(d => ({ value: d.code, label: `${d.name}（${d.code}）` }))
-  const docList = form.deptCode ? doctors.filter(d => d.deptCode === form.deptCode) : doctors   // 選了科別→只列該科醫師
-  const docOptions = [...new Map(docList.map(d => [d.name, { value: d.name, label: `${d.name}${d.ext ? `（分機 ${d.ext}）` : ''}` }])).values()]   // 依姓名去重（避免重複 key）
-  const pickDept = (code) => {
-    if (!code) { setF('deptCode', ''); setF('deptName', ''); return }   // 輸入搜尋中（未選）：不動醫師
-    setF('deptCode', code); setF('deptName', depts.find(d => d.code === code)?.name ?? '')
-    if (form.doctorName && !doctors.some(d => d.name === form.doctorName && d.deptCode === code)) { setF('doctorName', ''); setF('empNo', ''); setF('ext', '') }
-  }
-  const pickDoctor = (name) => {
-    setF('doctorName', name)
-    const pool = form.deptCode ? doctors.filter(d => d.deptCode === form.deptCode) : doctors
-    const dr = pool.find(d => d.name === name) || doctors.find(d => d.name === name)   // 精確命中醫師→自動帶入科別/分機/員編
-    if (dr) {
-      setF('empNo', dr.employeeNo ?? ''); setF('ext', dr.ext ?? '')
-      if (dr.deptCode) { setF('deptCode', dr.deptCode); setF('deptName', dr.deptName ?? depts.find(x => x.code === dr.deptCode)?.name ?? '') }
-    }
-  }
-
+// 月曆格內的緊湊醫師查詢下拉（可自由輸入；選項限該科醫師）
+function OnCallCellSelect({ options, value, onChange }) {
+  const [q, setQ] = useState(value || '')
+  const [open, setOpen] = useState(false)
+  useEffect(() => { setQ(value || '') }, [value])
+  const filtered = q ? options.filter(o => o.value.includes(q)) : options
   return (
-    <div>
-      {msg.text && <div style={{ ...s.msg, background: msg.error ? '#fee2e2' : '#d1fae5', color: msg.error ? '#991b1b' : '#065f46' }}>{msg.text}</div>}
-      <div style={s.formCard}>
-        <h4 style={s.formTitle}>{editId ? `修改值班醫師 (ID: ${editId})` : '新增各科值班醫師'}</h4>
-        <div style={{ fontSize: '12px', color: '#9ca3af', marginBottom: '10px' }}>顯示於 ER 病室動態右下「各科值班醫師」面板（5×2）。科別、醫師皆為查詢下拉：選科別後醫師只列該科；先選醫師會自動帶入科別與分機/員編。（科別、醫師總表於「系統管理」維護）</div>
-        <form onSubmit={handleSubmit}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0 16px' }}>
-            <div style={s.formRow}><label style={s.label}>科別 *</label><NurseSelect options={deptOptions} value={form.deptCode} onChange={pickDept} placeholder="搜尋科別（代碼/名稱）" /></div>
-            <div style={s.formRow}><label style={s.label}>科別中文</label><input style={{ ...s.input, background: '#f9fafb', color: '#6b7280' }} value={form.deptName} readOnly placeholder="（選科別後自動帶入）" /></div>
-            <div style={s.formRow}><label style={s.label}>值班醫師</label><NurseSelect options={docOptions} value={form.doctorName} allowFree onChange={pickDoctor} placeholder={form.deptCode ? '搜尋該科醫師' : '搜尋醫師（先選科別可篩選）'} /></div>
-            <div style={s.formRow}><label style={s.label}>分機</label><input style={s.input} value={form.ext} onChange={e => setF('ext', e.target.value)} placeholder="4204" /></div>
-            <div style={s.formRow}><label style={s.label}>員編</label><input style={s.input} value={form.empNo} onChange={e => setF('empNo', e.target.value)} /></div>
-            <div style={s.formRow}><label style={s.label}>排序</label><input type="number" style={s.input} value={form.sortOrder} onChange={e => setF('sortOrder', Number(e.target.value))} /></div>
-          </div>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '14px', cursor: 'pointer', marginTop: '4px' }}>
-            <input type="checkbox" checked={form.isActive} onChange={e => setF('isActive', e.target.checked)} />啟用
-          </label>
-          <div style={{ marginTop: '14px', display: 'flex', gap: '8px' }}>
-            <button type="submit" style={s.btnPrimary}>{editId ? '儲存修改' : '+ 新增'}</button>
-            {editId && <button type="button" style={s.btnSecondary} onClick={resetForm}>取消</button>}
-          </div>
-        </form>
-      </div>
-      <div style={s.listCard}>
-        <h4 style={s.formTitle}>各科值班醫師（共 {list.length} 筆）</h4>
-        {list.length === 0 ? <p style={{ color: '#9ca3af', fontSize: '14px' }}>尚無資料，請新增</p> : (
-          <table style={s.table}>
-            <thead><tr>{['排序','科別','科別中文','值班醫師','分機','員編','啟用','操作'].map(h => <th key={h} style={s.th}>{h}</th>)}</tr></thead>
-            <tbody>
-              {list.map((item, i) => (
-                <tr key={item.id} style={{ background: editId === item.id ? '#fef9c3' : i % 2 ? '#f9fafb' : '#fff' }}>
-                  <td style={s.td}>{item.sortOrder}</td>
-                  <td style={s.td}>{item.deptCode}</td>
-                  <td style={s.td}>{item.deptName || '—'}</td>
-                  <td style={s.td}>{item.doctorName || '—'}</td>
-                  <td style={s.td}>{item.ext || '—'}</td>
-                  <td style={s.td}>{item.empNo || '—'}</td>
-                  <td style={s.td}><span style={{ ...s.badge, background: item.isActive ? '#d1fae5' : '#f3f4f6', color: item.isActive ? '#065f46' : '#6b7280' }}>{item.isActive ? '✓ 啟用' : '停用'}</span></td>
-                  <td style={s.td}><button style={s.btnEdit} onClick={() => handleEdit(item)}>編輯</button><button style={s.btnDel} onClick={() => handleDelete(item.id)}>刪除</button></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
+    <div style={{ position: 'relative' }}>
+      <input value={q} placeholder="醫師"
+        style={{ width: '100%', boxSizing: 'border-box', padding: '3px 5px', fontSize: '12px', border: '1px solid #d1d5db', borderRadius: '4px', fontFamily: 'inherit' }}
+        onFocus={() => setOpen(true)}
+        onChange={e => { setQ(e.target.value); setOpen(true); onChange(e.target.value) }}
+        onBlur={() => setTimeout(() => setOpen(false), 150)} />
+      {open && filtered.length > 0 && (
+        <div style={{ position: 'absolute', zIndex: 40, left: 0, right: 0, top: '100%', marginTop: '2px', maxHeight: '170px', overflowY: 'auto', background: '#fff', border: '1px solid #d1d5db', borderRadius: '6px', boxShadow: '0 4px 14px rgba(0,0,0,.14)' }}>
+          {filtered.map(o => (
+            <div key={o.value} onMouseDown={() => { onChange(o.value); setQ(o.value); setOpen(false) }}
+              style={{ padding: '5px 8px', cursor: 'pointer', fontSize: '12px', whiteSpace: 'nowrap' }}
+              onMouseEnter={e => (e.currentTarget.style.background = '#f0fdf4')}
+              onMouseLeave={e => (e.currentTarget.style.background = '#fff')}>{o.label}</div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
 
-function ErOnCallManager() {
+// 各科值班醫師「每日輪值排程」— 月曆後台（選科別＋月份→每日下拉填醫師；含科別規則/備註）
+function OnCallScheduleSection() {
+  const [depts, setDepts] = useState([])
+  const [deptCode, setDeptCode] = useState('')
+  const [ym, setYm] = useState(pmToday().slice(0, 7))     // 'YYYY-MM'
+  const [doctors, setDoctors] = useState([])
+  const [grid, setGrid] = useState({})                    // 'YYYY-MM-DD|slot' → {doctorName,ext,mobile,empNo,note}
+  const [deptForm, setDeptForm] = useState(null)
+  const [showRules, setShowRules] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [msg, show] = pmMsgHook()
+
+  const dept = depts.find(d => d.deptCode === deptCode) || null
+  const slots = dept?.slots ? dept.slots.split(',').map(x => x.trim()).filter(Boolean) : ['']   // ['']＝單一全日
+  const multiSlot = slots.length > 1 || (slots.length === 1 && slots[0] !== '')
+  const [y, m] = ym.split('-').map(Number)
+  const daysInMonth = (y && m) ? new Date(y, m, 0).getDate() : 30
+  const firstWd = (y && m) ? new Date(y, m - 1, 1).getDay() : 1     // 0=日
+  const lead = firstWd === 0 ? 6 : firstWd - 1                       // 週一為首
+  const docOptions = [...new Map(doctors.map(d => [d.name, { value: d.name, label: `${d.name}${d.ext ? `（分機 ${d.ext}）` : ''}` }])).values()]
+
+  useEffect(() => {
+    wardApi.getOnCallDepts(true).then(ds => { setDepts(ds ?? []); if ((ds ?? []).length) setDeptCode(p => p || ds[0].deptCode) }).catch(() => show('讀取科別失敗', true))
+  }, [])   // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (!deptCode) return
+    wardApi.getDoctors(deptCode, true).then(ds => setDoctors(ds ?? [])).catch(() => {})
+    const d = depts.find(x => x.deptCode === deptCode)
+    if (d) setDeptForm({ id: d.id, deptCode: d.deptCode, deptName: d.deptName ?? '', slots: d.slots ?? '', callOutRule: d.callOutRule ?? '', remark: d.remark ?? '', holidayContact: d.holidayContact ?? '', ext: d.ext ?? '', mobile: d.mobile ?? '', sortOrder: d.sortOrder, isActive: d.isActive })
+  }, [deptCode, depts])
+
+  const loadRoster = useCallback(async () => {
+    if (!deptCode || !y || !m) return
+    setLoading(true)
+    try {
+      const from = `${ym}-01`; const to = `${ym}-${String(new Date(y, m, 0).getDate()).padStart(2, '0')}`
+      const rows = await wardApi.getOnCallRoster(deptCode, from, to)
+      const g = {}; (rows ?? []).forEach(r => { g[`${String(r.onCallDate).slice(0, 10)}|${r.slot ?? ''}`] = { doctorName: r.doctorName ?? '', ext: r.ext ?? '', mobile: r.mobile ?? '', empNo: r.empNo ?? '', note: r.note ?? '' } })
+      setGrid(g)
+    } catch { show('讀取排程失敗', true) }
+    finally { setLoading(false) }
+  }, [deptCode, ym, y, m])
+  useEffect(() => { loadRoster() }, [loadRoster])
+
+  const setCell = (dateIso, slot, name) => setGrid(g => {
+    const key = `${dateIso}|${slot}`; const cur = g[key] || {}; const next = { ...cur, doctorName: name }
+    const dr = doctors.find(x => x.name === name); if (dr) { next.ext = dr.ext ?? ''; next.empNo = dr.employeeNo ?? '' }
+    return { ...g, [key]: next }
+  })
+
+  const save = async () => {
+    setSaving(true)
+    try {
+      const entries = []
+      Object.entries(grid).forEach(([key, v]) => {
+        if (!v.doctorName) return
+        const [dt, slot] = key.split('|')
+        entries.push({ onCallDate: dt, slot: slot || null, doctorName: v.doctorName, ext: v.ext || null, mobile: v.mobile || null, empNo: v.empNo || null, note: v.note || null, sortOrder: Math.max(0, slots.indexOf(slot)) + 1 })
+      })
+      await wardApi.saveOnCallMonth({ deptCode, year: y, month: m, entries }); show(`已存 ${ym}（${entries.length} 筆）`); loadRoster()
+    } catch { show('存檔失敗', true) }
+    finally { setSaving(false) }
+  }
+
+  const saveDept = async () => {
+    try { await wardApi.updateOnCallDept(deptForm.id, deptForm); show('科別設定已存'); const ds = await wardApi.getOnCallDepts(true); setDepts(ds ?? []) }
+    catch { show('科別設定存檔失敗', true) }
+  }
+
+  const cells = []
+  for (let i = 0; i < lead; i++) cells.push(null)
+  for (let d = 1; d <= daysInMonth; d++) cells.push(d)
+
   return (
     <div>
-      <div style={s.sectionSub}>急診各科值班醫師（ER 病室動態面板）</div>
-      <ErOnCallSection />
+      <PmMsg msg={msg} />
+      <div style={{ fontSize: '12px', color: '#9ca3af', marginBottom: '10px' }}>各科每日值班醫師（月曆）。選科別與月份 → 每日下拉填醫師（限該科），按「儲存本月」覆寫該科該月。多時段科別（如內科）每日可填多個時段。<b>顯示於白板之設定日後再接</b>。</div>
+      <div style={s.formCard}>
+        <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-end', flexWrap: 'wrap', marginBottom: '4px' }}>
+          <div style={{ ...s.formRow, marginBottom: 0 }}><label style={s.label}>科別</label>
+            <select style={{ ...s.input, width: '200px' }} value={deptCode} onChange={e => setDeptCode(e.target.value)}>
+              {depts.map(d => <option key={d.deptCode} value={d.deptCode}>{d.deptName}（{d.deptCode}）</option>)}
+            </select>
+          </div>
+          <div style={{ ...s.formRow, marginBottom: 0 }}><label style={s.label}>月份</label><input type="month" style={{ ...s.input, width: '170px' }} value={ym} onChange={e => setYm(e.target.value || pmToday().slice(0, 7))} /></div>
+          <button style={s.btnPrimary} onClick={save} disabled={saving || loading}>{saving ? '儲存中…' : '儲存本月'}</button>
+          <button style={s.btnSecondary} onClick={() => setShowRules(v => !v)}>{showRules ? '收合科別設定' : '科別設定/備註'}</button>
+        </div>
+        {showRules && deptForm && (
+          <div style={{ borderTop: '1px solid #e5e7eb', paddingTop: '10px', marginTop: '8px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0 12px' }}>
+              <div style={s.formRow}><label style={s.label}>科別中文</label><input style={s.input} value={deptForm.deptName} onChange={e => setDeptForm(f => ({ ...f, deptName: e.target.value }))} /></div>
+              <div style={s.formRow}><label style={s.label}>每日時段（逗號分隔，空=全日）</label><input style={s.input} value={deptForm.slots} onChange={e => setDeptForm(f => ({ ...f, slots: e.target.value }))} placeholder="值班,值日,上午,下午" /></div>
+              <div style={s.formRow}><label style={s.label}>假日緊急聯絡</label><input style={s.input} value={deptForm.holidayContact} onChange={e => setDeptForm(f => ({ ...f, holidayContact: e.target.value }))} /></div>
+              <div style={s.formRow}><label style={s.label}>預設分機</label><input style={s.input} value={deptForm.ext} onChange={e => setDeptForm(f => ({ ...f, ext: e.target.value }))} /></div>
+              <div style={s.formRow}><label style={s.label}>預設手機/MVPN</label><input style={s.input} value={deptForm.mobile} onChange={e => setDeptForm(f => ({ ...f, mobile: e.target.value }))} /></div>
+            </div>
+            <div style={s.formRow}><label style={s.label}>呼出/會診規則</label><input style={s.input} value={deptForm.callOutRule} onChange={e => setDeptForm(f => ({ ...f, callOutRule: e.target.value }))} placeholder="平常日值班呼出至17:30；六日國定假不呼出…" /></div>
+            <div style={s.formRow}><label style={s.label}>備註</label><input style={s.input} value={deptForm.remark} onChange={e => setDeptForm(f => ({ ...f, remark: e.target.value }))} placeholder="卓○德醫師出國 07/10~07/13…" /></div>
+            <button style={s.btnPrimary} onClick={saveDept}>儲存科別設定</button>
+          </div>
+        )}
+      </div>
+      <div style={s.listCard}>
+        <h4 style={s.formTitle}>{ym}　{dept?.deptName} 值班月曆{multiSlot ? `（時段：${slots.join('/')}）` : ''}</h4>
+        {loading ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#6b7280', padding: '12px 0' }}>
+            <span style={{ width: '20px', height: '20px', border: '3px solid #d6e0ea', borderTopColor: '#2D7A55', borderRadius: '50%', animation: 'board-spin 0.9s linear infinite' }} />載入中…
+          </div>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', gap: '4px' }}>
+            {['一', '二', '三', '四', '五', '六', '日'].map(w => <div key={w} style={{ textAlign: 'center', fontWeight: 700, fontSize: '13px', color: '#374151', padding: '4px 0' }}>{w}</div>)}
+            {cells.map((d, i) => {
+              if (d === null) return <div key={`b${i}`} />
+              const dateIso = `${ym}-${String(d).padStart(2, '0')}`
+              const wd = new Date(y, m - 1, d).getDay(); const weekend = wd === 0 || wd === 6
+              return (
+                <div key={dateIso} style={{ border: '1px solid #e5e7eb', borderRadius: '6px', padding: '4px', minHeight: '52px', background: weekend ? '#fafafa' : '#fff' }}>
+                  <div style={{ fontSize: '12px', fontWeight: 700, color: weekend ? '#b91c1c' : '#374151', marginBottom: '3px' }}>{d}</div>
+                  {slots.map(slot => (
+                    <div key={slot} style={{ display: 'flex', alignItems: 'center', gap: '3px', marginBottom: '2px' }}>
+                      {multiSlot && <span style={{ fontSize: '10px', color: '#9ca3af', minWidth: '26px' }}>{slot}</span>}
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <OnCallCellSelect options={docOptions} value={grid[`${dateIso}|${slot}`]?.doctorName ?? ''} onChange={name => setCell(dateIso, slot, name)} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
     </div>
   )
 }
@@ -1351,6 +1421,125 @@ function OrShiftRoomSection() {
                   <td style={s.td}><button style={s.btnEdit} onClick={() => handleEdit(i)}>編輯</button><button style={s.btnDel} onClick={() => handleDelete(i.id)}>刪除</button></td>
                 </tr>
               ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// 刷手/流動設定：逐台刀（月曆式）。選月份 → 逐台刀填 刷手/流動/備註 → 存檔（餵 OR 看板刀房卡）
+function OrScrubCircSection() {
+  const nurses = useUnitNurses('OR')
+  const nurseOpts = [...new Map(nurses.map(n => [n.name, { value: n.name, label: n.name }])).values()]
+  const base = new Date()
+  const dayISO = (off) => { const d = new Date(); d.setDate(d.getDate() + off); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` }
+  const ymOf = (off) => { const d = new Date(base.getFullYear(), base.getMonth() + off, 1); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}` }
+  const monthRange = (ym) => { const [yy, mm] = ym.split('-').map(Number); return { from: `${ym}-01`, to: `${ym}-${String(new Date(yy, mm, 0).getDate()).padStart(2, '0')}` } }
+  const tabs = [
+    { key: 'd-1', label: '昨日', from: dayISO(-1), to: dayISO(-1) },
+    { key: 'd0', label: '今日', from: dayISO(0), to: dayISO(0) },
+    { key: 'd1', label: '明日', from: dayISO(1), to: dayISO(1) },
+    ...[0, 1, 2].map(off => { const ym = ymOf(off); const r = monthRange(ym); return { key: 'm' + off, label: off === 0 ? '本月' : off === 1 ? '下月' : '下下月', ym, month: true, from: r.from, to: r.to } }),
+  ]
+  const [tabKey, setTabKey] = useState('d0')   // 預設今日
+  const tab = tabs.find(t => t.key === tabKey) || tabs[1]
+  const from = tab.from, to = tab.to
+  const [rows, setRows] = useState([])
+  const [grid, setGrid] = useState({})          // key -> {scrub,circ,note}
+  const [initial, setInitial] = useState({})
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [msg, show] = pmMsgHook()
+
+  const keyOf = r => `${String(r.opDate).slice(0, 10)}|${r.roomId ?? ''}|${r.chartNo ?? ''}|${r.opTime ?? ''}`
+  const load = useCallback(async () => {
+    setLoading(true)
+    try {
+      const res = await wardApi.getOrSurgeryList(from, to)
+      const rs = res?.rows ?? []
+      setRows(rs)
+      const g = {}; rs.forEach(r => { g[keyOf(r)] = { scrub: r.scrubNurse ?? '', circ: r.circNurse ?? '', anes: r.anesNurse ?? '', note: r.note ?? '' } })
+      setGrid(g); setInitial(JSON.parse(JSON.stringify(g)))
+    } catch { show('讀取失敗', true) }
+    finally { setLoading(false) }
+  }, [from, to])
+  useEffect(() => { load() }, [load])
+
+  const setCell = (key, field, val) => setGrid(g => ({ ...g, [key]: { ...(g[key] || { scrub: '', circ: '', anes: '', note: '' }), [field]: val } }))
+
+  const save = async () => {
+    setSaving(true)
+    try {
+      const entries = []
+      rows.forEach(r => {
+        const key = keyOf(r); const cur = grid[key] || { scrub: '', circ: '', anes: '', note: '' }; const ini = initial[key] || { scrub: '', circ: '', anes: '', note: '' }
+        if (cur.scrub !== ini.scrub || cur.circ !== ini.circ || cur.anes !== ini.anes || cur.note !== ini.note)
+          entries.push({ opDate: String(r.opDate).slice(0, 10), roomId: r.roomId ?? '', chartNo: r.chartNo ?? '', opTime: r.opTime ?? '', scrubNurse: cur.scrub, circNurse: cur.circ, anesNurse: cur.anes, note: cur.note })
+      })
+      if (!entries.length) { show('沒有變更'); setSaving(false); return }
+      await wardApi.saveOrSurgeryNurseBatch(entries); show(`已存 ${entries.length} 台刀`); await load()
+    } catch { show('存檔失敗', true) }
+    finally { setSaving(false) }
+  }
+
+  const WD = ['日', '一', '二', '三', '四', '五', '六']
+  const byDate = {}; rows.forEach(r => { const d = String(r.opDate).slice(0, 10); (byDate[d] = byDate[d] || []).push(r) })
+  const dates = Object.keys(byDate).sort()
+
+  return (
+    <div>
+      <PmMsg msg={msg} />
+      <div style={{ fontSize: '12px', color: '#9ca3af', marginBottom: '10px' }}>逐台刀設定<b>刷手/流動/備註</b>（同刀房同日多台刀可各自不同）。選月份 → 逐台刀填寫 → 「儲存本月」。顯示於 OR 病室動態刀房卡彈窗。手術清單來自排程（WhiteboardSync）。</div>
+      <div style={s.formCard}>
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+          <div style={{ ...s.unitTabs, marginBottom: 0, flexWrap: 'wrap' }}>
+            {tabs.map(t => (
+              <button key={t.key} style={{ ...s.unitTab, ...(tabKey === t.key ? s.unitTabActive : {}) }} onClick={() => setTabKey(t.key)}>
+                {t.month ? `${t.label}（${t.ym.replace('-', '/')}）` : t.label}
+              </button>
+            ))}
+          </div>
+          <div style={{ flex: 1 }} />
+          <button style={s.btnPrimary} onClick={save} disabled={saving || loading}>{saving ? '儲存中…' : '儲存'}</button>
+        </div>
+      </div>
+      <div style={s.listCard}>
+        <h4 style={s.formTitle}>{tab.month ? tab.ym.replace('-', '/') : `${tab.label}（${from.slice(5).replace('-', '/')}）`} 刀房手術（{rows.length} 台）</h4>
+        {loading ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#6b7280', padding: '12px 0' }}>
+            <span style={{ width: '20px', height: '20px', border: '3px solid #d6e0ea', borderTopColor: '#2D7A55', borderRadius: '50%', animation: 'board-spin 0.9s linear infinite' }} />載入中…
+          </div>
+        ) : rows.length === 0 ? <div style={{ color: '#9ca3af', fontSize: '14px' }}>本月無手術資料</div> : (
+          <table style={s.table}>
+            <thead><tr>{['時間', '刀房', '病人', '主刀', '術式', '刷手', '流動', '麻醉', '備註'].map(h => <th key={h} style={s.th}>{h}</th>)}</tr></thead>
+            <tbody>
+              {dates.map(d => {
+                const [yy, mm, dd] = d.split('-').map(Number)
+                const wd = WD[new Date(yy, mm - 1, dd).getDay()]
+                return (
+                  <Fragment key={d}>
+                    <tr><td colSpan="9" style={{ ...s.td, background: '#eef2f7', fontWeight: 700, color: '#374151' }}>{mm}/{dd}（{wd}）　{byDate[d].length} 台</td></tr>
+                    {byDate[d].map((r, i) => {
+                      const key = keyOf(r); const c = grid[key] || { scrub: '', circ: '', anes: '', note: '' }
+                      return (
+                        <tr key={key + '#' + i} style={{ background: i % 2 ? '#f9fafb' : '#fff' }}>
+                          <td style={s.td}>{r.opTime}</td>
+                          <td style={s.td}>{r.roomId}</td>
+                          <td style={s.td}>{r.patientName}</td>
+                          <td style={s.td}>{r.surgeonName}</td>
+                          <td style={{ ...s.td, maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={r.surgeryName}>{r.surgeryName}</td>
+                          <td style={{ ...s.td, minWidth: '120px' }}><NurseSelect options={nurseOpts} value={c.scrub} allowFree onChange={v => setCell(key, 'scrub', v)} placeholder="刷手" /></td>
+                          <td style={{ ...s.td, minWidth: '120px' }}><NurseSelect options={nurseOpts} value={c.circ} allowFree onChange={v => setCell(key, 'circ', v)} placeholder="流動" /></td>
+                          <td style={{ ...s.td, minWidth: '120px' }}><NurseSelect options={nurseOpts} value={c.anes} allowFree onChange={v => setCell(key, 'anes', v)} placeholder="麻醉" /></td>
+                          <td style={{ ...s.td, minWidth: '130px' }}><input style={s.input} value={c.note} onChange={e => setCell(key, 'note', e.target.value)} placeholder="備註" /></td>
+                        </tr>
+                      )
+                    })}
+                  </Fragment>
+                )
+              })}
             </tbody>
           </table>
         )}
@@ -2430,22 +2619,13 @@ function BedNurseAdminSection({ units }) {
   )
 }
 
-// ── 三班醫護人員面板（固定班別；醫師/照服員文字、護理師接人員管理）──
-// unit：站別（ER 四班、W52 三班…）；nursesOnly：只編護理師（W52 值班表用，不顯示醫師/照服員）
-function ErShiftPanelSection({ unit = 'ER', nursesOnly = false } = {}) {
+// ── 醫師/照服員設定（ER 面板固定班別的醫師、照服員；護理師改由「三班護理師」供給）──
+function ErShiftPanelSection({ unit = 'ER' } = {}) {
   const [list, setList] = useState([])
   const [msg, show] = pmMsgHook()
-  const nurses = useUnitNurses(unit)
-  const nurseOpts = nurses.map(n => ({ id: n.staffId, name: n.name }))
   const load = useCallback(async () => { try { setList((await wardApi.getErShiftPanelList(unit)) ?? []) } catch { show('讀取失敗', true) } }, [unit])
   useEffect(() => { load() }, [load])
   const setRow = (id, k, v) => setList(rows => rows.map(r => r.id === id ? { ...r, [k]: v } : r))
-  const toggleNurse = (id, staffId) => setList(rows => rows.map(r => {
-    if (r.id !== id) return r
-    const cur = (r.nurseStaffIds || '').split(',').filter(Boolean)
-    const next = cur.includes(String(staffId)) ? cur.filter(x => x !== String(staffId)) : [...cur, String(staffId)]
-    return { ...r, nurseStaffIds: next.join(',') }
-  }))
   const save = async (r) => {
     try {
       await wardApi.updateErShiftPanel(r.id, { unitCode: unit, shiftKey: r.shiftKey, shiftLabel: r.shiftLabel, shiftTime: r.shiftTime, doctor: r.doctor, aide: r.aide, nurseStaffIds: r.nurseStaffIds, sortOrder: r.sortOrder, isActive: r.isActive })
@@ -2456,21 +2636,14 @@ function ErShiftPanelSection({ unit = 'ER', nursesOnly = false } = {}) {
     <div>
       <PmMsg msg={msg} />
       <div style={{ fontSize: '12px', color: '#9ca3af', marginBottom: '10px' }}>
-        {nursesOnly
-          ? '對應病室動態「值班表」的三班護理師。班別固定（大夜/白班/小夜），每班可勾多位護理師（白班常多人），儲存後白板即更新。護理師名單來自人員管理（該站）。'
-          : 'ER 病室動態右上「三班醫護人員」面板。班別/時間固定；醫師、照服員自由輸入，護理師從人員管理(ER)挑選。標題列只顯示白班(白)、大夜(夜)的醫師與照服員。'}
+        ER 病室動態右上面板的醫師 / 照服員（班別/時間固定，自由輸入；看板僅顯示<b>白班、大夜</b>的醫師與照服員）。<b>護理師改由「三班護理師」設定</b>。
       </div>
-      {list.map(r => (
+      {list.filter(r => r.shiftLabel === '大夜' || r.shiftLabel === '白班').sort((a, b) => (a.shiftLabel === '白班' ? 0 : 1) - (b.shiftLabel === '白班' ? 0 : 1)).map(r => (
         <div key={r.id} style={s.formCard}>
-          <h4 style={s.formTitle}>{r.shiftLabel || '第四班'}　<span style={{ color: '#9ca3af', fontWeight: 400, fontSize: '13px' }}>{r.shiftTime}</span></h4>
-          {!nursesOnly && (
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 16px' }}>
-              <div style={s.formRow}><label style={s.label}>醫師</label><input style={s.input} value={r.doctor ?? ''} onChange={e => setRow(r.id, 'doctor', e.target.value)} placeholder="如 張○哲醫師" /></div>
-              <div style={s.formRow}><label style={s.label}>照服員</label><input style={s.input} value={r.aide ?? ''} onChange={e => setRow(r.id, 'aide', e.target.value)} placeholder="如 周○英照服員" /></div>
-            </div>
-          )}
-          <div style={s.formRow}><label style={s.label}>護理師（從人員管理挑選；可多位）</label>
-            <StaffCheckPicker staff={nurseOpts} value={r.nurseStaffIds} onToggle={sid => toggleNurse(r.id, sid)} />
+          <h4 style={s.formTitle}>{r.shiftLabel === '大夜' ? '夜班' : r.shiftLabel}</h4>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 16px' }}>
+            <div style={s.formRow}><label style={s.label}>醫師</label><input style={s.input} value={r.doctor ?? ''} onChange={e => setRow(r.id, 'doctor', e.target.value)} placeholder="如 張○哲醫師" /></div>
+            <div style={s.formRow}><label style={s.label}>照服員</label><input style={s.input} value={r.aide ?? ''} onChange={e => setRow(r.id, 'aide', e.target.value)} placeholder="如 周○英照服員" /></div>
           </div>
           <button style={s.btnPrimary} onClick={() => save(r)}>儲存此班</button>
         </div>
@@ -2482,26 +2655,36 @@ function ErShiftPanelSection({ unit = 'ER', nursesOnly = false } = {}) {
 
 // ── W52 值班表三班護理師（每日排班；點選＝順序，可日期區間疊加）──────────────
 const ROSTER_SHIFTS = ['大夜', '白班', '小夜']                                       // 三站共用
+const ER_EXTRA_SHIFT = '12:00–20:00'                                                 // ER 專屬第 4 班（單一字串來源）
 const EMERGENCY_GROUPS = ['救護班', '滅火班', '安全防護', '避難引導', '通報班']       // 三站共用（含 ICU 的通報班）
 function ShiftRosterSection({ unit = 'W52' }) {
+  const shiftList = unit === 'ER' ? [...ROSTER_SHIFTS, ER_EXTRA_SHIFT] : ROSTER_SHIFTS   // ER 於小夜下方多第 4 班
+  const emptySel = () => Object.fromEntries(shiftList.map(k => [k, []]))
   const [from, setFrom] = useState(pmToday())
   const [to, setTo] = useState(pmToday())
-  const [sel, setSel] = useState({ 大夜: [], 白班: [], 小夜: [] })   // 每班有序 staffId 陣列（＝點選順序）
-  const [list, setList] = useState([])                              // 起始日既有排班（檢視/刪除）
-  const [bedCountByStaff, setBedCountByStaff] = useState({})        // staffId → 該員在 from 日的主護床數
+  const [sel, setSel] = useState(emptySel)   // 每班有序 staffId 陣列（＝點選順序）
+  const [list, setList] = useState([])                              // 檢視日既有排班（檢視/刪除）
+  const [listDate, setListDate] = useState(pmToday())              // 當前名單檢視日（昨日/今日/明日 tab，預設今日）
+  const [bedCountByStaff, setBedCountByStaff] = useState({})        // staffId → 該員在 listDate 的主護床數
   const [bedModalStaff, setBedModalStaff] = useState(null)          // {staffId,name}；null＝彈窗關閉
   const [bedVer, setBedVer] = useState(0)                           // 病床配對版本（存檔後 +1 觸發面板重載）
   const [grpModalRow, setGrpModalRow] = useState(null)             // 緊急編組／點班彈窗的排班列；null＝關閉
   const [grpVer, setGrpVer] = useState(0)                           // 緊急編組版本（存檔後 +1 觸發面板重載）
+  const [loading, setLoading] = useState(true)                      // 當前名單/床數載入中
   const [msg, show] = pmMsgHook()
   const nurses = useUnitNurses(unit)                              // [{staffId, name}]
   const reloadBedCounts = useCallback(async () => {
     try {
-      const rows = await wardApi.getBedAssign(unit, from, '主護', true)
+      const rows = await wardApi.getBedAssign(unit, listDate, '主護', true)
       const c = {}; (rows ?? []).forEach(r => { c[r.staffId] = (c[r.staffId] || 0) + 1 }); setBedCountByStaff(c)
     } catch { /* 忽略：計數非關鍵 */ }
-  }, [unit, from])
-  const loadList = useCallback(async () => { try { setList((await wardApi.getScheduleList(unit, from, true)) ?? []); reloadBedCounts() } catch { show('讀取失敗', true) } }, [unit, from, reloadBedCounts])
+  }, [unit, listDate])
+  const loadList = useCallback(async () => {
+    setLoading(true)
+    try { setList((await wardApi.getScheduleList(unit, listDate, true)) ?? []); await reloadBedCounts() }
+    catch { show('讀取失敗', true) }
+    finally { setLoading(false) }
+  }, [unit, listDate, reloadBedCounts])
   useEffect(() => { loadList() }, [loadList])
   const toggle = (shift, id) => setSel(sc => {
     const cur = sc[shift] || []
@@ -2509,9 +2692,9 @@ function ShiftRosterSection({ unit = 'W52' }) {
   })
   const orderOf = (shift, id) => { const i = (sel[shift] || []).indexOf(id); return i < 0 ? null : i + 1 }
   const save = async () => {
-    const shifts = ROSTER_SHIFTS.map(k => ({ shift: k, staffIds: sel[k] || [] })).filter(x => x.staffIds.length)
+    const shifts = shiftList.map(k => ({ shift: k, staffIds: sel[k] || [] })).filter(x => x.staffIds.length)
     if (!shifts.length) { show('請先點選護理師', true); return }
-    try { await wardApi.setShiftRoster(unit, { from, to, shifts }); show(`已套用到 ${from}${to !== from ? ' ~ ' + to : ''}`); setSel({ 大夜: [], 白班: [], 小夜: [] }); loadList() }
+    try { await wardApi.setShiftRoster(unit, { from, to, shifts }); show(`已套用到 ${from}${to !== from ? ' ~ ' + to : ''}`); setSel(emptySel()); loadList() }
     catch { show('儲存失敗', true) }
   }
   const del = async (id) => { if (!window.confirm('刪除此排班？')) return; try { await wardApi.removeSchedule(id); show('已刪除'); loadList() } catch { show('刪除失敗', true) } }
@@ -2527,11 +2710,13 @@ function ShiftRosterSection({ unit = 'W52' }) {
           <div style={s.formRow}><label style={s.label}>起始日 *</label><input type="date" style={s.input} value={from} onChange={e => { const v = e.target.value; setFrom(v); if (to < v) setTo(v) }} /></div>
           <div style={s.formRow}><label style={s.label}>結束日（區間，可＝起始日）</label><input type="date" style={s.input} value={to} min={from} onChange={e => setTo(e.target.value)} /></div>
         </div>
-        {ROSTER_SHIFTS.map(k => (
+        {shiftList.map(k => (
           <div key={k} style={{ marginBottom: '12px' }}>
             <div style={{ fontWeight: 700, marginBottom: '5px' }}>{k}<span style={{ color: '#9ca3af', fontWeight: 400, fontSize: '12px' }}>　點選＝加入並編號，再點＝移除</span></div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-              {nurses.length === 0 ? <span style={{ color: '#9ca3af', fontSize: '13px' }}>此站尚無護理師（請先到人員管理設定 {unit} 護理師）</span> :
+              {nurses.length === 0 ? (loading
+                ? <span style={{ color: '#9ca3af', fontSize: '13px' }}>載入中…</span>
+                : <span style={{ color: '#9ca3af', fontSize: '13px' }}>此站尚無護理師（請先到人員管理設定 {unit} 護理師）</span>) :
                 nurses.map(n => {
                   const ord = orderOf(k, n.staffId); const on = ord != null
                   return (
@@ -2548,8 +2733,14 @@ function ShiftRosterSection({ unit = 'W52' }) {
         <button style={s.btnPrimary} onClick={save}>套用到{from === to ? `（${from}）` : `區間（${from} ~ ${to}）`}</button>
       </div>
       <div style={s.listCard}>
-        <h4 style={s.formTitle}>{from} 當前三班護理師</h4>
-        {ROSTER_SHIFTS.map(k => {
+        <h4 style={s.formTitle}>近期三班護理師</h4>
+        <DayTabs active={listDate} onChange={setListDate} />
+        {loading ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#6b7280', fontSize: '14px', padding: '10px 0' }}>
+            <span style={{ width: '20px', height: '20px', border: '3px solid #d6e0ea', borderTopColor: '#2D7A55', borderRadius: '50%', animation: 'board-spin 0.9s linear infinite' }} />
+            載入中…
+          </div>
+        ) : shiftList.map(k => {
           const rows = (byShift[k] || []).sort((a, b) => a.sortOrder - b.sortOrder)
           return (
             <div key={k} style={{ marginBottom: '8px', fontSize: '14px' }}>
@@ -2573,9 +2764,9 @@ function ShiftRosterSection({ unit = 'W52' }) {
       {bedModalStaff && (
         <div style={extEditOverlay} onClick={() => setBedModalStaff(null)}>
           <div style={extEditModal} onClick={e => e.stopPropagation()}>
-            <h4 style={s.formTitle}>我的病床：{bedModalStaff.name}（{from}）</h4>
+            <h4 style={s.formTitle}>我的病床：{bedModalStaff.name}（{listDate}）</h4>
             <div style={{ fontSize: '12px', color: '#9ca3af', marginBottom: '10px' }}>核取該護理師負責病床後按「存檔」。一床一主護（指派他人會覆蓋原本的）。</div>
-            <BedNurseGrid unit={unit} targetStaffId={String(bedModalStaff.staffId)} date={from} hideDate onSaved={() => { reloadBedCounts(); setBedVer(v => v + 1) }} />
+            <BedNurseGrid unit={unit} targetStaffId={String(bedModalStaff.staffId)} date={listDate} hideDate onSaved={() => { reloadBedCounts(); setBedVer(v => v + 1) }} />
             <div style={{ marginTop: '14px', textAlign: 'right' }}>
               <button style={s.btnSecondary} onClick={() => setBedModalStaff(null)}>關閉</button>
             </div>
@@ -2583,7 +2774,7 @@ function ShiftRosterSection({ unit = 'W52' }) {
         </div>
       )}
       {grpModalRow && (
-        <GroupChargeModal unit={unit} row={grpModalRow} workDate={from} onClose={() => setGrpModalRow(null)}
+        <GroupChargeModal unit={unit} row={grpModalRow} workDate={listDate} onClose={() => setGrpModalRow(null)}
           onSaved={() => { setGrpModalRow(null); loadList(); setGrpVer(v => v + 1) }} />
       )}
     </div>
@@ -2632,12 +2823,24 @@ function GroupChargeModal({ unit, row, workDate, onClose, onSaved }) {
 }
 
 // 緊急編組：昨日/今日/明日三 tab，依組別列出護理師
+// 日期 tab：昨日/今日/明日 ＋ 之後 7 天（共 10 天，offset -1~+8）；昨/今/明有標籤，其餘只顯示 MM/DD
+function DayTabs({ active, onChange }) {
+  return (
+    <div style={{ ...s.unitTabs, marginBottom: '14px', flexWrap: 'wrap' }}>
+      {[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8].map(n => {
+        const iso = pmDateOffset(n)
+        const label = n === -1 ? '昨日' : n === 0 ? '今日' : n === 1 ? '明日' : ''
+        return (
+          <button key={iso} style={{ ...s.unitTab, ...(active === iso ? s.unitTabActive : {}) }} onClick={() => onChange(iso)}>
+            {label ? `${label}（${pmMD(iso)}）` : pmMD(iso)}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
 function EmergencyGroupPanel({ unit, version = 0 }) {
-  const tabs = [
-    { iso: pmDateOffset(-1), label: '昨日' },
-    { iso: pmDateOffset(0), label: '今日' },
-    { iso: pmDateOffset(1), label: '明日' },
-  ]
   const [active, setActive] = useState(pmDateOffset(0))
   const [rows, setRows] = useState([])
   const [msg, show] = pmMsgHook()
@@ -2652,13 +2855,7 @@ function EmergencyGroupPanel({ unit, version = 0 }) {
     <div style={{ ...s.listCard, marginTop: '16px' }}>
       <PmMsg msg={msg} />
       <h4 style={s.formTitle}>緊急編組</h4>
-      <div style={{ ...s.unitTabs, marginBottom: '14px' }}>
-        {tabs.map(t => (
-          <button key={t.iso} style={{ ...s.unitTab, ...(active === t.iso ? s.unitTabActive : {}) }} onClick={() => setActive(t.iso)}>
-            {t.label}（{pmMD(t.iso)}）
-          </button>
-        ))}
-      </div>
+      <DayTabs active={active} onChange={setActive} />
       {!has
         ? <div style={{ color: '#9ca3af', fontSize: '14px' }}>（該日尚無編組）</div>
         : EMERGENCY_GROUPS.map(g => {
@@ -2678,11 +2875,6 @@ function EmergencyGroupPanel({ unit, version = 0 }) {
 
 // 病床資訊：昨日/今日/明日三 tab，只列有配到主護護理師的病床
 function BedInfoPanel({ unit, version = 0 }) {
-  const tabs = [
-    { iso: pmDateOffset(-1), label: '昨日' },
-    { iso: pmDateOffset(0), label: '今日' },
-    { iso: pmDateOffset(1), label: '明日' },
-  ]
   const [active, setActive] = useState(pmDateOffset(0))
   const [rows, setRows] = useState([])
   const [msg, show] = pmMsgHook()
@@ -2697,13 +2889,7 @@ function BedInfoPanel({ unit, version = 0 }) {
     <div style={{ ...s.listCard, marginTop: '16px' }}>
       <PmMsg msg={msg} />
       <h4 style={s.formTitle}>病床資訊</h4>
-      <div style={{ ...s.unitTabs, marginBottom: '14px' }}>
-        {tabs.map(t => (
-          <button key={t.iso} style={{ ...s.unitTab, ...(active === t.iso ? s.unitTabActive : {}) }} onClick={() => setActive(t.iso)}>
-            {t.label}（{pmMD(t.iso)}）
-          </button>
-        ))}
-      </div>
+      <DayTabs active={active} onChange={setActive} />
       {rows.length === 0
         ? <div style={{ color: '#9ca3af', fontSize: '14px' }}>（該日無配床）</div>
         : (
@@ -3066,12 +3252,13 @@ export default function AdminPage() {
       case 'icu-ext':        return <WardExtSection key="ICU" unitCode="ICU" />
       case 'or-ext':         return <WardExtSection key="OR"  unitCode="OR" />
       case 'er-ext':         return <WardExtSection key="ER"  unitCode="ER" />
-      case 'er-oncall':      return <ErOnCallManager />
+      case 'er-oncall-roster': return <OnCallScheduleSection />
       case 'er-shift':       return <ErShiftPanelSection key="ERshift" />
       case 'w52-shift':      return <ShiftRosterSection unit="W52" key="W52roster" />
       case 'icu-shift':      return <ShiftRosterSection unit="ICU" key="ICUroster" />
       case 'er-shift-roster':return <ShiftRosterSection unit="ER" key="ERroster" />
       case 'or-schedule':    return <OrScheduleManager />
+      case 'or-scrub':       return <OrScrubCircSection />
       case 'or-handover':    return <OrHandoverManager />
       // 人員管理（跨單位）
       case 'staff':          return <StaffSection />

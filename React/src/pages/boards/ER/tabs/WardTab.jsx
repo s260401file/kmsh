@@ -227,11 +227,17 @@ export default function WardTab() {
   const info = useUnitInfo('ER')                        // 頁首設定（總病床數覆寫）
   const totalBeds = info?.totalBeds ?? 19               // 留空→19；有值（含 0/1）→該值
   // 各科值班醫師（自建，後台維護）：定時輪詢，免 F5 自動更新
-  const { data: onCallData } = usePolling(() => wardApi.getOnCall('ER'), { intervalMs: BULLETIN_MS, deps: ['ER'] })
+  // 各科值班醫師（改讀「值班醫師排程」今日；內科依當下時間帶當前時段醫師）
+  const { data: onCallData } = usePolling(() => wardApi.getOnCallBoard(), { intervalMs: BULLETIN_MS, deps: ['ER-oncall'] })
   const onCallDocs = onCallData ?? []
-  // 三班醫護人員面板（自建，後台維護；護理師取自人員管理）：定時輪詢
+  // 三班醫護人員面板：醫師/照服員＋班別結構取自「醫師/照服員設定」(ErShiftPanel)；護理師改由「三班護理師」(排班)供給
   const { data: shiftData } = usePolling(() => wardApi.getErShiftPanel('ER'), { intervalMs: BULLETIN_MS, deps: ['ER-shift'] })
   const shifts = shiftData ?? []
+  const { data: schedData } = usePolling(() => wardApi.getSchedule('ER'), { intervalMs: BULLETIN_MS, deps: ['ER-sched'] })
+  const normShift = s => String(s ?? '').replace(/[–—-]/g, '-')   // 吸收 en-dash/hyphen 差異（第4班 12:00–20:00）
+  const nursesByShift = useMemo(() => {
+    const m = {}; (schedData?.shifts ?? []).forEach(s => { m[normShift(s.shiftType)] = (s.nurses ?? []).map(n => n.peName).filter(Boolean) }); return m
+  }, [schedData])
   // 急診醫師/照服員只顯示白班(白)、大夜(夜) 於標題右側
   const dayDoc = shifts.find(s => s.shift === '白班')?.doctor
   const nightDoc = shifts.find(s => s.shift === '大夜')?.doctor
@@ -290,7 +296,8 @@ export default function WardTab() {
                   <div className="ss-col" key={s.shift || s.time}>
                     <div className="ss-shift">{s.shift ? <>{s.shift} <span className="ss-time">{s.time}</span></> : <span className="ss-time">{s.time}</span>}</div>
                     {(() => {
-                      const names = (s.nurses && s.nurses.length ? s.nurses : ['—'])
+                      const schedNurses = nursesByShift[normShift(s.shift || s.time)] ?? []   // 護理師改由三班護理師(今日排班)
+                      const names = (schedNurses.length ? schedNurses : ['—'])
                       const per = s.shift ? 2 : 1   // 有班別：每行 2 個；無班別(12:00–20:00)：每行 1 個
                       const rows = []
                       for (let i = 0; i < names.length; i += per) rows.push(names.slice(i, i + per).join('／'))

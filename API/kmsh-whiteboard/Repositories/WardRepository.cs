@@ -671,6 +671,56 @@ public class WardRepository : IWardRepository
             new CommandDefinition(sql, new { From = fromDate.Date, To = toDate.Date }, cancellationToken: ct));
     }
 
+    // ── 逐台刀 刷手/流動/備註 覆蓋 [dbo].[OrSurgeryNurse] ──
+    private const string OsnCols = "Id, OpDate, RoomId, ChartNo, OpTime, ScrubNurse, CircNurse, AnesNurse, Note, UpdatedAt, CreatedAt";
+
+    public async Task<IEnumerable<OrSurgeryNurseItem>> GetOrSurgeryNurseAsync(DateTime fromDate, DateTime toDate, CancellationToken ct = default)
+    {
+        using var conn = _db.Create();
+        var sql = $@"SELECT {OsnCols} FROM [dbo].[OrSurgeryNurse] WHERE OpDate >= @From AND OpDate <= @To";
+        return await conn.QueryAsync<OrSurgeryNurseItem>(
+            new CommandDefinition(sql, new { From = fromDate.Date, To = toDate.Date }, cancellationToken: ct));
+    }
+
+    /// <summary>批次依鍵(日期+房+病歷號+時間) upsert；三欄皆空→刪除。單一交易。回寫入/刪除筆數。</summary>
+    public async Task<int> SaveOrSurgeryNurseBatchAsync(IEnumerable<OrSurgeryNurseUpsertRequest> entries, CancellationToken ct = default)
+    {
+        const string delSql = "DELETE FROM [dbo].[OrSurgeryNurse] WHERE OpDate=@OpDate AND RoomId=@RoomId AND ChartNo=@ChartNo AND OpTime=@OpTime";
+        const string updSql = @"UPDATE [dbo].[OrSurgeryNurse] SET ScrubNurse=@ScrubNurse, CircNurse=@CircNurse, AnesNurse=@AnesNurse, Note=@Note, UpdatedAt=GETDATE()
+                                WHERE OpDate=@OpDate AND RoomId=@RoomId AND ChartNo=@ChartNo AND OpTime=@OpTime";
+        const string insSql = @"INSERT INTO [dbo].[OrSurgeryNurse] (OpDate, RoomId, ChartNo, OpTime, ScrubNurse, CircNurse, AnesNurse, Note, UpdatedAt, CreatedAt)
+                                VALUES (@OpDate, @RoomId, @ChartNo, @OpTime, @ScrubNurse, @CircNurse, @AnesNurse, @Note, GETDATE(), GETDATE())";
+        using var conn = _db.Create();
+        conn.Open();
+        using var tx = conn.BeginTransaction();
+        int n = 0;
+        try
+        {
+            foreach (var e in entries ?? Enumerable.Empty<OrSurgeryNurseUpsertRequest>())
+            {
+                var p = new
+                {
+                    OpDate = DateTime.Parse(e.OpDate).Date, RoomId = e.RoomId ?? "", ChartNo = e.ChartNo ?? "", OpTime = e.OpTime ?? "",
+                    ScrubNurse = string.IsNullOrWhiteSpace(e.ScrubNurse) ? null : e.ScrubNurse!.Trim(),
+                    CircNurse = string.IsNullOrWhiteSpace(e.CircNurse) ? null : e.CircNurse!.Trim(),
+                    AnesNurse = string.IsNullOrWhiteSpace(e.AnesNurse) ? null : e.AnesNurse!.Trim(),
+                    Note = string.IsNullOrWhiteSpace(e.Note) ? null : e.Note!.Trim()
+                };
+                if (p.ScrubNurse is null && p.CircNurse is null && p.AnesNurse is null && p.Note is null)
+                {
+                    n += await conn.ExecuteAsync(new CommandDefinition(delSql, p, tx, cancellationToken: ct));
+                    continue;
+                }
+                var upd = await conn.ExecuteAsync(new CommandDefinition(updSql, p, tx, cancellationToken: ct));
+                if (upd == 0) await conn.ExecuteAsync(new CommandDefinition(insSql, p, tx, cancellationToken: ct));
+                n++;
+            }
+            tx.Commit();
+        }
+        catch { tx.Rollback(); throw; }
+        return n;
+    }
+
     /// <summary>依唯一鍵(日期+刀房+病歷號+時間) upsert；存在則更新欄位＋LastSeen、Completed 歸 0。</summary>
     public async Task<int> UpsertOrDailyAsync(OrDailySurgeryItem it, CancellationToken ct = default)
     {

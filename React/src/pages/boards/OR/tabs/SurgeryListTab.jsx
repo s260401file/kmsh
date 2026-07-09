@@ -1,6 +1,6 @@
 // SurgeryListTab：OR 手術室站「手術清單」分頁（第 7 頁籤）
 // 資料來源：後端 /api/Board/or/surgerylist（讀本地清洗表 OrSurgery，由 WhiteboardSync ETL 落地）。
-// 預設本月；欄位排列參考紙本 orschedule.jpg（「補充」「刷手/流動/麻醉」欄暫留空，資料未串）。
+// 預設本月；「補充」＝備註、「刷手/流動」欄由「刷手/流動設定」(OrSurgeryNurse) 逐台刀合併帶入。
 // 上方顯示 總/住/門/急 統計；下方提供 上個月/本月/下個月/今日 快速鈕與自訂日期範圍查詢。
 import { useState } from 'react'
 import { usePolling } from '../../../../hooks/usePolling'
@@ -13,7 +13,7 @@ const fmt = d => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate(
 const monthRange = (y, m) => ({ from: fmt(new Date(y, m, 1)), to: fmt(new Date(y, m + 1, 0)) })  // m: 0-index
 
 const today = new Date()
-const DEFAULT = monthRange(today.getFullYear(), today.getMonth())
+const DEFAULT = { from: fmt(today), to: fmt(today) }   // 預設停在今日
 
 export default function SurgeryListTab() {
   const [range, setRange] = useState(DEFAULT)          // { from, to } yyyy-MM-dd（皆含）
@@ -41,6 +41,19 @@ export default function SurgeryListTab() {
   const [fy, fm, fd] = range.from.split('-').map(Number)
   const isWholeMonth = fd === 1 && range.to === monthRange(fy, fm - 1).to
   const periodLabel = isWholeMonth ? `${fy}-${pad2(fm)} 手術清單` : `${range.from} ~ ${range.to} 手術清單`
+
+  // 目前選中的快速鈕（長亮）
+  const fmtOff = n => { const d = new Date(today); d.setDate(d.getDate() + n); return fmt(d) }
+  const monthOff = delta => { const d = new Date(today.getFullYear(), today.getMonth() + delta, 1); return monthRange(d.getFullYear(), d.getMonth()) }
+  const eqR = r => range.from === r.from && range.to === r.to
+  const isDay = range.from === range.to
+  const activeBtn = isDay && range.from === fmtOff(-1) ? 'd-1'
+    : isDay && range.from === fmtOff(0) ? 'd0'
+    : isDay && range.from === fmtOff(1) ? 'd1'
+    : eqR(monthOff(-1)) ? 'm-1'
+    : eqR(monthOff(0)) ? 'm0'
+    : eqR(monthOff(1)) ? 'm1' : ''
+  const btnCls = k => `sl-btn${activeBtn === k ? ' sl-btn-active' : ''}`
 
   const wardCell = r => r.sourceWard ? `${r.sourceWard}${r.sourceBed ? '-' + r.sourceBed : ''}` : (r.caseTypeText || '')
   const typeCls = t => t === '住院' ? 'sl-t-in' : t === '門診' ? 'sl-t-out' : t === '急診' ? 'sl-t-emg' : ''
@@ -105,8 +118,8 @@ export default function SurgeryListTab() {
                     <td>{r.surgeonName}</td>
                     <td className="sl-col-op">{r.surgeryName}</td>
                     <td className="sl-mono">{r.icdCodes}</td>
-                    <td className="sl-empty-col"></td>
-                    <td className="sl-empty-col"></td>
+                    <td>{r.note}</td>
+                    <td>{[r.scrubNurse, r.circNurse, r.anesNurse].filter(Boolean).join(' / ')}</td>
                   </tr>
                 )
               })}
@@ -116,12 +129,12 @@ export default function SurgeryListTab() {
 
         {/* 下方：快速鈕 + 自訂範圍查詢 */}
         <div className="sl-controls">
-          <button className="sl-btn" onClick={() => shiftMonth(-1)}>上個月</button>
-          <button className="sl-btn" onClick={thisMonth}>本月</button>
-          <button className="sl-btn" onClick={() => shiftMonth(1)}>下個月</button>
-          <button className="sl-btn" onClick={() => dayOffset(-1)}>昨日</button>
-          <button className="sl-btn" onClick={() => dayOffset(0)}>今日</button>
-          <button className="sl-btn" onClick={() => dayOffset(1)}>明日</button>
+          <button className={btnCls('m-1')} onClick={() => shiftMonth(-1)}>上個月</button>
+          <button className={btnCls('m0')} onClick={thisMonth}>本月</button>
+          <button className={btnCls('m1')} onClick={() => shiftMonth(1)}>下個月</button>
+          <button className={btnCls('d-1')} onClick={() => dayOffset(-1)}>昨日</button>
+          <button className={btnCls('d0')} onClick={() => dayOffset(0)}>今日</button>
+          <button className={btnCls('d1')} onClick={() => dayOffset(1)}>明日</button>
           <span className="sl-sep" />
           <span className="sl-custom-label">自訂：</span>
           <input type="date" className="sl-date-input" value={cf} onChange={e => setCf(e.target.value)} />

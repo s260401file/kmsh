@@ -23,9 +23,10 @@ public class BoardController : ControllerBase
     private readonly IJwtTokenService _jwt;
     private readonly IOrReportRepository _orReport;
     private readonly IMasterDataRepository _master;
+    private readonly IOnCallRepository _oncall;
     private readonly ILogger<BoardController> _logger;
 
-    public BoardController(IBoardApiService board, IWardRepository ward, IPersonnelRepository staff, ILdapAuthenticator ldap, IJwtTokenService jwt, IOrReportRepository orReport, IMasterDataRepository master, ILogger<BoardController> logger)
+    public BoardController(IBoardApiService board, IWardRepository ward, IPersonnelRepository staff, ILdapAuthenticator ldap, IJwtTokenService jwt, IOrReportRepository orReport, IMasterDataRepository master, IOnCallRepository oncall, ILogger<BoardController> logger)
     {
         _board = board;
         _ward = ward;
@@ -34,6 +35,7 @@ public class BoardController : ControllerBase
         _jwt = jwt;
         _orReport = orReport;
         _master = master;
+        _oncall = oncall;
         _logger = logger;
     }
 
@@ -475,6 +477,11 @@ public class BoardController : ControllerBase
             if (!string.IsNullOrWhiteSpace(his)) extByHis.TryGetValue(his!.Trim(), out e);
             return e;
         }
+        // 逐台刀刷手/流動/備註覆蓋（今日）
+        var osn = (await _ward.GetOrSurgeryNurseAsync(today, today, ct))
+            .GroupBy(x => OsnKey(x.OpDate, x.RoomId, x.ChartNo, x.OpTime))
+            .ToDictionary(g => g.Key, g => g.First());
+        OrSurgeryNurseItem? OsnOf(OrDailySurgeryItem d) => osn.TryGetValue(OsnKey(d.SurgeryDate, d.RoomId, d.Hhisnum, d.OpTime), out var a) ? a : null;
 
         var byRoom = daily
             .GroupBy(d => d.RoomId ?? "", StringComparer.OrdinalIgnoreCase)
@@ -493,7 +500,7 @@ public class BoardController : ControllerBase
             var dto = new OrRoomDto { RoomId = r.RoomId, ApiRoom = r.ApiRoom, SortOrder = r.SortOrder };
             if (byRoom.TryGetValue(r.RoomId, out var list) && list.Count > 0)
             {
-                dto.Surgeries = list.Select(d => BuildOrSurgeryFromDaily(d, ExtOf(d.Hhisnum), now)).ToList();
+                dto.Surgeries = list.Select(d => BuildOrSurgeryFromDaily(d, ExtOf(d.Hhisnum), OsnOf(d), now)).ToList();
                 dto.TodayCount = dto.Surgeries.Count;
                 // 房卡顯示（Surgeries 已依時間排序）：手術中優先；否則顯示「第一台仍在保留期內」的刀——
                 // 每台過預定時間後房卡仍停留 OrCardHoldMinutes 分鐘，超過才換下一台；全部過保留則停在最後一台。
@@ -548,8 +555,12 @@ public class BoardController : ControllerBase
         await _ward.PurgeOrDailyAsync(today.AddDays(-14), ct);
     }
 
-    /// <summary>當日快照 ＋ WardPatientExt overlay → OR 手術 DTO；Completed→已完成、否則時間/overlay 推導。</summary>
-    private static OrSurgeryDto BuildOrSurgeryFromDaily(OrDailySurgeryItem d, WardPatientExtItem? e, DateTime now) => new()
+    /// <summary>逐台刀覆蓋鍵：日期|白板房號|病歷號|預計時間（各 trim；供 OrSurgery/OrDaily/OrSurgeryNurse 對應）。</summary>
+    private static string OsnKey(DateTime? date, string? roomId, string? chartNo, string? opTime)
+        => $"{(date ?? default).ToString("yyyy-MM-dd")}|{(roomId ?? "").Trim()}|{(chartNo ?? "").Trim()}|{(opTime ?? "").Trim()}";
+
+    /// <summary>當日快照 ＋ WardPatientExt overlay ＋ 逐台刀刷手/流動覆蓋 → OR 手術 DTO。</summary>
+    private static OrSurgeryDto BuildOrSurgeryFromDaily(OrDailySurgeryItem d, WardPatientExtItem? e, OrSurgeryNurseItem? a, DateTime now) => new()
     {
         PatientName = MaskName(d.PatientName), Gender = d.Gender, Age = CalcAge(d.BirthDate), BirthDate = FormatBirth(d.BirthDate),
         MedRecord = d.Hhisnum, Diagnosis = string.IsNullOrWhiteSpace(d.Diagnosis) ? e?.Diagnosis : d.Diagnosis,
@@ -557,7 +568,10 @@ public class BoardController : ControllerBase
         ScheduledTime = d.OpTime,
         SurgeryStatus = d.Completed ? "已完成" : DeriveOrStatus(d.OpTime, e?.StartTime, e?.EndTime, now),
         StartTime = e?.StartTime, EndTime = e?.EndTime,
-        Department = e?.Department, ScrubNurse = e?.ScrubNurse, CircNurse = e?.CircNurse, Notes = e?.Notes
+        Department = e?.Department,
+        ScrubNurse = a?.ScrubNurse ?? e?.ScrubNurse,   // 逐台刀覆蓋優先，無則 WardPatientExt 後備
+        CircNurse = a?.CircNurse ?? e?.CircNurse,
+        Notes = a?.Note ?? e?.Notes
     };
 
     /// <summary>房卡停留（分）：某台過了預定時間、仍未登記進刀房，房卡仍停留此久；超過才換下一台。</summary>
@@ -662,6 +676,90 @@ public class BoardController : ControllerBase
     [HttpDelete("oncall/{id:int}")]
     public async Task<IActionResult> DeleteOnCall(int id, CancellationToken ct = default)
         => await _ward.DeleteOnCallAsync(id, ct) ? NoContent() : NotFound();
+
+    // ── 各科值班醫師「每日輪值排程」（月曆後台；顯示端日後接）──────────────
+    // 科別設定 OnCallDept
+    [HttpGet("oncall-dept")]
+    public async Task<IActionResult> GetOnCallDepts([FromQuery] bool includeAll = true, CancellationToken ct = default)
+        => Ok(await _oncall.GetDeptsAsync(includeAll, ct));
+
+    [HttpGet("oncall-dept/{id:int}")]
+    public async Task<IActionResult> GetOnCallDeptById(int id, CancellationToken ct = default)
+    {
+        var item = await _oncall.GetDeptByIdAsync(id, ct);
+        return item is null ? NotFound() : Ok(item);
+    }
+
+    [HttpPost("oncall-dept")]
+    public async Task<IActionResult> CreateOnCallDept([FromBody] OnCallDeptUpsertRequest req, CancellationToken ct = default)
+    {
+        var id = await _oncall.CreateDeptAsync(req, ct);
+        return CreatedAtAction(nameof(GetOnCallDeptById), new { id }, await _oncall.GetDeptByIdAsync(id, ct));
+    }
+
+    [HttpPut("oncall-dept/{id:int}")]
+    public async Task<IActionResult> UpdateOnCallDept(int id, [FromBody] OnCallDeptUpsertRequest req, CancellationToken ct = default)
+        => await _oncall.UpdateDeptAsync(id, req, ct) ? Ok(await _oncall.GetDeptByIdAsync(id, ct)) : NotFound();
+
+    [HttpDelete("oncall-dept/{id:int}")]
+    public async Task<IActionResult> DeleteOnCallDept(int id, CancellationToken ct = default)
+        => await _oncall.DeleteDeptAsync(id, ct) ? NoContent() : NotFound();
+
+    // 每日輪值 OnCallRoster
+    [HttpGet("oncall-roster")]
+    public async Task<IActionResult> GetOnCallRoster([FromQuery] string? deptCode, [FromQuery] string? from, [FromQuery] string? to, CancellationToken ct = default)
+    {
+        DateTime? f = string.IsNullOrWhiteSpace(from) ? null : DateTime.Parse(from);
+        DateTime? t = string.IsNullOrWhiteSpace(to) ? null : DateTime.Parse(to);
+        return Ok(await _oncall.GetRosterAsync(string.IsNullOrWhiteSpace(deptCode) ? null : deptCode, f, t, ct));
+    }
+
+    /// <summary>某日全科值班（供日後看板顯示）。</summary>
+    [HttpGet("oncall-roster/day")]
+    public async Task<IActionResult> GetOnCallRosterDay([FromQuery] string? date, CancellationToken ct = default)
+    {
+        var d = string.IsNullOrWhiteSpace(date) ? DateTime.Today : DateTime.Parse(date);
+        return Ok(await _oncall.GetDayAsync(d, ct));
+    }
+
+    /// <summary>看板「各科值班醫師」面板：每科一位（含全部啟用科別）；多時段科（內科）依當下時間帶當前時段醫師。</summary>
+    [HttpGet("oncall-board")]
+    public async Task<IActionResult> GetOnCallBoard([FromQuery] string? date, CancellationToken ct = default)
+    {
+        var d = string.IsNullOrWhiteSpace(date) ? DateTime.Today : DateTime.Parse(date);
+        var depts = (await _oncall.GetDeptsAsync(false, ct)).OrderBy(x => x.SortOrder).ThenBy(x => x.Id).ToList();
+        var rows = (await _oncall.GetDayAsync(d, ct)).ToList();
+        // 作用時段（伺服器＝看板同機）：上午 08:00–13:00、下午 13:00–17:30、其餘＝值班（夜間）
+        var now = DateTime.Now.TimeOfDay;
+        var activeSlot = (now >= TimeSpan.FromHours(8) && now < TimeSpan.FromHours(13)) ? "上午"
+                       : (now >= TimeSpan.FromHours(13) && now < new TimeSpan(17, 30, 0)) ? "下午"
+                       : "值班";
+        var result = depts.Select(dp =>
+        {
+            var drows = rows.Where(r => r.DeptCode == dp.DeptCode).OrderBy(r => r.SortOrder).ThenBy(r => r.Id).ToList();
+            var pick = drows.Count <= 1 ? drows.FirstOrDefault()
+                     : (drows.FirstOrDefault(r => r.Slot == activeSlot) ?? drows.First());
+            return new { deptCode = dp.DeptCode, deptName = dp.DeptName, doctorName = pick?.DoctorName, ext = pick?.Ext, mobile = pick?.Mobile, slot = pick?.Slot };
+        });
+        return Ok(result);
+    }
+
+    [HttpPost("oncall-roster")]
+    public async Task<IActionResult> CreateOnCallRoster([FromBody] OnCallRosterUpsertRequest req, CancellationToken ct = default)
+        => Ok(new { id = await _oncall.CreateRosterAsync(req, ct) });
+
+    [HttpPut("oncall-roster/{id:int}")]
+    public async Task<IActionResult> UpdateOnCallRoster(int id, [FromBody] OnCallRosterUpsertRequest req, CancellationToken ct = default)
+        => await _oncall.UpdateRosterAsync(id, req, ct) ? NoContent() : NotFound();
+
+    [HttpDelete("oncall-roster/{id:int}")]
+    public async Task<IActionResult> DeleteOnCallRoster(int id, CancellationToken ct = default)
+        => await _oncall.DeleteRosterAsync(id, ct) ? NoContent() : NotFound();
+
+    /// <summary>月曆整月存檔（覆寫該科該月）。</summary>
+    [HttpPost("oncall-roster/month")]
+    public async Task<IActionResult> SaveOnCallMonth([FromBody] OnCallMonthSaveRequest req, CancellationToken ct = default)
+        => Ok(new { saved = await _oncall.SaveMonthAsync(req, ct) });
 
     // ── ER 三班醫護人員面板（自建；護理師掛人員管理）──────────────────
     /// <summary>看板：ER 四班面板，護理師 Staff.Id→姓名解析；回 camelCase。</summary>
@@ -850,6 +948,15 @@ public class BoardController : ControllerBase
         if ((t - f).TotalDays > 92) return BadRequest(new { message = "查詢區間過長（上限約 3 個月）" });
 
         var rows = (await _ward.GetOrSurgeryListAsync(f, t, ct)).ToList();
+        // 合併逐台刀刷手/流動/備註覆蓋（鍵＝日期|房|病歷號|時間）
+        var osn = (await _ward.GetOrSurgeryNurseAsync(f, t, ct))
+            .GroupBy(x => OsnKey(x.OpDate, x.RoomId, x.ChartNo, x.OpTime))
+            .ToDictionary(g => g.Key, g => g.First());
+        foreach (var r in rows)
+        {
+            if (osn.TryGetValue(OsnKey(r.OpDate, r.RoomId, r.ChartNo, r.OpTime), out var a))
+            { r.ScrubNurse = a.ScrubNurse; r.CircNurse = a.CircNurse; r.AnesNurse = a.AnesNurse; r.Note = a.Note; }
+        }
         foreach (var r in rows) r.PatientName = MaskName(r.PatientName);   // 公開看板：病人姓名去識別化（統計不受影響）
         var stats = new OrMonthlyStats
         {
@@ -869,6 +976,11 @@ public class BoardController : ControllerBase
             Rows = rows,
         });
     }
+
+    /// <summary>逐台刀 刷手/流動/備註 批次存檔（後台月曆一次送出變更；三欄皆空＝清除該台刀）。</summary>
+    [HttpPost("or/surgery-nurse/batch")]
+    public async Task<IActionResult> SaveOrSurgeryNurse([FromBody] OrSurgeryNurseBatchRequest req, CancellationToken ct = default)
+        => Ok(new { saved = await _ward.SaveOrSurgeryNurseBatchAsync(req.Entries ?? new(), ct) });
 
     /// <summary>OR 手術清單（全部排程，攤平）：供 ICU/W52「手術資訊」分頁；狀態依時間推導。</summary>
     [HttpGet("or/surgeries")]

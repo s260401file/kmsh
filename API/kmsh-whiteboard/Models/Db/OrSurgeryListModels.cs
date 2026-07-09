@@ -28,6 +28,11 @@ public class OrSurgeryListRow
     public string? CancelReason { get; set; }      // 取消/DC 原因
     public DateTime? EndDate { get; set; }
     public string? EndTime { get; set; }
+    // 逐台刀覆蓋（OrSurgeryNurse，依 OpDate+RoomId+ChartNo+OpTime 合併）
+    public string? ScrubNurse { get; set; }        // 刷手護理師
+    public string? CircNurse { get; set; }         // 流動護理師
+    public string? AnesNurse { get; set; }         // 麻醉人員
+    public string? Note { get; set; }              // 備註
 }
 
 /// <summary>手術清單回應：期間＋統計＋明細。統計型別沿用 OrMonthlyStats／CodeCount。</summary>

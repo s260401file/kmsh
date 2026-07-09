@@ -64,6 +64,7 @@ builder.Services.AddScoped<IPersonnelRepository, PersonnelRepository>();
 builder.Services.AddScoped<IAuditRepository, AuditRepository>();
 builder.Services.AddScoped<IOrReportRepository, OrReportRepository>();   // OR 月報：直接讀 DB2_DUMP OPORDER
 builder.Services.AddScoped<IMasterDataRepository, MasterDataRepository>();   // 全院共用主檔：科別／醫師
+builder.Services.AddScoped<IOnCallRepository, OnCallRepository>();   // 各科值班醫師每日輪值排程
 // LDAP／AD 認證（LLDAP@101；設定檔驅動，Enabled=false 時為過渡期員編登入）
 builder.Services.Configure<kmsh_whiteboard.Settings.LdapOptions>(
     builder.Configuration.GetSection(kmsh_whiteboard.Settings.LdapOptions.Section));

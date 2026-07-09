@@ -105,4 +105,8 @@ public interface IWardRepository
 
     // ── OR 清洗手術清單 [dbo].[OrSurgery]（由 WhiteboardSync ETL 落地；表不存在時回空）──
     Task<IEnumerable<OrSurgeryListRow>> GetOrSurgeryListAsync(DateTime fromDate, DateTime toDate, CancellationToken ct = default);
+
+    // ── OR 逐台刀 刷手/流動/備註 覆蓋 [dbo].[OrSurgeryNurse] ──
+    Task<IEnumerable<OrSurgeryNurseItem>> GetOrSurgeryNurseAsync(DateTime fromDate, DateTime toDate, CancellationToken ct = default);
+    Task<int> SaveOrSurgeryNurseBatchAsync(IEnumerable<OrSurgeryNurseUpsertRequest> entries, CancellationToken ct = default);
 }
