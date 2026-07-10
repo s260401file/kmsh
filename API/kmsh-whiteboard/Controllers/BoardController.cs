@@ -1135,7 +1135,12 @@ public class BoardController : ControllerBase
     [HttpGet("{unitCode}/exam")]
     public async Task<IActionResult> GetExamConsult(string unitCode, CancellationToken ct = default)
     {
-        var rows = (await _ward.GetExamConsultAsync(unitCode, false, ct)).ToList();
+        // 看板只顯示「設定時間（UpdatedAt，最後一次於後台設定）」起 24 小時內的項目；逾時自動下板。
+        // 例：7/10 18:00 設定 → 7/11 18:00 後不再顯示。UpdatedAt 由 SQL GETDATE()（本地時間）寫入，故以 DateTime.Now 比較。
+        var cutoff = DateTime.Now.AddHours(-24);
+        var rows = (await _ward.GetExamConsultAsync(unitCode, false, ct))
+            .Where(r => r.UpdatedAt > cutoff)
+            .ToList();
         // 依規格書：以執行日「最新時間」排序，最新在前（檢查＝檢查時間 ScheduledDate+TimeSlot；會診＝會診時間 CompletedTime）
         var exams = rows.Where(r => r.Kind == "檢查")
             .OrderByDescending(r => r.ScheduledDate ?? "")

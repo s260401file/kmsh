@@ -807,7 +807,7 @@
             <tr><td class="col-no">04</td><td class="col-tab"><a href="#w52-ep-4">檢查/會診</a></td><td class="col-spec">§7.1.2 (5)</td><td class="col-method">GET</td><td class="col-path"><a href="#w52-ep-4">/api/wards/{wardCode}/exam-consult?date=</a></td><td>檢查清單 + 會診清單</td></tr>
             <tr><td class="col-no">05</td><td class="col-tab"><a href="#w52-ep-5">連絡電話</a></td><td class="col-spec">§7.1.2 (6)</td><td class="col-method">GET</td><td class="col-path"><a href="#w52-ep-5">/api/wards/{wardCode}/contacts?date=</a></td><td>當日值班 + 常用電話</td></tr>
             <tr><td class="col-no">06</td><td class="col-tab"><a href="#w52-ep-6">排班資訊</a></td><td class="col-spec">§7.1.2 (7)</td><td class="col-method">GET</td><td class="col-path"><a href="#w52-ep-6">/api/wards/{wardCode}/schedule?date=</a></td><td>三班別護理人員/專師/住院醫師</td></tr>
-            <tr><td class="col-no">07</td><td class="col-tab"><a href="#w52-ep-7">醫師資訊</a></td><td class="col-spec">§7.1.2 (8)</td><td class="col-method">GET</td><td class="col-path"><a href="#w52-ep-7">/api/wards/{wardCode}/doctor-info?date=</a></td><td>負責床位 + 查房時間表</td></tr>
+            <tr><td class="col-no">07</td><td class="col-tab"><a href="#w52-ep-7">醫師資訊</a></td><td class="col-spec">§7.1.2 (8)</td><td class="col-method">GET</td><td class="col-path"><a href="#w52-ep-7">/api/wards/{wardCode}/doctor-info?date=</a></td><td>HIS 負責醫師/科別分組負責床位 + 查房時間表</td></tr>
             <tr><td class="col-no">08</td><td class="col-tab"><a href="#w52-ep-8">佈告欄</a></td><td class="col-spec">§7.1.2 (9)</td><td class="col-method">GET</td><td class="col-path"><a href="#w52-ep-8">/api/wards/{wardCode}/bulletins</a></td><td>護理站公告 + 院方公告</td></tr>
             <tr><td class="col-no">09</td><td class="col-tab"><a href="#w52-ep-9">避難圖</a></td><td class="col-spec">§7.1.2 (10)</td><td class="col-method">GET</td><td class="col-path"><a href="#w52-ep-9">/api/wards/{wardCode}/evacuation</a></td><td>避難圖 + 設備清單 + 緊急聯絡</td></tr>
             <tr><td class="col-no">10</td><td class="col-tab"><a href="#w52-ep-10">護理交班</a></td><td class="col-spec">§7.1.2 (11)</td><td class="col-method">GET</td><td class="col-path"><a href="#w52-ep-10">/api/wards/{wardCode}/handover?date=</a></td><td>交班日誌摘要（病患重點交班）</td></tr>
@@ -1296,7 +1296,7 @@
             <span class="tag tag-tab">頁籤 7 · 醫師資訊</span>
             <span class="tag tag-spec">§7.1.2 (8.1)(8.2)</span>
             <span class="tag tag-file">doctor.html · js/doctorData.js</span>
-            <span class="tag tag-status-local">本地 DB</span>
+            <span class="tag tag-status-local">HIS + 本地</span>
           </div>
           <div class="method-path">
             <span class="method-get">GET</span>
@@ -1308,18 +1308,16 @@
         <img class="shot" src="W52-board/api-shots/doctor.jpg" alt="ep-7 畫面示意">
         <div class="shot-cap">目前前端實際畫面（doctor.html）</div>
           <h4>用途</h4>
-          <p>左欄醫師/專師負責床位、右欄查房時間表（依日期分組顯示）。</p>
+          <p>左欄依院方 HIS <strong>負責醫師 / 科別</strong>，把在床病人（以病歷號比對）分組為各醫師的負責床位；右欄查房時間表（依日期分組顯示）。免自建「醫師-床位對照表」。</p>
 
           <h4>Data 結構</h4>
           <table class="field-table">
             <thead><tr><th class="col-field">欄位</th><th class="col-type">型別</th><th class="col-src">來源</th><th class="col-his">HIS欄位存在</th><th>說明</th></tr></thead>
             <tbody>
-              <tr><td class="col-field">DoctorBeds</td><td><span class="type-tag type-array">DoctorBed[]</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>(8.1) 負責床位</td></tr>
-              <tr><td class="col-field nested">.DoctorId / .DoctorNo / .DoctorName</td><td><span class="type-tag type-string">基本欄位</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>醫師基本</td></tr>
-              <tr><td class="col-field nested">.Role</td><td><span class="type-tag type-enum">enum</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td><code>主治醫師</code> / <code>專科護理師</code></td></tr>
-              <tr><td class="col-field nested">.Specialty</td><td><span class="type-tag type-string">string</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>專科</td></tr>
-              <tr><td class="col-field nested">.Ext</td><td><span class="type-tag type-string">string</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>分機</td></tr>
-              <tr><td class="col-field nested">.BedNos</td><td><span class="type-tag type-array">string[]</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>負責床位陣列</td></tr>
+              <tr><td class="col-field">DoctorBeds</td><td><span class="type-tag type-array">DoctorBed[]</span></td><td class="col-src"><span class="src-his">院方</span></td><td class="col-his"><span class="his-yes">✓</span></td><td>(8.1) 依 HIS 負責醫師分組的負責床位</td></tr>
+              <tr><td class="col-field nested">.DoctorName</td><td><span class="type-tag type-string">string</span></td><td class="col-src"><span class="src-his">院方</span></td><td class="col-his"><span class="his-yes">✓</span></td><td>負責醫師（<code>Board_bed</code> 負責醫師）</td></tr>
+              <tr><td class="col-field nested">.Specialty</td><td><span class="type-tag type-string">string</span></td><td class="col-src"><span class="src-his">院方</span></td><td class="col-his"><span class="his-yes">✓</span></td><td>科別（<code>Board_bed</code> 科別）</td></tr>
+              <tr><td class="col-field nested">.BedNos</td><td><span class="type-tag type-array">string[]</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>在床病人依負責醫師分組後的床位陣列</td></tr>
               <tr><td class="col-field">RoundSchedule</td><td><span class="type-tag type-array">Round[]</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>(8.2) 查房時間表</td></tr>
               <tr><td class="col-field nested">.RoundId</td><td><span class="type-tag type-int">int</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>—</td></tr>
               <tr><td class="col-field nested">.RoundDate</td><td><span class="type-tag type-string">yyyyMMdd</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>巡房日期（前端顯示星期）</td></tr>
@@ -1333,8 +1331,8 @@
 
           <h4>資料來源</h4>
           <ul>
-            <li><strong>本地 DB：</strong><code>DoctorInfo</code>（醫師資訊）、<code>DoctorRound</code>（查房排程）</li>
-            <li><strong>待新增：</strong>醫師-床位對照表（規格 8.1 要求，目前 schema 未提供）</li>
+            <li><strong>院方 HIS：</strong><code>Board_bed</code> 負責醫師 / 科別（以病歷號比對在床病人分組，免自建醫師-床位對照表）</li>
+            <li><strong>本地 DB：</strong><code>DoctorRound</code>（查房排程，右欄查房時間表）</li>
           </ul>
         </div>
       </article>
@@ -2149,6 +2147,9 @@
         <div class="note note-icu">
           <strong>ICU 特有：</strong>bedIds 使用 ICU 床位格式（<code>F4-01</code>），與 W52 的 3 碼純數字（<code>001</code>）不同。白班 6 位護理人員分別負責 4F 前半/後半/3F 全區。
         </div>
+        <div class="note note-icu">
+          <strong>AICU 值班表面板：</strong>病室動態 4F 平面 <code>F4-01</code> 下方顯示「AICU 值班表」面板，其三班護理師即取自本 schedule（逐日）；面板之醫療團隊 / 照服員 / 日期目前為靜態資料。
+        </div>
       </div>
     </article>
 
@@ -2349,6 +2350,7 @@
           <tr><td class="col-no">04</td><td class="col-tab"><a href="#or-ep-4">連絡電話</a></td><td class="col-spec">§7.1.2(6)</td><td>GET</td><td class="col-path"><a href="#or-ep-4">/api/wards/OR/contacts?date=</a></td><td>當日值班（7人）+ 常用電話（14筆）</td></tr>
           <tr><td class="col-no">05</td><td class="col-tab"><a href="#or-ep-5">佈告欄</a></td><td class="col-spec">§7.1.2(9)</td><td>GET</td><td class="col-path"><a href="#or-ep-5">/api/wards/OR/bulletins</a></td><td>手術室公告（4筆）+ 院方公告（3筆）</td></tr>
           <tr><td class="col-no">06</td><td class="col-tab"><a href="#or-ep-6">避難圖</a></td><td class="col-spec">§7.1.2(10)</td><td>GET</td><td class="col-path"><a href="#or-ep-6">/api/wards/OR/evacuation</a></td><td>5F 平面示意 + 設備清單（10項）+ 緊急聯絡（3筆）</td></tr>
+          <tr><td class="col-no">07</td><td class="col-tab"><a href="#or-ep-7">手術清單</a></td><td class="col-spec">加值</td><td>GET</td><td class="col-path"><a href="#or-ep-7">/api/wards/OR/surgery-list?from=&amp;to=</a></td><td>整月刀房手術清單（本地 ETL OrSurgery + 逐台刀刷手/流動/麻醉/備註）</td></tr>
         </tbody>
       </table>
     </section>
@@ -2398,8 +2400,10 @@
             <tr><td class="col-field nested" style="padding-left:32px">.SurgerySource</td><td><span class="type-tag type-enum">enum</span></td><td class="col-src"><span class="src-his">資訊室</span></td><td class="col-his"><span class="his-yes">✓</span></td><td><code>急診刀</code> / <code>門診刀</code> / <code>住院刀</code></td></tr>
             <tr><td class="col-field nested" style="padding-left:32px">.SurgeryStatus</td><td><span class="type-tag type-enum">enum</span></td><td class="col-src"><span class="src-his">資訊室</span></td><td class="col-his"><span class="his-yes">✓</span></td><td><code>手術中</code> / <code>準備中</code> / <code>已完成</code></td></tr>
             <tr><td class="col-field nested" style="padding-left:32px">.Doctor</td><td><span class="type-tag type-string">string</span></td><td class="col-src"><span class="src-his">資訊室</span></td><td class="col-his"><span class="his-yes">✓</span></td><td>主刀醫師姓名（含職稱）</td></tr>
-            <tr><td class="col-field nested" style="padding-left:32px">.ScrubNurse</td><td><span class="type-tag type-string">string</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>刷手護理師</td></tr>
-            <tr><td class="col-field nested" style="padding-left:32px">.CircNurse</td><td><span class="type-tag type-string">string</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>流動護理師</td></tr>
+            <tr><td class="col-field nested" style="padding-left:32px">.ScrubNurse</td><td><span class="type-tag type-string">string</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>刷手護理師（由後台「刷手/流動設定」逐台刀 <code>OrSurgeryNurse</code> 覆蓋帶入）</td></tr>
+            <tr><td class="col-field nested" style="padding-left:32px">.CircNurse</td><td><span class="type-tag type-string">string</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>流動護理師（同上，逐台刀 <code>OrSurgeryNurse</code> 覆蓋）</td></tr>
+            <tr><td class="col-field nested" style="padding-left:32px">.AnesNurse</td><td><span class="type-tag type-string">string</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>麻醉護理師（逐台刀 <code>OrSurgeryNurse</code> 覆蓋帶入）</td></tr>
+            <tr><td class="col-field nested" style="padding-left:32px">.Note</td><td><span class="type-tag type-string">string</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>逐台刀備註（<code>OrSurgeryNurse</code>）</td></tr>
             <tr><td class="col-field nested" style="padding-left:32px">.AnesType</td><td><span class="type-tag type-string">string</span></td><td class="col-src"><span class="src-his">資訊室</span></td><td class="col-his"><span class="his-yes">✓</span></td><td>麻醉方式（例：全身麻醉 GA）</td></tr>
             <tr><td class="col-field nested" style="padding-left:32px">.ScheduledTime</td><td><span class="type-tag type-string">string</span></td><td class="col-src"><span class="src-his">資訊室</span></td><td class="col-his"><span class="his-yes">✓</span></td><td>排程時間，格式 <code>HH:mm</code></td></tr>
             <tr><td class="col-field nested" style="padding-left:32px">.StartTime</td><td><span class="type-tag type-string">string</span></td><td class="col-src"><span class="src-his">資訊室</span></td><td class="col-his"><span class="his-yes">✓</span></td><td>手術開始時間，格式 <code>HH:mm</code></td></tr>
@@ -2473,10 +2477,11 @@
             <tr><td class="col-field nested">.Rooms</td><td><span class="type-tag type-array">RoomAssign[]</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>7 筆，每刀房護理師派班</td></tr>
             <tr><td class="col-field nested" style="padding-left:32px">.RoomId</td><td><span class="type-tag type-string">string</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td><code>OR-01～03</code>、<code>OR-05～08</code></td></tr>
             <tr><td class="col-field nested" style="padding-left:32px">.Extension</td><td><span class="type-tag type-string">string</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>刀房分機</td></tr>
-            <tr><td class="col-field nested" style="padding-left:32px">.ScrubNurse</td><td><span class="type-tag type-string">string|null</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>刷手護理師（未排班時 null）</td></tr>
-            <tr><td class="col-field nested" style="padding-left:32px">.CircNurse</td><td><span class="type-tag type-string">string|null</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>流動護理師（未排班時 null）</td></tr>
+            <tr><td class="col-field nested" style="padding-left:32px">.ScrubNurse</td><td><span class="type-tag type-string">string|null</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>刷手護理師（此為<strong>每房 × 每班</strong>派班；未排班時 null）</td></tr>
+            <tr><td class="col-field nested" style="padding-left:32px">.CircNurse</td><td><span class="type-tag type-string">string|null</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>流動護理師（每房 × 每班；未排班時 null）</td></tr>
           </tbody>
         </table>
+        <div class="note note-or"><strong>與「手術清單」之別：</strong>本端點為<strong>每房 × 每班</strong>的護理師派班（<code>OrShiftRoom</code>）；若需<strong>逐台刀</strong>的刷手 / 流動 / 麻醉 / 備註，另見 <a href="#or-ep-7">手術清單</a>（<code>OrSurgeryNurse</code>，鍵＝日期＋房＋病歷號＋時間）。</div>
       </div>
     </article>
 
@@ -2731,6 +2736,63 @@
       </div>
     </article>
 
+    <!-- EP 07 -->
+    <article class="endpoint" id="or-ep-7">
+      <div class="endpoint-header">
+        <div class="endpoint-no">ENDPOINT 07</div>
+        <div class="endpoint-title">手術清單</div>
+        <div class="endpoint-tags">
+          <span class="tag tag-tab">頁籤 7 · 手術清單</span>
+          <span class="tag tag-spec">加值頁籤</span>
+          <span class="tag tag-file">surgerylist.html · SurgeryListTab.jsx</span>
+          <span class="tag tag-status-local">本地 DB（ETL）</span>
+        </div>
+        <div class="method-path"><span class="method-get">GET</span><span>/api/wards/OR/surgery-list?from={date}&amp;to={date}</span></div>
+      </div>
+      <div class="endpoint-body">
+        <h4>用途</h4>
+        <p>整月（或任意區間）刀房手術清單。資料來源為本地清洗表 <code>OrSurgery</code>（由 WhiteboardSync ETL 自 DB2_DUMP <code>OPORDER</code> 等落地），逐台刀合併後台「刷手/流動設定」維護之刷手 / 流動 / 麻醉 / 備註。前端預設停在今日，另提供 昨/今/明日、上/本/下個月快速鈕與自訂範圍。</p>
+
+        <h4>Query 參數</h4>
+        <table class="field-table">
+          <thead><tr><th class="col-field">參數</th><th class="col-type">型別</th><th>說明</th></tr></thead>
+          <tbody>
+            <tr><td class="col-field">from</td><td><span class="type-tag type-string">string</span></td><td>起日（含），格式 <code>YYYY-MM-DD</code></td></tr>
+            <tr><td class="col-field">to</td><td><span class="type-tag type-string">string</span></td><td>訖日（含），格式 <code>YYYY-MM-DD</code></td></tr>
+          </tbody>
+        </table>
+
+        <h4>Data 結構</h4>
+        <table class="field-table">
+          <thead><tr><th class="col-field">欄位</th><th class="col-type">型別</th><th class="col-src">來源</th><th class="col-his">HIS欄位存在</th><th>說明</th></tr></thead>
+          <tbody>
+            <tr><td class="col-field">from / to</td><td><span class="type-tag type-string">string</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>回傳查詢區間</td></tr>
+            <tr><td class="col-field">stats</td><td><span class="type-tag type-object">object</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>統計：<code>total</code> / <code>inpatient</code> / <code>outpatient</code> / <code>emergency</code></td></tr>
+            <tr><td class="col-field">rows</td><td><span class="type-tag type-array">Row[]</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>手術清單列（本地 <code>OrSurgery</code> ETL）</td></tr>
+            <tr><td class="col-field nested">.opDate / .opTime</td><td><span class="type-tag type-string">string</span></td><td class="col-src"><span class="src-his">院方</span></td><td class="col-his"><span class="his-yes">✓</span></td><td>手術日期 / 時間</td></tr>
+            <tr><td class="col-field nested">.room / .roomId</td><td><span class="type-tag type-string">string</span></td><td class="col-src"><span class="src-his">院方</span></td><td class="col-his"><span class="his-yes">✓</span></td><td>刀房</td></tr>
+            <tr><td class="col-field nested">.chartNo</td><td><span class="type-tag type-string">string</span></td><td class="col-src"><span class="src-his">院方</span></td><td class="col-his"><span class="his-yes">✓</span></td><td>病歷號</td></tr>
+            <tr><td class="col-field nested">.patientName / .sex / .age</td><td><span class="type-tag type-string">string</span></td><td class="col-src"><span class="src-his">院方</span></td><td class="col-his"><span class="his-yes">✓</span></td><td>病患基本</td></tr>
+            <tr><td class="col-field nested">.sourceWard / .sourceBed</td><td><span class="type-tag type-string">string</span></td><td class="col-src"><span class="src-his">院方</span></td><td class="col-his"><span class="his-yes">✓</span></td><td>來源病房 / 床位</td></tr>
+            <tr><td class="col-field nested">.caseTypeText</td><td><span class="type-tag type-enum">enum</span></td><td class="col-src"><span class="src-his">院方</span></td><td class="col-his"><span class="his-yes">✓</span></td><td><code>住院</code> / <code>門診</code> / <code>急診</code>（統計依此）</td></tr>
+            <tr><td class="col-field nested">.surgeonName</td><td><span class="type-tag type-string">string</span></td><td class="col-src"><span class="src-his">院方</span></td><td class="col-his"><span class="his-yes">✓</span></td><td>主刀醫師</td></tr>
+            <tr><td class="col-field nested">.surgeryName</td><td><span class="type-tag type-string">string</span></td><td class="col-src"><span class="src-his">院方</span></td><td class="col-his"><span class="his-yes">✓</span></td><td>手術名稱</td></tr>
+            <tr><td class="col-field nested">.anesthesia</td><td><span class="type-tag type-string">string</span></td><td class="col-src"><span class="src-his">院方</span></td><td class="col-his"><span class="his-yes">✓</span></td><td>麻醉方式（HIS 原值）</td></tr>
+            <tr><td class="col-field nested">.icdCodes</td><td><span class="type-tag type-string">string</span></td><td class="col-src"><span class="src-his">院方</span></td><td class="col-his"><span class="his-yes">✓</span></td><td>診斷碼</td></tr>
+            <tr><td class="col-field nested">.statusCode / .cancelReason</td><td><span class="type-tag type-string">string</span></td><td class="col-src"><span class="src-his">院方</span></td><td class="col-his"><span class="his-yes">✓</span></td><td>狀態碼（<code>82</code>＝取消刀）與取消原因</td></tr>
+            <tr><td class="col-field nested">.scrubNurse / .circNurse / .anesNurse / .note</td><td><span class="type-tag type-string">string</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td><strong>逐台刀覆蓋</strong>（<code>OrSurgeryNurse</code>，鍵＝日期＋房＋病歷號＋時間），由後台「刷手/流動設定」月曆維護</td></tr>
+          </tbody>
+        </table>
+
+        <h4>資料來源</h4>
+        <ul>
+          <li><strong>本地 DB：</strong><code>OrSurgery</code>（WhiteboardSync ETL 自 DB2_DUMP <code>OPORDER</code> 等清洗落地）</li>
+          <li><strong>本地 DB（覆蓋）：</strong><code>OrSurgeryNurse</code>（逐台刀刷手 / 流動 / 麻醉 / 備註；後台「刷手/流動設定」月曆維護，四欄皆空即刪除）</li>
+        </ul>
+        <div class="note note-or"><strong>與「手術派班」之別：</strong><a href="#or-ep-2">手術派班</a> 為每房 × 每班的護理師排班；本端點為<strong>逐台刀</strong>層級（同一刀房一日多台刀可各自不同刷手/流動）。</div>
+      </div>
+    </article>
+
     <!-- Appendix C -->
     <article class="endpoint" id="or-appendix-diff">
       <div class="endpoint-header">
@@ -2743,7 +2805,7 @@
           <tbody>
             <tr><td>欄位命名</td><td><strong>PascalCase</strong></td><td>PascalCase</td><td>camelCase</td></tr>
             <tr><td>基本單位</td><td>刀房（RoomId）</td><td>床位（BedId）</td><td>床位（id）</td></tr>
-            <tr><td>頁籤數</td><td>6 個</td><td>11 個</td><td>9 個</td></tr>
+            <tr><td>頁籤數</td><td>7 個</td><td>11 個</td><td>9 個</td></tr>
             <tr><td>特殊頁籤</td><td>手術派班、特殊交班</td><td>照護提醒、醫師資訊、照護團隊</td><td>抗生素、管路</td></tr>
             <tr><td>主色調</td><td>#1A7040（深綠）</td><td>#2D7A55（中綠）</td><td>#2D7A55（中綠）</td></tr>
             <tr><td>篩選條件</td><td>手術來源/狀態</td><td>病況旗標/族群</td><td>條件/管路</td></tr>
@@ -2786,6 +2848,8 @@
           <tr><td class="col-no">04</td><td class="col-tab"><a href="#er-ep-4">連絡電話</a></td><td class="col-spec">§7.1.2(6)</td><td>GET</td><td class="col-path"><a href="#er-ep-4">/api/wards/ER/contacts?date=</a></td><td>當日值班（7人）+ 常用電話（17筆）</td></tr>
           <tr><td class="col-no">05</td><td class="col-tab"><a href="#er-ep-5">佈告欄</a></td><td class="col-spec">§7.1.2(9)</td><td>GET</td><td class="col-path"><a href="#er-ep-5">/api/wards/ER/bulletins</a></td><td>急診室公告（4筆）+ 院方公告（3筆）</td></tr>
           <tr><td class="col-no">06</td><td class="col-tab"><a href="#er-ep-6">避難圖</a></td><td class="col-spec">§7.1.2(10)</td><td>GET</td><td class="col-path"><a href="#er-ep-6">/api/wards/ER/evacuation</a></td><td>1F 平面示意 + 設備清單（8項）+ 緊急聯絡（3筆）</td></tr>
+          <tr><td class="col-no">07</td><td class="col-tab"><a href="#er-ep-7">各科值班醫師</a></td><td class="col-spec">加值</td><td>GET</td><td class="col-path"><a href="#er-ep-7">/api/wards/ER/oncall?date=</a></td><td>各科當日值班醫師（內科依當下時間帶當前時段）</td></tr>
+          <tr><td class="col-no">08</td><td class="col-tab"><a href="#er-ep-8">三班醫護面板</a></td><td class="col-spec">加值</td><td>GET</td><td class="col-path"><a href="#er-ep-8">/api/wards/ER/shiftpanel</a></td><td>白/夜班醫師、照服員 + 護理師（另有 /schedule 供三班護理師）</td></tr>
         </tbody>
       </table>
     </section>
@@ -3102,6 +3166,90 @@
             <tr><td class="col-field nested">.Extension</td><td><span class="type-tag type-string">string</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>院內分機或外線號碼</td></tr>
           </tbody>
         </table>
+      </div>
+    </article>
+
+    <!-- EP 07 -->
+    <article class="endpoint" id="er-ep-7">
+      <div class="endpoint-header">
+        <div class="endpoint-no">ENDPOINT 07</div>
+        <div class="endpoint-title">各科值班醫師</div>
+        <div class="endpoint-tags">
+          <span class="tag tag-tab">病室動態 · 右下面板</span>
+          <span class="tag tag-spec">加值面板</span>
+          <span class="tag tag-file">WardTab.jsx · getOnCallBoard</span>
+          <span class="tag tag-status-local">本地 DB</span>
+        </div>
+        <div class="method-path"><span class="method-get">GET</span><span>/api/wards/ER/oncall?date={yyyy-MM-dd}</span></div>
+      </div>
+      <div class="endpoint-body">
+        <h4>用途</h4>
+        <p>ER 病室動態右下「各科值班醫師」面板，顯示各科當日值班醫師（科別、姓名、分機、行動電話）。<strong>內科（MED）依當下時間</strong>帶當前時段醫師（值班 / 上午 08:00–13:00 / 下午 13:00–17:30）；其餘科別為單一值班。由後台「值班醫師排程」月曆逐日維護，取代舊「各科值班醫師」靜態設定。</p>
+
+        <h4>Query 參數</h4>
+        <table class="field-table">
+          <thead><tr><th class="col-field">參數</th><th class="col-type">型別</th><th>說明</th></tr></thead>
+          <tbody>
+            <tr><td class="col-field">date</td><td><span class="type-tag type-string">string</span></td><td>查詢日期，格式 <code>YYYY-MM-DD</code>（省略＝今日）</td></tr>
+          </tbody>
+        </table>
+
+        <h4>Data 結構（陣列，每科一筆）</h4>
+        <table class="field-table">
+          <thead><tr><th class="col-field">欄位</th><th class="col-type">型別</th><th class="col-src">來源</th><th class="col-his">HIS欄位存在</th><th>說明</th></tr></thead>
+          <tbody>
+            <tr><td class="col-field">deptCode</td><td><span class="type-tag type-string">string</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>科別代碼（<code>MED</code>/<code>SUR</code>/<code>GU</code>/<code>GYN</code>…）</td></tr>
+            <tr><td class="col-field">deptName</td><td><span class="type-tag type-string">string</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>科別名稱</td></tr>
+            <tr><td class="col-field">doctorName</td><td><span class="type-tag type-string">string</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>值班醫師姓名（取自全院共用醫師總表）</td></tr>
+            <tr><td class="col-field">ext</td><td><span class="type-tag type-string">string</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>分機</td></tr>
+            <tr><td class="col-field">mobile</td><td><span class="type-tag type-string">string</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>行動電話</td></tr>
+            <tr><td class="col-field">slot</td><td><span class="type-tag type-enum">enum</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>時段（<code>值班</code> / <code>上午</code> / <code>下午</code>）；內科依當下時間縮減後回傳當前時段</td></tr>
+          </tbody>
+        </table>
+
+        <h4>資料來源</h4>
+        <ul>
+          <li><strong>本地 DB：</strong><code>OnCallDept</code>（科別 / 時段 / 規則）＋ <code>OnCallRoster</code>（每日 × 科別 × 時段輪值）</li>
+          <li>醫師名單取全院共用醫師總表；後台「值班醫師排程」月曆維護每日輪值</li>
+        </ul>
+      </div>
+    </article>
+
+    <!-- EP 08 -->
+    <article class="endpoint" id="er-ep-8">
+      <div class="endpoint-header">
+        <div class="endpoint-no">ENDPOINT 08</div>
+        <div class="endpoint-title">三班醫護面板</div>
+        <div class="endpoint-tags">
+          <span class="tag tag-tab">病室動態 · 右上面板</span>
+          <span class="tag tag-spec">加值面板</span>
+          <span class="tag tag-file">WardTab.jsx · getErShiftPanel</span>
+          <span class="tag tag-status-local">本地 DB</span>
+        </div>
+        <div class="method-path"><span class="method-get">GET</span><span>/api/wards/ER/shiftpanel</span></div>
+      </div>
+      <div class="endpoint-body">
+        <h4>用途</h4>
+        <p>ER 病室動態右上面板。每班顯示<strong>醫師、照服員</strong>（後台「醫師/照服員設定」<code>ErShiftStaff</code>）＋<strong>護理師</strong>（來自「三班護理師」排班 <code>StaffSchedule</code>，逐日）。班別為白班（上）、夜班（下）；ER 另含第 4 班 <code>12:00–20:00</code>。</p>
+
+        <h4>Data 結構（shifts[]）</h4>
+        <table class="field-table">
+          <thead><tr><th class="col-field">欄位</th><th class="col-type">型別</th><th class="col-src">來源</th><th class="col-his">HIS欄位存在</th><th>說明</th></tr></thead>
+          <tbody>
+            <tr><td class="col-field">shifts</td><td><span class="type-tag type-array">Shift[]</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>各班（白班 / 夜班；含 <code>12:00–20:00</code>）</td></tr>
+            <tr><td class="col-field nested">.shift</td><td><span class="type-tag type-string">string</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>班別名稱</td></tr>
+            <tr><td class="col-field nested">.doctor</td><td><span class="type-tag type-string">string</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>醫師（<code>ErShiftStaff</code>，後台「醫師/照服員設定」）</td></tr>
+            <tr><td class="col-field nested">.aide</td><td><span class="type-tag type-string">string</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>照服員（<code>ErShiftStaff</code>）</td></tr>
+            <tr><td class="col-field nested">.nurses</td><td><span class="type-tag type-array">string[]</span></td><td class="col-src"><span class="src-self">自建</span></td><td class="col-his"><span class="his-no">—</span></td><td>護理師陣列（<code>StaffSchedule</code>，同「三班護理師」排班逐日帶入）</td></tr>
+          </tbody>
+        </table>
+
+        <h4>資料來源</h4>
+        <ul>
+          <li><strong>本地 DB：</strong><code>ErShiftStaff</code>（醫師 / 照服員；後台「醫師/照服員設定」）</li>
+          <li><strong>本地 DB：</strong><code>StaffSchedule</code>（護理師逐日排班；同 <code>/api/wards/ER/schedule</code> 機制，班別多一個 <code>12:00–20:00</code>）</li>
+        </ul>
+        <div class="note note-er"><strong>三班護理師：</strong>ER 亦提供 <code>/api/wards/ER/schedule?date=</code>（同 W52 / ICU schedule 機制），供後台「三班護理師」排班；本面板護理師即取自此。</div>
       </div>
     </article>
 
