@@ -93,9 +93,9 @@ export default function AntibioticTab() {
   const [floor, setFloor] = useState(4)                  // 目前顯示樓層（4F 為主，可切 3F）
 
   const { beds, loading } = useIcuWard('ICU')            // 床位/病人＝真實在床
-  const { data: abxRows } = usePolling(                  // 抗生素＝自建表
-    () => wardApi.getAntibiotic('ICU'),
-    { intervalMs: CENSUS_MS, deps: ['ICU-abx'] },
+  const { data: abxRows } = usePolling(                  // 用藥＝院方 Board_bed 帶入（使用中；暫含全部用藥，非僅抗生素）
+    () => wardApi.getAntibioticLive('ICU'),
+    { intervalMs: CENSUS_MS, deps: ['ICU-abx-live'] },
   )
 
   // 以病歷號建索引：getAbx(病歷號) → 該病人抗生素清單

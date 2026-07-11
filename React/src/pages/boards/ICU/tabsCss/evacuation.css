@@ -28,6 +28,13 @@
 .icu-board .ev-icon-arrow::after { content:"";position:absolute;right:-2px;top:-4px;border-left:8px solid #E64A19;border-top:5px solid transparent;border-bottom:5px solid transparent }
 .icu-board .ev-icon-meet { display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;background:#E64A19;color:#FFF8E1;font-weight:800;font-size:14px;border-radius:50% }
 .icu-board .ev-icon-o2 { display:inline-flex;align-items:center;justify-content:center;width:26px;height:22px;background:#FFF;border:2px solid #1565C0;color:#1565C0;font-weight:800;font-size:11px;border-radius:50% }
+/* 緊急應變編組（右欄卡片） */
+.icu-board .ev-resp { display:flex;flex-direction:column }
+.icu-board .ev-resp-row { display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 18px;border-bottom:1px solid var(--bg-card-empty) }
+.icu-board .ev-resp-row:last-child { border-bottom:none }
+.icu-board .ev-resp-k { font-size:17px;font-weight:700;color:var(--text-secondary);background:var(--bg-card-empty);padding:4px 14px;border-radius:var(--radius-pill);flex-shrink:0 }
+.icu-board .ev-resp-n { font-size:20px;font-weight:800;color:var(--text-primary);text-align:right;flex:1;line-height:1.3 }
+
 .icu-board .ev-contacts { display:flex;flex-direction:column }
 .icu-board .ev-contact-row { display:flex;align-items:center;justify-content:space-between;padding:11px 18px;border-bottom:1px solid var(--bg-card-empty) }
 .icu-board .ev-contact-row:last-child { border-bottom:none }

@@ -10,6 +10,7 @@ tags: [kmsh, LDAP, AD, 資安, MOC]
 
 ## 文件
 - [[AD-LDS-安裝記錄]] — 安裝決策、實例設定、踩過的雷、維運（改密／新增／停用／LDAPS／備份）。
+- [[帳號連動AD-規劃]] — 後台三項（新增帳號／管理員重設／自助改密）＋停用連動 AD 的實作規劃（決策：授權 app pool 身分寫入）。
 - **操作說明（HTML＋截圖）**：`Document/LDAP帳號管理操作說明.html` — 帳號**增／刪／查／改**逐步操作，附實際畫面。
 - 登入端使用者說明：`html_demo/登入帳號操作說明.html`（如何登入／權限／登出／錯誤排解）。
 
@@ -24,6 +25,6 @@ tags: [kmsh, LDAP, AD, 資安, MOC]
 | 白板端設定 | `appsettings.json` 的 `Ldap` 區段（Enabled/Host/Port/BindDnFormat） |
 
 ## 待強化
-LDAPS 加密、AD LDS 資料備份、停用帳號與 Staff 同步、app 內自助改密。
+LDAPS 加密、AD LDS 資料備份。~~停用帳號與 Staff 同步、app 內自助改密／建帳號連動~~ → **已上線（2026-07-10）**：後台建帳號自動建 AD、管理員重設、使用者自助改密、IsActive 停用連動；詳 [[帳號連動AD-規劃]]（app pool 改用專用服務帳號 `.\kmshldapsvc` 寫 AD、稽核遮蔽密碼、M999 測 8/8）。
 
 相關：[[00-總覽]] · [[工作項目回報]] · [[DbSync-同步策略]]

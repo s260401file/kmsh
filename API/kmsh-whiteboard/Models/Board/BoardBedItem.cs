@@ -19,6 +19,24 @@ public class BoardBedItem
     [JsonPropertyName("科別")]     public string? Department { get; set; }// 院方已回傳（可帶入，免後台自建）
     [JsonPropertyName("病房")]     public string? Hnursta { get; set; }
     [JsonPropertyName("床位")]     public string? Hbed { get; set; }    // 如 006
+    // 院方 2026-07 起把用藥 join 進來 → 同病人每筆用藥一列（欄名「抗生素」，實為全部用藥）。
+    [JsonPropertyName("抗生素")]     public string? Med { get; set; }          // 藥品名稱（實為全用藥，非僅抗生素）
+    [JsonPropertyName("開始使用日期")] public string? MedStartDate { get; set; }  // ISO
+    [JsonPropertyName("開始使用時間")] public string? MedStartTime { get; set; }  // HH:mm:ss
+    [JsonPropertyName("結束使用日期")] public string? MedEndDate { get; set; }    // ISO
+    [JsonPropertyName("結束使用時間")] public string? MedEndTime { get; set; }    // HH:mm:ss
+    // 去重時把同病人各列的用藥彙整於此（不參與序列化，供 antibiotic/live 使用）。
+    [JsonIgnore] public List<BoardBedMed> Meds { get; set; } = new();
+}
+
+/// <summary>Board_bed 附帶的一筆用藥（院方欄名「抗生素」，實為全部用藥）。</summary>
+public class BoardBedMed
+{
+    public string? Name { get; set; }
+    public string? StartDate { get; set; }
+    public string? StartTime { get; set; }
+    public string? EndDate { get; set; }
+    public string? EndTime { get; set; }
 }
 
 /// <summary>Board_bed 回應外殼：{ success, data[] }。</summary>

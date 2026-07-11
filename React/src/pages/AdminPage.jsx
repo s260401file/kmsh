@@ -123,6 +123,12 @@ const MENU_CONFIG = [
       { id: 'audit', label: '操作稽核', available: true },  // 資料異動記錄查詢（唯讀；寫入由後端自動）
     ]
   },
+  {
+    id: 'account', label: '我的帳號',   // 任一登入者皆可見（無 unit/adminOnly 限制）
+    children: [
+      { id: 'my-password', label: '修改密碼', available: true },   // 自助改密（寫回 AD）
+    ]
+  },
 ]
 
 // 第一個可用的 leaf id
@@ -2054,12 +2060,22 @@ function StaffSection({ unitCode }) {
     try {
       if (editId) { await wardApi.updateStaff(editId, form); show('修改成功'); load() }
       else {
-        const created = await wardApi.createStaff(form)
+        const created = await wardApi.createStaff(form)   // 後端已連動建立 AD 帳號（初始密碼 Kmsh@員編）
         if (unitCode) await wardApi.createUnitRole({ staffId: created.id, unitCode, role: '護理師', department: '', isManager: false, groupKey: 'nurse', sortOrder: 0, isActive: true })  // 自動綁該單位
-        show(unitCode ? `已建立並綁定 ${unitCode}，可於下方調整角色` : '已建立，請於下方設定單位角色')
+        show(unitCode ? `已建立並綁定 ${unitCode}（AD 帳號已連動，初始密碼 Kmsh@${form.employeeNo}）` : `已建立（AD 帳號已連動，初始密碼 Kmsh@${form.employeeNo}），請於下方設定單位角色`)
         setEditId(created.id); load()
       }
     } catch { show('操作失敗（員編可能重複）', true) }
+  }
+  // 管理員：重設密碼 / 補建 AD 帳號（僅系統層 !unitCode 顯示）
+  const resetPw = async (staff) => {
+    const pw = window.prompt(`重設「${staff.name}」(${staff.employeeNo}) 的密碼，請輸入新密碼：`, `Kmsh@${staff.employeeNo}`)
+    if (!pw) return
+    try { const r = await wardApi.resetPassword(staff.id, pw); show(r?.message || '密碼已重設') } catch (e) { show(e.message || '重設失敗', true) }
+  }
+  const makeAd = async (staff) => {
+    if (!window.confirm(`為「${staff.name}」(${staff.employeeNo}) 建立 AD 帳號？初始密碼 Kmsh@${staff.employeeNo}`)) return
+    try { const r = await wardApi.createAdAccount(staff.id); show(r?.message || 'AD 帳號已建立') } catch (e) { show(e.message || '建立失敗', true) }
   }
   const del = async (staff) => {
     if (!window.confirm(unitCode ? `將「${staff.name}」自 ${unitCode} 移除（若無其他單位則一併刪除帳號）？` : '刪除帳號會一併移除其單位角色，確定？')) return
@@ -2098,7 +2114,12 @@ function StaffSection({ unitCode }) {
                   <td style={s.td}>{i.employeeNo}</td><td style={s.td}>{i.name}</td><td style={s.td}>{i.ext || '—'}</td><td style={s.td}>{i.mobile || '—'}</td>
                   {!unitCode && <td style={s.td}>{i.isAdmin ? '✓' : '—'}</td>}
                   <td style={s.td}><span style={{ ...s.badge, background: i.isActive ? '#d1fae5' : '#f3f4f6', color: i.isActive ? '#065f46' : '#6b7280' }}>{i.isActive ? '✓' : '停'}</span></td>
-                  <td style={s.td}><button style={s.btnEdit} onClick={() => openEdit(i)}>編輯</button><button style={s.btnDel} onClick={() => del(i)}>{unitCode ? '移除' : '刪除'}</button></td>
+                  <td style={s.td}>
+                    <button style={s.btnEdit} onClick={() => openEdit(i)}>編輯</button>
+                    {!unitCode && <button style={s.btnEdit} onClick={() => resetPw(i)}>重設密碼</button>}
+                    {!unitCode && <button style={s.btnEdit} onClick={() => makeAd(i)}>建AD</button>}
+                    <button style={s.btnDel} onClick={() => del(i)}>{unitCode ? '移除' : '刪除'}</button>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -2141,6 +2162,39 @@ function StaffSection({ unitCode }) {
           </div>
         </div>
       )}
+    </div>
+  )
+}
+
+// 自助修改密碼（任一登入者；員編取自 token，寫回 AD）
+function ChangePasswordSection() {
+  const [oldPw, setOldPw] = useState('')
+  const [newPw, setNewPw] = useState('')
+  const [confirmPw, setConfirmPw] = useState('')
+  const [msg, show] = pmMsgHook()
+  const [busy, setBusy] = useState(false)
+  const submit = async (e) => {
+    e.preventDefault()
+    if (!newPw) { show('請輸入新密碼', true); return }
+    if (newPw !== confirmPw) { show('兩次新密碼不一致', true); return }
+    setBusy(true)
+    try { const r = await wardApi.changePassword(oldPw, newPw); show(r?.message || '密碼已更新'); setOldPw(''); setNewPw(''); setConfirmPw('') }
+    catch (e2) { show(e2.message || '更新失敗', true) }
+    finally { setBusy(false) }
+  }
+  return (
+    <div>
+      <PmMsg msg={msg} />
+      <div style={{ ...s.formCard, maxWidth: '460px' }}>
+        <h4 style={s.formTitle}>修改密碼</h4>
+        <div style={{ fontSize: '12px', color: '#9ca3af', marginBottom: '12px' }}>修改自己的登入密碼（寫回 AD）。需先輸入目前密碼驗證。</div>
+        <form onSubmit={submit}>
+          <div style={s.formRow}><label style={s.label}>目前密碼 *</label><input type="password" style={s.input} value={oldPw} onChange={e => setOldPw(e.target.value)} required autoComplete="current-password" /></div>
+          <div style={s.formRow}><label style={s.label}>新密碼 *</label><input type="password" style={s.input} value={newPw} onChange={e => setNewPw(e.target.value)} required autoComplete="new-password" /></div>
+          <div style={s.formRow}><label style={s.label}>確認新密碼 *</label><input type="password" style={s.input} value={confirmPw} onChange={e => setConfirmPw(e.target.value)} required autoComplete="new-password" /></div>
+          <div style={{ marginTop: '14px' }}><button type="submit" style={s.btnPrimary} disabled={busy}>{busy ? '處理中…' : '更新密碼'}</button></div>
+        </form>
+      </div>
     </div>
   )
 }
@@ -3344,6 +3398,7 @@ export default function AdminPage() {
       case 'or-handover':    return <OrHandoverManager />
       // 人員管理（跨單位）
       case 'staff':          return <StaffSection />
+      case 'my-password':    return <ChangePasswordSection />
       case 'department':     return <DepartmentManager />
       case 'doctor':         return <DoctorManager />
       case 'audit':          return <OperationAuditSection />

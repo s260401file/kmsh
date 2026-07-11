@@ -35,6 +35,13 @@
 .er-board .ev-equip-name { font-size: 16px; font-weight: 700; color: var(--text-primary); white-space: nowrap; flex-shrink: 0; }
 .er-board .ev-equip-loc { font-size: 14px; color: var(--text-muted); text-align: right; flex: 1; }
 .er-board .ev-equip-qty { font-size: 14px; font-weight: 700; font-family: var(--font-num); color: var(--text-secondary); background: var(--bg-card-empty); padding: 2px 8px; border-radius: 4px; flex-shrink: 0; }
+/* 緊急應變編組（右欄卡片） */
+.er-board .ev-resp { display: flex; flex-direction: column; }
+.er-board .ev-resp-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 18px; border-bottom: 1px solid var(--bg-card-empty); }
+.er-board .ev-resp-row:last-child { border-bottom: none; }
+.er-board .ev-resp-k { font-size: 17px; font-weight: 700; color: var(--text-secondary); background: var(--bg-card-empty); padding: 4px 14px; border-radius: var(--radius-pill); flex-shrink: 0; }
+.er-board .ev-resp-n { font-size: 20px; font-weight: 800; color: var(--text-primary); text-align: right; flex: 1; line-height: 1.3; }
+
 .er-board .ev-contacts { display: flex; flex-direction: column; }
 .er-board .ev-contact-row { display: flex; align-items: center; justify-content: space-between; padding: 11px 18px; border-bottom: 1px solid var(--bg-card-empty); }
 .er-board .ev-contact-row:last-child { border-bottom: none; }

@@ -72,6 +72,7 @@ public class OperationAuditFilter : IAsyncActionFilter
                 .ToDictionary(kv => kv.Key, kv => kv.Value);
             if (args.Count == 0) return null;
             var json = JsonSerializer.Serialize(args);
+            json = RedactPasswords(json);   // 任何 key 含 password 的值遮蔽，避免明碼入庫
             return json.Length > BodyMaxLength ? json[..BodyMaxLength] : json;
         }
         catch
@@ -79,4 +80,11 @@ public class OperationAuditFilter : IAsyncActionFilter
             return null;   // 序列化失敗不阻擋稽核其餘欄位
         }
     }
+
+    /// <summary>遮蔽 JSON 中任何欄名含 "password" 的字串值（改密/重設/建帳號密碼不入庫）。</summary>
+    private static string RedactPasswords(string json)
+        => System.Text.RegularExpressions.Regex.Replace(
+            json,
+            "(\"[^\"]*[Pp]assword[^\"]*\"\\s*:\\s*)\"[^\"]*\"",
+            "$1\"***\"");
 }

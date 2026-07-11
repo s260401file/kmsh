@@ -21,6 +21,7 @@ BEGIN
         [BirthDate]   NVARCHAR(30)  NULL,
         [SurgeryName] NVARCHAR(200) NULL,
         [Doctor]      NVARCHAR(50)  NULL,                -- 主刀
+        [Department]  NVARCHAR(50)  NULL,                -- 科別代碼（Board_OR 提供，如 PS）
         [AnesType]    NVARCHAR(20)  NULL,
         [Source]      NVARCHAR(20)  NULL,
         [OpTime]      NVARCHAR(10)  NOT NULL CONSTRAINT DF_ODS_OpTime DEFAULT(''),  -- 手術時間 HH:mm
@@ -36,5 +37,10 @@ BEGIN
 END
 GO
 
-PRINT N'[dbo].[OrDailySurgery] 當日手術快照表建立完成。';
+-- 既有資料庫補欄：科別（Board_OR 2026-07 起提供）。可重複執行。
+IF COL_LENGTH(N'[dbo].[OrDailySurgery]', N'Department') IS NULL
+    ALTER TABLE [dbo].[OrDailySurgery] ADD [Department] NVARCHAR(50) NULL;
+GO
+
+PRINT N'[dbo].[OrDailySurgery] 當日手術快照表建立完成（含科別）。';
 GO

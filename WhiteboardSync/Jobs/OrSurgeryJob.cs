@@ -16,7 +16,7 @@ public sealed class OrSurgeryJob : IEtlJob
     {
         "OpDate","OpTime","Room","RoomId","CaseType","CaseTypeText","ChartNo","CaseNo",
         "PatientName","Sex","Age","SourceWard","SourceBed","SurgeonNo","SurgeonName","MentorName",
-        "AssistantNames","SurgeryName","Anesthesia","NhiCodes","IcdCodes","StatusCode","CancelReason","EndDate","EndTime"
+        "AssistantNames","SurgeryName","Anesthesia","Department","NhiCodes","IcdCodes","StatusCode","CancelReason","EndDate","EndTime"
     };
     private static readonly string[] KeyCols = { "OpDate", "Room", "ChartNo", "OpTime" };
 
@@ -35,6 +35,7 @@ BEGIN
         [SourceWard] NVARCHAR(20) NULL, [SourceBed] NVARCHAR(20) NULL,
         [SurgeonNo] NVARCHAR(20) NULL, [SurgeonName] NVARCHAR(50) NULL, [MentorName] NVARCHAR(50) NULL,
         [AssistantNames] NVARCHAR(500) NULL, [SurgeryName] NVARCHAR(200) NULL, [Anesthesia] NVARCHAR(20) NULL,
+        [Department] NVARCHAR(50) NULL,
         [NhiCodes] NVARCHAR(200) NULL, [IcdCodes] NVARCHAR(200) NULL,
         [StatusCode] NVARCHAR(10) NULL, [CancelReason] NVARCHAR(400) NULL,
         [EndDate] DATE NULL, [EndTime] NVARCHAR(10) NULL,
@@ -45,13 +46,15 @@ BEGIN
         CONSTRAINT [UX_OrSurgery] UNIQUE ([OpDate],[Room],[ChartNo],[OpTime])
     );
     CREATE INDEX [IX_OrSurgery_Date_Room] ON [dbo].[OrSurgery] ([OpDate],[Room]);
-END";
+END
+IF COL_LENGTH(N'[dbo].[OrSurgery]', N'Department') IS NULL
+    ALTER TABLE [dbo].[OrSurgery] ADD [Department] NVARCHAR(50) NULL;";
 
     // 抽取（來源 DB2_DUMP）：join 姓名/生日與最新病房床；多帶 CaseNo/DseqNo 供去重
     private const string ExtractSql = @"
 SELECT
   o.ORBGNDT AS OpDate, CONVERT(varchar(5),o.ORBGNTM,108) AS OpTime,
-  o.OROPROOM AS Room, o.ORCASETP AS CaseType, o.OROPAMED AS Anesthesia,
+  o.OROPROOM AS Room, o.ORCASETP AS CaseType, o.OROPAMED AS Anesthesia, o.ORCATGY AS Department,
   o.ORHISNUM AS ChartNo, o.ORCASENO AS CaseNo,
   p.HNAMEC AS PatientName, p.HSEX AS Sex, TRY_CONVERT(date,p.HBIRTHDT) AS BirthDate,
   l.HNURSTA AS SourceWard, l.HBED AS SourceBed,
@@ -144,6 +147,7 @@ ORDER BY o.ORBGNDT, o.ORBGNTM, o.OROPROOM;";
                 AssistantNames = OrClean.Join(S("A1"), S("A2"), S("A3"), S("A4"), S("A5")),
                 SurgeryName = OrClean.C(S("SurgeryName")),
                 Anesthesia = OrClean.C(S("Anesthesia")),
+                Department = OrClean.C(S("Department")),
                 NhiCodes = OrClean.Join(S("N1"), S("N2"), S("N3"), S("N4")),
                 IcdCodes = OrClean.Join(S("D1"), S("D2"), S("D3"), S("D4")),
                 StatusCode = OrClean.C(S("StatusCode")),
@@ -192,6 +196,7 @@ ORDER BY o.ORBGNDT, o.ORBGNTM, o.OROPROOM;";
         dt.Columns.Add("AssistantNames", typeof(string));
         dt.Columns.Add("SurgeryName", typeof(string));
         dt.Columns.Add("Anesthesia", typeof(string));
+        dt.Columns.Add("Department", typeof(string));
         dt.Columns.Add("NhiCodes", typeof(string));
         dt.Columns.Add("IcdCodes", typeof(string));
         dt.Columns.Add("StatusCode", typeof(string));
@@ -208,6 +213,7 @@ ORDER BY o.ORBGNDT, o.ORBGNTM, o.OROPROOM;";
                 (object?)x.SourceWard ?? DBNull.Value, (object?)x.SourceBed ?? DBNull.Value,
                 (object?)x.SurgeonNo ?? DBNull.Value, (object?)x.SurgeonName ?? DBNull.Value, (object?)x.MentorName ?? DBNull.Value,
                 (object?)x.AssistantNames ?? DBNull.Value, (object?)x.SurgeryName ?? DBNull.Value, (object?)x.Anesthesia ?? DBNull.Value,
+                (object?)x.Department ?? DBNull.Value,
                 (object?)x.NhiCodes ?? DBNull.Value, (object?)x.IcdCodes ?? DBNull.Value,
                 (object?)x.StatusCode ?? DBNull.Value, (object?)x.CancelReason ?? DBNull.Value,
                 (object?)x.EndDate ?? DBNull.Value, (object?)x.EndTime ?? DBNull.Value);
@@ -260,7 +266,7 @@ FROM @act;";
         public string? CaseType; public string? CaseTypeText; public string ChartNo = ""; public string? CaseNo;
         public string? PatientName; public string? Sex; public int? Age; public string? SourceWard; public string? SourceBed;
         public string? SurgeonNo; public string? SurgeonName; public string? MentorName; public string? AssistantNames;
-        public string? SurgeryName; public string? Anesthesia; public string? NhiCodes; public string? IcdCodes;
+        public string? SurgeryName; public string? Anesthesia; public string? Department; public string? NhiCodes; public string? IcdCodes;
         public string? StatusCode; public string? CancelReason; public DateTime? EndDate; public string? EndTime;
     }
 }

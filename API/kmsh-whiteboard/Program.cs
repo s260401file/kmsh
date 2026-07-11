@@ -69,6 +69,7 @@ builder.Services.AddScoped<IOnCallRepository, OnCallRepository>();   // 各科�
 builder.Services.Configure<kmsh_whiteboard.Settings.LdapOptions>(
     builder.Configuration.GetSection(kmsh_whiteboard.Settings.LdapOptions.Section));
 builder.Services.AddSingleton<kmsh_whiteboard.Services.ILdapAuthenticator, kmsh_whiteboard.Services.LdapAuthenticator>();
+builder.Services.AddSingleton<kmsh_whiteboard.Services.ILdapAdminService, kmsh_whiteboard.Services.LdapAdminService>();   // AD 帳號寫入（建帳號/改密/停用）
 builder.Services.AddEndpointsApiExplorer();
 // ── Swagger / OpenAPI 文件（含 XML 註解）───────────────────────
 builder.Services.AddSwaggerGen(c =>

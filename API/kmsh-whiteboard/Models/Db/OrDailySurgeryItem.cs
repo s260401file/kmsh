@@ -16,6 +16,7 @@ public class OrDailySurgeryItem
     public string? BirthDate { get; set; }
     public string? SurgeryName { get; set; }
     public string? Doctor { get; set; }
+    public string? Department { get; set; }   // 科別代碼（Board_OR 提供，如 PS）
     public string? AnesType { get; set; }
     public string? Source { get; set; }
     public string OpTime { get; set; } = "";

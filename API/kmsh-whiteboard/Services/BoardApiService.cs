@@ -59,7 +59,30 @@ public class BoardApiService : IBoardApiService
             it.Diagnosis = Trim(it.Diagnosis);
             it.Department = Trim(it.Department);
         }
-        return list;
+
+        // 院方 Board_bed 自 2026-07 起 join 用藥 → 同一床位病人變成「每筆用藥一列」（例：AICU 8 人卻回 515 列）。
+        // 病人/病房/床位欄位在同病人各列皆相同、僅用藥列不同 → 以病歷號去重為「一床一列」，
+        // 回復看板/roster/occupancy 等消費端原本「一病人一列」的預期。若院方日後恢復單列，去重為冪等不影響。
+        var deduped = list
+            .Where(x => !string.IsNullOrWhiteSpace(x.Hhisnum))
+            .GroupBy(x => x.Hhisnum!.Trim())
+            .Select(g =>
+            {
+                var head = g.First();
+                // 各列的用藥彙整到代表列（去重後保留完整用藥清單，供 antibiotic/live 帶入）
+                head.Meds = g
+                    .Where(r => !string.IsNullOrWhiteSpace(r.Med))
+                    .Select(r => new BoardBedMed
+                    {
+                        Name = Trim(r.Med), StartDate = Trim(r.MedStartDate), StartTime = Trim(r.MedStartTime),
+                        EndDate = Trim(r.MedEndDate), EndTime = Trim(r.MedEndTime),
+                    })
+                    .ToList();
+                return head;
+            })
+            .ToList();
+        _logger.LogInformation("Board_bed 病房={Ward}：原始 {Raw} 列，去重後 {Distinct} 人", ward, list.Count, deduped.Count);
+        return deduped;
     }
 
     public async Task<List<BoardErItem>> GetErListAsync(CancellationToken ct = default)
@@ -130,7 +153,7 @@ public class BoardApiService : IBoardApiService
         {
             it.Room = Trim(it.Room); it.Hhisnum = Trim(it.Hhisnum); it.Hnamec = Trim(it.Hnamec);
             it.Hsex = Trim(it.Hsex); it.Hbirthdt = Trim(it.Hbirthdt); it.Surgery = Trim(it.Surgery);
-            it.Doctor = Trim(it.Doctor); it.Anes = Trim(it.Anes); it.Source = Trim(it.Source);
+            it.Doctor = Trim(it.Doctor); it.Department = Trim(it.Department); it.Anes = Trim(it.Anes); it.Source = Trim(it.Source);
             it.OpDate = Trim(it.OpDate); it.OpTime = Trim(it.OpTime); it.Diagnosis = Trim(it.Diagnosis);
         }
         return list;

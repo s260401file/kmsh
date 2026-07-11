@@ -20,18 +20,20 @@ public class BoardController : ControllerBase
     private readonly IWardRepository _ward;
     private readonly IPersonnelRepository _staff;
     private readonly ILdapAuthenticator _ldap;
+    private readonly ILdapAdminService _ldapAdmin;
     private readonly IJwtTokenService _jwt;
     private readonly IOrReportRepository _orReport;
     private readonly IMasterDataRepository _master;
     private readonly IOnCallRepository _oncall;
     private readonly ILogger<BoardController> _logger;
 
-    public BoardController(IBoardApiService board, IWardRepository ward, IPersonnelRepository staff, ILdapAuthenticator ldap, IJwtTokenService jwt, IOrReportRepository orReport, IMasterDataRepository master, IOnCallRepository oncall, ILogger<BoardController> logger)
+    public BoardController(IBoardApiService board, IWardRepository ward, IPersonnelRepository staff, ILdapAuthenticator ldap, ILdapAdminService ldapAdmin, IJwtTokenService jwt, IOrReportRepository orReport, IMasterDataRepository master, IOnCallRepository oncall, ILogger<BoardController> logger)
     {
         _board = board;
         _ward = ward;
         _staff = staff;
         _ldap = ldap;
+        _ldapAdmin = ldapAdmin;
         _jwt = jwt;
         _orReport = orReport;
         _master = master;
@@ -465,6 +467,14 @@ public class BoardController : ControllerBase
         await SyncOrDailyIfFetchedAsync(ct);   // 取 Board_OR 成功才同步當日快照（失敗則僅讀快照）
 
         var daily = (await _ward.GetOrDailyAsync(today, today, ct)).ToList();   // 當日累積快照（含已完成）
+        // 取消排除：Board_OR 消失＝已完成，但「取消」的刀也會消失而被誤判。
+        // 以 OPORDER(OrSurgery) 今日 StatusCode=82（取消）為準，將這些刀自快照剔除（不視為已完成、不上看板、不計入總刀數）。
+        var cancelledKeys = (await _ward.GetOrSurgeryListAsync(today, today, ct))
+            .Where(x => x.StatusCode == "82")
+            .Select(x => OsnKey(x.OpDate, x.RoomId, x.ChartNo, x.OpTime))
+            .ToHashSet();
+        if (cancelledKeys.Count > 0)
+            daily = daily.Where(d => !cancelledKeys.Contains(OsnKey(d.SurgeryDate, d.RoomId, d.Hhisnum, d.OpTime))).ToList();
         var rooms = (await _ward.GetOrRoomsAsync("OR", includeAll: false, ct)).ToList();
         var extList = (await _ward.GetExtAsync("OR", includeAll: false, ct)).ToList();
         var extByHis = extList
@@ -477,6 +487,10 @@ public class BoardController : ControllerBase
             if (!string.IsNullOrWhiteSpace(his)) extByHis.TryGetValue(his!.Trim(), out e);
             return e;
         }
+        // 「已完成」僅以實際出刀房時間(overlay EndTime)為準（唯一可信的完成訊號）。
+        // 從 Board_OR 消失(Completed=1)但未登記出刀房者，完成與否未明（可能已完成/改期/未登記）→ 暫不上看板，
+        // 避免把「消失」誤判為已完成，或殘留成排程。院方提供 ORSTATUS 完成碼後再改以其為準。
+        daily = daily.Where(d => !d.Completed || !string.IsNullOrWhiteSpace(ExtOf(d.Hhisnum)?.EndTime)).ToList();
         // 逐台刀刷手/流動/備註覆蓋（今日）
         var osn = (await _ward.GetOrSurgeryNurseAsync(today, today, ct))
             .GroupBy(x => OsnKey(x.OpDate, x.RoomId, x.ChartNo, x.OpTime))
@@ -547,7 +561,7 @@ public class BoardController : ControllerBase
             {
                 SurgeryDate = d.Date, Hhisnum = his!, ApiRoom = apiRoom, RoomId = roomId,
                 PatientName = o.Hnamec, Gender = o.Hsex, BirthDate = o.Hbirthdt, SurgeryName = o.Surgery,
-                Doctor = o.Doctor, AnesType = o.Anes, Source = o.Source, OpTime = opt, Diagnosis = o.Diagnosis
+                Doctor = o.Doctor, Department = o.Department, AnesType = o.Anes, Source = o.Source, OpTime = opt, Diagnosis = o.Diagnosis
             }, ct);
             if (d.Date == today) presentToday.Add($"{apiRoom}|{his}|{opt}");
         }
@@ -566,9 +580,9 @@ public class BoardController : ControllerBase
         MedRecord = d.Hhisnum, Diagnosis = string.IsNullOrWhiteSpace(d.Diagnosis) ? e?.Diagnosis : d.Diagnosis,
         SurgeryName = d.SurgeryName, Doctor = d.Doctor, AnesType = d.AnesType, SurgerySource = SourceToLabel(d.Source),
         ScheduledTime = d.OpTime,
-        SurgeryStatus = d.Completed ? "已完成" : DeriveOrStatus(d.OpTime, e?.StartTime, e?.EndTime, now),
+        SurgeryStatus = DeriveOrStatus(d.OpTime, e?.StartTime, e?.EndTime, now),   // 已完成僅來自實際出刀房時間(EndTime)
         StartTime = e?.StartTime, EndTime = e?.EndTime,
-        Department = e?.Department,
+        Department = string.IsNullOrWhiteSpace(d.Department) ? e?.Department : d.Department,   // 院方 Board_OR 科別優先，無則 overlay
         ScrubNurse = a?.ScrubNurse ?? e?.ScrubNurse,   // 逐台刀覆蓋優先，無則 WardPatientExt 後備
         CircNurse = a?.CircNurse ?? e?.CircNurse,
         Notes = a?.Note ?? e?.Notes
@@ -1196,6 +1210,52 @@ public class BoardController : ControllerBase
     public async Task<IActionResult> DeleteAntibiotic(int id, CancellationToken ct = default)
         => await _ward.DeleteAntibioticAsync(id, ct) ? NoContent() : NotFound();
 
+    /// <summary>看板：ICU 實際用藥（自院方 Board_bed 帶入，以病歷號對應在床病人）。
+    /// 目前欄名雖為「抗生素」實為全部用藥、暫不過濾藥品種類；僅取「使用中」(結束日 ≥ 今日或無結束日) 避免列出大量歷史。
+    /// 回傳與自建 antibiotic 相同的 camelCase 形狀，前端免改渲染。</summary>
+    [HttpGet("{unitCode}/antibiotic/live")]
+    public async Task<IActionResult> GetAntibioticLive(string unitCode, CancellationToken ct = default)
+    {
+        if (unitCode.ToUpperInvariant() != "ICU") return Ok(Array.Empty<object>());
+        // AICU(4F)＋CICU(3F)；院方目前忽略病房參數會回同一份，跨呼叫以病歷號去重避免用藥重複計。
+        var beds = (await SafeBoardAsync("AICU", ct)).Concat(await SafeBoardAsync("CICU", ct))
+            .Where(b => !string.IsNullOrWhiteSpace(b.Hhisnum))
+            .GroupBy(b => b.Hhisnum!.Trim())
+            .Select(g => g.First())
+            .ToList();
+        var today = DateTime.Today;
+        var rows = new List<object>();
+        int id = 0;
+        foreach (var b in beds)
+        {
+            var his = b.Hhisnum!.Trim();
+            foreach (var m in b.Meds)
+            {
+                if (string.IsNullOrWhiteSpace(m.Name)) continue;
+                var end = TryDate(m.EndDate);
+                if (end is { } ed && ed.Date < today) continue;   // 只留使用中（含未來/未結束）
+                rows.Add(new
+                {
+                    id = ++id, hhisnum = his, drugName = m.Name,
+                    startDateTime = JoinDateTime(m.StartDate, m.StartTime),
+                    firstDoseDateTime = (string?)null,   // 院方未提供首次給藥
+                    endDateTime = JoinDateTime(m.EndDate, m.EndTime),
+                });
+            }
+        }
+        return Ok(rows);
+    }
+
+    private static DateTime? TryDate(string? s) => DateTime.TryParse((s ?? "").Trim(), out var d) ? d : (DateTime?)null;
+    private static string? JoinDateTime(string? date, string? time)
+    {
+        var d = TryDate(date);
+        if (d is null) return null;
+        var t = (time ?? "").Trim();
+        if (t.Length >= 5) t = t.Substring(0, 5);   // HH:mm:ss → HH:mm
+        return string.IsNullOrWhiteSpace(t) ? d.Value.ToString("yyyy-MM-dd") : $"{d.Value:yyyy-MM-dd} {t}";
+    }
+
     // ── 照護提醒（自建；看板＋後台共用，W52）──────────────────────
     /// <summary>看板＋後台共用：某站照護提醒（camelCase，含責任護理師姓名；includeAll=false 僅啟用）。</summary>
     [HttpGet("{unitCode}/care-reminder")]
@@ -1230,13 +1290,87 @@ public class BoardController : ControllerBase
     { var x = await _staff.GetStaffByIdAsync(id, ct); return x is null ? NotFound() : Ok(x); }
     [HttpPost("personnel")]
     public async Task<IActionResult> CreateStaff([FromBody] StaffUpsertRequest req, CancellationToken ct = default)
-    { var id = await _staff.CreateStaffAsync(req, ct); return CreatedAtAction(nameof(GetStaffById), new { id }, await _staff.GetStaffByIdAsync(id, ct)); }
+    {
+        var id = await _staff.CreateStaffAsync(req, ct);
+        // 連動建立 AD 帳號（best-effort；系統層/單位層新增皆適用；初始密碼 Kmsh@員編；已存在則補設密碼＋啟用）
+        if (_ldapAdmin.Enabled && !string.IsNullOrWhiteSpace(req.EmployeeNo))
+            try { var e = req.EmployeeNo.Trim(); _ldapAdmin.CreateUser(e, $"Kmsh@{e}"); if (!req.IsActive) _ldapAdmin.SetEnabled(e, false); }
+            catch (Exception ex) { _logger.LogWarning(ex, "建 Staff 後連動建 AD 失敗（{Emp}）", req.EmployeeNo); }
+        return CreatedAtAction(nameof(GetStaffById), new { id }, await _staff.GetStaffByIdAsync(id, ct));
+    }
     [HttpPut("personnel/{id:int}")]
     public async Task<IActionResult> UpdateStaff(int id, [FromBody] StaffUpsertRequest req, CancellationToken ct = default)
-        => await _staff.UpdateStaffAsync(id, req, ct) ? Ok(await _staff.GetStaffByIdAsync(id, ct)) : NotFound();
+    {
+        var before = await _staff.GetStaffByIdAsync(id, ct);   // 取舊員編以偵測改名
+        if (before is null) return NotFound();
+        if (!await _staff.UpdateStaffAsync(id, req, ct)) return NotFound();
+        // AD 連動（best-effort）：員編變更→改名；再依 IsActive 啟用/停用
+        if (_ldapAdmin.Enabled && !string.IsNullOrWhiteSpace(req.EmployeeNo))
+        {
+            var newEmp = req.EmployeeNo.Trim();
+            var oldEmp = before.EmployeeNo?.Trim();
+            try
+            {
+                if (!string.IsNullOrWhiteSpace(oldEmp) && !string.Equals(oldEmp, newEmp, StringComparison.OrdinalIgnoreCase))
+                    _ldapAdmin.RenameUser(oldEmp!, newEmp);
+                _ldapAdmin.SetEnabled(newEmp, req.IsActive);
+            }
+            catch (Exception ex) { _logger.LogWarning(ex, "AD 連動失敗（{Old}→{New}）", oldEmp, newEmp); }
+        }
+        return Ok(await _staff.GetStaffByIdAsync(id, ct));
+    }
     [HttpDelete("personnel/{id:int}")]
     public async Task<IActionResult> DeleteStaff(int id, CancellationToken ct = default)
-        => await _staff.DeleteStaffAsync(id, ct) ? NoContent() : NotFound();
+    {
+        var s = await _staff.GetStaffByIdAsync(id, ct);   // 取員編以停用 AD
+        if (!await _staff.DeleteStaffAsync(id, ct)) return NotFound();
+        // 刪帳號 → AD 帳號「停用」（不實際刪除，保留軌跡、可復職）
+        if (_ldapAdmin.Enabled && !string.IsNullOrWhiteSpace(s?.EmployeeNo))
+            try { _ldapAdmin.SetEnabled(s!.EmployeeNo.Trim(), false); }
+            catch (Exception ex) { _logger.LogWarning(ex, "刪 Staff 後 AD 停用失敗（{Emp}）", s.EmployeeNo); }
+        return NoContent();
+    }
+
+    // ── AD 帳號 / 密碼（連動 AD LDS）──────────────────────────────
+    /// <summary>管理員建立/補建該員 AD 帳號並設初始密碼（省略＝Kmsh@員編）、啟用。</summary>
+    [HttpPost("personnel/{id:int}/ad-account")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> CreateAdAccount(int id, [FromBody] AdAccountRequest? req, CancellationToken ct = default)
+    {
+        if (!_ldapAdmin.Enabled) return BadRequest(new { message = "AD 認證未啟用" });
+        var s = await _staff.GetStaffByIdAsync(id, ct);
+        if (s is null || string.IsNullOrWhiteSpace(s.EmployeeNo)) return NotFound();
+        var pwd = string.IsNullOrWhiteSpace(req?.Password) ? $"Kmsh@{s.EmployeeNo.Trim()}" : req!.Password!.Trim();
+        try { _ldapAdmin.CreateUser(s.EmployeeNo.Trim(), pwd); return Ok(new { message = $"AD 帳號已建立：{s.EmployeeNo}" }); }
+        catch (LdapAdminException ex) { return BadRequest(new { message = ex.Message }); }
+    }
+
+    /// <summary>管理員重設某員密碼（寫回 AD）。</summary>
+    [HttpPost("personnel/{id:int}/reset-password")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> ResetPassword(int id, [FromBody] PasswordResetRequest req, CancellationToken ct = default)
+    {
+        if (!_ldapAdmin.Enabled) return BadRequest(new { message = "AD 認證未啟用" });
+        if (string.IsNullOrWhiteSpace(req.NewPassword)) return BadRequest(new { message = "請輸入新密碼" });
+        var s = await _staff.GetStaffByIdAsync(id, ct);
+        if (s is null || string.IsNullOrWhiteSpace(s.EmployeeNo)) return NotFound();
+        try { _ldapAdmin.ResetPassword(s.EmployeeNo.Trim(), req.NewPassword.Trim()); return Ok(new { message = "密碼已重設" }); }
+        catch (LdapAdminException ex) { return BadRequest(new { message = ex.Message }); }
+    }
+
+    /// <summary>使用者自助改密：員編取自 token，先驗舊密再寫新密（防改他人）。</summary>
+    [HttpPost("personnel/change-password")]
+    [Authorize]
+    public IActionResult ChangePassword([FromBody] PasswordChangeRequest req)
+    {
+        if (!_ldapAdmin.Enabled) return BadRequest(new { message = "AD 認證未啟用" });
+        var emp = User.Identity?.Name;
+        if (string.IsNullOrWhiteSpace(emp)) return Unauthorized();
+        if (string.IsNullOrWhiteSpace(req.NewPassword)) return BadRequest(new { message = "請輸入新密碼" });
+        if (!_ldap.Authenticate(emp, req.OldPassword ?? "", out var err)) return BadRequest(new { message = err ?? "舊密碼錯誤" });
+        try { _ldapAdmin.ResetPassword(emp, req.NewPassword.Trim()); return Ok(new { message = "密碼已更新" }); }
+        catch (LdapAdminException ex) { return BadRequest(new { message = ex.Message }); }
+    }
 
     /// <summary>驗證目前 token 並回最新身分（前端啟動時呼叫；token 過期/無效回 401）。</summary>
     [HttpGet("personnel/me")]

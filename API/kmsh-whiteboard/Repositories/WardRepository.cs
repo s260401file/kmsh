@@ -639,7 +639,7 @@ public class WardRepository : IWardRepository
 
     // ── OR 當日手術快照 [dbo].[OrDailySurgery] ─────────────────────
     private const string OdsCols = @"Id, SurgeryDate, Hhisnum, ApiRoom, RoomId, PatientName, Gender, BirthDate,
-        SurgeryName, Doctor, AnesType, Source, OpTime, Diagnosis, Completed, FirstSeenAt, LastSeenAt, UpdatedAt, CreatedAt";
+        SurgeryName, Doctor, Department, AnesType, Source, OpTime, Diagnosis, Completed, FirstSeenAt, LastSeenAt, UpdatedAt, CreatedAt";
 
     public async Task<IEnumerable<OrDailySurgeryItem>> GetOrDailyAsync(DateTime fromDate, DateTime toDate, CancellationToken ct = default)
     {
@@ -654,7 +654,7 @@ public class WardRepository : IWardRepository
     // ── OR 清洗手術清單 [dbo].[OrSurgery]（WhiteboardSync ETL 落地）─────
     private const string OrSurgeryCols = @"OpDate, OpTime, Room, RoomId, CaseType, CaseTypeText, ChartNo, CaseNo,
         PatientName, Sex, Age, SourceWard, SourceBed, SurgeonNo, SurgeonName, MentorName, AssistantNames,
-        SurgeryName, Anesthesia, NhiCodes, IcdCodes, StatusCode, CancelReason, EndDate, EndTime";
+        SurgeryName, Anesthesia, Department, NhiCodes, IcdCodes, StatusCode, CancelReason, EndDate, EndTime";
 
     public async Task<IEnumerable<OrSurgeryListRow>> GetOrSurgeryListAsync(DateTime fromDate, DateTime toDate, CancellationToken ct = default)
     {
@@ -727,18 +727,18 @@ public class WardRepository : IWardRepository
         var sql = @"
             UPDATE [dbo].[OrDailySurgery] SET
                 RoomId=@RoomId, PatientName=@PatientName, Gender=@Gender, BirthDate=@BirthDate,
-                SurgeryName=@SurgeryName, Doctor=@Doctor, AnesType=@AnesType, Source=@Source, Diagnosis=@Diagnosis,
+                SurgeryName=@SurgeryName, Doctor=@Doctor, Department=@Department, AnesType=@AnesType, Source=@Source, Diagnosis=@Diagnosis,
                 Completed=0, LastSeenAt=GETDATE(), UpdatedAt=GETDATE()
             WHERE SurgeryDate=@SurgeryDate AND ApiRoom=@ApiRoom AND Hhisnum=@Hhisnum AND OpTime=@OpTime;
             IF @@ROWCOUNT = 0
             INSERT INTO [dbo].[OrDailySurgery]
-                (SurgeryDate, Hhisnum, ApiRoom, RoomId, PatientName, Gender, BirthDate, SurgeryName, Doctor, AnesType, Source, OpTime, Diagnosis, Completed, FirstSeenAt, LastSeenAt, UpdatedAt, CreatedAt)
+                (SurgeryDate, Hhisnum, ApiRoom, RoomId, PatientName, Gender, BirthDate, SurgeryName, Doctor, Department, AnesType, Source, OpTime, Diagnosis, Completed, FirstSeenAt, LastSeenAt, UpdatedAt, CreatedAt)
             VALUES
-                (@SurgeryDate, @Hhisnum, @ApiRoom, @RoomId, @PatientName, @Gender, @BirthDate, @SurgeryName, @Doctor, @AnesType, @Source, @OpTime, @Diagnosis, 0, GETDATE(), GETDATE(), GETDATE(), GETDATE());";
+                (@SurgeryDate, @Hhisnum, @ApiRoom, @RoomId, @PatientName, @Gender, @BirthDate, @SurgeryName, @Doctor, @Department, @AnesType, @Source, @OpTime, @Diagnosis, 0, GETDATE(), GETDATE(), GETDATE(), GETDATE());";
         using var conn = _db.Create();
         return await conn.ExecuteAsync(new CommandDefinition(sql, new {
             it.SurgeryDate, it.Hhisnum, it.ApiRoom, it.RoomId, it.PatientName, it.Gender, it.BirthDate,
-            it.SurgeryName, it.Doctor, it.AnesType, it.Source, it.OpTime, it.Diagnosis
+            it.SurgeryName, it.Doctor, it.Department, it.AnesType, it.Source, it.OpTime, it.Diagnosis
         }, cancellationToken: ct));
     }
 

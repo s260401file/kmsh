@@ -4,7 +4,7 @@ namespace kmsh_whiteboard.Models.Board;
 
 /// <summary>
 /// 院方 Board_OR API（手術排程清單）回應的單一手術。中文鍵、字串多補空白（含全形）取用前 trim。
-/// 為「預定排程」：無即時手術狀態/實際起訖/刷手流動/科別（這些由自建 overlay 補）。
+/// 為「預定排程」：無即時手術狀態/實際起訖/刷手流動（這些由自建 overlay 補）。科別自 2026-07 起院方已回傳。
 /// </summary>
 public class BoardOrItem
 {
@@ -15,6 +15,7 @@ public class BoardOrItem
     [JsonPropertyName("出生年月日")] public string? Hbirthdt { get; set; }
     [JsonPropertyName("手術")]     public string? Surgery { get; set; }   // 術式名
     [JsonPropertyName("主刀醫師")] public string? Doctor { get; set; }
+    [JsonPropertyName("科別")]     public string? Department { get; set; } // 科別代碼（如 PS 整形外科）；院方 2026-07 起提供
     [JsonPropertyName("麻醉")]     public string? Anes { get; set; }      // LA/SA/GA/IG/IR…
     [JsonPropertyName("來源")]     public string? Source { get; set; }    // 代碼（實測全 O，待院方代碼表）
     [JsonPropertyName("手術日期")] public string? OpDate { get; set; }    // ISO

@@ -120,6 +120,10 @@ export async function getAntibiotic(unitCode = 'ICU', includeAll = false) {
   const p = new URLSearchParams({ includeAll: includeAll ? 'true' : 'false' })
   return handle(await apiFetch(`${BASE}/${unitCode}/antibiotic?${p}`))
 }
+// GET /api/Board/{unitCode}/antibiotic/live → 院方 Board_bed 帶入的實際用藥（使用中；暫不過濾藥品種類）
+export async function getAntibioticLive(unitCode = 'ICU') {
+  return handle(await apiFetch(`${BASE}/${unitCode}/antibiotic/live`))
+}
 export async function createAntibiotic(data) { return handle(await apiFetch(`${BASE}/antibiotic`, { method: 'POST', headers, body: JSON.stringify(data) })) }
 export async function updateAntibiotic(id, data) { return handle(await apiFetch(`${BASE}/antibiotic/${id}`, { method: 'PUT', headers, body: JSON.stringify(data) })) }
 export async function removeAntibiotic(id) { return handle(await apiFetch(`${BASE}/antibiotic/${id}`, { method: 'DELETE' })) }
@@ -161,6 +165,13 @@ export async function getStaff(includeAll = true) {
 export async function createStaff(d) { return handle(await apiFetch(`${BASE}/personnel`, { method: 'POST', headers, body: JSON.stringify(d) })) }
 export async function updateStaff(id, d) { return handle(await apiFetch(`${BASE}/personnel/${id}`, { method: 'PUT', headers, body: JSON.stringify(d) })) }
 export async function removeStaff(id) { return handle(await apiFetch(`${BASE}/personnel/${id}`, { method: 'DELETE' })) }
+// ── AD 帳號 / 密碼（連動 AD LDS）──
+// 管理員：建/補建該員 AD 帳號（password 省略＝Kmsh@員編）
+export async function createAdAccount(id, password) { return handle(await apiFetch(`${BASE}/personnel/${id}/ad-account`, { method: 'POST', headers, body: JSON.stringify({ password: password || null }) })) }
+// 管理員：重設某員密碼
+export async function resetPassword(id, newPassword) { return handle(await apiFetch(`${BASE}/personnel/${id}/reset-password`, { method: 'POST', headers, body: JSON.stringify({ newPassword }) })) }
+// 使用者自助改密（員編取自 token）
+export async function changePassword(oldPassword, newPassword) { return handle(await apiFetch(`${BASE}/personnel/change-password`, { method: 'POST', headers, body: JSON.stringify({ oldPassword, newPassword }) })) }
 // 單位×角色 CRUD
 export async function getUnitRoles(staffId, unit, includeAll = true) {
   const p = new URLSearchParams({ includeAll: includeAll ? 'true' : 'false' })

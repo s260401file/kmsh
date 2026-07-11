@@ -82,6 +82,7 @@ export default function SurgeryListTab() {
                 <th>病歷號</th>
                 <th>病房</th>
                 <th>房間</th>
+                <th>科別</th>
                 <th>麻醉</th>
                 <th>姓名</th>
                 <th>主刀醫師</th>
@@ -93,7 +94,7 @@ export default function SurgeryListTab() {
             </thead>
             <tbody>
               {rows.length === 0 ? (
-                <tr className="sl-empty"><td colSpan={11}>{loading ? '載入中…' : '本期間無手術資料'}</td></tr>
+                <tr className="sl-empty"><td colSpan={12}>{loading ? '載入中…' : '本期間無手術資料'}</td></tr>
               ) : rows.map((r, i) => {
                 const cancelled = r.statusCode === '82'
                 return (
@@ -109,6 +110,7 @@ export default function SurgeryListTab() {
                       {r.caseTypeText && <span className={`sl-badge ${typeCls(r.caseTypeText)}`}>{r.caseTypeText}</span>}
                     </td>
                     <td className="sl-room">{r.roomId || r.room}</td>
+                    <td className="sl-mono">{r.department}</td>
                     <td>{r.anesthesia}</td>
                     <td>
                       <span className={`sl-name ${r.sex === 'M' ? 'sl-m' : r.sex === 'F' ? 'sl-f' : ''}`}>{r.patientName}</span>

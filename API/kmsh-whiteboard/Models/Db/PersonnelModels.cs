@@ -34,6 +34,24 @@ public class StaffUpsertRequest
     public int SortOrder { get; set; }
 }
 
+// ── 1b. AD 帳號 / 密碼 請求 ──────────────────────────────────
+/// <summary>管理員建立/補建該員 AD 帳號（密碼省略＝初始密碼 Kmsh&lt;員編&gt;）。</summary>
+public class AdAccountRequest
+{
+    public string? Password { get; set; }
+}
+/// <summary>管理員重設某員密碼。</summary>
+public class PasswordResetRequest
+{
+    [Required] public string NewPassword { get; set; } = "";
+}
+/// <summary>使用者自助改密（員編取自 token，不由前端指定）。</summary>
+public class PasswordChangeRequest
+{
+    [Required] public string OldPassword { get; set; } = "";
+    [Required] public string NewPassword { get; set; } = "";
+}
+
 // ── 2. 人員×單位×角色 ─────────────────────────────────────────
 public class StaffUnitRoleItem
 {
