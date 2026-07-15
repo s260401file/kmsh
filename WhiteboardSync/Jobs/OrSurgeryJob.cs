@@ -16,7 +16,7 @@ public sealed class OrSurgeryJob : IEtlJob
     {
         "OpDate","OpTime","Room","RoomId","CaseType","CaseTypeText","ChartNo","CaseNo",
         "PatientName","Sex","Age","SourceWard","SourceBed","SurgeonNo","SurgeonName","MentorName",
-        "AssistantNames","SurgeryName","Anesthesia","Department","NhiCodes","IcdCodes","StatusCode","CancelReason","EndDate","EndTime"
+        "AssistantNames","SurgeryName","Anesthesia","Department","Diagnosis","NhiCodes","IcdCodes","StatusCode","CancelReason","EndDate","EndTime"
     };
     private static readonly string[] KeyCols = { "OpDate", "Room", "ChartNo", "OpTime" };
 
@@ -35,7 +35,7 @@ BEGIN
         [SourceWard] NVARCHAR(20) NULL, [SourceBed] NVARCHAR(20) NULL,
         [SurgeonNo] NVARCHAR(20) NULL, [SurgeonName] NVARCHAR(50) NULL, [MentorName] NVARCHAR(50) NULL,
         [AssistantNames] NVARCHAR(500) NULL, [SurgeryName] NVARCHAR(200) NULL, [Anesthesia] NVARCHAR(20) NULL,
-        [Department] NVARCHAR(50) NULL,
+        [Department] NVARCHAR(50) NULL, [Diagnosis] NVARCHAR(200) NULL,
         [NhiCodes] NVARCHAR(200) NULL, [IcdCodes] NVARCHAR(200) NULL,
         [StatusCode] NVARCHAR(10) NULL, [CancelReason] NVARCHAR(400) NULL,
         [EndDate] DATE NULL, [EndTime] NVARCHAR(10) NULL,
@@ -48,7 +48,9 @@ BEGIN
     CREATE INDEX [IX_OrSurgery_Date_Room] ON [dbo].[OrSurgery] ([OpDate],[Room]);
 END
 IF COL_LENGTH(N'[dbo].[OrSurgery]', N'Department') IS NULL
-    ALTER TABLE [dbo].[OrSurgery] ADD [Department] NVARCHAR(50) NULL;";
+    ALTER TABLE [dbo].[OrSurgery] ADD [Department] NVARCHAR(50) NULL;
+IF COL_LENGTH(N'[dbo].[OrSurgery]', N'Diagnosis') IS NULL
+    ALTER TABLE [dbo].[OrSurgery] ADD [Diagnosis] NVARCHAR(200) NULL;";
 
     // 抽取（來源 DB2_DUMP）：join 姓名/生日與最新病房床；多帶 CaseNo/DseqNo 供去重
     private const string ExtractSql = @"
@@ -60,7 +62,7 @@ SELECT
   l.HNURSTA AS SourceWard, l.HBED AS SourceBed,
   o.ORDOCNO AS SurgeonNo, o.ORDOCNM AS SurgeonName, o.ORGUINM AS MentorName,
   o.ORADRNM1 AS A1, o.ORADRNM2 AS A2, o.ORADRNM3 AS A3, o.ORADRNM4 AS A4, o.ORADRNM5 AS A5,
-  o.OROPNM1 AS SurgeryName,
+  o.OROPNM1 AS SurgeryName, o.ORDIAG AS Diagnosis,
   o.OROPNC1 AS N1, o.OROPNC2 AS N2, o.OROPNC3 AS N3, o.OROPNC4 AS N4,
   o.OROPICD1 AS D1, o.OROPICD2 AS D2, o.OROPICD3 AS D3, o.OROPICD4 AS D4,
   o.ORSTATUS AS StatusCode, o.ORREASON AS CancelReason,
@@ -148,6 +150,7 @@ ORDER BY o.ORBGNDT, o.ORBGNTM, o.OROPROOM;";
                 SurgeryName = OrClean.C(S("SurgeryName")),
                 Anesthesia = OrClean.C(S("Anesthesia")),
                 Department = OrClean.C(S("Department")),
+                Diagnosis = OrClean.C(S("Diagnosis")),
                 NhiCodes = OrClean.Join(S("N1"), S("N2"), S("N3"), S("N4")),
                 IcdCodes = OrClean.Join(S("D1"), S("D2"), S("D3"), S("D4")),
                 StatusCode = OrClean.C(S("StatusCode")),
@@ -197,6 +200,7 @@ ORDER BY o.ORBGNDT, o.ORBGNTM, o.OROPROOM;";
         dt.Columns.Add("SurgeryName", typeof(string));
         dt.Columns.Add("Anesthesia", typeof(string));
         dt.Columns.Add("Department", typeof(string));
+        dt.Columns.Add("Diagnosis", typeof(string));
         dt.Columns.Add("NhiCodes", typeof(string));
         dt.Columns.Add("IcdCodes", typeof(string));
         dt.Columns.Add("StatusCode", typeof(string));
@@ -213,7 +217,7 @@ ORDER BY o.ORBGNDT, o.ORBGNTM, o.OROPROOM;";
                 (object?)x.SourceWard ?? DBNull.Value, (object?)x.SourceBed ?? DBNull.Value,
                 (object?)x.SurgeonNo ?? DBNull.Value, (object?)x.SurgeonName ?? DBNull.Value, (object?)x.MentorName ?? DBNull.Value,
                 (object?)x.AssistantNames ?? DBNull.Value, (object?)x.SurgeryName ?? DBNull.Value, (object?)x.Anesthesia ?? DBNull.Value,
-                (object?)x.Department ?? DBNull.Value,
+                (object?)x.Department ?? DBNull.Value, (object?)x.Diagnosis ?? DBNull.Value,
                 (object?)x.NhiCodes ?? DBNull.Value, (object?)x.IcdCodes ?? DBNull.Value,
                 (object?)x.StatusCode ?? DBNull.Value, (object?)x.CancelReason ?? DBNull.Value,
                 (object?)x.EndDate ?? DBNull.Value, (object?)x.EndTime ?? DBNull.Value);
@@ -266,7 +270,7 @@ FROM @act;";
         public string? CaseType; public string? CaseTypeText; public string ChartNo = ""; public string? CaseNo;
         public string? PatientName; public string? Sex; public int? Age; public string? SourceWard; public string? SourceBed;
         public string? SurgeonNo; public string? SurgeonName; public string? MentorName; public string? AssistantNames;
-        public string? SurgeryName; public string? Anesthesia; public string? Department; public string? NhiCodes; public string? IcdCodes;
+        public string? SurgeryName; public string? Anesthesia; public string? Department; public string? Diagnosis; public string? NhiCodes; public string? IcdCodes;
         public string? StatusCode; public string? CancelReason; public DateTime? EndDate; public string? EndTime;
     }
 }

@@ -460,7 +460,7 @@ public class WardRepository : IWardRepository
     }
 
     // ── 各站頁首單位資訊 [dbo].[UnitInfo]（一站一列；以 UnitCode upsert）──
-    private const string UiCols = "Id, UnitCode, HospitalName, WardName, DirectorLabel, DirectorName, HeadNurseLabel, HeadNurseName, TotalBeds, UpdatedAt, CreatedAt";
+    private const string UiCols = "Id, UnitCode, HospitalName, WardName, DirectorLabel, DirectorName, HeadNurseLabel, HeadNurseName, TotalBeds, ViewPassword, ViewTimeoutMinutes, UpdatedAt, CreatedAt";
 
     public async Task<UnitInfoItem?> GetUnitInfoAsync(string unitCode, CancellationToken ct = default)
     {
@@ -654,7 +654,7 @@ public class WardRepository : IWardRepository
     // ── OR 清洗手術清單 [dbo].[OrSurgery]（WhiteboardSync ETL 落地）─────
     private const string OrSurgeryCols = @"OpDate, OpTime, Room, RoomId, CaseType, CaseTypeText, ChartNo, CaseNo,
         PatientName, Sex, Age, SourceWard, SourceBed, SurgeonNo, SurgeonName, MentorName, AssistantNames,
-        SurgeryName, Anesthesia, Department, NhiCodes, IcdCodes, StatusCode, CancelReason, EndDate, EndTime";
+        SurgeryName, Anesthesia, Department, Diagnosis, NhiCodes, IcdCodes, StatusCode, CancelReason, EndDate, EndTime";
 
     public async Task<IEnumerable<OrSurgeryListRow>> GetOrSurgeryListAsync(DateTime fromDate, DateTime toDate, CancellationToken ct = default)
     {
@@ -721,6 +721,49 @@ public class WardRepository : IWardRepository
         return n;
     }
 
+    // ── OR 刀房每日溫溼度 [dbo].[OrRoomEnv] ──
+    private const string OreCols = "Id, OpDate, RoomId, Temperature, Humidity, UpdatedAt, CreatedAt";
+
+    public async Task<IEnumerable<OrRoomEnvItem>> GetOrRoomEnvAsync(DateTime date, CancellationToken ct = default)
+    {
+        using var conn = _db.Create();
+        var sql = $@"SELECT {OreCols} FROM [dbo].[OrRoomEnv] WHERE OpDate=@Date";
+        return await conn.QueryAsync<OrRoomEnvItem>(
+            new CommandDefinition(sql, new { Date = date.Date }, cancellationToken: ct));
+    }
+
+    /// <summary>批次依鍵(日期+刀房) upsert；溫溼皆空→刪除。單一交易。回寫入/刪除筆數。</summary>
+    public async Task<int> SaveOrRoomEnvBatchAsync(IEnumerable<OrRoomEnvUpsertRequest> entries, CancellationToken ct = default)
+    {
+        const string delSql = "DELETE FROM [dbo].[OrRoomEnv] WHERE OpDate=@OpDate AND RoomId=@RoomId";
+        const string updSql = @"UPDATE [dbo].[OrRoomEnv] SET Temperature=@Temperature, Humidity=@Humidity, UpdatedAt=GETDATE()
+                                WHERE OpDate=@OpDate AND RoomId=@RoomId";
+        const string insSql = @"INSERT INTO [dbo].[OrRoomEnv] (OpDate, RoomId, Temperature, Humidity, UpdatedAt, CreatedAt)
+                                VALUES (@OpDate, @RoomId, @Temperature, @Humidity, GETDATE(), GETDATE())";
+        using var conn = _db.Create();
+        conn.Open();
+        using var tx = conn.BeginTransaction();
+        int n = 0;
+        try
+        {
+            foreach (var e in entries ?? Enumerable.Empty<OrRoomEnvUpsertRequest>())
+            {
+                var p = new { OpDate = DateTime.Parse(e.OpDate).Date, RoomId = e.RoomId ?? "", e.Temperature, e.Humidity };
+                if (p.Temperature is null && p.Humidity is null)
+                {
+                    n += await conn.ExecuteAsync(new CommandDefinition(delSql, p, tx, cancellationToken: ct));
+                    continue;
+                }
+                var upd = await conn.ExecuteAsync(new CommandDefinition(updSql, p, tx, cancellationToken: ct));
+                if (upd == 0) await conn.ExecuteAsync(new CommandDefinition(insSql, p, tx, cancellationToken: ct));
+                n++;
+            }
+            tx.Commit();
+        }
+        catch { tx.Rollback(); throw; }
+        return n;
+    }
+
     /// <summary>依唯一鍵(日期+刀房+病歷號+時間) upsert；存在則更新欄位＋LastSeen、Completed 歸 0。</summary>
     public async Task<int> UpsertOrDailyAsync(OrDailySurgeryItem it, CancellationToken ct = default)
     {
@@ -772,11 +815,11 @@ public class WardRepository : IWardRepository
             UPDATE [dbo].[UnitInfo] SET
                 HospitalName=@HospitalName, WardName=@WardName,
                 DirectorLabel=@DirectorLabel, DirectorName=@DirectorName,
-                HeadNurseLabel=@HeadNurseLabel, HeadNurseName=@HeadNurseName, TotalBeds=@TotalBeds, UpdatedAt=GETDATE()
+                HeadNurseLabel=@HeadNurseLabel, HeadNurseName=@HeadNurseName, TotalBeds=@TotalBeds, ViewPassword=@ViewPassword, ViewTimeoutMinutes=@ViewTimeoutMinutes, UpdatedAt=GETDATE()
             WHERE UnitCode=@UnitCode;
             IF @@ROWCOUNT = 0
-            INSERT INTO [dbo].[UnitInfo] (UnitCode, HospitalName, WardName, DirectorLabel, DirectorName, HeadNurseLabel, HeadNurseName, TotalBeds, UpdatedAt, CreatedAt)
-            VALUES (@UnitCode, @HospitalName, @WardName, @DirectorLabel, @DirectorName, @HeadNurseLabel, @HeadNurseName, @TotalBeds, GETDATE(), GETDATE());";
+            INSERT INTO [dbo].[UnitInfo] (UnitCode, HospitalName, WardName, DirectorLabel, DirectorName, HeadNurseLabel, HeadNurseName, TotalBeds, ViewPassword, ViewTimeoutMinutes, UpdatedAt, CreatedAt)
+            VALUES (@UnitCode, @HospitalName, @WardName, @DirectorLabel, @DirectorName, @HeadNurseLabel, @HeadNurseName, @TotalBeds, @ViewPassword, @ViewTimeoutMinutes, GETDATE(), GETDATE());";
         using var conn = _db.Create();
         await conn.ExecuteAsync(new CommandDefinition(sql, req, cancellationToken: ct));
         return true;

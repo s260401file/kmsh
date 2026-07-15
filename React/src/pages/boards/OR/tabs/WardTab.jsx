@@ -4,6 +4,7 @@
 // 資料來源：後端 /api/Board/or（自建刀房主檔 ＋ Board_OR 今日排程 ＋ overlay；免 F5 輪詢）。
 import { useState, useMemo } from 'react'
 import { useOrWard } from '../../../../hooks/useOrWard'
+import { useOrRoomEnv } from '../../../../hooks/useOrRoomEnv'   // 今日各刀房溫溼度
 import BoardLoading from '../../../../components/BoardLoading'   // 院方資料載入中動畫
 
 // 依手術來源回傳對應的 CSS class（急診/門診/住院刀）
@@ -73,6 +74,28 @@ function RoomCard({ room, filteredOut, onClick }) {
       </div>
       <div className="card-row3">{p.SurgeryName}</div>
       <div className="card-row4">術：{p.Doctor || '—'}{p.AnesType ? `　麻：${p.AnesType}` : ''}</div>
+    </div>
+  )
+}
+
+// 第 8 格：今日各刀房溫溼度摘要卡（後台「溫溼度記錄」填入；隨看板輪詢更新，缺值顯示「—」）
+function EnvCard({ rooms, envByRoom, date }) {
+  const fmt = v => (v == null ? '—' : String(v))
+  return (
+    <div className="or-env-card">
+      <div className="or-env-title">溫溼度<span className="or-env-date">{date}</span></div>
+      <div className="or-env-body">
+        {rooms.map(r => {
+          const e = envByRoom[r.RoomId]
+          return (
+            <div key={r.RoomId} className="or-env-row">
+              <span className="or-env-room">{r.RoomId}</span>
+              <span className="or-env-val">{fmt(e?.temperature)}<i>°C</i></span>
+              <span className="or-env-val">{fmt(e?.humidity)}<i>%</i></span>
+            </div>
+          )
+        })}
+      </div>
     </div>
   )
 }
@@ -154,6 +177,9 @@ export default function WardTab() {
   const [selectedRoom, setSelectedRoom] = useState(null) // 目前開啟詳情的刀房
   const [showCompleted, setShowCompleted] = useState(false) // 今日已完成清單 Modal
   const { rooms, count, loading } = useOrWard('OR')     // 後端聚合看板（當日快照＋overlay）
+  const { env } = useOrRoomEnv()                        // 今日各刀房溫溼度（第 8 格）
+  const envByRoom = useMemo(() => Object.fromEntries((env || []).map(e => [e.roomId, e])), [env])
+  const envDate = useMemo(() => { const d = new Date(); return `${d.getMonth() + 1}/${d.getDate()}` }, [])
   // 開著的刀房詳情彈窗：每次輪詢後用 RoomId 從最新 rooms 重新取回，內容跟著自動更新（約20秒）
   const liveSelectedRoom = selectedRoom ? rooms.find(r => r.RoomId === selectedRoom.RoomId) : null
   // 統計改以「刀數」計（由各房今日手術聯集；今日總刀＝後端穩定 count）
@@ -190,6 +216,7 @@ export default function WardTab() {
                 onClick={room.Status !== 'empty' ? () => setSelectedRoom(room) : undefined}
               />
             ))}
+            <EnvCard rooms={rooms} envByRoom={envByRoom} date={envDate} />
           </div>
         </div>
 

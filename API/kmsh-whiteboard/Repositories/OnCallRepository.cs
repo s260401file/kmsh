@@ -140,4 +140,42 @@ public class OnCallRepository : IOnCallRepository
         catch { tx.Rollback(); throw; }
         return n;
     }
+
+    // ── 各單位引用值班科別選取 UnitOnCallDept ──
+    public async Task<IEnumerable<UnitOnCallDeptItem>> GetUnitDeptsAsync(string unitCode, CancellationToken ct = default)
+    {
+        var sql = @"SELECT u.Id, u.UnitCode, u.DeptCode, d.DeptName, u.SortOrder, u.IsActive, u.UpdatedAt, u.CreatedAt
+                    FROM [dbo].[UnitOnCallDept] u
+                    LEFT JOIN [dbo].[OnCallDept] d ON d.DeptCode = u.DeptCode
+                    WHERE u.UnitCode=@UnitCode AND u.IsActive=1
+                    ORDER BY u.SortOrder, u.Id";
+        using var conn = _db.Create();
+        return await conn.QueryAsync<UnitOnCallDeptItem>(new CommandDefinition(sql, new { UnitCode = unitCode }, cancellationToken: ct));
+    }
+
+    /// <summary>覆寫某單位整組科別選取：交易內先刪該單位既有列、再依 entries 插入。回傳插入筆數。</summary>
+    public async Task<int> SaveUnitDeptsAsync(string unitCode, IEnumerable<UnitOnCallDeptEntry> entries, CancellationToken ct = default)
+    {
+        const string delSql = "DELETE FROM [dbo].[UnitOnCallDept] WHERE UnitCode=@UnitCode";
+        const string insSql = @"INSERT INTO [dbo].[UnitOnCallDept] (UnitCode, DeptCode, SortOrder, IsActive, UpdatedAt, CreatedAt)
+                                VALUES (@UnitCode, @DeptCode, @SortOrder, 1, GETDATE(), GETDATE())";
+        using var conn = _db.Create();
+        conn.Open();
+        using var tx = conn.BeginTransaction();
+        int n = 0;
+        try
+        {
+            await conn.ExecuteAsync(new CommandDefinition(delSql, new { UnitCode = unitCode }, tx, cancellationToken: ct));
+            var seen = new HashSet<string>();
+            foreach (var e in entries ?? Enumerable.Empty<UnitOnCallDeptEntry>())
+            {
+                if (string.IsNullOrWhiteSpace(e.DeptCode) || !seen.Add(e.DeptCode)) continue;   // 空/重複略過（UNIQUE 保護）
+                n += await conn.ExecuteAsync(new CommandDefinition(insSql,
+                    new { UnitCode = unitCode, DeptCode = e.DeptCode.Trim(), e.SortOrder }, tx, cancellationToken: ct));
+            }
+            tx.Commit();
+        }
+        catch { tx.Rollback(); throw; }
+        return n;
+    }
 }

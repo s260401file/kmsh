@@ -736,25 +736,46 @@ public class BoardController : ControllerBase
         return Ok(await _oncall.GetDayAsync(d, ct));
     }
 
-    /// <summary>看板「各科值班醫師」面板：每科一位（含全部啟用科別）；多時段科（內科）依當下時間帶當前時段醫師。</summary>
+    /// <summary>看板「各科值班醫師」面板：每科一位（含全部啟用科別）；多時段科（內科）一律帶「值班」時段醫師。</summary>
     [HttpGet("oncall-board")]
     public async Task<IActionResult> GetOnCallBoard([FromQuery] string? date, CancellationToken ct = default)
     {
         var d = string.IsNullOrWhiteSpace(date) ? DateTime.Today : DateTime.Parse(date);
         var depts = (await _oncall.GetDeptsAsync(false, ct)).OrderBy(x => x.SortOrder).ThenBy(x => x.Id).ToList();
         var rows = (await _oncall.GetDayAsync(d, ct)).ToList();
-        // 作用時段（伺服器＝看板同機）：上午 08:00–13:00、下午 13:00–17:30、其餘＝值班（夜間）
-        var now = DateTime.Now.TimeOfDay;
-        var activeSlot = (now >= TimeSpan.FromHours(8) && now < TimeSpan.FromHours(13)) ? "上午"
-                       : (now >= TimeSpan.FromHours(13) && now < new TimeSpan(17, 30, 0)) ? "下午"
-                       : "值班";
-        var result = depts.Select(dp =>
-        {
-            var drows = rows.Where(r => r.DeptCode == dp.DeptCode).OrderBy(r => r.SortOrder).ThenBy(r => r.Id).ToList();
-            var pick = drows.Count <= 1 ? drows.FirstOrDefault()
-                     : (drows.FirstOrDefault(r => r.Slot == activeSlot) ?? drows.First());
-            return new { deptCode = dp.DeptCode, deptName = dp.DeptName, doctorName = pick?.DoctorName, ext = pick?.Ext, mobile = pick?.Mobile, slot = pick?.Slot };
-        });
+        var result = depts.Select(dp => BuildOnCallEntry(dp.DeptCode, dp.DeptName, rows));
+        return Ok(result);
+    }
+
+    // 某科當日值班醫師挑選：多時段科（內科）取 Slot=值班；無值班列或單一時段科取當日該科第一列。
+    private static object BuildOnCallEntry(string deptCode, string? deptName, List<OnCallRosterItem> rows)
+    {
+        var drows = rows.Where(r => r.DeptCode == deptCode).OrderBy(r => r.SortOrder).ThenBy(r => r.Id).ToList();
+        var pick = drows.Count <= 1 ? drows.FirstOrDefault()
+                 : (drows.FirstOrDefault(r => r.Slot == "值班") ?? drows.First());
+        return new { deptCode, deptName, doctorName = pick?.DoctorName, ext = pick?.Ext, mobile = pick?.Mobile, slot = pick?.Slot };
+    }
+
+    // ── 各單位「引用值班醫師」科別選取 UnitOnCallDept ──────────────
+    /// <summary>某單位選取的值班科別（含順序＋科別名稱）。供後台設定頁載入現值。</summary>
+    [HttpGet("{unitCode}/oncall-display")]
+    public async Task<IActionResult> GetUnitOnCallDepts(string unitCode, CancellationToken ct = default)
+        => Ok(await _oncall.GetUnitDeptsAsync(unitCode, ct));
+
+    /// <summary>覆寫某單位的值班科別選取（core batch：先刪後插，順序＝SortOrder）。</summary>
+    [HttpPost("{unitCode}/oncall-display/batch")]
+    public async Task<IActionResult> SaveUnitOnCallDepts(string unitCode, [FromBody] UnitOnCallDeptSaveRequest req, CancellationToken ct = default)
+        => Ok(new { saved = await _oncall.SaveUnitDeptsAsync(unitCode, req.Entries ?? new(), ct) });
+
+    /// <summary>某單位白板「值班醫療團隊」資料：所選科別當日值班醫師，依單位順序。（前台顯示用）</summary>
+    [HttpGet("{unitCode}/oncall-display/board")]
+    public async Task<IActionResult> GetUnitOnCallBoard(string unitCode, [FromQuery] string? date, CancellationToken ct = default)
+    {
+        var selected = (await _oncall.GetUnitDeptsAsync(unitCode, ct)).ToList();   // 已依 SortOrder
+        if (selected.Count == 0) return Ok(Array.Empty<object>());
+        var d = string.IsNullOrWhiteSpace(date) ? DateTime.Today : DateTime.Parse(date);
+        var rows = (await _oncall.GetDayAsync(d, ct)).ToList();
+        var result = selected.Select(s => BuildOnCallEntry(s.DeptCode, s.DeptName, rows));
         return Ok(result);
     }
 
@@ -955,22 +976,10 @@ public class BoardController : ControllerBase
     [HttpGet("or/surgerylist")]
     public async Task<IActionResult> GetOrSurgeryList([FromQuery] DateTime? from, [FromQuery] DateTime? to, CancellationToken ct = default)
     {
-        var today = DateTime.Today;
-        var f = from?.Date ?? new DateTime(today.Year, today.Month, 1);
-        var t = to?.Date ?? f.AddMonths(1).AddDays(-1);       // 預設當月月底
-        if (t < f) (f, t) = (t, f);
-        if ((t - f).TotalDays > 92) return BadRequest(new { message = "查詢區間過長（上限約 3 個月）" });
+        var (ok, f, t, err) = NormalizeOrRange(from, to);
+        if (!ok) return BadRequest(new { message = err });
 
-        var rows = (await _ward.GetOrSurgeryListAsync(f, t, ct)).ToList();
-        // 合併逐台刀刷手/流動/備註覆蓋（鍵＝日期|房|病歷號|時間）
-        var osn = (await _ward.GetOrSurgeryNurseAsync(f, t, ct))
-            .GroupBy(x => OsnKey(x.OpDate, x.RoomId, x.ChartNo, x.OpTime))
-            .ToDictionary(g => g.Key, g => g.First());
-        foreach (var r in rows)
-        {
-            if (osn.TryGetValue(OsnKey(r.OpDate, r.RoomId, r.ChartNo, r.OpTime), out var a))
-            { r.ScrubNurse = a.ScrubNurse; r.CircNurse = a.CircNurse; r.AnesNurse = a.AnesNurse; r.Note = a.Note; }
-        }
+        var rows = await BuildOrSurgeryRowsAsync(f, t, ct);
         foreach (var r in rows) r.PatientName = MaskName(r.PatientName);   // 公開看板：病人姓名去識別化（統計不受影響）
         var stats = new OrMonthlyStats
         {
@@ -991,10 +1000,68 @@ public class BoardController : ControllerBase
         });
     }
 
+    /// <summary>匯出 OR 手術清單為 .xlsx（含完整病人姓名，屬 PII → 需登入）。檔名 手術清單{起}-{訖}.xlsx。</summary>
+    [HttpGet("or/surgerylist/export")]
+    [Authorize]
+    public async Task<IActionResult> ExportOrSurgeryList([FromQuery] DateTime? from, [FromQuery] DateTime? to, CancellationToken ct = default)
+    {
+        var (ok, f, t, err) = NormalizeOrRange(from, to);
+        if (!ok) return BadRequest(new { message = err });
+
+        var rows = await BuildOrSurgeryRowsAsync(f, t, ct);   // 不遮罩，匯出真名
+        var headers = new[] { "手術日期", "手術時間", "房間", "科別", "案別", "病歷號", "姓名", "性別", "年齡",
+            "來源病房", "床位", "主刀醫師", "麻醉", "手術名稱", "診斷", "ICD碼", "刷手", "流動", "麻醉護理", "備註", "狀態", "取消原因" };
+        var data = rows.Select(r => new[]
+        {
+            r.OpDate.ToString("yyyy-MM-dd"), r.OpTime ?? "", r.RoomId ?? r.Room ?? "", r.Department ?? "", r.CaseTypeText ?? "",
+            r.ChartNo ?? "", r.PatientName ?? "", r.Sex ?? "", r.Age?.ToString() ?? "",
+            r.SourceWard ?? "", r.SourceBed ?? "", r.SurgeonName ?? "", r.Anesthesia ?? "", r.SurgeryName ?? "",
+            r.Diagnosis ?? "", r.IcdCodes ?? "", r.ScrubNurse ?? "", r.CircNurse ?? "", r.AnesNurse ?? "", r.Note ?? "",
+            r.StatusCode == "82" ? "取消" : "正常", r.CancelReason ?? "",
+        });
+        var bytes = Utils.SimpleXlsx.Build("手術清單", headers, data);
+        var fileName = $"手術清單{f:yyyy-MM-dd}~{t:yyyy-MM-dd}.xlsx";
+        return File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+    }
+
+    // 手術清單區間正規化（皆含；預設當月；上限約 3 個月）
+    private static (bool ok, DateTime from, DateTime to, string? err) NormalizeOrRange(DateTime? from, DateTime? to)
+    {
+        var today = DateTime.Today;
+        var f = from?.Date ?? new DateTime(today.Year, today.Month, 1);
+        var t = to?.Date ?? f.AddMonths(1).AddDays(-1);
+        if (t < f) (f, t) = (t, f);
+        if ((t - f).TotalDays > 92) return (false, f, t, "查詢區間過長（上限約 3 個月）");
+        return (true, f, t, null);
+    }
+
+    // 查手術清單 ＋ 併入逐台刀刷手/流動/麻醉/備註覆蓋（不遮罩姓名；供 JSON 端點遮罩後回、匯出端點原樣用）
+    private async Task<List<OrSurgeryListRow>> BuildOrSurgeryRowsAsync(DateTime f, DateTime t, CancellationToken ct)
+    {
+        var rows = (await _ward.GetOrSurgeryListAsync(f, t, ct)).ToList();
+        var osn = (await _ward.GetOrSurgeryNurseAsync(f, t, ct))
+            .GroupBy(x => OsnKey(x.OpDate, x.RoomId, x.ChartNo, x.OpTime))
+            .ToDictionary(g => g.Key, g => g.First());
+        foreach (var r in rows)
+            if (osn.TryGetValue(OsnKey(r.OpDate, r.RoomId, r.ChartNo, r.OpTime), out var a))
+            { r.ScrubNurse = a.ScrubNurse; r.CircNurse = a.CircNurse; r.AnesNurse = a.AnesNurse; r.Note = a.Note; }
+        return rows;
+    }
+
     /// <summary>逐台刀 刷手/流動/備註 批次存檔（後台月曆一次送出變更；三欄皆空＝清除該台刀）。</summary>
     [HttpPost("or/surgery-nurse/batch")]
     public async Task<IActionResult> SaveOrSurgeryNurse([FromBody] OrSurgeryNurseBatchRequest req, CancellationToken ct = default)
         => Ok(new { saved = await _ward.SaveOrSurgeryNurseBatchAsync(req.Entries ?? new(), ct) });
+
+    /// <summary>OR 刀房某日溫溼度（省略 date＝今日）；供後台編輯載入現值。GET 匿名。</summary>
+    [HttpGet("or/temphumidity")]
+    public async Task<IActionResult> GetOrRoomEnv([FromQuery] DateTime? date, CancellationToken ct = default)
+        => Ok(await _ward.GetOrRoomEnvAsync(date?.Date ?? DateTime.Today, ct));
+
+    /// <summary>OR 刀房溫溼度 批次存檔（後台一次送出該日變更；兩欄皆空＝清除該刀房）。</summary>
+    [HttpPost("or/temphumidity/batch")]
+    public async Task<IActionResult> SaveOrRoomEnv([FromBody] OrRoomEnvBatchRequest req, CancellationToken ct = default)
+        => Ok(new { saved = await _ward.SaveOrRoomEnvBatchAsync(req.Entries ?? new(), ct) });
 
     /// <summary>OR 手術清單（全部排程，攤平）：供 ICU/W52「手術資訊」分頁；狀態依時間推導。</summary>
     [HttpGet("or/surgeries")]
@@ -1495,6 +1562,31 @@ public class BoardController : ControllerBase
     [HttpDelete("doctor/{id:int}")]
     public async Task<IActionResult> DeleteDoctor(int id, CancellationToken ct = default)
         => await _master.DeleteDoctorAsync(id, ct) ? NoContent() : NotFound();
+
+    // ── 全院共用主檔：照服員 CareAide ─────
+    [HttpGet("care-aide")]
+    public async Task<IActionResult> GetCareAides([FromQuery] bool includeAll = true, CancellationToken ct = default)
+        => Ok(await _master.GetCareAidesAsync(includeAll, ct));
+    [HttpPost("care-aide")]
+    public async Task<IActionResult> CreateCareAide([FromBody] CareAideUpsertRequest req, CancellationToken ct = default)
+    { var id = await _master.CreateCareAideAsync(req, ct); return Ok(new { id }); }
+    [HttpPut("care-aide/{id:int}")]
+    public async Task<IActionResult> UpdateCareAide(int id, [FromBody] CareAideUpsertRequest req, CancellationToken ct = default)
+        => await _master.UpdateCareAideAsync(id, req, ct) ? NoContent() : NotFound();
+    [HttpDelete("care-aide/{id:int}")]
+    public async Task<IActionResult> DeleteCareAide(int id, CancellationToken ct = default)
+        => await _master.DeleteCareAideAsync(id, ct) ? NoContent() : NotFound();
+
+    // ── 各單位「顯示照服員」選取 UnitCareAide ─────
+    /// <summary>某單位選取顯示的照服員（含順序＋姓名／聯絡方式）。供後台設定頁載入與前台顯示。</summary>
+    [HttpGet("{unitCode}/aide-display")]
+    public async Task<IActionResult> GetUnitCareAides(string unitCode, CancellationToken ct = default)
+        => Ok(await _master.GetUnitAidesAsync(unitCode, ct));
+
+    /// <summary>覆寫某單位的照服員顯示選取（先刪後插，順序＝SortOrder）。</summary>
+    [HttpPost("{unitCode}/aide-display/batch")]
+    public async Task<IActionResult> SaveUnitCareAides(string unitCode, [FromBody] UnitCareAideSaveRequest req, CancellationToken ct = default)
+        => Ok(new { saved = await _master.SaveUnitAidesAsync(unitCode, req.Entries ?? new(), ct) });
 
     // ── 排班：看板組裝（ScheduleTab）──
     /// <summary>排班資訊：依班別分組，護理師帶其負責床位（主護指派聚合）。</summary>

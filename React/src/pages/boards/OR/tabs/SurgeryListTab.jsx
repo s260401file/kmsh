@@ -19,6 +19,7 @@ export default function SurgeryListTab() {
   const [range, setRange] = useState(DEFAULT)          // { from, to } yyyy-MM-dd（皆含）
   const [cf, setCf] = useState(DEFAULT.from)           // 自訂起
   const [ct, setCt] = useState(DEFAULT.to)             // 自訂訖
+  const [exporting, setExporting] = useState(false)    // 匯出中
 
   const { data, loading } = usePolling(
     () => wardApi.getOrSurgeryList(range.from, range.to),
@@ -36,6 +37,22 @@ export default function SurgeryListTab() {
   const thisMonth = () => setRange(monthRange(today.getFullYear(), today.getMonth()))
   const dayOffset = n => { const d = new Date(today); d.setDate(d.getDate() + n); const t = fmt(d); setRange({ from: t, to: t }) }
   const applyCustom = () => { if (cf && ct) setRange({ from: cf, to: ct }) }
+
+  // 匯出 xlsx（含完整姓名，需登入）；未登入回 401 → 提示。檔名＝手術清單{起}-{訖}.xlsx
+  const doExport = async () => {
+    setExporting(true)
+    try {
+      const res = await wardApi.exportOrSurgeryList(range.from, range.to)
+      if (res.status === 401) { alert('請先登入後台再匯出（含完整姓名）'); return }
+      if (!res.ok) { alert('匯出失敗，請稍後再試'); return }
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url; a.download = `手術清單${range.from}~${range.to}.xlsx`
+      document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url)
+    } catch { alert('匯出失敗') }
+    finally { setExporting(false) }
+  }
 
   // 期間標題：整月→「YYYY-MM 手術清單」，否則顯示區間
   const [fy, fm, fd] = range.from.split('-').map(Number)
@@ -119,7 +136,7 @@ export default function SurgeryListTab() {
                     </td>
                     <td>{r.surgeonName}</td>
                     <td className="sl-col-op">{r.surgeryName}</td>
-                    <td className="sl-mono">{r.icdCodes}</td>
+                    <td>{r.diagnosis}</td>
                     <td>{r.note}</td>
                     <td>{[r.scrubNurse, r.circNurse, r.anesNurse].filter(Boolean).join(' / ')}</td>
                   </tr>
@@ -143,6 +160,7 @@ export default function SurgeryListTab() {
           <span className="sl-tilde">～</span>
           <input type="date" className="sl-date-input" value={ct} onChange={e => setCt(e.target.value)} />
           <button className="sl-btn sl-btn-go" onClick={applyCustom}>查詢</button>
+          <button className="sl-btn sl-btn-export" onClick={doExport} disabled={exporting}>{exporting ? '匯出中…' : '匯出'}</button>
         </div>
 
       </div>

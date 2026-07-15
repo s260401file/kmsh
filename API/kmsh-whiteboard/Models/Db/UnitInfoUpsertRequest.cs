@@ -13,4 +13,6 @@ public class UnitInfoUpsertRequest
     public string? HeadNurseLabel { get; set; }
     public string? HeadNurseName { get; set; }
     public int? TotalBeds { get; set; }
+    public string? ViewPassword { get; set; }   // OR 檢視密碼（4 位數；空=清除門檻）
+    public int? ViewTimeoutMinutes { get; set; } // OR 檢視密碼有效分鐘（1–10；空=預設 3）
 }

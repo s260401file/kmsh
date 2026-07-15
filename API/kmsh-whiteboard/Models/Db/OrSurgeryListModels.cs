@@ -23,6 +23,7 @@ public class OrSurgeryListRow
     public string? SurgeryName { get; set; }
     public string? Anesthesia { get; set; }        // LA/SA/GA/IG/IR
     public string? Department { get; set; }        // 科別代碼（OPORDER.ORCATGY，如 PS）
+    public string? Diagnosis { get; set; }         // 手術診斷文字（OPORDER.ORDIAG，如 Left distal radius fracture）
     public string? NhiCodes { get; set; }          // 健保手術代碼（合併）
     public string? IcdCodes { get; set; }          // 術前診斷 ICD（合併）
     public string? StatusCode { get; set; }        // 手術狀態碼（82＝疑似取消，代碼表待院方）

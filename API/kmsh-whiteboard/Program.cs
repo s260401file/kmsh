@@ -59,6 +59,7 @@ builder.Services.AddSingleton<DbConnectionFactory>();
 builder.Services.AddScoped<ITextRepository, TextRepository>();
 builder.Services.AddScoped<IContactRepository, ContactRepository>();
 builder.Services.AddScoped<IEvacRepository, EvacRepository>();
+builder.Services.AddScoped<IBoardImageRepository, BoardImageRepository>();   // 通用看板圖片（各科協助業務…）
 builder.Services.AddScoped<IWardRepository, WardRepository>();
 builder.Services.AddScoped<IPersonnelRepository, PersonnelRepository>();
 builder.Services.AddScoped<IAuditRepository, AuditRepository>();

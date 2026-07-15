@@ -44,7 +44,9 @@ function CenterTitle([string]$text, [int]$halfpt, [bool]$bold) {
   return Para (Runs $text $bold $extr) $ppr
 }
 function Bullet([string]$text) {
-  return Para (Runs ('&#8226;  ' + $text)) '<w:pPr><w:ind w:left="480" w:hanging="240"/><w:spacing w:after="40"/></w:pPr>'
+  # Bullet glyph as a raw XML char reference (NOT via Esc, which would turn & into &amp; and show literal "&#8226;").
+  $b = '<w:r><w:t xml:space="preserve">&#8226;  </w:t></w:r>'
+  return Para ($b + (Runs $text)) '<w:pPr><w:ind w:left="480" w:hanging="240"/><w:spacing w:after="40"/></w:pPr>'
 }
 function Numbered([string]$text) {
   return Para (Runs $text) '<w:pPr><w:ind w:left="480" w:hanging="360"/><w:spacing w:after="40"/></w:pPr>'

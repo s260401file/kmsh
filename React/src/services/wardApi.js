@@ -74,6 +74,20 @@ export async function getOnCallBoard(date) {
 export async function saveOnCallMonth(body) {
   return handle(await apiFetch(`${BASE}/oncall-roster/month`, { method: 'POST', headers, body: JSON.stringify(body) }))
 }
+// ── 各單位「引用值班醫師」科別選取（UnitOnCallDept）──
+// GET {unitCode}/oncall-display → 該單位選取的值班科別（含順序＋deptName）；供後台載入
+export async function getUnitOnCallDepts(unitCode) {
+  return handle(await apiFetch(`${BASE}/${unitCode}/oncall-display`))
+}
+// 覆寫某單位科別選取（entries:[{deptCode,sortOrder}]）
+export async function saveUnitOnCallDepts(unitCode, entries) {
+  return handle(await apiFetch(`${BASE}/${unitCode}/oncall-display/batch`, { method: 'POST', headers, body: JSON.stringify({ entries }) }))
+}
+// 前台：某單位所選科別當日值班醫師（依單位順序）→ [{deptCode,deptName,doctorName,ext,mobile}]
+export async function getOnCallBoardForUnit(unitCode, date) {
+  const p = date ? `?date=${date}` : ''
+  return handle(await apiFetch(`${BASE}/${unitCode}/oncall-display/board${p}`))
+}
 // ── ER 床位主檔（病室動態平面圖 + 後台 CRUD）──────────────────────
 // GET /api/Board/{unitCode}/bed?includeAll= → 該單位 ER 床位主檔（含座標/分區）
 export async function getErBeds(unitCode, includeAll = false) {
@@ -275,6 +289,18 @@ export async function getDoctors(deptCode = null, includeAll = true) {
 export async function createDoctor(data) { return handle(await apiFetch(`${BASE}/doctor`, { method: 'POST', headers, body: JSON.stringify(data) })) }
 export async function updateDoctor(id, data) { return handle(await apiFetch(`${BASE}/doctor/${id}`, { method: 'PUT', headers, body: JSON.stringify(data) })) }
 export async function removeDoctor(id) { return handle(await apiFetch(`${BASE}/doctor/${id}`, { method: 'DELETE' })) }
+// 照服員主檔（全院共用；姓名＋單一聯絡方式）
+export async function getCareAides(includeAll = true) { return handle(await apiFetch(`${BASE}/care-aide?includeAll=${includeAll ? 'true' : 'false'}`)) }
+export async function createCareAide(data) { return handle(await apiFetch(`${BASE}/care-aide`, { method: 'POST', headers, body: JSON.stringify(data) })) }
+export async function updateCareAide(id, data) { return handle(await apiFetch(`${BASE}/care-aide/${id}`, { method: 'PUT', headers, body: JSON.stringify(data) })) }
+export async function removeCareAide(id) { return handle(await apiFetch(`${BASE}/care-aide/${id}`, { method: 'DELETE' })) }
+// 各單位「顯示照服員」選取（UnitCareAide）
+// GET {unitCode}/aide-display → 該單位選取的照服員（含順序＋姓名／聯絡方式）；供後台載入與前台顯示
+export async function getUnitCareAides(unitCode) { return handle(await apiFetch(`${BASE}/${unitCode}/aide-display`)) }
+// 覆寫某單位照服員選取（entries:[{aideId,sortOrder}]）
+export async function saveUnitCareAides(unitCode, entries) {
+  return handle(await apiFetch(`${BASE}/${unitCode}/aide-display/batch`, { method: 'POST', headers, body: JSON.stringify({ entries }) }))
+}
 // GET /api/Board/or/surgerylist?from=&to=（皆含 yyyy-MM-dd；省略→本月）→ { from,to,stats,rows[] }（本地 OrSurgery，快）
 export async function getOrSurgeryList(from, to) {
   const p = new URLSearchParams()
@@ -282,9 +308,26 @@ export async function getOrSurgeryList(from, to) {
   if (to) p.set('to', to)
   return handle(await apiFetch(`${BASE}/or/surgerylist?${p}`))
 }
+// 匯出 xlsx（含完整姓名，需登入）→ 回原始 Response（呼叫端自行 .blob()/看 status；帶 localStorage token）
+export async function exportOrSurgeryList(from, to) {
+  const p = new URLSearchParams()
+  if (from) p.set('from', from)
+  if (to) p.set('to', to)
+  return apiFetch(`${BASE}/or/surgerylist/export?${p}`)
+}
 // 逐台刀 刷手/流動/備註 批次存檔（後台月曆）
 export async function saveOrSurgeryNurseBatch(entries) {
   return handle(await apiFetch(`${BASE}/or/surgery-nurse/batch`, { method: 'POST', headers, body: JSON.stringify({ entries }) }))
+}
+// GET /api/Board/or/temphumidity?date=（省略→今日）→ 該日各刀房溫溼度 [{ opDate, roomId, temperature, humidity }]
+export async function getOrRoomEnv(date) {
+  const p = new URLSearchParams()
+  if (date) p.set('date', date)
+  return handle(await apiFetch(`${BASE}/or/temphumidity?${p}`))
+}
+// OR 刀房溫溼度 批次存檔（後台；兩欄皆空＝清除該刀房）
+export async function saveOrRoomEnvBatch(entries) {
+  return handle(await apiFetch(`${BASE}/or/temphumidity/batch`, { method: 'POST', headers, body: JSON.stringify({ entries }) }))
 }
 // 後台 CRUD：班級人員 OrShiftStaff
 export async function getShiftStaff(unitCode = 'OR', includeAll = true) {

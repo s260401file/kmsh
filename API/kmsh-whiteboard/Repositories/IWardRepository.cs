@@ -109,4 +109,8 @@ public interface IWardRepository
     // ── OR 逐台刀 刷手/流動/備註 覆蓋 [dbo].[OrSurgeryNurse] ──
     Task<IEnumerable<OrSurgeryNurseItem>> GetOrSurgeryNurseAsync(DateTime fromDate, DateTime toDate, CancellationToken ct = default);
     Task<int> SaveOrSurgeryNurseBatchAsync(IEnumerable<OrSurgeryNurseUpsertRequest> entries, CancellationToken ct = default);
+
+    // ── OR 刀房每日溫溼度 [dbo].[OrRoomEnv] ──
+    Task<IEnumerable<OrRoomEnvItem>> GetOrRoomEnvAsync(DateTime date, CancellationToken ct = default);
+    Task<int> SaveOrRoomEnvBatchAsync(IEnumerable<OrRoomEnvUpsertRequest> entries, CancellationToken ct = default);
 }

@@ -18,4 +18,15 @@ public interface IMasterDataRepository
     Task<int> CreateDoctorAsync(DoctorUpsertRequest req, CancellationToken ct = default);
     Task<bool> UpdateDoctorAsync(int id, DoctorUpsertRequest req, CancellationToken ct = default);
     Task<bool> DeleteDoctorAsync(int id, CancellationToken ct = default);
+
+    // ── 照服員 ──
+    Task<IEnumerable<CareAideItem>> GetCareAidesAsync(bool includeAll, CancellationToken ct = default);
+    Task<int> CreateCareAideAsync(CareAideUpsertRequest req, CancellationToken ct = default);
+    Task<bool> UpdateCareAideAsync(int id, CareAideUpsertRequest req, CancellationToken ct = default);
+    Task<bool> DeleteCareAideAsync(int id, CancellationToken ct = default);
+
+    // ── 各單位「顯示照服員」選取 UnitCareAide ──
+    Task<IEnumerable<UnitCareAideItem>> GetUnitAidesAsync(string unitCode, CancellationToken ct = default);
+    /// <summary>覆寫某單位整組照服員選取（先刪後插）。回傳插入筆數。</summary>
+    Task<int> SaveUnitAidesAsync(string unitCode, IEnumerable<UnitCareAideEntry> entries, CancellationToken ct = default);
 }

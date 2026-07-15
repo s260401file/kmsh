@@ -226,9 +226,8 @@ export default function WardTab() {
   const stats = useMemo(() => getStats(beds), [beds])  // 統計面板數值（由床位推導）
   const info = useUnitInfo('ER')                        // 頁首設定（總病床數覆寫）
   const totalBeds = info?.totalBeds ?? 19               // 留空→19；有值（含 0/1）→該值
-  // 各科值班醫師（自建，後台維護）：定時輪詢，免 F5 自動更新
-  // 各科值班醫師（改讀「值班醫師排程」今日；內科依當下時間帶當前時段醫師）
-  const { data: onCallData } = usePolling(() => wardApi.getOnCallBoard(), { intervalMs: BULLETIN_MS, deps: ['ER-oncall'] })
+  // 各科值班醫師：引用中央值班排程，只顯示本單位(ER)後台「顯示值班醫師」所選科別，依所設順序（當日值班；免 F5 自動更新）
+  const { data: onCallData } = usePolling(() => wardApi.getOnCallBoardForUnit('ER'), { intervalMs: BULLETIN_MS, deps: ['ER-oncall'] })
   const onCallDocs = onCallData ?? []
   // 三班醫護人員面板：醫師/照服員＋班別結構取自「醫師/照服員設定」(ErShiftPanel)；護理師改由「三班護理師」(排班)供給
   const { data: shiftData } = usePolling(() => wardApi.getErShiftPanel('ER'), { intervalMs: BULLETIN_MS, deps: ['ER-shift'] })
@@ -287,6 +286,7 @@ export default function WardTab() {
                   <span className="ss-td-item"><span className="ss-td-label">夜班</span>{nightDoc || '—'}</span>
                 </span>
                 <span className="ss-title-docs ss-aides">
+                  <span style={{ fontWeight: 700, marginRight: '2px' }}>照服員</span>
                   <span className="ss-td-item"><span className="ss-td-label">白班</span>{dayAide || '—'}</span>
                   <span className="ss-td-item"><span className="ss-td-label">夜班</span>{nightAide || '—'}</span>
                 </span>

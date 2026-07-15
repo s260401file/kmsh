@@ -475,13 +475,15 @@
   font-size: 15px; font-weight: 800; color: var(--accent-green);
   border-bottom: 1.5px solid #DCE8E1; padding-bottom: 3px; margin-bottom: 6px;
 }
-/* ① 值班醫療團隊 */
-.w52-board .duty-rows { display: flex; flex-direction: column; gap: 4px; }
+/* ① 值班醫療團隊（2 個 1 排；科別欄固定寬使姓名/分機對齊） */
+.w52-board .duty-rows { display: grid; grid-template-columns: 1fr 1fr; column-gap: 18px; row-gap: 5px; }
 .w52-board .duty-r {
-  display: grid; grid-template-columns: 84px 1fr auto; align-items: baseline;
-  font-size: 16px; column-gap: 6px;
+  display: grid; grid-template-columns: 72px 1fr auto; align-items: baseline;
+  font-size: 16px; column-gap: 6px; min-width: 0;
 }
-.w52-board .duty-role { color: var(--text-muted); }
+.w52-board .duty-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.w52-board .duty-ext { text-align: right; }
+.w52-board .duty-role { color: var(--text-secondary); }
 .w52-board .duty-name { font-weight: 700; color: var(--text-primary); }
 .w52-board .duty-ext  { font-family: var(--font-num); font-size: 15px; color: var(--text-secondary); }
 /* ② 三班護理師（每班可多人；欄內姓名縱向堆疊） */

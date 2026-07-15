@@ -34,6 +34,7 @@ BEGIN
         [SurgeryName]    NVARCHAR(200) NULL,                -- 手術名稱 OROPNM1
         [Anesthesia]     NVARCHAR(20)  NULL,                -- 麻醉 OROPAMED（LA/SA/GA/IG/IR）
         [Department]     NVARCHAR(50)  NULL,                -- 科別 OROPORDER.ORCATGY（如 PS）
+        [Diagnosis]      NVARCHAR(200) NULL,                -- 手術診斷文字 OPORDER.ORDIAG
         [NhiCodes]       NVARCHAR(200) NULL,                -- 健保手術代碼（OROPNC1~4 合併）
         [IcdCodes]       NVARCHAR(200) NULL,                -- 術前診斷 ICD（OROPICD1~4 合併）
         [StatusCode]     NVARCHAR(10)  NULL,                -- 手術狀態碼 ORSTATUS（代碼表待院方）
@@ -50,10 +51,12 @@ BEGIN
 END
 GO
 
--- 既有資料庫補欄：科別（OPORDER.ORCATGY）。可重複執行。
+-- 既有資料庫補欄：科別（OPORDER.ORCATGY）、診斷（OPORDER.ORDIAG）。可重複執行。
 IF COL_LENGTH(N'[dbo].[OrSurgery]', N'Department') IS NULL
     ALTER TABLE [dbo].[OrSurgery] ADD [Department] NVARCHAR(50) NULL;
+IF COL_LENGTH(N'[dbo].[OrSurgery]', N'Diagnosis') IS NULL
+    ALTER TABLE [dbo].[OrSurgery] ADD [Diagnosis] NVARCHAR(200) NULL;
 GO
 
-PRINT N'[dbo].[OrSurgery] 清洗手術清單表建立完成（含科別）。';
+PRINT N'[dbo].[OrSurgery] 清洗手術清單表建立完成（含科別、診斷）。';
 GO

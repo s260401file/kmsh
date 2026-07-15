@@ -170,6 +170,12 @@ export default function WardTab() {
     const byType = {}; (schedData?.shifts ?? []).forEach(s => { byType[s.shiftType] = s })
     return ['大夜', '白班', '小夜'].map(k => ({ shift: k, nurses: (byType[k]?.nurses ?? []).map(n => n.peName).filter(Boolean) }))
   }, [schedData])
+  // 值班醫療團隊：引用中央值班排程，顯示本單位所選科別的「當日值班」醫師(後台「W52 管理→顯示值班醫師」設定；依所設順序)
+  const { data: onCallData } = usePolling(() => wardApi.getOnCallBoardForUnit('W52'), { intervalMs: CENSUS_MS, deps: ['W52-oncall'] })
+  const dutyDocs = onCallData ?? []
+  // 照服員電話：引用後台「W52 管理→顯示照服員」所選之照服員（依所設順序）
+  const { data: aideData } = usePolling(() => wardApi.getUnitCareAides('W52'), { intervalMs: CENSUS_MS, deps: ['W52-aide'] })
+  const aides = aideData ?? []
   // 點同一篩選鈕再按一次可取消（回到 all）；'all' 鈕本身不切回
   const handleFilter = f => setFilter(prev => (prev === f && f !== 'all') ? 'all' : f)
   // 開著的詳情彈窗：每次輪詢後用 BedId 從最新 beds 重新取回，內容跟著自動更新（約20秒）；病人離床則自動關閉
@@ -248,24 +254,23 @@ export default function WardTab() {
                     })}
                   </div>
                 </div>
-                {/* ② 值班醫療團隊（護理長在頁首、專科護理師配於各床，故不列） */}
+                {/* ② 值班醫療團隊：醫師各列引用中央值班排程(當日值班，後台設定科別＋順序)；書記維持靜態 */}
                 <div className="duty-sec">
                   <div className="duty-sec-t">值班醫療團隊</div>
                   <div className="duty-rows">
-                    <div className="duty-r"><span className="duty-role">骨科醫師</span><span className="duty-name">林建宏</span><span className="duty-ext">0265509</span></div>
-                    <div className="duty-r"><span className="duty-role">內科醫師</span><span className="duty-name">郭玉哲</span><span className="duty-ext">0267290</span></div>
+                    {dutyDocs.map(d => (
+                      <div className="duty-r" key={d.deptCode}><span className="duty-role">{d.deptName}</span><span className="duty-name">{d.doctorName || '—'}</span><span className="duty-ext">{d.ext || ''}</span></div>
+                    ))}
                     <div className="duty-r"><span className="duty-role">書記</span><span className="duty-name">張聖宗</span><span className="duty-ext">0265166</span></div>
                   </div>
                 </div>
-                {/* ③ 照服員電話 */}
+                {/* ③ 照服員電話：引用後台「顯示照服員」所選（依所設順序） */}
                 <div className="duty-sec">
                   <div className="duty-sec-t">照服員電話</div>
                   <div className="duty-aides">
-                    <span className="duty-aide"><b>春花</b><span>0988818966</span></span>
-                    <span className="duty-aide"><b>瑞雲</b><span>0915821732</span></span>
-                    <span className="duty-aide"><b>佳誉</b><span>0955155023</span></span>
-                    <span className="duty-aide"><b>覆晴</b><span>0988383132</span></span>
-                    <span className="duty-aide"><b>永美</b><span>0920401127</span></span>
+                    {aides.map(a => (
+                      <span className="duty-aide" key={a.aideId}><b>{a.name}</b><span>{a.contact || ''}</span></span>
+                    ))}
                   </div>
                 </div>
               </div>

@@ -20,4 +20,9 @@ public interface IOnCallRepository
     Task<bool> DeleteRosterAsync(int id, CancellationToken ct = default);
     /// <summary>覆寫某科某月：交易內先刪該月既有列、再插入 entries。回傳插入筆數。</summary>
     Task<int> SaveMonthAsync(OnCallMonthSaveRequest req, CancellationToken ct = default);
+
+    // ── 各單位引用值班科別選取 UnitOnCallDept ──
+    Task<IEnumerable<UnitOnCallDeptItem>> GetUnitDeptsAsync(string unitCode, CancellationToken ct = default);
+    /// <summary>覆寫某單位整組科別選取（先刪後插）。回傳插入筆數。</summary>
+    Task<int> SaveUnitDeptsAsync(string unitCode, IEnumerable<UnitOnCallDeptEntry> entries, CancellationToken ct = default);
 }
