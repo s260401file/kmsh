@@ -48,7 +48,6 @@
       <div class="ev-title">
         <span class="ev-title-bar"></span>
         避難圖
-        <span class="ev-title-meta" id="ev-floor-info"></span>
       </div>
 
       <!-- 雙欄 -->
@@ -225,24 +224,13 @@
           </svg>
         </div>
 
-        <!-- 右欄：緊急應變編組 + 緊急聯絡 -->
+        <!-- 右欄：緊急應變編組（取自三班護理師今日排班的緊急編組） -->
         <div class="ev-side">
 
-          <!-- 緊急應變編組（由值班表移入；置頂利於演練時第一眼看到） -->
+          <!-- 緊急應變編組（班別 → 指派人員；置頂利於演練時第一眼看到） -->
           <div class="ev-card">
             <div class="ev-card-header">緊急應變編組</div>
-            <div class="ev-resp">
-              <div class="ev-resp-row"><span class="ev-resp-k">救護班</span><span class="ev-resp-n">陳慧盈</span></div>
-              <div class="ev-resp-row"><span class="ev-resp-k">滅火班</span><span class="ev-resp-n">莊惠媛</span></div>
-              <div class="ev-resp-row"><span class="ev-resp-k">安全防護</span><span class="ev-resp-n">曾子豪</span></div>
-              <div class="ev-resp-row"><span class="ev-resp-k">避難引導</span><span class="ev-resp-n">鐘雅琪</span></div>
-            </div>
-          </div>
-
-          <!-- 緊急聯絡 -->
-          <div class="ev-card">
-            <div class="ev-card-header">緊急聯絡</div>
-            <div class="ev-contacts" id="emerg-contacts"></div>
+            <div class="ev-resp" id="ev-resp"></div>
           </div>
 
         </div>

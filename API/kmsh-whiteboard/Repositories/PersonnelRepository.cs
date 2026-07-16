@@ -280,16 +280,21 @@ public class PersonnelRepository : IPersonnelRepository
     public async Task SetBedNurseAsync(string unitCode, int staffId, string date, IEnumerable<string> bedIds, CancellationToken ct = default)
     {
         var csv = string.Join(",", (bedIds ?? Enumerable.Empty<string>()).Select(b => b?.Trim()).Where(b => !string.IsNullOrEmpty(b)));
-        // 交易：① 移除該員多餘主護床 ② 移除所選床上其他人的主護（一床一主護）③ 補插該員缺的床
-        var sql = @"
+        // W52／ICU／ER 皆允許一床多位護理師（跨班/帶教）→ 略過步驟②（移除他人同床）。
+        var multiBed = unitCode.Equals("W52", StringComparison.OrdinalIgnoreCase)
+            || unitCode.Equals("ICU", StringComparison.OrdinalIgnoreCase)
+            || unitCode.Equals("ER", StringComparison.OrdinalIgnoreCase);
+        var stripOthers = multiBed ? "" : @"
+DELETE FROM [dbo].[BedStaffAssignment]
+ WHERE UnitCode=@Unit AND WorkDate=@Date AND AssignType=N'主護' AND StaffId<>@StaffId
+   AND BedId IN (SELECT LTRIM(RTRIM(value)) FROM STRING_SPLIT(@Csv, ',') WHERE value<>'');";
+        // 交易：① 移除該員取消勾選的主護床 ②（非 W52）移除所選床上其他人的主護 ③ 補插該員缺的床
+        var sql = $@"
 SET XACT_ABORT ON;
 BEGIN TRAN;
 DELETE FROM [dbo].[BedStaffAssignment]
  WHERE UnitCode=@Unit AND WorkDate=@Date AND AssignType=N'主護' AND StaffId=@StaffId
-   AND BedId NOT IN (SELECT LTRIM(RTRIM(value)) FROM STRING_SPLIT(@Csv, ',') WHERE value<>'');
-DELETE FROM [dbo].[BedStaffAssignment]
- WHERE UnitCode=@Unit AND WorkDate=@Date AND AssignType=N'主護' AND StaffId<>@StaffId
-   AND BedId IN (SELECT LTRIM(RTRIM(value)) FROM STRING_SPLIT(@Csv, ',') WHERE value<>'');
+   AND BedId NOT IN (SELECT LTRIM(RTRIM(value)) FROM STRING_SPLIT(@Csv, ',') WHERE value<>'');{stripOthers}
 INSERT INTO [dbo].[BedStaffAssignment] (UnitCode, BedId, WorkDate, Shift, StaffId, AssignType, SortOrder, IsActive, UpdatedAt, CreatedAt)
 SELECT @Unit, LTRIM(RTRIM(s.value)), @Date, NULL, @StaffId, N'主護', 0, 1, GETDATE(), GETDATE()
 FROM STRING_SPLIT(@Csv, ',') s

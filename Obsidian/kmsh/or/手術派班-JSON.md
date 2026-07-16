@@ -35,18 +35,18 @@ tags: [kmsh, 技術, OR, 手術派班, 試作]
 | 欄位 | 來源 | 自建表 | 說明 |
 |---|---|---|---|
 | ShiftType/ShiftTime | 自建 | 班別常數/設定 | 白/小夜/大夜 |
-| Charge 值班護理長 | 自建 | `ShiftStaff`（Role=護理長） | |
-| Anesthesia[] 麻醉科人員 | 自建 | `ShiftStaff`（Role=麻醉醫師，含主治/住院醫師） | |
-| CircTech 體外循環技師 | 自建 | `ShiftStaff`（Role=體循技師；null=該班無） | |
-| Rooms[].RoomId 刀房 | 固定 | 刀房清單（OR-01/02/03/05/06/07/08） | OR-04 已移除 |
-| Rooms[].ScrubNurse 刷手 | 自建 | `OrShiftAssignment.ScrubNurseEmpNo`→`NurseStaff` | null=未派 |
-| Rooms[].CircNurse 流動 | 自建 | `OrShiftAssignment.CirculatingNurseEmpNo`→`NurseStaff` | null=未派 |
-| Rooms[].Extension 分機 | 自建 | 刀房分機（設定/`OrShiftAssignment`） | |
+| Charge 值班護理長 | 自建 | `OrShiftStaff`（Role=護理長） | |
+| Anesthesia[] 麻醉科人員 | 自建 | `OrShiftStaff`（Role=麻醉醫師，含主治/住院醫師） | |
+| CircTech 體外循環技師 | 自建 | `OrShiftStaff`（Role=體循技師；null=該班無） | |
+| Rooms[].RoomId 刀房 | 固定 | 刀房主檔 `OrRoom`（OR-01/02/03/05/06/07/08） | OR-04 已移除 |
+| Rooms[].ScrubNurse 刷手 | 自建 | `OrShiftRoom`（房×班 刷手）→ 人員主檔 | null=未派 |
+| Rooms[].CircNurse 流動 | 自建 | `OrShiftRoom`（房×班 流動）→ 人員主檔 | null=未派 |
+| Rooms[].Extension 分機 | 自建 | 刀房分機（`OrRoom`/設定） | |
 
-> `OrShiftAssignment`（一房一班一列：room-level 刷手/流動）＋ `ShiftStaff`（班級：護理長/麻醉/體循）；後端 group by 班別組出 `Shifts[]`。
+> **實作用 OR 專屬小表**：`OrShiftStaff`（班級：護理長/麻醉/體循）＋`OrShiftRoom`（一房一班一列：room-level 刷手/流動）＋`OrRoom`（刀房主檔）；後端 group by 班別組出 `Shifts[]`。後台 CRUD：`getShiftStaff`/`getShiftRoom`。
 
 ## API 組裝
-- 純自建 `GET /api/Board/or/schedule?date=`：讀 `OrShiftAssignment`＋`ShiftStaff`（本日），group by 班別→刀房。
-- **★現可立即自建上線**（高榮無對應、不等院方）。量小、輪詢頻率低。
+- 純自建 `GET /api/Board/or/schedule?date=`（`getOrSchedule`）：讀 `OrShiftStaff`＋`OrShiftRoom`（本日），group by 班別→刀房。
+- **✅ 已自建上線（非 mock）**（高榮無對應、不等院方）。量小、輪詢頻率低；`ScheduleTab` 免 F5。
 
 相關：[[OR手術動態-JSON與組裝]] · [[資料庫Schema]] · [[資料項對照表]] · [[OR]]

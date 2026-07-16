@@ -74,6 +74,14 @@ export async function getOnCallBoard(date) {
 export async function saveOnCallMonth(body) {
   return handle(await apiFetch(`${BASE}/oncall-roster/month`, { method: 'POST', headers, body: JSON.stringify(body) }))
 }
+// ── 夜/假護理師值班表（NightNurseRoster；無科別、每日小夜/小夜貳組）──
+export async function getNightNurse(from, to) {
+  const p = new URLSearchParams(); if (from) p.set('from', from); if (to) p.set('to', to)
+  return handle(await apiFetch(`${BASE}/night-nurse?${p}`))
+}
+export async function saveNightNurseMonth(body) {
+  return handle(await apiFetch(`${BASE}/night-nurse/month`, { method: 'POST', headers, body: JSON.stringify(body) }))
+}
 // ── 各單位「引用值班醫師」科別選取（UnitOnCallDept）──
 // GET {unitCode}/oncall-display → 該單位選取的值班科別（含順序＋deptName）；供後台載入
 export async function getUnitOnCallDepts(unitCode) {

@@ -52,7 +52,28 @@ tags: [kmsh, 技術, 資料庫]
 **`WardPatientExt` 欄位演進**：v2 基本臨床＋管路/旗標（W52）→ v3 加 `Ventilator/Crrt/Ng`（ICU）→ v5 加 ER 狀態 `Observation/Awaiting(+Type)/TransferIn/Out(+Hospital)/Admitted(+AdmBedNo)/Aad/Mbd/Deceased/ArrivalDate/ArrivalTime` → v6 加 OR `ScrubNurse/CircNurse/SurgeryStatus/StartTime/EndTime`。皆 `COL_LENGTH` 保護、可重跑。
 
 **對應端點**：`GET /api/Board/{w52|icu|er|or}`（聚合輸出）＋ overlay CRUD `/api/Board/{ext|bed|room|oncall}`。院方 API 見 [[Board_ER]]、[[Board_OR]]。
-> `OrShiftAssignment`/`OrSpecialHandover`（手術派班/特殊交班）等仍為**規劃中**（OR ScheduleTab/HandoverTab 尚 mock）。
+> OR 手術派班（`OrShiftStaff`/`OrShiftRoom`）、特殊交班（`OrHandover`）**已上線**（非 mock）。
+
+## ★★ 後續批次新增表（schema_v9～v40，皆已上線）
+> 隨後台功能陸續擴充；schema 檔以 `schema_vNN_*.sql` 版本化、可重複執行、以 `sqlcmd -f 65001`（UTF-8）套用。**目前最高為 v40**。
+
+| # / DDL | 表 | 鍵 | 用途 / 對應功能 |
+|---|---|---|---|
+| v9 | `UnitInfo` | `UNIQUE(UnitCode)` | 各站頁首（主任/護理長標籤與姓名、總病床數）。後台「頁首設定」。v10 加 `TotalBeds`；v30 加 `ViewPassword`、v31 加 `ViewTimeoutMinutes`（OR 檢視密碼/逾時）。 |
+| v11 | `WardExamConsult` | `(UnitCode, …)` | 檢查/會診明細（自建過渡，HIS 明細未開放）；完成後 24h 自動移除。四板共用。 |
+| v14 | `Staff` / `StaffSchedule` / `BedStaffAssignment` | 見下 | **人員排班主軸**：`Staff` 人員主檔＋單位角色；`StaffSchedule`（每人每日每班，含 `EmergencyGroup` 緊急編組、`IsCharge` 點班）；`BedStaffAssignment`（我的病床勾床，AssignType=主護）。三班護理師、緊急應變編組、責任護理師皆源於此。 |
+| v19 | `ErShiftStaff` | 每班一列 | ER 三班醫護面板：`Doctor`（自由輸入）、`Aide`（照服員，改主檔下拉）、`NurseStaffIds`。 |
+| v24 | `Department` / `Doctor` | `UNIQUE(Code)` / `UNIQUE(EmployeeNo)` | 全院共用**科別／醫師主檔**（系統管理）。`Doctor.DeptCode` 軟關聯 `Department.Code`。 |
+| v26 | `OnCallDept` / `OnCallRoster` | 見下 | **值班醫師排程**（ER 每月維護，全院共用，無 UnitCode）。`OnCallDept`（科別＋時段 Slots，MED 有 值班/上午/下午）；`OnCallRoster`（每日×科別×時段值班醫師，月存＝先刪後插）。看板 `GET oncall-board` 一律取 `Slot=值班`。v34 補 呼吸治療科(DRT)、v39 補 大外科(--)。 |
+| v32 | `BoardImage` | `UNIQUE(Kind,UnitCode)` | 通用看板圖片（kind＋unit）；用於 OR「各科協助業務」（kind=assist）等整頁圖片上傳。 |
+| v33 | `OrRoomEnv` | `UNIQUE(OpDate,RoomId)` | **OR 刀房每日溫溼度**（後台登錄→前台手術動態第 8 格）。 |
+| v35 | `UnitOnCallDept` | `UNIQUE(UnitCode,DeptCode)` | **各單位「顯示值班醫師」**：選取要顯示的值班科別＋順序，引用中央排程之當日值班（W52/ICU/ER；ER≤10 科）。 |
+| v36 | `CareAide` | `Id` | **照服員主檔**（全院共用；姓名＋單一聯絡方式）。系統管理 › 照服員。 |
+| v37 | `UnitCareAide` | `UNIQUE(UnitCode,AideId)` | **各單位「顯示照服員」**：選人＋順序，引用照服員主檔。 |
+| v38 | `ContactPhone` | `(UnitCode,…)` | **值班表「聯絡電話」清單**（標題＋名稱＋分機/電話＋排序）；比照常用電話多標題。後台「顯示聯絡電話」。 |
+| v40 | `NightNurseRoster` | `Id` | **夜/假護理師排程**（全院、無科別、只選月份；每日兩時段 小夜/小夜貳組；姓名純文字）。ER 管理維護；看板「夜專師」取當日小夜。 |
+
+**一床多位責任護理師（2026-07）**：`BedStaffAssignment` 無 one-per-bed 唯一鍵，原由 `SetBedNurseAsync` 程式強制「一床一主護」。W52/ICU/ER 三站已放寬（略過「移除他人同床」步驟），一床可多位護理師；看板責任護理師以逗號並列。ER 仍以自建 `ErBed`；W52/ICU 以床碼裸碼對應（曾有 `W52-001` vs `001` key 不符 bug，已修）。
 
 ## ★ 混合機制：`MarkerTypeDef.SourceMode`
 同一註記「HIS 有就用 HIS、沒有就用人工」，逐項可切換、不雙重輸入。

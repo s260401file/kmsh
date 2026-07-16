@@ -28,7 +28,7 @@ function renderCareItem(item) {
         <span class="care-basic">${genderText}/${item.Age}</span>
       </div>
       <span class="care-category cat-${item.Category}">${item.Category}</span>
-      <div class="care-content">${item.Content}</div>
+      <span class="care-content">${item.Content}</span>
       <div class="care-meta">
         <span class="care-time">${item.RemindTime}</span>
         <span class="care-nurse">${item.PrimaryNurse}</span>

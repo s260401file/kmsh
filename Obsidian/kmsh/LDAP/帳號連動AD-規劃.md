@@ -1,12 +1,11 @@
 ---
-tags: [kmsh, LDAP, 規劃]
+tags: [kmsh, LDAP, AD, 已實作]
 ---
-# 後台帳號／密碼連動 AD LDS — 規劃
+# 後台帳號／密碼連動 AD LDS — 已實作（原規劃）
 
-> 目標：後台三項連動 AD LDS（`localhost:3890`）：① 新增帳號 ② 管理員重設密碼 ③ 使用者自助改密，＋ ④ 停用連動。
-> 現況：app 只 bind 驗證（[[00-LDAP總覽]]、`Services/LdapAuthenticator.cs`），**不寫 AD**；建帳號只進本地 SQL `Staff`，改密/建帳號目前靠 `C:\kmsh-ldap\*.ps1` 手動。
-> 決策（2026-07-10）：**寫入身分＝授權 app pool 身分**（免存密碼）；**範圍＝三項＋停用連動**（不含刪除）。
-> 建立 2026-07-10。相關：[[AD-LDS-安裝記錄]]、[[後台總覽]]。
+> **狀態：✅ 已實作並上線（2026-07-10）**，M999 端到端 8/8 PASS。本文上半為完成紀錄與實作要點；下半「## 機制」以後為**原始規劃背景**（保留備查，部分決策已於實作時調整，見「與原決策的差異」）。
+> 目標：後台連動 AD LDS（`localhost:3890`）：① 新增帳號 ② 管理員重設密碼 ③ 使用者自助改密 ④ 停用連動（實作再追加：員編變更 → AD 改名、刪除 → AD 停用不實刪）。
+> 相關：[[00-LDAP總覽]]、[[AD-LDS-安裝記錄]]、[[後台總覽]]。實作：`Services/LdapAdminService.cs`（Negotiate + Sign & Seal Bind）、`Controllers/BoardController.cs`（`personnel` 區）。
 
 ## ✅ 已實作並驗證（2026-07-10）
 四項全上線，M999 端到端測試 **8/8 PASS**（初始密碼登入、管理員重設、舊密失效、自助改密、錯誤舊密被擋、停用擋登入、重新啟用）；稽核 `OperationAudit` 密碼欄位遮蔽為 `***`（0 明碼外洩）。
@@ -29,6 +28,9 @@ tags: [kmsh, LDAP, 規劃]
 - **修改**（`PUT personnel/{id}`）：**員編變更 → AD 改名**（`RenameUser`：`ModifyDNRequest` CN rename，沿用密碼）；再依 `IsActive` 啟用/停用。
 - **刪除**（`DELETE personnel/{id}`）：**AD 帳號停用**（`SetEnabled false`，**不實際刪除**——保留軌跡、可復職）。
 測試：建立→AD 存在＋初密可登入；改員編→AD 改名、舊名消失、沿用密碼可登入；刪除→AD 仍在但停用、擋登入。
+
+---
+> 📌 **以下為原始規劃（2026-07-10 撰寫）**，保留設計脈絡。實際落地見上半段；**「前提」的 app pool 身分決策已改為專用服務帳號 `.\kmshldapsvc`**（見「與原決策的差異」）。
 
 ## 機制（沿用已驗證的 PowerShell 手法）
 `C:\kmsh-ldap\ldap-admin.ps1` 已證實可行，照搬到 .NET：

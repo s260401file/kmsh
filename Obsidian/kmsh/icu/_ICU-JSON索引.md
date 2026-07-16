@@ -8,13 +8,14 @@ tags: [kmsh, 技術, ICU, 索引]
 
 | 功能 | 文件 | 主要來源 | 現可上線 |
 |---|---|---|---|
-| 病室動態 | [[ICU病室動態-JSON與組裝]] | HIS 清單＋自建（管路/病況/主護） | 待 AMDR 開放/先自建 |
-| 抗生素 | [[抗生素-JSON]] | HIS `UD.UDORDER`（UDANTFLG） | 待開放 |
+| 病室動態（含**AICU 值班表面板**）| [[ICU病室動態-JSON與組裝]] | HIS 清單＋自建（管路/病況/主護）；值班表面板（三班＋夜專師＋緊急編組｜值班醫療團隊｜照服員＋聯絡電話，同 W52）| ✅ 值班表已上線 |
+| 抗生素 | [[抗生素-JSON]] | 看板 `getAntibioticLive`（Board_bed 在床用藥）＋後台 `Antibiotic`；HIS `UD.UDORDER` 為候選 | ✅ 用藥帶入 |
 | 管路 | [[管路-JSON]] | 自建（`PatientMarker` LINE）★核心 | ✅ 可自建 |
 | 手術資訊 | [[手術資訊-JSON]] | HIS `OR.OPORDER` | 待開放 |
 | 檢查／會診 | [[檢查會診-JSON]] | HIS `OR.ORDER`/`RESULT`（會診待確認） | 待開放 |
 
 ## 其餘 ICU 待辦（多含於病室動態）
-- 首頁主治醫師、會診醫師區（自建 `ConsultDutyDaily`）、3F/4F 分頁（`floor`）、策略病人（`PatientMarker` STRATEGIC）。見 [[ICU病室動態-JSON與組裝]]、[[待辦清單]]。
+- 首頁主治醫師、3F/4F 分頁（`floor`）、策略病人（`PatientMarker` STRATEGIC）。見 [[ICU病室動態-JSON與組裝]]、[[待辦清單]]。
+- 「會診/值班醫師區」已由值班表面板「值班醫療團隊」（引用中央值班排程）取代，另有「顯示照服員/聯絡電話」引用。
 
 相關：[[ICU]] · [[資料庫Schema]] · [[00-總覽]]

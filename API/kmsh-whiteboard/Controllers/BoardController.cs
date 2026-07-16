@@ -82,12 +82,14 @@ public class BoardController : ControllerBase
                 : 0
         };
 
-        // 責任護理師：改由「我的病床」勾床（依床號）決定（今日，主護）
+        // 責任護理師：改由「我的病床」勾床（依床號）決定（今日，主護）。W52 一床可多位 → 逗號並列。
+        // key 統一去除可能的 "W52-" 前綴（存的多為裸碼 001），與下方以裸 code 查詢一致。
+        static string BareBed(string? b) => (b ?? "").Trim().Replace("W52-", "", StringComparison.OrdinalIgnoreCase);
         var w52today = DateTime.Today.ToString("yyyy-MM-dd");
         var nurseByBed = (await _staff.GetBedAssignAsync("W52", w52today, "主護", false, ct))
             .Where(b => !string.IsNullOrWhiteSpace(b.BedId))
-            .GroupBy(b => b.BedId!)
-            .ToDictionary(g => g.Key, g => g.First().Name, StringComparer.OrdinalIgnoreCase);
+            .GroupBy(b => BareBed(b.BedId))
+            .ToDictionary(g => g.Key, g => string.Join("，", g.Select(x => x.Name).Where(n => !string.IsNullOrWhiteSpace(n))), StringComparer.OrdinalIgnoreCase);
 
         foreach (var code in W52_BEDS)
         {
@@ -120,7 +122,7 @@ public class BoardController : ControllerBase
                     AdmissionDate = FormatBirth(o.AdmitDate) ?? e?.AdmissionDate,   // 院方轉入日期（yyyy/MM/dd）優先
                     Diagnosis = string.IsNullOrWhiteSpace(o.Diagnosis) ? e?.Diagnosis : o.Diagnosis,  // 院方診斷優先
                     AttendingDoctor = string.IsNullOrWhiteSpace(o.Doctor) ? e?.AttendingDoctor : o.Doctor,  // 院方負責醫師優先
-                    PrimaryNurse = nurseByBed.TryGetValue(bedId, out var rn) ? rn : null,  // 責任護理師＝我的病床勾床
+                    PrimaryNurse = nurseByBed.TryGetValue(code, out var rn) && !string.IsNullOrWhiteSpace(rn) ? rn : null,  // 責任護理師＝我的病床勾床（裸碼對應，可多位逗號並列）
                     Condition = e?.Condition,
                     Isolation = e?.Isolation,
                     Dnr = e?.Dnr ?? false,
@@ -164,12 +166,12 @@ public class BoardController : ControllerBase
             .GroupBy(e => e.Hhisnum!.Trim())
             .ToDictionary(g => g.Key, g => g.First());
 
-        // 責任護理師：改由「勾床配對」（依床號）決定（今日，AssignType=主護）
+        // 責任護理師：改由「勾床配對」（依床號）決定（今日，AssignType=主護）。ICU 一床可多位 → 逗號並列。
         var today = DateTime.Today.ToString("yyyy-MM-dd");
         var nurseByBed = (await _staff.GetBedAssignAsync("ICU", today, "主護", false, ct))
             .Where(b => !string.IsNullOrWhiteSpace(b.BedId))
             .GroupBy(b => b.BedId!)
-            .ToDictionary(g => g.Key, g => g.First().Name, StringComparer.OrdinalIgnoreCase);
+            .ToDictionary(g => g.Key, g => string.Join("，", g.Select(x => x.Name).Where(n => !string.IsNullOrWhiteSpace(n))), StringComparer.OrdinalIgnoreCase);
 
         var resp = new IcuBoardResponse
         {
@@ -198,7 +200,7 @@ public class BoardController : ControllerBase
                         Department = string.IsNullOrWhiteSpace(o.Department) ? e?.Department : o.Department, Admission = FormatBirth(o.AdmitDate) ?? e?.AdmissionDate,
                         Diagnosis = string.IsNullOrWhiteSpace(o.Diagnosis) ? e?.Diagnosis : o.Diagnosis,  // 院方診斷優先
                         Doctor = string.IsNullOrWhiteSpace(o.Doctor) ? e?.AttendingDoctor : o.Doctor,
-                        Nurse = nurseByBed.TryGetValue(bed.Id, out var rn) ? rn : null,  // 責任護理師＝勾床配對（依床號）
+                        Nurse = nurseByBed.TryGetValue(bed.Id, out var rn) && !string.IsNullOrWhiteSpace(rn) ? rn : null,  // 責任護理師＝勾床配對（可多位逗號並列）
                         Condition = string.IsNullOrWhiteSpace(e?.Condition) ? "危急" : e!.Condition,  // ICU 病況預設 A級（危急）；無後台設定即 A
                         Isolation = e?.Isolation,
                         Dnr = e?.Dnr ?? false, Ventilator = e?.Ventilator ?? false, Crrt = e?.Crrt ?? false,
@@ -341,12 +343,12 @@ public class BoardController : ControllerBase
             .GroupBy(e => e.Hhisnum!.Trim())
             .ToDictionary(g => g.Key, g => g.First());
 
-        // 責任護理師：改由「我的病床」勾床（依床號）決定（今日，主護）
+        // 責任護理師：改由「我的病床」勾床（依床號）決定（今日，主護）。ER 一床可多位 → 逗號並列。
         var erToday = DateTime.Today.ToString("yyyy-MM-dd");
         var nurseByBed = (await _staff.GetBedAssignAsync("ER", erToday, "主護", false, ct))
             .Where(x => !string.IsNullOrWhiteSpace(x.BedId))
             .GroupBy(x => x.BedId!)
-            .ToDictionary(g => g.Key, g => g.First().Name, StringComparer.OrdinalIgnoreCase);
+            .ToDictionary(g => g.Key, g => string.Join("，", g.Select(x => x.Name).Where(n => !string.IsNullOrWhiteSpace(n))), StringComparer.OrdinalIgnoreCase);
 
         // 在室病人以「映射後白板床號」索引（同床取第一筆）
         var occByBed = occ
@@ -389,7 +391,7 @@ public class BoardController : ControllerBase
             {
                 var e = ExtOf(o);
                 bed.Patient = BuildErPatient(o, e);
-                bed.Patient.Nurse = nurseByBed.TryGetValue(b.BedId, out var ern) ? ern : null;  // 責任護理師＝我的病床勾床
+                bed.Patient.Nurse = nurseByBed.TryGetValue(b.BedId, out var ern) && !string.IsNullOrWhiteSpace(ern) ? ern : null;  // 責任護理師＝我的病床勾床（可多位逗號並列）
                 bed.Status = DeriveErStatus(o, e);
             }
             resp.Beds.Add(bed);
@@ -795,6 +797,22 @@ public class BoardController : ControllerBase
     [HttpPost("oncall-roster/month")]
     public async Task<IActionResult> SaveOnCallMonth([FromBody] OnCallMonthSaveRequest req, CancellationToken ct = default)
         => Ok(new { saved = await _oncall.SaveMonthAsync(req, ct) });
+
+    // ── 夜/假護理師值班表 NightNurseRoster（無科別；每日小夜/小夜貳組）──
+    /// <summary>夜/假護理師值班（區間；供後台月曆載入／日後看板顯示）。GET 匿名。</summary>
+    [HttpGet("night-nurse")]
+    public async Task<IActionResult> GetNightNurse([FromQuery] string? from, [FromQuery] string? to, CancellationToken ct = default)
+    {
+        var today = DateTime.Today;
+        var f = string.IsNullOrWhiteSpace(from) ? new DateTime(today.Year, today.Month, 1) : DateTime.Parse(from);
+        var t = string.IsNullOrWhiteSpace(to) ? f.AddMonths(1).AddDays(-1) : DateTime.Parse(to);
+        return Ok(await _oncall.GetNightNurseAsync(f, t, ct));
+    }
+
+    /// <summary>夜/假護理師 月曆整月存檔（覆寫該月）。</summary>
+    [HttpPost("night-nurse/month")]
+    public async Task<IActionResult> SaveNightNurseMonth([FromBody] NightNurseMonthSaveRequest req, CancellationToken ct = default)
+        => Ok(new { saved = await _oncall.SaveNightNurseMonthAsync(req, ct) });
 
     // ── ER 三班醫護人員面板（自建；護理師掛人員管理）──────────────────
     /// <summary>看板：ER 四班面板，護理師 Staff.Id→姓名解析；回 camelCase。</summary>

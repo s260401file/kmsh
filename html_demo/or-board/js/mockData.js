@@ -167,7 +167,18 @@ const MOCK_DATA = {
       }
     },
 
-  ]
+  ],
+
+  // 今日各刀房溫溼度（後台「溫溼度記錄」填入；第 8 格摘要卡顯示，缺值以「—」表示）
+  RoomEnv: {
+    "OR-01": { temperature: 22.4, humidity: 55 },
+    "OR-02": { temperature: 21.8, humidity: 52 },
+    "OR-03": { temperature: 22.1, humidity: 58 },
+    "OR-05": { temperature: 20.9, humidity: 50 },
+    "OR-06": { temperature: 22.6, humidity: 56 },
+    "OR-07": { temperature: 23.0, humidity: 54 },
+    "OR-08": { temperature: 21.5, humidity: 53 }
+  }
 };
 
 // 一房可能今日多台刀：統計改以「刀數」計（聯集各房 Surgeries；無 Surgeries 則以 Patient 視為 1 台）

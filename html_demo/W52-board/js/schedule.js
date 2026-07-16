@@ -37,7 +37,7 @@ function renderNurses(nurses) {
       : `<span class="sc-beds-none">—</span>`;
 
     const group = n.EmergencyGroup
-      ? `<span class="sc-group-badge sc-group-${n.EmergencyGroup}">${n.EmergencyGroup === "指揮" ? "指揮" : n.EmergencyGroup + "組"}</span>`
+      ? `<span class="sc-group-badge sc-group-${n.EmergencyGroup}">${n.EmergencyGroup}</span>`
       : `<span class="sc-group-none">—</span>`;
 
     const checkin = n.CheckIn

@@ -201,6 +201,35 @@
   color: var(--text-secondary); background: var(--bg-card-empty);
   padding: 2px 8px; border-radius: 4px; flex-shrink: 0;
 }
+/* 緊急應變編組（右欄卡片） */
+.ev-resp { display: flex; flex-direction: column; }
+.ev-resp-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--bg-card-empty);
+}
+.ev-resp-row:last-child { border-bottom: none; }
+.ev-resp-k {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  background: var(--bg-card-empty);
+  padding: 4px 14px;
+  border-radius: var(--radius-pill);
+  flex-shrink: 0;
+}
+.ev-resp-n {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--text-primary);
+  text-align: right;
+  flex: 1;
+  line-height: 1.3;
+}
+
 .ev-contacts { display: flex; flex-direction: column; }
 .ev-contact-row {
   display: flex;

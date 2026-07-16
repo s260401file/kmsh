@@ -47,11 +47,15 @@ const _MOCK_EVACUATION = {
       { "EquipmentId":10, "EquipmentName": "集合點",      "Location": "1F 中庭廣場",  "Quantity": 1, "LastCheckDate": null         }
     ],
 
-    // ── 緊急聯絡電話 ──
-    "EmergencyContacts": [
-      { "ContactId": 1, "Name": "院內保全",     "Extension": "9119" },
-      { "ContactId": 2, "Name": "院內急救 RRT", "Extension": "1234" },
-      { "ContactId": 3, "Name": "消防隊（外線）", "Extension": "119"  }
+    // ── 緊急應變編組 ──
+    // 對應 React：取三班護理師今日排班的 EmergencyGroup 彙整（跨班別、去重姓名）
+    // 順序與後台一致：救護班 / 滅火班 / 安全防護 / 避難引導 / 通報班
+    "EmergencyGroups": [
+      { "Group": "救護班",   "Members": ["陳○梅", "鄭○雲"] },
+      { "Group": "滅火班",   "Members": ["蔡○柔"] },
+      { "Group": "安全防護", "Members": ["王○惠", "黃○萍"] },
+      { "Group": "避難引導", "Members": ["吳○萱"] },
+      { "Group": "通報班",   "Members": ["林○靜"] }
     ]
   }
 };

@@ -1,5 +1,5 @@
-/* 值班表面板 — W52 病室動態 056 下方 4×8 空間（原型；資料為 mock，對照實體白板）
-   放在 .ward-grid 內，grid-column:4/8; grid-row:3/11（4 欄 × 8 列，往下一格避開五人房） */
+/* 值班表面板 — W52 病室動態右上 7×6 空區（欄 8–14 × 列 1–6；與統計區對調）
+   內容改「橫向 3 欄並排」：①三班護理師＋緊急應變編組 ②值班醫療團隊 ③照服員＋聯絡電話（比照 ICU 值班表版面） */
 .duty-panel {
   background: #fff;
   border: 1.5px solid var(--accent-green);
@@ -19,47 +19,45 @@
 .duty-title { font-size: 22px; font-weight: 800; letter-spacing: 4px; }
 .duty-date  { font-size: 15px; font-weight: 600; opacity: .95; }
 
-/* 內容：四區塊垂直排列 */
+/* 內容：橫向 3 欄並排 */
 .duty-body {
   flex: 1; min-height: 0; overflow: hidden;
-  display: flex; flex-direction: column; gap: 9px; padding: 10px 13px;
+  display: grid; grid-template-columns: 1.15fr 1fr 1fr; gap: 0 14px; padding: 8px 12px;
+  align-items: start;
 }
+.duty-sec { min-width: 0; }
+.duty-sec + .duty-sec { border-left: 1px solid #E3EAE6; padding-left: 12px; }
 .duty-sec-t {
   font-size: 15px; font-weight: 800; color: var(--accent-green);
   border-bottom: 1.5px solid #DCE8E1; padding-bottom: 3px; margin-bottom: 6px;
 }
 
-/* ① 值班醫療團隊 */
-.duty-rows { display: flex; flex-direction: column; gap: 4px; }
+/* 直向清單列（值班醫療團隊／緊急應變編組共用；科別欄固定寬使姓名/分機對齊） */
+.duty-rows { display: flex; flex-direction: column; row-gap: 5px; }
 .duty-r {
-  display: grid; grid-template-columns: 84px 1fr auto; align-items: baseline;
-  font-size: 16px; column-gap: 6px;
+  display: grid; grid-template-columns: 72px 1fr auto; align-items: baseline;
+  font-size: 16px; column-gap: 6px; min-width: 0;
 }
-.duty-role { color: var(--text-muted); }
-.duty-name { font-weight: 700; color: var(--text-primary); }
-.duty-ext  { font-family: var(--font-num); font-size: 15px; color: var(--text-secondary); }
+.duty-role { color: var(--text-secondary); }
+.duty-name { font-weight: 700; color: var(--text-primary); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.duty-ext  { font-family: var(--font-num); font-size: 15px; color: var(--text-secondary); text-align: right; }
 
-/* ② 三班護理師（每班可多人；欄內姓名縱向堆疊） */
-.duty-shift { display: flex; gap: 8px; align-items: stretch; }
+/* ① 三班護理師（每班可多人；欄內姓名縱向堆疊；含第 4 班 12:00–20:00） */
+.duty-shift { display: flex; gap: 5px; align-items: stretch; }
 .duty-sh {
-  flex: 1; display: flex; flex-direction: column; align-items: center;
-  background: var(--bg-card-empty); border-radius: 7px; padding: 7px 3px 8px;
+  flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center;
+  background: var(--bg-card-empty); border-radius: 7px; padding: 7px 2px 8px;
 }
-.duty-sh-k { font-size: 12.5px; font-weight: 700; color: #fff; padding: 2px 9px; border-radius: 10px; margin-bottom: 5px; }
+.duty-sh-k { font-size: 12.5px; font-weight: 700; color: #fff; padding: 2px 9px; border-radius: 10px; margin-bottom: 5px; white-space: nowrap; }
+.duty-sh-k.sh-t { background: #607D8B; font-size: 10px; padding: 2px 5px; letter-spacing: -0.3px; }  /* 12:00–20:00（中性） */
 .sh-n { background: #37474F; }  /* 大夜 */
 .sh-d { background: #0288D1; }  /* 白班 */
 .sh-e { background: #7B1FA2; }  /* 小夜 */
 .duty-sh-n { font-size: 16.5px; font-weight: 700; color: var(--text-primary); line-height: 1.3; }
 .duty-sh-n + .duty-sh-n { margin-top: 2px; }
 
-/* ③ 緊急應變編組 */
-.duty-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 5px 16px; }
-.duty-g { display: flex; align-items: baseline; gap: 6px; font-size: 16px; }
-.duty-g-k { color: var(--accent-red); font-weight: 700; white-space: nowrap; }
-.duty-g-n { font-weight: 700; color: var(--text-primary); }
-
-/* ④ 照服員電話 */
-.duty-aides { display: flex; flex-wrap: wrap; gap: 4px 18px; }
+/* ③ 照服員／聯絡電話（橫向版面內改直向清單） */
+.duty-aides { display: flex; flex-direction: column; gap: 4px; }
 .duty-aide { font-size: 15px; color: var(--text-secondary); }
 .duty-aide b { color: var(--text-primary); font-weight: 700; margin-right: 4px; }
 .duty-aide span { font-family: var(--font-num); }

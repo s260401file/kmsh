@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>手術室 — 手術清單</title>
+  <link rel="stylesheet" href="css/variables.css?v=2">
+  <link rel="stylesheet" href="css/reset.css?v=1">
+  <link rel="stylesheet" href="css/main.css?v=2">
+  <link rel="stylesheet" href="css/components.css?v=3">
+  <link rel="stylesheet" href="css/surgerylist.css?v=1">
+</head>
+<body>
+
+  <!-- ── Header ── -->
+  <header class="page-header">
+    <div class="header-left">OR
+      <span class="ward-sub">手術室</span>
+    </div>
+    <div class="header-center">
+      <div class="staff-block">
+        <div class="staff-label">手術室主任</div>
+        <div class="staff-name" id="ward-director">—</div>
+      </div>
+      <div class="staff-block">
+        <div class="staff-label">護理長</div>
+        <div class="staff-name" id="head-nurse">—</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="update-label">資料更新時間：剛剛</div>
+      <div class="clock-date" id="clock-date"></div>
+      <div class="clock-time" id="clock-time"></div>
+    </div>
+  </header>
+
+  <!-- ── Announcement marquee ── -->
+  <div class="announce-bar">
+    <span>🔔</span>
+    <span>2026/05/24 手術室公告：今日共安排 7 台手術，OR-05 MVR 預計 13:00 完成，ICU 床位已預留，相關科別請備妥接收。</span>
+  </div>
+
+  <!-- ── Main content ── -->
+  <main class="main-content">
+    <div class="sl-panel">
+
+      <!-- 上方：期間 + 統計 -->
+      <div class="sl-header">
+        <div class="sl-title">2026-07-16 手術清單</div>
+        <div class="sl-stats">
+          <span class="sl-stat sl-stat-total" id="sl-stat-total">總 0</span>
+          <span class="sl-stat sl-t-in"  id="sl-stat-in">住 0</span>
+          <span class="sl-stat sl-t-out" id="sl-stat-out">門 0</span>
+          <span class="sl-stat sl-t-emg" id="sl-stat-emg">急 0</span>
+        </div>
+      </div>
+
+      <!-- 中間：清單表格 -->
+      <div class="sl-table-wrap">
+        <table class="sl-table">
+          <thead>
+            <tr>
+              <th class="sl-col-date">手術日期</th>
+              <th>病歷號</th>
+              <th>病房</th>
+              <th>房間</th>
+              <th>科別</th>
+              <th>麻醉</th>
+              <th>姓名</th>
+              <th>主刀醫師</th>
+              <th class="sl-col-op">手術名稱</th>
+              <th>診斷</th>
+              <th>補充</th>
+              <th>刷手 / 流動 / 麻醉</th>
+            </tr>
+          </thead>
+          <tbody id="sl-tbody"></tbody>
+        </table>
+      </div>
+
+      <!-- 下方：快速鈕 + 自訂範圍查詢 + 匯出 -->
+      <div class="sl-controls">
+        <button class="sl-btn" data-range="m-1">上個月</button>
+        <button class="sl-btn" data-range="m0">本月</button>
+        <button class="sl-btn" data-range="m1">下個月</button>
+        <button class="sl-btn" data-range="d-1">昨日</button>
+        <button class="sl-btn sl-btn-active" data-range="d0">今日</button>
+        <button class="sl-btn" data-range="d1">明日</button>
+        <span class="sl-sep"></span>
+        <span class="sl-custom-label">自訂：</span>
+        <input type="date" class="sl-date-input" value="2026-07-16">
+        <span class="sl-tilde">～</span>
+        <input type="date" class="sl-date-input" value="2026-07-16">
+        <button class="sl-btn sl-btn-go" id="sl-go">查詢</button>
+        <button class="sl-btn sl-btn-export" id="sl-export">匯出</button>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- ── Bottom tabs ── -->
+  <nav class="bottom-tabs">
+    <a href="index.html"        class="tab-btn">手術動態</a>
+    <a href="schedule.html"     class="tab-btn">手術派班</a>
+    <a href="handover.html"     class="tab-btn">特殊交班</a>
+    <a href="contact.html"      class="tab-btn">連絡電話</a>
+    <a href="bulletin.html"     class="tab-btn">佈告欄</a>
+    <a href="evacuation.html"   class="tab-btn">避難圖</a>
+    <a href="surgerylist.html"  class="tab-btn active">手術清單</a>
+    <a href="assist.html"       class="tab-btn">各科協助業務</a>
+  </nav>
+
+  <script src="js/mockData.js?v=2"></script>
+  <script src="js/surgerylistData.js?v=1"></script>
+  <script src="js/surgerylist.js?v=1"></script>
+</body>
+</html>

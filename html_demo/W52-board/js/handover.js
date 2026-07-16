@@ -20,7 +20,7 @@ function renderMetaBar(info) {
   const toNurses   = info.ToNurses.join("、")   || "—";
 
   document.getElementById("ho-shift-summary").textContent =
-    `${info.FromShift} → ${info.ToShift}・${info.HandoverTime} 已交班`;
+    `${info.FromShift} → ${info.ToShift}`;
 
   document.getElementById("ho-meta-bar").innerHTML = `
     <div class="ho-meta-block">
@@ -28,14 +28,17 @@ function renderMetaBar(info) {
       <span class="ho-meta-pill ho-pill-${info.FromShift}">${info.FromShift}</span>
       <span class="ho-meta-arrow">→</span>
       <span class="ho-meta-pill ho-pill-${info.ToShift}">${info.ToShift}</span>
+    </div>
+    <div class="ho-meta-block">
+      <span class="ho-meta-label">時間</span>
       <span class="ho-meta-time">${info.HandoverTime}</span>
     </div>
     <div class="ho-meta-block">
-      <span class="ho-meta-label">${info.FromShift}</span>
+      <span class="ho-meta-label">交班</span>
       <span class="ho-meta-nurses">${fromNurses}</span>
     </div>
     <div class="ho-meta-block">
-      <span class="ho-meta-label">${info.ToShift}</span>
+      <span class="ho-meta-label">接班</span>
       <span class="ho-meta-nurses">${toNurses}</span>
     </div>`;
 }

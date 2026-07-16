@@ -132,37 +132,44 @@ function dutyRosterPanelHTML() {
   return `<div class="icu-duty-panel">
       <div class="icu-duty-head"><span class="icu-duty-title">AICU 值班表</span><span class="icu-duty-date">115/07/02（四）</span></div>
       <div class="icu-duty-body">
+        <!-- ① 三班護理師（夜專師於標題右）＋ 緊急應變編組（5 組） -->
         <div class="icu-duty-col">
-          <div class="icu-duty-sec-t">醫療團隊</div>
-          <div class="icu-duty-r"><span class="icu-duty-role">主任</span><span class="icu-duty-name">張雅淳</span><span class="icu-duty-ext">0266027</span></div>
-          <div class="icu-duty-r"><span class="icu-duty-role">內科</span><span class="icu-duty-name">林芸仟</span><span class="icu-duty-ext">0264638</span></div>
-          <div class="icu-duty-r"><span class="icu-duty-role">外科</span><span class="icu-duty-name">林士助</span><span class="icu-duty-ext">0261594</span></div>
-          <div class="icu-duty-r"><span class="icu-duty-role">值班</span><span class="icu-duty-name">陳蕙君</span><span class="icu-duty-ext">0264632</span></div>
-          <div class="icu-duty-r"><span class="icu-duty-role">護理長</span><span class="icu-duty-name">吳美瑞</span></div>
-          <div class="icu-duty-r"><span class="icu-duty-role">行政總值</span><span class="icu-duty-ext">0262207</span></div>
-          <div class="icu-duty-r"><span class="icu-duty-role">專科師</span><span class="icu-duty-name">楊鈞漢</span><span class="icu-duty-ext">0267595</span></div>
-          <div class="icu-duty-r"><span class="icu-duty-role">透析師</span><span class="icu-duty-name">江雅惠</span><span class="icu-duty-ext">0269325</span></div>
-        </div>
-        <div class="icu-duty-col">
-          <div class="icu-duty-sec-t">三班護理師</div>
+          <div class="icu-duty-sec-t" style="display:flex;justify-content:space-between;align-items:baseline;gap:6px;">
+            <span>三班護理師</span>
+            <span style="font-size:13px;font-weight:700;color:var(--text-primary);"><span style="color:var(--text-secondary);font-weight:600;">夜專師：</span>楊鈞漢</span>
+          </div>
           <div class="icu-duty-shift">
             <div class="icu-sh"><span class="icu-sh-k n">大夜</span><span class="icu-sh-n">葉怡廷</span><span class="icu-sh-n">蘇紋如</span></div>
             <div class="icu-sh"><span class="icu-sh-k d">白班</span><span class="icu-sh-n">鄭婷</span><span class="icu-sh-n">高佩君</span><span class="icu-sh-n">李妍萱</span><span class="icu-sh-n">林碧霞</span></div>
             <div class="icu-sh"><span class="icu-sh-k e">小夜</span><span class="icu-sh-n">劉妍伶</span><span class="icu-sh-n">江延衛</span></div>
           </div>
-          <div class="icu-duty-sec-t">書記 / 傳送</div>
-          <div class="icu-duty-r"><span class="icu-duty-role">書記</span><span class="icu-duty-name">田雅芬</span></div>
-          <div class="icu-duty-r"><span class="icu-duty-role">傳送</span><span class="icu-duty-ext">0262577</span></div>
+          <div class="icu-duty-sec-t">緊急應變編組</div>
+          <div class="icu-duty-r"><span class="icu-duty-role">通報班</span><span class="icu-duty-name">鄭婷</span></div>
+          <div class="icu-duty-r"><span class="icu-duty-role">滅火班</span><span class="icu-duty-name">高佩君、江延衛</span></div>
+          <div class="icu-duty-r"><span class="icu-duty-role">安全防護</span><span class="icu-duty-name">李妍萱</span></div>
+          <div class="icu-duty-r"><span class="icu-duty-role">救護班</span><span class="icu-duty-name">葉怡廷、劉妍伶</span></div>
+          <div class="icu-duty-r"><span class="icu-duty-role">避難引導</span><span class="icu-duty-name">蘇紋如、林碧霞</span></div>
         </div>
+        <!-- ② 值班醫療團隊（當日值班醫師：科別＋醫師＋分機） -->
+        <div class="icu-duty-col">
+          <div class="icu-duty-sec-t">值班醫療團隊</div>
+          <div class="icu-duty-r"><span class="icu-duty-role">內科</span><span class="icu-duty-name">林芸仟</span><span class="icu-duty-ext">0264638</span></div>
+          <div class="icu-duty-r"><span class="icu-duty-role">外科</span><span class="icu-duty-name">林士助</span><span class="icu-duty-ext">0261594</span></div>
+          <div class="icu-duty-r"><span class="icu-duty-role">心臟內科</span><span class="icu-duty-name">王志宏</span><span class="icu-duty-ext">0264701</span></div>
+          <div class="icu-duty-r"><span class="icu-duty-role">神經外科</span><span class="icu-duty-name">洪偉倫</span><span class="icu-duty-ext">0261588</span></div>
+          <div class="icu-duty-r"><span class="icu-duty-role">胸腔內科</span><span class="icu-duty-name">蘇建維</span><span class="icu-duty-ext">0264655</span></div>
+        </div>
+        <!-- ③ 照服員清單 ＋ 聯絡電話清單 -->
         <div class="icu-duty-col">
           <div class="icu-duty-sec-t">照服員</div>
           <div class="icu-duty-r"><span class="icu-duty-name">何美妹</span><span class="icu-duty-ext">分機 2681</span></div>
           <div class="icu-duty-r"><span class="icu-duty-name">周淑英</span><span class="icu-duty-ext">分機 2682</span></div>
           <div class="icu-duty-r"><span class="icu-duty-name">蔡秀滿</span><span class="icu-duty-ext">分機 2683</span></div>
           <div class="icu-duty-sec-t">聯絡電話</div>
-          <div class="icu-tel"><b>警衛</b> <span>0262016</span>　<b>救護車</b> <span>0918527590</span></div>
-          <div class="icu-tel"><b>訂床</b> <span>5216、2134</span>　<b>轉診</b> <span>6710</span></div>
-          <div class="icu-tel"><b>超音波管理</b> <span>4090-4091</span></div>
+          <div class="icu-duty-r"><span class="icu-duty-role">警衛</span><span class="icu-duty-name">中控室</span><span class="icu-duty-ext">0262016</span></div>
+          <div class="icu-duty-r"><span class="icu-duty-role">救護車</span><span class="icu-duty-name">派遣</span><span class="icu-duty-ext">0918527590</span></div>
+          <div class="icu-duty-r"><span class="icu-duty-role">訂床</span><span class="icu-duty-name">住院組</span><span class="icu-duty-ext">5216</span></div>
+          <div class="icu-duty-r"><span class="icu-duty-role">轉診</span><span class="icu-duty-name">轉診中心</span><span class="icu-duty-ext">6710</span></div>
         </div>
       </div>
     </div>`;

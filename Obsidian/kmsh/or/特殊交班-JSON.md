@@ -43,10 +43,10 @@ tags: [kmsh, 技術, OR, 特殊交班, 試作]
 | **SpecialNotes** 術後注意 | 自建 | `OrSpecialHandover.Content` | 自建 |
 | 隔離/測謀（病房帶入） | 自建 | `OrSpecialHandover.IsolationFlag/SpecialFlag` | 自建 |
 
-> `OrSpecialHandover` 需**擴充欄位**：`SurgeryName`/`SurgeonName`/`SurgerySource`/`DestWard`/`DestBed`/`EndTime`/`BloodLoss`/`BloodTransfusion`/`DrainDetails`（現僅 Content/FromWard/ToWard/旗標）→ 補進 [[資料庫Schema]]。
+> ✅ 實作表為 **`OrHandover`**（schema_v8），已含 `PatientName`/`SurgeryName`/`SurgeonName`/`SurgerySource`/`DestWard`/`DestBed`/`EndTime`/`BloodLoss`/`BloodTransfusion`/`DrainDetails`/`SpecialNotes` 等欄（**全自建手填**）。後台 CRUD：`getHandoverList`/`createHandover`。
 
 ## API 組裝
-- `GET /api/Board/or/handover?date=`：核心交班內容讀自建 `OrSpecialHandover`；手術基本（術式/主刀/來源）OPORDER 開放後帶入、否則留白。
-- **★核心可立即自建上線**（交班細節本就護理紀錄手填）；手術基本待 OPORDER 開放再自動補。
+- `GET /api/Board/or/handover?date=`（`getOrHandover`）：核心交班內容讀自建 `OrHandover`；手術基本（術式/主刀/來源）目前一併手填，待 `OR.OPORDER`/Board_OR 自動帶入為未來補洞。
+- **✅ 核心已自建上線（非 mock）**，`HandoverTab` 免 F5；手術基本待 OPORDER 開放再自動補。
 
 相關：[[OR手術動態-JSON與組裝]] · [[資料庫Schema]] · [[資料項對照表]] · [[OR]]

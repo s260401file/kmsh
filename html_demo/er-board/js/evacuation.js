@@ -10,18 +10,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.getElementById("head-nurse").textContent    = MOCK_DATA.HospitalInfo.HeadNurse;
   updateClock(); setInterval(updateClock, 1000);
   const res = await getEvacuation("ER");
-  const { EvacPlan, Equipment, EmergencyContacts } = res.Data;
-  document.getElementById("ev-floor-info").textContent = `${EvacPlan.FloorNo} — ${EvacPlan.WardName}`;
-  document.getElementById("ev-equip-count").textContent = Equipment.length + " 項";
-  document.getElementById("equip-list").innerHTML = Equipment.map(e => `
-    <div class="ev-equip-row">
-      <span class="ev-equip-name">${e.EquipmentName}</span>
-      <span class="ev-equip-loc">${e.Location}</span>
-      ${e.Quantity > 1 ? `<span class="ev-equip-qty">×${e.Quantity}</span>` : ""}
-    </div>`).join("");
-  document.getElementById("emerg-contacts").innerHTML = EmergencyContacts.map(c => `
-    <div class="ev-contact-row">
-      <span class="ev-contact-name">${c.Name}</span>
-      <span class="ev-contact-ext">${c.Extension}</span>
+  const { EmergencyGroups } = res.Data;
+  // 緊急應變編組（正式版取自三班護理師今日排班的緊急編組；此為靜態示意）
+  document.getElementById("emerg-groups").innerHTML = EmergencyGroups.map(g => `
+    <div class="ev-resp-row">
+      <span class="ev-resp-k">${g.Group}</span>
+      <span class="ev-resp-n">${g.Members && g.Members.length ? g.Members.join("、") : "—"}</span>
     </div>`).join("");
 });

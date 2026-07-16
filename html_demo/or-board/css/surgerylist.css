@@ -1,0 +1,98 @@
+/* surgerylist.css — OR「手術清單」分頁（第 7 頁籤）
+   版面：上方統計列 + 中間可捲動表格 + 下方查詢控制列；欄位參考紙本 orschedule.jpg。
+   （靜態原型：對齊 React tabsCss/surgerylist.css，class 去 .or-board 前綴）*/
+
+.sl-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--bg-card-occ);
+  border: 1px solid var(--divider);
+  border-radius: var(--radius-card);
+  overflow: hidden;
+}
+
+/* ── 上方：期間 + 統計 ── */
+.sl-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--divider);
+  background: #F1F8F4;
+  flex-shrink: 0;
+}
+.sl-title { font-size: 20px; font-weight: 800; color: var(--accent-green); letter-spacing: .5px; }
+.sl-stats { display: flex; gap: 10px; align-items: center; }
+.sl-stat { font-size: 17px; font-weight: 700; padding: 4px 12px; border-radius: var(--radius-pill); }
+.sl-stat-total { background: var(--accent-green); color: #fff; }
+.sl-stats .sl-t-in  { background: #E6F4EA; color: #1B7A3D; }
+.sl-stats .sl-t-out { background: #E3F0FB; color: #1565C0; }
+.sl-stats .sl-t-emg { background: #FBE4E4; color: #CC3333; }
+
+/* ── 中間：表格（可捲動、表頭 sticky）── */
+.sl-table-wrap { flex: 1; overflow-y: auto; min-height: 0; }
+.sl-table { width: 100%; border-collapse: collapse; }
+.sl-table thead th {
+  position: sticky; top: 0; z-index: 1;
+  background: #E8F4EE; color: var(--text-secondary);
+  font-size: 14px; font-weight: 700; text-align: left;
+  padding: 9px 10px; border-bottom: 1px solid var(--divider); white-space: nowrap;
+}
+.sl-table td {
+  padding: 8px 10px; font-size: 15px; color: var(--text-primary);
+  border-bottom: 1px solid var(--bg-card-empty); vertical-align: middle;
+}
+.sl-table tbody tr:nth-child(even) { background: #F8FAF9; }
+.sl-table tbody tr:hover { background: #EEF6F1; }
+
+.sl-col-date { width: 108px; }
+.sl-col-op { min-width: 220px; }
+.sl-date { font-weight: 700; font-family: var(--font-num); }
+.sl-time { font-size: 13px; color: var(--text-muted); font-family: var(--font-num); }
+.sl-mono { font-family: var(--font-num); color: var(--text-secondary); }
+.sl-room { font-weight: 800; color: var(--accent-green); font-family: var(--font-num); }
+
+.sl-ward { margin-right: 6px; }
+.sl-badge { display: inline-block; padding: 1px 7px; border-radius: var(--radius-badge); font-size: 12px; font-weight: 700; white-space: nowrap; }
+.sl-badge.sl-t-in  { background: #27AE60; color: #fff; }
+.sl-badge.sl-t-out { background: #1976D2; color: #fff; }
+.sl-badge.sl-t-emg { background: #CC3333; color: #fff; }
+
+.sl-name { font-weight: 700; margin-right: 6px; }
+.sl-name.sl-m { color: #1565C0; }
+.sl-name.sl-f { color: #C2185B; }
+.sl-basic { font-size: 13px; color: var(--text-muted); font-family: var(--font-num); }
+
+/* 取消刀（狀態 82）*/
+.sl-cancelled { opacity: .5; }
+.sl-cancelled .sl-col-op { text-decoration: line-through; }
+.sl-cancel-tag { display: inline-block; margin-left: 6px; padding: 0 6px; border-radius: 3px; background: #CC3333; color: #fff; font-size: 11px; font-weight: 700; }
+
+.sl-empty td { text-align: center; color: var(--text-muted); padding: 40px 0; font-size: 16px; }
+
+/* ── 下方：查詢控制列 ── */
+.sl-controls {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 16px; border-top: 1px solid var(--divider);
+  background: var(--bg-filter); flex-shrink: 0; flex-wrap: wrap;
+}
+.sl-btn {
+  padding: 6px 18px; border-radius: var(--radius-pill); font-size: 16px; font-weight: 600;
+  border: 1.5px solid var(--filter-border); color: var(--text-secondary);
+  background: transparent; cursor: pointer; transition: background .15s, color .15s;
+}
+.sl-btn:hover { background: var(--filter-active-bg); color: var(--filter-active-text); }
+.sl-btn.sl-btn-active { background: var(--filter-active-bg); color: var(--filter-active-text); border-color: var(--filter-active-bg); font-weight: 800; }
+.sl-btn-go { background: var(--accent-green); color: #fff; border-color: var(--accent-green); }
+.sl-btn-export { background: #1565C0; color: #fff; border-color: #1565C0; }
+.sl-btn-export:hover { background: #0D47A1; color: #fff; }
+.sl-btn-export:disabled { opacity: .55; cursor: default; }
+.sl-sep { width: 1px; height: 24px; background: var(--divider); margin: 0 4px; }
+.sl-custom-label { font-size: 16px; color: var(--text-muted); }
+.sl-date-input {
+  padding: 5px 10px; border: 1.5px solid var(--filter-border); border-radius: 8px;
+  font-size: 15px; font-family: var(--font-num); color: var(--text-primary); background: #fff;
+}
+.sl-tilde { color: var(--text-muted); }

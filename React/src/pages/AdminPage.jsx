@@ -95,6 +95,7 @@ const MENU_CONFIG = [
       { id: 'icu-shift', label: '三班護理師', available: true },   // 值班表三班護理師（每班可多人；W52 式）
       { id: 'icu-oncall-display', label: '顯示值班醫師', available: true }, // 引用中央值班排程，選科別＋排序
       { id: 'icu-aide-display', label: '顯示照服員', available: true }, // 引用照服員主檔，選人＋排序
+      { id: 'icu-contact-phone', label: '顯示聯絡電話', available: true }, // 值班表面板聯絡電話清單
     ]
   },
   {
@@ -118,6 +119,7 @@ const MENU_CONFIG = [
       { id: 'er-ext',    label: '病人臨床補充', available: true },
       { id: 'er-exam',   label: '檢查/會診', available: true },
       { id: 'er-oncall-roster', label: '值班醫師排程', available: true },   // 每日輪值月曆（全院共用；已取代舊「各科值班醫師」）
+      { id: 'er-night-nurse', label: '夜/假護理師排程', available: true }, // 全院夜/假護理師月曆（無科別；小夜/小夜貳組）
       { id: 'er-oncall-display', label: '顯示值班醫師', available: true }, // 引用中央值班排程；ER 前台最多 10 科
       { id: 'er-shift',  label: '醫師/照服員設定', available: true },   // 原「三班醫護人員」；護理師改由三班護理師供給
       { id: 'er-shift-roster', label: '三班護理師', available: true },   // 護理師來源（餵 ER 看板三班面板）
@@ -1417,6 +1419,96 @@ function OnCallScheduleSection() {
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <OnCallCellSelect options={docOptions} value={grid[`${dateIso}|${slot}`]?.doctorName ?? ''} onChange={name => setCell(dateIso, slot, name)} />
                       </div>
+                    </div>
+                  ))}
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// 夜/假護理師值班表 — 月曆後台（只選月份、無科別；每日兩時段：小夜/小夜貳組；姓名純文字）
+const NIGHT_NURSE_SLOTS = ['小夜', '小夜貳組']
+function NightNurseScheduleSection() {
+  const [ym, setYm] = useState(pmToday().slice(0, 7))     // 'YYYY-MM'
+  const [grid, setGrid] = useState({})                    // 'YYYY-MM-DD|slot' → name
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [msg, show] = pmMsgHook()
+
+  const [y, m] = ym.split('-').map(Number)
+  const daysInMonth = (y && m) ? new Date(y, m, 0).getDate() : 30
+  const firstWd = (y && m) ? new Date(y, m - 1, 1).getDay() : 1     // 0=日
+  const lead = firstWd === 0 ? 6 : firstWd - 1                       // 週一為首
+
+  const loadRoster = useCallback(async () => {
+    if (!y || !m) return
+    setLoading(true)
+    try {
+      const from = `${ym}-01`; const to = `${ym}-${String(new Date(y, m, 0).getDate()).padStart(2, '0')}`
+      const rows = await wardApi.getNightNurse(from, to)
+      const g = {}; (rows ?? []).forEach(r => { g[`${String(r.onCallDate).slice(0, 10)}|${r.slot ?? ''}`] = r.name ?? '' })
+      setGrid(g)
+    } catch { show('讀取排程失敗', true) }
+    finally { setLoading(false) }
+  }, [ym, y, m])
+  useEffect(() => { loadRoster() }, [loadRoster])
+
+  const setCell = (dateIso, slot, name) => setGrid(g => ({ ...g, [`${dateIso}|${slot}`]: name }))
+
+  const save = async () => {
+    setSaving(true)
+    try {
+      const entries = []
+      Object.entries(grid).forEach(([key, name]) => {
+        if (!name) return
+        const [dt, slot] = key.split('|')
+        entries.push({ onCallDate: dt, slot, name, sortOrder: Math.max(0, NIGHT_NURSE_SLOTS.indexOf(slot)) + 1 })
+      })
+      await wardApi.saveNightNurseMonth({ year: y, month: m, entries }); show(`已存 ${ym}（${entries.length} 筆）`); loadRoster()
+    } catch { show('存檔失敗', true) }
+    finally { setSaving(false) }
+  }
+
+  const cells = []
+  for (let i = 0; i < lead; i++) cells.push(null)
+  for (let d = 1; d <= daysInMonth; d++) cells.push(d)
+
+  return (
+    <div>
+      <PmMsg msg={msg} />
+      <div style={{ fontSize: '12px', color: '#9ca3af', marginBottom: '10px' }}>全院夜間及假日護理師值班（月曆）。選月份 → 每日填<b>小夜／小夜貳組</b>護理師（純文字），按「儲存本月」覆寫整月。<b>顯示於白板之設定日後再接</b>。</div>
+      <div style={s.formCard}>
+        <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-end', flexWrap: 'wrap', marginBottom: '4px' }}>
+          <div style={{ ...s.formRow, marginBottom: 0 }}><label style={s.label}>月份</label><input type="month" style={{ ...s.input, width: '170px' }} value={ym} onChange={e => setYm(e.target.value || pmToday().slice(0, 7))} /></div>
+          <button style={s.btnPrimary} onClick={save} disabled={saving || loading}>{saving ? '儲存中…' : '儲存本月'}</button>
+        </div>
+      </div>
+      <div style={s.listCard}>
+        <h4 style={s.formTitle}>{ym} 夜/假護理師值班月曆（時段：{NIGHT_NURSE_SLOTS.join('/')}）</h4>
+        {loading ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#6b7280', padding: '12px 0' }}>
+            <span style={{ width: '20px', height: '20px', border: '3px solid #d6e0ea', borderTopColor: '#2D7A55', borderRadius: '50%', animation: 'board-spin 0.9s linear infinite' }} />載入中…
+          </div>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', gap: '4px' }}>
+            {['一', '二', '三', '四', '五', '六', '日'].map(w => <div key={w} style={{ textAlign: 'center', fontWeight: 700, fontSize: '13px', color: '#374151', padding: '4px 0' }}>{w}</div>)}
+            {cells.map((d, i) => {
+              if (d === null) return <div key={`b${i}`} />
+              const dateIso = `${ym}-${String(d).padStart(2, '0')}`
+              const wd = new Date(y, m - 1, d).getDay(); const weekend = wd === 0 || wd === 6
+              return (
+                <div key={dateIso} style={{ border: '1px solid #e5e7eb', borderRadius: '6px', padding: '4px', minHeight: '62px', background: weekend ? '#fafafa' : '#fff' }}>
+                  <div style={{ fontSize: '12px', fontWeight: 700, color: weekend ? '#b91c1c' : '#374151', marginBottom: '3px' }}>{d}</div>
+                  {NIGHT_NURSE_SLOTS.map(slot => (
+                    <div key={slot} style={{ display: 'flex', alignItems: 'center', gap: '3px', marginBottom: '2px' }}>
+                      <span style={{ fontSize: '10px', color: '#9ca3af', minWidth: '48px' }}>{slot}</span>
+                      <input style={{ flex: 1, minWidth: 0, boxSizing: 'border-box', padding: '3px 5px', fontSize: '12px', border: '1px solid #d1d5db', borderRadius: '4px', fontFamily: 'inherit' }}
+                        value={grid[`${dateIso}|${slot}`] ?? ''} placeholder="姓名" onChange={e => setCell(dateIso, slot, e.target.value)} />
                     </div>
                   ))}
                 </div>
@@ -2890,13 +2982,13 @@ function BedNurseGrid({ unit, targetStaffId, date: dateProp, hideDate = false, o
         setBeds(arr.map(b => ({ id: b.id ?? b.BedId, floor: b.floor ?? null, num: b.num ?? null, patientName: b.patient?.name ?? b.Patient?.PatientName ?? null })))
       }
       const rows = await wardApi.getBedAssign(unit, date, '主護', true)
-      const m = {}; (rows ?? []).forEach(r => { m[r.bedId] = { staffId: r.staffId, name: r.name } }); setAsg(m)
+      const m = {}; (rows ?? []).forEach(r => { (m[r.bedId] = m[r.bedId] || []).push({ staffId: r.staffId, name: r.name }) }); setAsg(m)   // 一床多人（陣列）
     } catch { show('讀取失敗', true) }
   }, [unit, date])
   useEffect(() => { loadAll() }, [loadAll])
-  // 切換對象或重新載入時，預先核取該對象目前的床
+  // 切換對象或重新載入時，預先核取該對象目前的床（target 有在該床名單中）
   useEffect(() => {
-    setChecked(new Set(Object.entries(asg).filter(([, v]) => String(v.staffId) === String(targetStaffId)).map(([id]) => id)))
+    setChecked(new Set(Object.entries(asg).filter(([, arr]) => (arr || []).some(v => String(v.staffId) === String(targetStaffId))).map(([id]) => id)))
   }, [targetStaffId, asg])
   const toggle = id => setChecked(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n })
   const save = async () => {
@@ -2920,14 +3012,15 @@ function BedNurseGrid({ unit, targetStaffId, date: dateProp, hideDate = false, o
           <div style={s.sectionSub}>{g.key}（{g.list.length} 床）</div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(220px,1fr))', gap: '8px' }}>
             {g.list.map(b => {
-              const cur = asg[b.id]
-              const other = cur && String(cur.staffId) !== String(targetStaffId)
+              const cur = asg[b.id] || []   // 一床多人
               return (
                 <label key={b.id} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '7px 10px', border: '1px solid #e5e7eb', borderRadius: '6px', cursor: 'pointer', background: checked.has(b.id) ? '#dcfce7' : '#fff' }}>
                   <input type="checkbox" checked={checked.has(b.id)} onChange={() => toggle(b.id)} />
                   <span style={{ fontWeight: 700, minWidth: '52px' }}>{pmBedLabel(b)}</span>
                   <span style={{ fontSize: '13px', color: '#6b7280', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{b.patientName || ''}</span>
-                  {cur && <span style={{ fontSize: '12px', fontWeight: 600, color: other ? '#c2410c' : '#16a34a' }}>{cur.name}</span>}
+                  <span style={{ fontSize: '12px', fontWeight: 600, display: 'flex', gap: '4px', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                    {cur.map((v, i) => <span key={i} style={{ color: String(v.staffId) === String(targetStaffId) ? '#16a34a' : '#c2410c' }}>{v.name}</span>)}
+                  </span>
                 </label>
               )
             })}
@@ -2953,7 +3046,7 @@ function BedNurseAdminSection({ units }) {
       <PmUnitTabs units={units} active={unit} onChange={setUnit} />
       <div style={s.formCard}>
         <h4 style={s.formTitle}>我的病床（{unit}）</h4>
-        <div style={{ fontSize: '12px', color: '#9ca3af', marginBottom: '10px' }}>先選護理師，再核取其負責病床，按存檔。一床一主護（指派他人會覆蓋原本的）。</div>
+        <div style={{ fontSize: '12px', color: '#9ca3af', marginBottom: '10px' }}>先選護理師，再核取其負責病床，按存檔。一床可多位護理師（跨班交接／學姊帶學妹）；前台責任護理師以逗號並列。</div>
         <div style={{ maxWidth: '360px', marginBottom: '14px' }}>
           <label style={s.label}>護理師</label>
           <NurseSelect options={nurses.map(n => ({ value: String(n.staffId), label: n.name }))} value={staffId} onChange={setStaffId} />
@@ -3008,10 +3101,10 @@ function ErShiftPanelSection({ unit = 'ER' } = {}) {
 
 // ── W52 值班表三班護理師（每日排班；點選＝順序，可日期區間疊加）──────────────
 const ROSTER_SHIFTS = ['大夜', '白班', '小夜']                                       // 三站共用
-const ER_EXTRA_SHIFT = '12:00–20:00'                                                 // ER 專屬第 4 班（單一字串來源）
+const EXTRA_SHIFT = '12:00–20:00'                                                    // 第 4 班（ER、W52 於小夜下方多此班；單一字串來源）
 const EMERGENCY_GROUPS = ['救護班', '滅火班', '安全防護', '避難引導', '通報班']       // 三站共用（含 ICU 的通報班）
 function ShiftRosterSection({ unit = 'W52' }) {
-  const shiftList = unit === 'ER' ? [...ROSTER_SHIFTS, ER_EXTRA_SHIFT] : ROSTER_SHIFTS   // ER 於小夜下方多第 4 班
+  const shiftList = (unit === 'ER' || unit === 'W52') ? [...ROSTER_SHIFTS, EXTRA_SHIFT] : ROSTER_SHIFTS   // ER、W52 於小夜下方多第 4 班（12:00–20:00）
   const emptySel = () => Object.fromEntries(shiftList.map(k => [k, []]))
   const [from, setFrom] = useState(pmToday())
   const [to, setTo] = useState(pmToday())
@@ -3837,6 +3930,7 @@ export default function AdminPage() {
       case 'or-ext':         return <WardExtSection key="OR"  unitCode="OR" />
       case 'er-ext':         return <WardExtSection key="ER"  unitCode="ER" />
       case 'er-oncall-roster': return <OnCallScheduleSection />
+      case 'er-night-nurse': return <NightNurseScheduleSection />
       case 'er-oncall-display': return <OnCallDisplaySection unitCode="ER" maxSelect={10} />
       case 'er-shift':       return <ErShiftPanelSection key="ERshift" />
       case 'w52-shift':      return <ShiftRosterSection unit="W52" key="W52roster" />
@@ -3846,6 +3940,7 @@ export default function AdminPage() {
       case 'icu-shift':      return <ShiftRosterSection unit="ICU" key="ICUroster" />
       case 'icu-oncall-display': return <OnCallDisplaySection unitCode="ICU" />
       case 'icu-aide-display': return <AideDisplaySection unitCode="ICU" />
+      case 'icu-contact-phone': return <ContactPhoneSection unitCode="ICU" />
       case 'er-shift-roster':return <ShiftRosterSection unit="ER" key="ERroster" />
       case 'or-schedule':    return <OrScheduleManager />
       case 'or-scrub':       return <OrScrubCircSection />

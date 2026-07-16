@@ -32,54 +32,23 @@
       <div class="ev-title">
         <span class="ev-title-bar"></span>
         避難圖
-        <span class="ev-title-meta" id="ev-floor-info"></span>
       </div>
       <div class="ev-columns">
 
-        <!-- 左欄：急診室平面示意 -->
-        <div class="ev-map-wrap">
-          <div class="ev-floor-plan-title">1F 急診室平面示意</div>
-          <div class="ev-floor-plan">
-            <div class="ev-floor-label">急診室（19 床）</div>
-            <div class="ev-er-grid">
-              <div class="ev-er-zone ev-zone-station" style="grid-column:span 3">
-                護理站 / 分診台
-                <span class="ev-zone-sub">Nursing Station</span>
-              </div>
-              <div class="ev-er-zone">急救區<span class="ev-zone-sub">1床</span></div>
-              <div class="ev-er-zone">負壓隔離<span class="ev-zone-sub">2床</span></div>
-              <div class="ev-er-zone ev-zone-exit">東側出口<span class="ev-zone-sub">急救入口</span></div>
-              <div class="ev-er-zone">第一診療<span class="ev-zone-sub">5床</span></div>
-              <div class="ev-er-zone">第二診療<span class="ev-zone-sub">6床</span></div>
-              <div class="ev-er-zone ev-zone-exit">西側出口<span class="ev-zone-sub">一般出口</span></div>
-              <div class="ev-er-zone">留觀區<span class="ev-zone-sub">2床</span></div>
-              <div class="ev-er-zone">待床區<span class="ev-zone-sub">3床</span></div>
-              <div class="ev-er-zone ev-zone-exit">集合點<span class="ev-zone-sub">院門前廣場</span></div>
-            </div>
-            <div class="ev-exit-arrow">
-              <span class="ev-arrow">↓</span>
-              <span class="ev-arrow-label">避難方向 → 院門前廣場</span>
-            </div>
-          </div>
-          <div class="ev-legend">
-            <div class="ev-legend-item"><span class="ev-legend-dot dot-zone"></span>診療區</div>
-            <div class="ev-legend-item"><span class="ev-legend-dot dot-station"></span>護理站</div>
-            <div class="ev-legend-item"><span class="ev-legend-dot dot-exit"></span>出口 / 集合點</div>
+        <!-- 左欄：避難圖（後台上傳圖檔；靜態原型顯示未上傳佔位） -->
+        <div class="ev-map-wrap" style="align-items:center;justify-content:center;">
+          <div style="text-align:center;color:var(--text-muted);">
+            <div style="font-size:48px;margin-bottom:12px;">🖼️</div>
+            <div style="font-size:16px;font-weight:700;margin-bottom:6px;">避難圖尚未上傳</div>
+            <div style="font-size:13px;">請由管理後台上傳</div>
           </div>
         </div>
 
-        <!-- 右欄：設備 + 緊急聯絡 -->
+        <!-- 右欄：緊急應變編組 -->
         <div class="ev-side">
           <div class="ev-card">
-            <div class="ev-card-header">
-              避難設備清單
-              <span class="ev-card-count" id="ev-equip-count"></span>
-            </div>
-            <div class="ev-equip-list" id="equip-list"></div>
-          </div>
-          <div class="ev-card">
-            <div class="ev-card-header">緊急聯絡</div>
-            <div class="ev-contacts" id="emerg-contacts"></div>
+            <div class="ev-card-header">緊急應變編組</div>
+            <div class="ev-resp" id="emerg-groups"></div>
           </div>
         </div>
 

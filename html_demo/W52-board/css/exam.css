@@ -159,7 +159,8 @@
 /* ── 會診醫師 ── */
 .ec-td-doctor {
   font-size: 15px;
-  color: var(--text-primary);
+  font-family: var(--font-num);
+  color: var(--text-secondary);
   white-space: nowrap;
 }
 

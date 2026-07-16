@@ -13,28 +13,18 @@ function updateClock() {
   document.getElementById("clock-time").textContent = timeStr;
 }
 
-// ── 樓層 / 病房資訊（標題列右側）──
-function renderFloorInfo(evacPlan) {
-  document.getElementById("ev-floor-info").textContent =
-    `${evacPlan.FloorNo}・${evacPlan.WardName}・上次演練 ${evacPlan.LastDrillDate}`;
-}
+// 設備清單、圖例、樓層資訊、緊急聯絡卡片已移除；平面圖本身仍保留。
 
-// 設備清單、圖例卡片已移除；平面圖本身仍保留。
+// ── 緊急應變編組（右欄卡片）──
+// React 對應：EMERGENCY_GROUPS.map(g => <div className="ev-resp-row">…</div>)
+// 班別（左）+ 指派人員（右，多人以「、」串接，無人顯示「—」）
+function renderEmergencyGroups(groups) {
+  const el = document.getElementById("ev-resp");
 
-// ── 緊急聯絡 ──
-// React 對應：<EmergencyContacts items={items} />
-function renderEmergencyContacts(items) {
-  const el = document.getElementById("emerg-contacts");
-
-  if (!items.length) {
-    el.innerHTML = `<div style="padding:24px;text-align:center;color:var(--text-muted);">無緊急聯絡資料</div>`;
-    return;
-  }
-
-  el.innerHTML = items.map(c => `
-    <div class="ev-contact-row">
-      <span class="ev-contact-name">${c.Name}</span>
-      <span class="ev-contact-ext">${c.Extension}</span>
+  el.innerHTML = groups.map(g => `
+    <div class="ev-resp-row">
+      <span class="ev-resp-k">${g.Group}</span>
+      <span class="ev-resp-n">${g.Members && g.Members.length ? g.Members.join("、") : "—"}</span>
     </div>`
   ).join("");
 }
@@ -49,11 +39,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   const res = await getEvacuation("W52");
   if (!res.Success) {
-    document.getElementById("emerg-contacts").innerHTML =
+    document.getElementById("ev-resp").innerHTML =
       `<div style="padding:24px;text-align:center;color:var(--text-muted);">資料載入失敗</div>`;
     return;
   }
 
-  renderFloorInfo(res.Data.EvacPlan);
-  renderEmergencyContacts(res.Data.EmergencyContacts);
+  renderEmergencyGroups(res.Data.EmergencyGroups);
 });

@@ -1,7 +1,8 @@
 // ──────────────────────────────────────────────────────────────
-// 避難圖 渲染邏輯 — ICU 版
-// 欄位使用 camelCase（與 ICU mockData 一致）
-// React 對應：<EvacPlanView /> + <EquipmentList /> + <EmergencyContacts />
+// 避難圖 渲染邏輯 — ICU 版（對齊 React EvacuationTab）
+// 版面：左＝避難圖（此原型以 SVG 平面圖代替後台上傳影像）；
+//       右＝緊急應變編組（取自三班護理師今日排班的緊急編組，此原型為靜態）。
+// 緊急聯絡卡、樓層資訊、設備/圖例卡片已隨 React 移除。
 // ──────────────────────────────────────────────────────────────
 
 function updateClock() {
@@ -13,47 +14,12 @@ function updateClock() {
   document.getElementById("clock-time").textContent = timeStr;
 }
 
-// ── 樓層 / 病房資訊（標題列右側）──
-function renderFloorInfo(evacPlan) {
-  document.getElementById("ev-floor-info").textContent =
-    `${evacPlan.floorNo}・${evacPlan.wardName}・上次演練 ${evacPlan.lastDrillDate}`;
-}
-
-// 設備清單、圖例卡片已移除；平面圖本身仍保留。
-
-// ── 緊急聯絡 ──
-// React 對應：<EmergencyContacts items={items} />
-function renderEmergencyContacts(items) {
-  const el = document.getElementById("emerg-contacts");
-
-  if (!items.length) {
-    el.innerHTML = `<div style="padding:24px;text-align:center;color:var(--text-muted);">無緊急聯絡資料</div>`;
-    return;
-  }
-
-  el.innerHTML = items.map(c => `
-    <div class="ev-contact-row">
-      <span class="ev-contact-name">${c.name}</span>
-      <span class="ev-contact-ext">${c.extension}</span>
-    </div>`
-  ).join("");
-}
-
 // ── 入口 ──
-document.addEventListener("DOMContentLoaded", async () => {
+document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("ward-director").textContent = "王○明";
   document.getElementById("head-nurse").textContent    = "陳○美";
 
   updateClock();
   setInterval(updateClock, 1000);
-
-  const res = await getIcuEvacuation("ICU");
-  if (!res.success) {
-    document.getElementById("emerg-contacts").innerHTML =
-      `<div style="padding:24px;text-align:center;color:var(--text-muted);">資料載入失敗</div>`;
-    return;
-  }
-
-  renderFloorInfo(res.data.evacPlan);
-  renderEmergencyContacts(res.data.emergencyContacts);
+  // 緊急應變編組為靜態 HTML；避難圖為靜態 SVG，無需再取資料。
 });

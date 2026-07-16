@@ -8,6 +8,15 @@ tags: [kmsh, 技術, OR, 手術動態, 試作]
 ## ⚠ 實測更新（2026-06-22）
 ✅ `OR.OPORDER` 核心**可用**（刀房 OROPROOM/術式 OROPNM1/主刀 ORDOCNM/助手/麻醉/狀態 ORSTATUS/來源 ORCASETP/起始時間 ORBGNDT-TM）；鍵＝**`ORHISNUM`**。⚠ NPO `ORNPODT/ORNPOTM` 異常、`ORDIAG`/`OREMRFG`/`ORBIO` 部分空。刷手/流動/特殊交班仍自建。詳 [[欄位資料實況]]。
 
+## ⚠ 版面更新（2026-07，已上線）— 房卡放大＋第 8 格溫溼度＋新頁籤
+- **7 刀房 4×2 卡片地圖 ＋ 第 8 格「溫溼度」摘要卡**（`EnvCard`）：各房溫度/溼度來自後台「溫溼度記錄」`OrRoomEnv`（`getOrRoomEnv` → `/or/temphumidity` → `[{ opDate, roomId, temperature, humidity }]`；缺值顯示「—」）。詳 [[或-溫溼度記錄]]／MEMORY。
+- **房卡字放大**；依**手術來源**上色（`src-er` 急診刀／`src-op` 門診刀／`src-inp` 住院刀）。房卡帶**科別（ORCATGY）/診斷（ORDIAG）**。
+- **狀態值**（`Status`／`SurgeryStatus`）：`in-surgery`（手術中）／`scheduled`（排程，卡片顯示準備中/排程）／`completed`（已完成）／`empty`（空房）。
+- **已完成僅依 `EndTime`**（有結束時間即完成）；**取消刀 `ORSTATUS=82` 一律排除**（不進看板；手術清單以刪節線標示）。
+- 房卡點開 `RoomModal`：顯示今日該房**全部台次可切換**（`Surgeries[]`），預設停在房卡當下那台（手術中/保留期）；欄位含診斷/術式/刷手/流動/麻醉/來源/排程・開始・結束時間・時長/備註。
+- **新增頁籤**：`surgerylist`「**手術清單**」（診斷欄＋總/住/門/急統計＋日期範圍＋**xlsx 匯出**；讀本地清洗表 `OrSurgery`，見 [[OR-手術清單]]）、`assist`「**各科協助業務**」（圖片）。**手術派班／特殊交班已上線（非 mock）**，見 [[手術派班-JSON]]、[[特殊交班-JSON]]。
+- **檢視密碼**：非第一頁（手術動態以外頁籤）若後台設密碼且未解鎖，以數字鍵盤 `OrViewGate` 取代內容（`UnitInfo.viewPassword`／`viewTimeoutMinutes` 1–10 分，per-device sessionStorage）。
+
 ## OPORDER 名單來源（base SQL，★含日期過濾）
 OR 名單＝`OR.OPORDER` 以 **`ORBGNDT`(預定手術日) ＋ `ORHISNUM`(病歷號)** 兜出，**必加日期過濾排除過去刀單**（OPORDER 累積所有歷史刀單，不濾會全撈）：
 ```sql
@@ -45,12 +54,12 @@ ORDER BY op.OROPROOM, op.ORBGNTM;
         "Notes":"術前停 Aspirin 7 天，血壓控制良好"
       }
     },
-    { "RoomId":"OR-05","Status":"prep","Patient":{ "PatientName":"吳○秀","Gender":"F","Age":58,"SurgeryName":"二尖瓣置換術 MVR","Doctor":"黃○誠醫師","SurgerySource":"住院刀","SurgeryStatus":"準備中","ScheduledTime":"11:30","StartTime":null,"EndTime":null,"Notes":"ICU 床已預留" } },
+    { "RoomId":"OR-05","Status":"scheduled","Patient":{ "PatientName":"吳○秀","Gender":"F","Age":58,"SurgeryName":"二尖瓣置換術 MVR","Doctor":"黃○誠醫師","SurgerySource":"住院刀","SurgeryStatus":"準備中","ScheduledTime":"11:30","StartTime":null,"EndTime":null,"Notes":"ICU 床已預留" } },
     { "RoomId":"OR-04","Status":"empty","Patient":null }
   ]
 }
 ```
-> 註：OR-04 已移除（7 間），空房可不回或回 `empty`。
+> 註：OR-04 已移除（7 間），空房可不回或回 `empty`。房卡另可帶 `TodayCount`（今日台數，>1 顯示「今日 N 台」）與 `Surgeries[]`（今日全台次，供 Modal 切換）；`Patient` 為房卡當下顯示那一台。`Status` 值＝`in-surgery`/`scheduled`/`completed`/`empty`。
 
 ## 二、逐欄資料來源（三態 × 表）
 | 欄位 | 來源 | 表.欄位 / 自建 | 現況 |

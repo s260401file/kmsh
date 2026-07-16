@@ -92,3 +92,33 @@ public class OnCallMonthEntry
     public string? Note { get; set; }
     public int SortOrder { get; set; }
 }
+
+// ── 夜/假護理師值班表（NightNurseRoster；無科別、每日兩時段：小夜/小夜貳組）──
+
+/// <summary>夜/假護理師某日某時段一列。</summary>
+public class NightNurseItem
+{
+    public int Id { get; set; }
+    public DateTime OnCallDate { get; set; }
+    public string Slot { get; set; } = "";
+    public string? Name { get; set; }
+    public int SortOrder { get; set; }
+    public bool IsActive { get; set; }
+}
+
+/// <summary>夜/假護理師月曆整月存檔請求（覆寫該月）。</summary>
+public class NightNurseMonthSaveRequest
+{
+    public int Year { get; set; }
+    public int Month { get; set; }
+    public List<NightNurseEntry> Entries { get; set; } = new();
+}
+
+/// <summary>夜/假護理師月曆單格。</summary>
+public class NightNurseEntry
+{
+    [Required] public string OnCallDate { get; set; } = "";   // yyyy-MM-dd
+    public string Slot { get; set; } = "";
+    public string? Name { get; set; }
+    public int SortOrder { get; set; }
+}

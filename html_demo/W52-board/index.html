@@ -126,16 +126,20 @@
           </div>
         </div>
 
-        <!-- ── 值班表面板（056 下方 4×8 空間；原型，mock 對照實體白板）── -->
-        <div class="duty-panel" style="grid-column:4/8;grid-row:3/11">
+        <!-- ── 值班表面板（右上 7×6 空區：欄 8–14 × 列 1–6；與統計區對調）── -->
+        <!-- 內容改「橫向 3 欄並排」：①三班護理師＋緊急應變編組 ②值班醫療團隊 ③照服員＋聯絡電話 -->
+        <div class="duty-panel" style="grid-column:8/15;grid-row:1/7">
           <div class="duty-head">
             <span class="duty-title">值班表</span>
             <span class="duty-date">115/06/22（日）</span>
           </div>
           <div class="duty-body">
-            <!-- ① 三班護理師（置最上；每班可多人，例白班到 4 人） -->
+            <!-- ① 三班護理師（含第 4 班 12:00–20:00；夜專師顯示於標題右方）＋ 緊急應變編組 -->
             <div class="duty-sec">
-              <div class="duty-sec-t">三班護理師</div>
+              <div class="duty-sec-t" style="display:flex;justify-content:space-between;align-items:baseline;gap:6px;">
+                <span>三班護理師</span>
+                <span style="font-size:13px;font-weight:700;color:var(--text-primary);"><span style="color:var(--text-secondary);font-weight:600;">夜專師：</span>謝佳蓉</span>
+              </div>
               <div class="duty-shift">
                 <div class="duty-sh"><span class="duty-sh-k sh-n">大夜 N</span>
                   <span class="duty-sh-n">黃婉芊</span>
@@ -151,27 +155,46 @@
                   <span class="duty-sh-n">曾子豪</span>
                   <span class="duty-sh-n">江庭妤</span>
                 </div>
+                <div class="duty-sh"><span class="duty-sh-k sh-t">12:00–20:00</span>
+                  <span class="duty-sh-n">許雅涵</span>
+                </div>
+              </div>
+              <!-- 緊急應變編組（5 班） -->
+              <div class="duty-sec-t" style="margin-top:10px;">緊急應變編組</div>
+              <div class="duty-rows">
+                <div class="duty-r"><span class="duty-role">通報班</span><span class="duty-name">王婉婷</span></div>
+                <div class="duty-r"><span class="duty-role">滅火班</span><span class="duty-name">林佳芊</span></div>
+                <div class="duty-r"><span class="duty-role">安全防護</span><span class="duty-name">方郁汝</span></div>
+                <div class="duty-r"><span class="duty-role">救護班</span><span class="duty-name">潘淑雲</span></div>
+                <div class="duty-r"><span class="duty-role">避難引導</span><span class="duty-name">曾子豪</span></div>
               </div>
             </div>
-            <!-- ② 值班醫療團隊（不列護理長／專科護理師：護理長已在頁首、專科護理師配於各床） -->
+            <!-- ② 值班醫療團隊（科別＋醫師＋分機） -->
             <div class="duty-sec">
               <div class="duty-sec-t">值班醫療團隊</div>
               <div class="duty-rows">
-                <div class="duty-r"><span class="duty-role">骨科醫師</span><span class="duty-name">林建宏</span><span class="duty-ext">0265509</span></div>
-                <div class="duty-r"><span class="duty-role">內科醫師</span><span class="duty-name">郭玉哲</span><span class="duty-ext">0267290</span></div>
+                <div class="duty-r"><span class="duty-role">骨科</span><span class="duty-name">林建宏</span><span class="duty-ext">0265509</span></div>
+                <div class="duty-r"><span class="duty-role">內科</span><span class="duty-name">郭玉哲</span><span class="duty-ext">0267290</span></div>
+                <div class="duty-r"><span class="duty-role">外科</span><span class="duty-name">陳志明</span><span class="duty-ext">0265102</span></div>
                 <div class="duty-r"><span class="duty-role">書記</span><span class="duty-name">張聖宗</span><span class="duty-ext">0265166</span></div>
               </div>
             </div>
-            <!-- 緊急應變編組已移至「避難圖」分頁右側 -->
-            <!-- ③ 照服員電話 -->
+            <!-- ③ 照服員 ＋ 聯絡電話 -->
             <div class="duty-sec">
-              <div class="duty-sec-t">照服員電話</div>
+              <div class="duty-sec-t">照服員</div>
               <div class="duty-aides">
                 <span class="duty-aide"><b>春花</b><span>0988818966</span></span>
                 <span class="duty-aide"><b>瑞雲</b><span>0915821732</span></span>
                 <span class="duty-aide"><b>佳誉</b><span>0955155023</span></span>
                 <span class="duty-aide"><b>覆晴</b><span>0988383132</span></span>
                 <span class="duty-aide"><b>永美</b><span>0920401127</span></span>
+              </div>
+              <div class="duty-sec-t" style="margin-top:10px;">聯絡電話</div>
+              <div class="duty-aides">
+                <span class="duty-aide"><b>護理站</b><span>0265200</span></span>
+                <span class="duty-aide"><b>藥劑科</b><span>0265300</span></span>
+                <span class="duty-aide"><b>檢驗科</b><span>0265400</span></span>
+                <span class="duty-aide"><b>放射科</b><span>0265500</span></span>
               </div>
             </div>
           </div>

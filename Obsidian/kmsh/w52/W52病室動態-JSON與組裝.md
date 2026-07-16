@@ -13,6 +13,15 @@ tags: [kmsh, 技術, W52, 病室動態, 試作]
 - ❓**待確認（6/22 未驗有值）**：入院日 `HADMDT`、病人狀態 `HPATSTAT`、科別名稱 `HCURDESC`（空則自建/用代碼對照；住院天數隨 HADMDT）。
 - ⛔**空值→自建**：DNR、保密、安寧、血型/身高體重、轉院(HOSPTRIN/HOSPTROU)、候床(HWBDDT 異常)、管路/隔離/責護/病況/註記。詳 [[欄位資料實況]]。
 
+## ⚠ 版面更新（2026-07，已上線）— 值班表併入病室動態
+- **值班表已改為 `WardTab`（病室動態）內的面板**（非獨立 `ScheduleTab`）：位於床位圖**右上 7×6 空區**（欄 8–14 × 列 1–6）；**統計區對調移到中間 4×8**。
+- 值班表面板橫向 **3 欄**（實際為上下堆疊三段 `duty-sec`）：
+  1. **三班護理師**（大夜 N／白班 D／小夜 E ＋ 第 4 班 **12:00–20:00**；每班可多人）＋標題右方「**夜專師**」＝夜/假護理師排程今日小夜（`getNightNurse` → `NightNurseRoster`）。其下 **緊急應變編組** 5 組：**通報班／滅火班／安全防護／救護班／避難引導**（由排班護理師之 `emergencyGroup` 歸類；目前一人一班，一人多班待後端擴充）。資料 ← `getSchedule('W52')`。
+  2. **值班醫療團隊**：引用**中央值班排程**之當日值班醫師（科別＋醫師＋分機）；後台「W52 管理→顯示值班醫師」選科別＋順序（`getOnCallBoardForUnit('W52')` → `[{deptCode,deptName,doctorName,ext,mobile}]`）。
+  3. **照服員**（後台「顯示照服員」`getUnitCareAides` → `[{aideId,name,contact}]`）＋ **聯絡電話**（後台「顯示聯絡電話」`getPhone('W52')` → `[{id,title,name,extension}]`）。
+- **責任護理師 `PrimaryNurse` 可多位**（一床多主護，逗號並列顯示）。
+- 詳見 [[排班資訊-JSON]]（三班/緊急編組）、[[醫師資訊-JSON]]（值班醫療團隊）、[[照護團隊-JSON]]（照服員/聯絡電話）。
+
 ## 一、試作 JSON（貼合前端 `mockData` 結構，可直接替換 `MOCK_DATA`）
 ```json
 {
@@ -73,7 +82,7 @@ tags: [kmsh, 技術, W52, 病室動態, 試作]
 | Renal 洗腎 | 自建/候選 | `TR.TRORDER` TRPROCED 過濾 | ③→自建 |
 | Surgery/Exam/Consult 旗標 | 候選 | `OR.OPORDER`、`OR.ORDER`(檢查/會診) | 候選(聚合計算) |
 | Condition 病況等級 | 自建 | — → `PatientMarker`/留空 | 自建 |
-| **PrimaryNurse** 責任護理師 | 自建 | (HIS主護未開放) → `NurseBedAssignment`＋`NurseStaff` | ③→自建 |
+| **PrimaryNurse** 責任護理師 | 自建 | (HIS主護未開放) → 床位指派＋人員主檔（**可多位，逗號並列**）| ③→自建 |
 | Notes 備註 | 自建 | — → `PatientCensus`/`PatientMarker` | 自建 |
 | WardDirector/HeadNurse | 自建 | — → `UnitInfo` | 自建 |
 

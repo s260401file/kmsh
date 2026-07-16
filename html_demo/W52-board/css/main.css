@@ -261,10 +261,10 @@ body { flex-direction: column; }
 .rl-three { color: #1565C0; }
 .rl-four  { color: #2E7D32; }
 
-/* ── Stats wrap（透明容器，C9-C13 × R1-R6，flex 垂直居中）── */
+/* ── Stats wrap（透明容器，C4-C7 × R3-R10，flex 垂直居中；與值班表對調至中段）── */
 .stats-wrap {
-  grid-column: 9 / 14;
-  grid-row: 1 / 7;
+  grid-column: 4 / 8;
+  grid-row: 3 / 11;
   display: flex;
   flex-direction: column;
   justify-content: center;

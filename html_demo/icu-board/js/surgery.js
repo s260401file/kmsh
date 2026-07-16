@@ -56,7 +56,6 @@ function renderSurgeryRow(item) {
     <tr class="${rowCls}">
       <td><span class="surg-td-or">${item.orRoom}</span></td>
       <td class="surg-td-time">${item.scheduledTime}</td>
-      <td class="surg-td-bed">${item.bedId}</td>
       <td class="surg-td-name">
         <span class="surg-name ${genderClass}">${item.patientName}</span>
         <span class="surg-basic">${genderText}/${item.age}</span>
@@ -86,7 +85,7 @@ function renderSurgeryList(items, selectedDate) {
   document.getElementById("surg-count").textContent = dayItems.length ? `${dayItems.length} 筆` : "";
 
   if (!dayItems.length) {
-    el.innerHTML = `<tr class="surg-empty-row"><td colspan="9">此日期無手術排程</td></tr>`;
+    el.innerHTML = `<tr class="surg-empty-row"><td colspan="8">此日期無手術排程</td></tr>`;
     return;
   }
 
@@ -128,7 +127,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const res = await getIcuSurgery("ICU", TODAY);
   if (!res.success) {
     document.getElementById("surgery-list").innerHTML =
-      `<tr class="surg-empty-row"><td colspan="9">資料載入失敗：${res.message}</td></tr>`;
+      `<tr class="surg-empty-row"><td colspan="8">資料載入失敗：${res.message}</td></tr>`;
     return;
   }
 

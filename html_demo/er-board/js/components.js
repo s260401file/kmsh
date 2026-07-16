@@ -66,6 +66,7 @@ function renderStaffShifts(shifts) {
         <span class="ss-td-item"><span class="ss-td-label">夜班</span>${night.Doctor || "—"}</span>
       </span>
       <span class="ss-title-docs ss-aides">
+        <span class="ss-aide-prefix">照服員</span>
         <span class="ss-td-item"><span class="ss-td-label">白班</span>${day.Aide || "—"}</span>
         <span class="ss-td-item"><span class="ss-td-label">夜班</span>${night.Aide || "—"}</span>
       </span>`;

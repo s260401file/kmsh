@@ -9,7 +9,7 @@ const MOCK_DATA = {
     // ── 4F beds ──
     { id:"F4-01", floor:4, num:1,  status:"occupied",
       patient:{ name:"林○志", gender:"M", age:72, admission:"05/10", diagnosis:"Septic shock, Pneumonia",
-                doctor:"蘇○醫師", nurse:"陳○護理師", condition:"重症", isolation:"無",
+                doctor:"蘇○醫師", nurse:"陳○護理師、王○護理師", condition:"重症", isolation:"無",
                 dnr:false, ventilator:true,  crrt:false, surgery:false, consult:false, rrt:false,
                 medRecord:"A234567890", idNo:"A2******90", birthDate:"1953/08/12", department:"胸腔內科",
                 fallRisk:false, dependency:null, confidential:false, noTreatment:false,

@@ -490,13 +490,14 @@
 .w52-board .duty-role { color: var(--text-secondary); }
 .w52-board .duty-name { font-weight: 700; color: var(--text-primary); }
 .w52-board .duty-ext  { font-family: var(--font-num); font-size: 15px; color: var(--text-secondary); }
-/* ② 三班護理師（每班可多人；欄內姓名縱向堆疊） */
-.w52-board .duty-shift { display: flex; gap: 8px; align-items: stretch; }
+/* ② 三班護理師（每班可多人；欄內姓名縱向堆疊；含第 4 班 12:00–20:00） */
+.w52-board .duty-shift { display: flex; gap: 5px; align-items: stretch; }
 .w52-board .duty-sh {
-  flex: 1; display: flex; flex-direction: column; align-items: center;
-  background: var(--bg-card-empty); border-radius: 7px; padding: 7px 3px 8px;
+  flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center;
+  background: var(--bg-card-empty); border-radius: 7px; padding: 7px 2px 8px;
 }
-.w52-board .duty-sh-k { font-size: 12.5px; font-weight: 700; color: #fff; padding: 2px 9px; border-radius: 10px; margin-bottom: 5px; }
+.w52-board .duty-sh-k { font-size: 12.5px; font-weight: 700; color: #fff; padding: 2px 9px; border-radius: 10px; margin-bottom: 5px; white-space: nowrap; }
+.w52-board .duty-sh-k.sh-t { background: #607D8B; font-size: 10px; padding: 2px 5px; letter-spacing: -0.3px; }  /* 12:00–20:00（中性） */
 .w52-board .sh-n { background: #37474F; }  /* 大夜 */
 .w52-board .sh-d { background: #0288D1; }  /* 白班 */
 .w52-board .sh-e { background: #7B1FA2; }  /* 小夜 */

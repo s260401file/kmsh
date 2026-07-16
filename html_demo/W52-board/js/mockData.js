@@ -21,7 +21,7 @@ const MOCK_DATA = {
     { BedId:"W52-001", Status:"occupied",
       Patient:{ PatientName:"林○志", Gender:"M", Age:75,
         AdmissionDate:"05/08", Diagnosis:"Hip fracture, Post-OP Day 3",
-        AttendingDoctor:"張○醫師", PrimaryNurse:"陳○護理師",
+        AttendingDoctor:"張○醫師", PrimaryNurse:"陳○護理師、王○護理師",
         Condition:"穩定", Isolation:"無",
         Dnr:true, FallRisk:true, Dependency:null, Confidential:false,
         NoTreatment:false, Npo:false, Allergy:false, Rrt:false,

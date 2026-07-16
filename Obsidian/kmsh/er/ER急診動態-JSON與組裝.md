@@ -8,6 +8,15 @@ tags: [kmsh, 技術, ER, 病室動態, 試作]
 ## ⚠ 實測更新（2026-06-22）
 ✅ 檢傷 `ER.ETROOT`（鍵＝**`ETHISNUM`**）全欄可用；床/科別/主治/診斷（`AM.*`）可用。⛔ 急診 DNR 空→自建；`ER.ETROOTS` 僅 FRANK/SAO2 有值、其餘空且**無病歷號欄**；轉院 `HOSPTRIN`/`HOSPTROU` 空、候床 `HWBDDT` 異常；過敏多 `NIL`、`BIMBA.ERDISPAT` **不存在**。詳 [[欄位資料實況]]。
 
+## ⚠ 版面更新（2026-07，已上線）— 三班醫護面板＋各科值班醫師面板
+- 右上「**三班醫護人員**」面板（`staff-shifts`）：
+  - **醫師/照服員結構** ← `getErShiftPanel('ER')` → `[{ shift, time, doctor, aide }]`；標題右側只顯示 **白班/夜班醫師**＋**照服員**（白班/夜班；有「照服員」標籤）。
+  - **各班護理師具名** ← `getSchedule('ER')`（三班護理師排班，非 ShiftStaff）；含 **12:00–20:00 第 4 班**（無班別者每行 1 名，有班別每行 2 名）。
+- 「**各科值班醫師**」面板（`oncall-panel`，MER09 下方 5×2）：引用**中央值班排程當日值班**（`getOnCallBoardForUnit('ER')` → `[{ deptCode, deptName, doctorName, ext }]`），顯示 **代碼 科別／醫師 #分機**；ER 後台「顯示值班醫師」可選 **≤10 科**。詳 [[急診值班表-JSON]]。
+- **死亡類別彈窗**（`DeceasedModal`）：Board_ER_TypeE（**不佔床**），底部「死亡」旗標開啟，列病歷號＋轉出(死亡)日期時間＋病房床；`deceasedCount` 計數。
+- **不佔床病人面板**（`unplaced-panel`，負1 下方）：床碼未建主檔者以簡易清單列出，可點開詳情。
+- **責任護理師 `Nurse` 可多位**（一床多主護，逗號並列）。**值班醫師排程/夜假護理師排程為全院共用中央資料（ER 管理維護）**，各站以「顯示值班醫師/顯示照服員/顯示聯絡電話」引用。
+
 ## 一、試作 JSON（貼合前端 `mockData`，PascalCase）
 ```json
 {
@@ -31,13 +40,15 @@ tags: [kmsh, 技術, ER, 病室動態, 試作]
     { "BedId":"負2","Zone":"負壓隔離室","Status":"isolation","Patient":{ "PatientName":"陳○文","Gender":"M","Age":58,"Triage":2,"Isolation":"負壓隔離","Awaiting":true,"AwaitingType":"隔離","Consult":true,"Notes":"疑似肺結核" } },
     { "BedId":"MER07","Zone":"第一診療區","Status":"empty","Patient":null }
   ],
-  "ShiftStaff": [
-    { "Shift":"白班","Time":"07:00–15:00","Doctor":"張○哲醫師","ChargeNurse":"王○琳護理師","NurseCount":6 },
-    { "Shift":"小夜","Time":"15:00–23:00","Doctor":"林○泰醫師","ChargeNurse":"李○婷護理師","NurseCount":4 },
-    { "Shift":"大夜","Time":"23:00–07:00","Doctor":"黃○誠醫師","ChargeNurse":"陳○華護理師","NurseCount":3 }
+  "ShiftPanel": [
+    { "shift":"大夜","time":"23:00–07:00","doctor":"黃○誠醫師","aide":"楊○雲" },
+    { "shift":"白班","time":"07:00–15:00","doctor":"張○哲醫師","aide":"林○芳" },
+    { "shift":"小夜","time":"15:00–23:00","doctor":"林○泰醫師","aide":null },
+    { "time":"12:00–20:00" }
   ]
 }
 ```
+> 註（現況）：三班醫護面板拆兩源——**醫師/照服員/班別結構** ← `getErShiftPanel`（`ErShiftPanel`，上例 `ShiftPanel`）；**各班護理師具名** ← `getSchedule('ER')`（三班護理師排班，含 12:00–20:00 第 4 班）。舊的 `ShiftStaff[].ChargeNurse/NurseCount` 已由這兩源取代。**各科值班醫師**另由 `getOnCallBoardForUnit('ER')` 供給（見上「版面更新」）。
 
 ## 二、逐欄資料來源（三態 × 表）
 | 欄位 | 來源 | 表.欄位 / 自建 | 現況 |
@@ -57,9 +68,10 @@ tags: [kmsh, 技術, ER, 病室動態, 試作]
 | Exam / Consult 旗標 | HIS候選 | `OR.ORDER` / `NonExSchList` | 候選 |
 | **Dnr** | 自建 | (急診 DNR ②**空值**) → `PatientMarker` | ②→自建 |
 | **Isolation / FallRisk** | 自建 | (護理紀錄/評估 ③) → `PatientMarker` | ③→自建 |
-| **Nurse** 主護 | 自建 | `NurseBedAssignment`＋`NurseStaff` | ③→自建 |
-| **ShiftStaff** 三班醫護 | 自建 | `ShiftStaff` 表 | 自建（結構已備）|
-| 會診醫師區（待辦） | 自建 | `ConsultDutyDaily`（科別→醫師） | 自建 |
+| **Nurse** 主護 | 自建 | 床位指派＋人員主檔（**可多位，逗號並列**）| ③→自建 |
+| **三班醫護面板** | 自建 | 醫師/照服員/班別 ← `ErShiftPanel`（`getErShiftPanel`）；護理師 ← 三班護理師排班（`getSchedule`，含 12:00–20:00）| ✅ 已上線 |
+| **各科值班醫師面板** | 自建/引用 | **中央值班排程**（`OnCallDept`/`OnCallRoster`）→ `getOnCallBoardForUnit`；後台選 ≤10 科 | ✅ 已上線 |
+| 死亡類別（不佔床） | HIS | Board_ER_TypeE → `DeceasedModal`（病歷號/轉出時間/病房床）| ✅ 已上線 |
 
 ## 三、API 組合策略（ER 特有）
 - **唯一可即時取的列表級＝[[Board_ER]]**（POST，`x-api-key`，`:8088`）。但 **回應 ~8.7s**：後端**必須快取**（TTL≈30s），白板輪詢（檢傷頁 10–15s，[[即時更新-輪詢設計]]）打的是快取、不直接壓 HIS。

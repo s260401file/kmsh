@@ -9,6 +9,15 @@ tags: [kmsh, 技術, ICU, 病室動態, 試作]
 ## ⚠ 實測更新（2026-06-22）
 ✅ **在床清單＋基本 ← [[Board_bed]] API**（病房參數化，**ICU HNURSTA=`AICU`**；或直接對 DB2_DUMP 同支 SQL 查）；DB2_DUMP 補：科別 `HSECTION`、**主治 `HDOCTOR`(HDOCNAMC/HMDTYPE)**、診斷 `HDIAGNOS`。⛔ 空值→自建：DNR、保密、安寧、血型/身高體重、轉院、候床(HWBDDT 異常)。管路本就自建（護理紀錄未開放）。抗生素旗標 `UDANTFLG` 空→改藥名比對（見 [[抗生素-JSON]]）。詳 [[欄位資料實況]]。
 
+## ⚠ 版面更新（2026-07，已上線）— AICU 值班表面板（`IcuDutyPanel`）
+- `WardTab`（4F 主頁）於 4F-01 下方空區掛 **`IcuDutyPanel`**，結構**同 W52 值班表**（3 欄）：
+  1. **三班護理師**（大夜 n／白班 d／小夜 e；**ICU 僅 3 班、無 12:00–20:00 第 4 班**；每班可多人）＋標題右方「**夜專師**」＝夜/假護理師排程今日小夜（`getNightNurse`）。其下 **緊急應變編組** 5 組（通報班／滅火班／安全防護／救護班／避難引導，由排班 `emergencyGroup` 歸類）。資料 ← `getSchedule('ICU')`。
+  2. **值班醫療團隊**：引用**中央值班排程**當日值班（`getOnCallBoardForUnit('ICU')` → `[{deptCode,deptName,doctorName,ext}]`；後台「ICU 管理→顯示值班醫師」選科別＋順序）。
+  3. **照服員**（`getUnitCareAides('ICU')`）＋ **聯絡電話**（`getPhone('ICU')`）。
+- **移除**舊有靜態角色：書記/傳送、專科師/透析師/行政總值、值班(陳蕙君) 等；「會診醫師區」待辦由「值班醫療團隊」取代。
+- **責任護理師 `nurse` 可多位**（一床多主護，逗號並列）。
+- **抗生素（`AntibioticTab`）改以 Board_bed 帶入實際用藥**：`getAntibioticLive('ICU')`（`/antibiotic/live`，以病歷號對應在床病人；暫不過濾藥品種類），後台另可維護 `getAntibiotic`（`Antibiotic` 表）。
+
 ## 一、試作 JSON（貼合前端 `mockData`，camelCase）
 ```json
 {
@@ -45,7 +54,7 @@ tags: [kmsh, 技術, ICU, 病室動態, 試作]
 | diagnosis | HIS | `AM.HDIAGNOS` HDIAGTXT | 候選 |
 | doctor 主治 | HIS | `AM.HDOCTOR` HDOCNAMC(+HMDTYPE) | 候選 |
 | status（轉出/出院） | HIS | `HCASE` HPATSTAT、`HDISCHRG` | 候選 |
-| **nurse** 主護 | 自建 | `NurseBedAssignment`＋`NurseStaff` | ③→自建 |
+| **nurse** 主護 | 自建 | 床位指派＋人員主檔（**可多位，逗號並列**）| ③→自建 |
 | **condition** 病況 C/B/A | 自建 | (無 HIS 欄位) → `PatientMarker`/留空 | 自建 |
 | **dnr** | 自建 | (HPBASIC.HDNRSIGN ②**空值**) → `PatientMarker` | ②→自建 |
 | **isolation / fallRisk** | 自建 | (護理紀錄/評估 ③) → `PatientMarker` | ③→自建 |
@@ -53,7 +62,7 @@ tags: [kmsh, 技術, ICU, 病室動態, 試作]
 | npo | HIS候選/自建 | `OR.OPORDER` ORNPODT | 候選 |
 | allergy | HIS候選 | `MR.EMRTRE` HALERGY | 候選(可能空) |
 | chemo | HIS候選 | `UD.UDORDER` UDDCJUST | 候選 |
-| 抗生素（AntibioticTab） | HIS候選 | `UD.UDORDER` UDANTFLG＋藥名＋UDBGNDT/UDENDDT | 候選 |
+| 抗生素（AntibioticTab） | Board_bed/自建 | 看板 `getAntibioticLive`（在床用藥，病歷號對應）；後台 `Antibiotic` 表可維護；HIS `UD.UDORDER` UDANTFLG 為候選 | ✅ 用藥帶入 |
 | rrt / transport / oxygen / dependency / confidential / noTreatment | 自建 | `PatientMarker`（②/③） | 自建 |
 | surgery / exam / consult 旗標 | HIS候選 | `OR.OPORDER` / `OR.ORDER` | 候選 |
 | 會診醫師區（待辦） | 自建 | `ConsultDutyDaily`（科別→醫師） | 自建 |

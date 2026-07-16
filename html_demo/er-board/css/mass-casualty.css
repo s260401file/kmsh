@@ -114,7 +114,7 @@
 .mc-table tr:nth-child(even) { background: #F8FAF9; }
 
 /* 欄位樣式 */
-.mc-bed { font-weight: 700; color: var(--accent-green); font-family: var(--font-num); }
+.mc-bed { font-weight: 700; color: var(--accent-red); font-family: var(--font-num); }
 .mc-patient { font-weight: 700; }
 .gender-m { color: #1565C0; }
 .gender-f { color: #AD1457; }

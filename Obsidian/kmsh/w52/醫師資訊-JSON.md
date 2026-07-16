@@ -5,6 +5,13 @@ tags: [kmsh, 技術, W52, 醫師資訊, 試作]
 
 > 對應分頁 `DoctorTab`：①醫師/專師負責床位 ②查房時間表。主治醫師可由 HIS `AM.HDOCTOR`（候選），**查房時間表為自建**（HIS 無，[[資料庫Schema]] `DoctorRound`）。
 
+## ⚠ 版面更新（2026-07，已上線）— 值班醫療團隊改引用中央值班排程
+> 病室動態 [[W52病室動態-JSON與組裝]] 內「值班表」面板第 2 段 **值班醫療團隊** 已上線：**引用全院共用「各科值班醫師每日輪值排程」**（`OnCallDept`＋`OnCallRoster`，由 ER 管理維護），非本頁 `HDOCTOR`。
+> - 前台：`getOnCallBoardForUnit('W52')` → `[{ deptCode, deptName, doctorName, ext, mobile }]`（顯示為 科別＋醫師＋分機）。
+> - 後台「W52 管理→顯示值班醫師」以 `saveUnitOnCallDepts` 挑科別＋排序（`UnitOnCallDept`）；面板依所設順序顯示**當日值班**醫師。
+> - 病室動態床卡詳情之 **責任護理師可多位**（一床多主護，逗號並列）。
+> DoctorTab 的「主治-床對應／查房時間表」仍如下（未變）。
+
 ## 試作 JSON
 ```json
 {

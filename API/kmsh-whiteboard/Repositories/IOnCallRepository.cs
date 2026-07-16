@@ -25,4 +25,9 @@ public interface IOnCallRepository
     Task<IEnumerable<UnitOnCallDeptItem>> GetUnitDeptsAsync(string unitCode, CancellationToken ct = default);
     /// <summary>覆寫某單位整組科別選取（先刪後插）。回傳插入筆數。</summary>
     Task<int> SaveUnitDeptsAsync(string unitCode, IEnumerable<UnitOnCallDeptEntry> entries, CancellationToken ct = default);
+
+    // ── 夜/假護理師值班表 NightNurseRoster ──
+    Task<IEnumerable<NightNurseItem>> GetNightNurseAsync(DateTime from, DateTime to, CancellationToken ct = default);
+    /// <summary>覆寫某月夜/假護理師：交易內先刪該月、再插入 entries。回傳插入筆數。</summary>
+    Task<int> SaveNightNurseMonthAsync(NightNurseMonthSaveRequest req, CancellationToken ct = default);
 }

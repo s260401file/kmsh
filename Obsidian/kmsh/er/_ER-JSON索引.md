@@ -8,13 +8,14 @@ tags: [kmsh, 技術, ER, 索引]
 
 | 功能 | 文件 | 主要來源 | 現可上線 |
 |---|---|---|---|
-| 急診動態（病室） | [[ER急診動態-JSON與組裝]] | **Board_ER（唯一已開放）**＋ETROOT＋自建 | 部分可（Board_ER）|
-| 急診值班表（含各科值班醫師） | [[急診值班表-JSON]] | 自建（`ShiftStaff`/`DoctorDirectory`/`ConsultDutyDaily`） | ✅ 可自建（依實體白板補充）|
+| 急診動態（病室，含**三班醫護＋各科值班醫師面板**）| [[ER急診動態-JSON與組裝]] | **Board_ER**＋ETROOT＋自建；三班醫護（`ErShiftPanel`＋三班護理師排班）｜各科值班醫師（**中央值班排程**）｜死亡類別（TypeE）| ✅ 面板已上線 |
+| 急診值班表（含各科值班醫師） | [[急診值班表-JSON]] | `ErShiftPanel`＋三班護理師排班＋**中央 `OnCallDept`/`OnCallRoster`**（ER 維護、全院共用，選 ≤10 科）| ✅ 已上線 |
 | 檢查／會診 | [[檢查會診-JSON]] | HIS `OR.ORDER`/`RESULT`（會診待確認） | 待開放 |
 | 大量傷患（MCI） | [[大量傷患-JSON]] | 同急診動態（攤平＋統計，無新源） | 同急診動態 |
 
-## schema 待補（依本批設計）
-- `ShiftStaff` 加 `EmergencyGroup`（緊急應變編組）、`Tag`；`DoctorDirectory` 加 `Ext`（分機）。→ 補進 [[資料庫Schema]]。
+## 實作對應（原「schema 待補」已落地）
+- 緊急應變編組改由**三班護理師排班**的 `emergencyGroup` 欄歸類（5 組具名班別）；分機隨中央 `OnCallRoster` 值班醫師帶入。
+- **值班醫師排程／夜假護理師排程為全院共用中央資料（ER 管理維護）**；W52/ICU/OR/ER 各站以「顯示值班醫師／顯示照服員／顯示聯絡電話」引用。
 
 ## 其餘 ER 待辦
 - 聯絡資訊分「值班人員/常用電話」、醫師白/夜班、大量傷患（MassCasualty）。見 [[待辦清單]]、[[ER急診動態-JSON與組裝]]。

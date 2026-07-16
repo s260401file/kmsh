@@ -16,6 +16,10 @@ import { FlagDot, makeFlagStyle } from '../../../../utils/flagShapes' // 共用 
 
 // 值班表三班：班別中文 → 色塊 class ＋ 代碼字母
 const SHIFT_META = { '大夜': { cls: 'sh-n', letter: 'N' }, '白班': { cls: 'sh-d', letter: 'D' }, '小夜': { cls: 'sh-e', letter: 'E' } }
+// 值班表三班護理師顯示的班別（比照 ER：小夜下方多 12:00–20:00 第 4 班；破折號為 en-dash）
+const W52_SHIFTS = ['大夜', '白班', '小夜', '12:00–20:00']
+const normShift = s => String(s ?? '').replace(/[–—-]/g, '-')   // 吸收 en-dash/hyphen 差異
+const nnToday = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` }
 // 緊急應變編組 5 班（顯示順序）
 const EMERGENCY_TEAMS = ['通報班', '滅火班', '安全防護', '救護班', '避難引導']
 
@@ -133,7 +137,7 @@ function BedModal({ bed, onClose }) {
           </div>
           <div className="modal-row">
             <div className="modal-field"><div className="field-label">主治醫師</div><div className="field-value">{p.AttendingDoctor}</div></div>
-            <div className="modal-field"><div className="field-label">責任護理師</div><div className="field-value">{p.PrimaryNurse}</div></div>
+            <div className="modal-field"><div className="field-label">責任護理師</div><div className="field-value">{p.PrimaryNurse || '—'}</div></div>
           </div>
           <div className="modal-row">
             <div className="modal-field"><div className="field-label">入院日期</div><div className="field-value">{p.AdmissionDate || '—'}</div></div>
@@ -170,8 +174,8 @@ export default function WardTab() {
   // 值班表三班護理師：讀「當日」排班(StaffSchedule；後台「W52 管理→三班護理師」設定)，依班別分組、SortOrder＝點選順序
   const { data: schedData } = usePolling(() => wardApi.getSchedule('W52'), { intervalMs: CENSUS_MS, deps: ['W52-sched'] })
   const shifts = useMemo(() => {
-    const byType = {}; (schedData?.shifts ?? []).forEach(s => { byType[s.shiftType] = s })
-    return ['大夜', '白班', '小夜'].map(k => ({ shift: k, nurses: (byType[k]?.nurses ?? []).map(n => n.peName).filter(Boolean) }))
+    const byType = {}; (schedData?.shifts ?? []).forEach(s => { byType[normShift(s.shiftType)] = s })
+    return W52_SHIFTS.map(k => ({ shift: k, nurses: (byType[normShift(k)]?.nurses ?? []).map(n => n.peName).filter(Boolean) }))
   }, [schedData])
   // 緊急應變編組：由當日排班護理師之「緊急編組」歸類（後台「三班護理師」點名字設定）。目前一人一班；一人多班待後端擴充
   const emergencyTeams = useMemo(() => {
@@ -191,6 +195,9 @@ export default function WardTab() {
   // 聯絡電話：引用後台「W52 管理→顯示聯絡電話」清單（標題＋名稱＋分機/電話，依排序）
   const { data: phoneData } = usePolling(() => getPhone('W52'), { intervalMs: CENSUS_MS, deps: ['W52-phone'] })
   const phones = phoneData ?? []
+  // 夜專師：夜/假護理師排程之今日「小夜」值班（顯示於三班護理師標題右方）
+  const { data: nnData } = usePolling(() => wardApi.getNightNurse(nnToday(), nnToday()), { intervalMs: CENSUS_MS, deps: ['W52-night'] })
+  const nightSpecialist = useMemo(() => { const rows = nnData ?? []; return (rows.find(r => r.slot === '小夜') || rows[0])?.name || '' }, [nnData])
   // 點同一篩選鈕再按一次可取消（回到 all）；'all' 鈕本身不切回
   const handleFilter = f => setFilter(prev => (prev === f && f !== 'all') ? 'all' : f)
   // 開著的詳情彈窗：每次輪詢後用 BedId 從最新 beds 重新取回，內容跟著自動更新（約20秒）；病人離床則自動關閉
@@ -255,14 +262,17 @@ export default function WardTab() {
               <div className="duty-body">
                 {/* ① 三班護理師（置最上；每班可多人；資料由後台「W52 管理→三班護理師」設定） */}
                 <div className="duty-sec">
-                  <div className="duty-sec-t">三班護理師</div>
+                  <div className="duty-sec-t" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '6px' }}>
+                    <span>三班護理師</span>
+                    {nightSpecialist && <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)' }}><span style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>夜專師：</span>{nightSpecialist}</span>}
+                  </div>
                   <div className="duty-shift">
                     {shifts.map(sh => {
-                      const meta = SHIFT_META[sh.shift] || { cls: '', letter: '' }
+                      const meta = SHIFT_META[sh.shift]   // 12:00–20:00 無對應 → 顯示時間字串（中性樣式）
                       const names = (sh.nurses && sh.nurses.length) ? sh.nurses : ['—']
                       return (
                         <div className="duty-sh" key={sh.shift}>
-                          <span className={`duty-sh-k ${meta.cls}`}>{sh.shift} {meta.letter}</span>
+                          <span className={`duty-sh-k ${meta ? meta.cls : 'sh-t'}`}>{meta ? `${sh.shift} ${meta.letter}` : sh.shift}</span>
                           {names.map((n, i) => <span className="duty-sh-n" key={i}>{n}</span>)}
                         </div>
                       )

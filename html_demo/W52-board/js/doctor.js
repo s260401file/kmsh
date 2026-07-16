@@ -36,7 +36,7 @@ function renderDoctorBeds(doctors) {
   document.getElementById("dr-bed-count").textContent = doctors.length ? `${doctors.length} 人` : "";
 
   if (!doctors.length) {
-    el.innerHTML = `<tr class="dr-empty-row"><td colspan="5">無醫師床位資料</td></tr>`;
+    el.innerHTML = `<tr class="dr-empty-row"><td colspan="3">無醫師床位資料</td></tr>`;
     return;
   }
 
@@ -45,15 +45,10 @@ function renderDoctorBeds(doctors) {
       ? d.BedNos.map(b => `<span class="dr-bed-tag">${b}</span>`).join("")
       : `<span class="dr-beds-none">—</span>`;
 
-    const roleKey = d.Role.replace(/\s/g, "");
-    const roleBadge = `<span class="dr-role-badge dr-role-${roleKey}">${d.Role}</span>`;
-
     return `
       <tr>
         <td>${d.DoctorName}</td>
-        <td>${roleBadge}</td>
         <td class="dr-td-specialty">${d.Specialty}</td>
-        <td class="dr-td-ext">${d.Ext}</td>
         <td><div class="dr-beds">${beds}</div></td>
       </tr>`;
   }).join("");
@@ -82,16 +77,16 @@ function renderRoundSchedule(rounds) {
   const rows = [];
 
   sorted.forEach(r => {
-    const { display, day, isToday } = parseRoundDate(r.RoundDate);
+    const { display, day } = parseRoundDate(r.RoundDate);
 
     if (r.RoundDate !== lastDate) {
       rows.push(`<tr class="dr-date-sep"><td colspan="5">${display} ${day}</td></tr>`);
       lastDate = r.RoundDate;
     }
 
-    const timeDisplay = r.ActualTime
-      ? `${r.EstimatedTime}<span class="dr-actual-time">實 ${r.ActualTime}</span>`
-      : r.EstimatedTime;
+    const dateCell = r.ActualTime
+      ? `<span class="dr-date-main">${r.EstimatedTime}</span><span class="dr-actual-time">實 ${r.ActualTime}</span>`
+      : `<span class="dr-date-main">${r.EstimatedTime}</span>`;
 
     const status = r.IsCompleted
       ? `<span class="dr-status-done">✓ 完成</span>`
@@ -101,13 +96,10 @@ function renderRoundSchedule(rounds) {
 
     rows.push(`
       <tr class="${rowCls}">
-        <td class="dr-td-date">
-          <span class="dr-date-main${isToday ? " dr-date-today-text" : ""}">${display}</span>
-          <span class="dr-date-day">${day}</span>
-        </td>
+        <td class="dr-td-date">${dateCell}</td>
         <td>${r.DoctorName}</td>
         <td class="dr-td-specialty">${r.Specialty}</td>
-        <td class="dr-td-time">${timeDisplay}</td>
+        <td class="dr-td-time">${r.EstimatedTime}</td>
         <td class="dr-td-status">${status}</td>
       </tr>`);
   });

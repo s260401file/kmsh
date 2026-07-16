@@ -13,14 +13,25 @@ document.addEventListener("DOMContentLoaded", async () => {
   const res = await getContacts("ER", "2026-06-03");
   const { DutyContacts, CommonContacts } = res.Data;
 
-  document.getElementById("duty-list").innerHTML = DutyContacts.map(c => `
+  // 依班別分組（白班/小夜/大夜 固定順序，其餘接在後面），每組一列班別標題＋成員列（與 React 一致）
+  const order = ["白班", "小夜", "大夜"];
+  const groups = {};
+  DutyContacts.forEach(c => { (groups[c.Shift] = groups[c.Shift] || []).push(c); });
+  const shiftGroups = order.filter(k => groups[k]).map(k => ({ shift: k, items: groups[k] }))
+    .concat(Object.keys(groups).filter(k => !order.includes(k)).map(k => ({ shift: k, items: groups[k] })));
+
+  document.getElementById("duty-list").innerHTML = shiftGroups.map(g => `
+    <tr class="ct-category-header">
+      <td colspan="5">${g.shift}　${g.items[0].ShiftTime || ""}</td>
+    </tr>
+    ${g.items.map(c => `
     <tr>
       <td>${c.Title}</td>
       <td>${c.Name}</td>
       <td class="ct-ext">${c.Extension}</td>
       <td class="ct-mobile">${c.Mobile || "—"}</td>
-      <td class="ct-slot">${c.Shift}　${c.ShiftTime}</td>
-    </tr>`).join("");
+      <td class="ct-slot">${c.Shift}</td>
+    </tr>`).join("")}`).join("");
 
   document.getElementById("common-list").innerHTML = CommonContacts.map(c => `
     <tr>

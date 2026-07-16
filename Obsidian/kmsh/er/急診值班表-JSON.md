@@ -4,8 +4,15 @@ tags: [kmsh, 技術, ER, 值班表, 試作]
 # ER 急診值班表 — JSON 設計（依實體白板補充）
 
 > 來源：實體白板照片 `Document/er-目前的實體白板.jpg`（高雄市立民生醫院 急診室值班表，115/06/16）。
-> 電子板現況只有「三班醫護面板」（`mockData.ShiftStaff`：每班 Doctor/ChargeNurse/NurseCount）涵蓋一部分；實體板資訊更完整 → 本頁列出**要再加入**的資訊。全部屬操作性、HIS 無 → **自建**。
-> 自建表 [[資料庫Schema]] `ShiftStaff` / `DoctorDirectory` / `ConsultDutyDaily`。
+> 全部屬操作性、HIS 無 → **自建**。
+
+## ⚠ 實作更新（2026-07，已上線）— 對應目前資料來源
+本頁原以 `ShiftStaff`/`DoctorDirectory`/`ConsultDutyDaily` 統括；**實作已拆為下列來源**（ER 病室動態面板取用，見 [[ER急診動態-JSON與組裝]]）：
+- **急診醫師／照服員／班別結構** → `ErShiftPanel`（`getErShiftPanel`）：每班 `{ shift, time, doctor, aide }`；照服員含班別標籤。
+- **各班護理師具名** → **三班護理師排班**（`getSchedule('ER')`，人員管理），含 **12:00–20:00 第 4 班**；緊急應變編組由排班 `emergencyGroup` 歸類（通報班/滅火班/安全防護/救護班/避難引導）。
+- **夜專師** → 夜/假護理師排程（`getNightNurse` → `NightNurseRoster`，全院共用）。
+- **各科值班醫師** → **中央「各科值班醫師每日輪值排程」**（`OnCallDept` 科別設定＋`OnCallRoster` 每日輪值），**ER 管理維護、全院共用**；ER 後台「顯示值班醫師」挑 **≤10 科**＋排序（`UnitOnCallDept`），前台 `getOnCallBoardForUnit('ER')` → `[{ deptCode, deptName, doctorName, ext, mobile }]`，看板顯示 **代碼 科別／醫師 #分機**。
+> 下方原始 JSON 為「依實體白板」的欄位盤點（保留參考）；欄名與實作 camelCase 略有差異。
 
 ## 實體白板 vs 電子板（差異＝要加入的資訊）
 | 實體板區塊 | 電子板現況 | 要加入 |

@@ -274,41 +274,27 @@
   border-radius: 50%;
 }
 
-/* ── 緊急聯絡 ── */
-.ev-contacts {
-  display: flex;
-  flex-direction: column;
-}
-
-.ev-contact-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 11px 18px;
-  border-bottom: 1px solid var(--bg-card-empty);
-}
-.ev-contact-row:last-child { border-bottom: none; }
-
-.ev-contact-name {
-  font-size: 16px;
-  font-weight: 700;
-  color: #C62828;
-}
-
-.ev-contact-ext {
-  font-size: 22px;
-  font-weight: 800;
-  font-family: var(--font-num);
-  color: #C62828;
-  letter-spacing: -0.5px;
-}
-
-/* 緊急應變編組（由值班表移入避難圖右欄）：班別（紅）+ 指派人員，比照聯絡列樣式 */
+/* 緊急應變編組（右欄卡片）：班別藥丸 + 指派人員 */
 .ev-resp { display: flex; flex-direction: column; }
 .ev-resp-row {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 11px 18px; border-bottom: 1px solid var(--bg-card-empty);
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 14px 18px; border-bottom: 1px solid var(--bg-card-empty);
 }
 .ev-resp-row:last-child { border-bottom: none; }
-.ev-resp-k { font-size: 15px; font-weight: 700; color: #C62828; }
-.ev-resp-n { font-size: 17px; font-weight: 700; color: var(--text-primary); }
+.ev-resp-k {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  background: var(--bg-card-empty);
+  padding: 4px 14px;
+  border-radius: var(--radius-pill);
+  flex-shrink: 0;
+}
+.ev-resp-n {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--text-primary);
+  text-align: right;
+  flex: 1;
+  line-height: 1.3;
+}

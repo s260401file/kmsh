@@ -39,9 +39,31 @@ function renderRoomCard(room) {
     </div>`;
 }
 
+// 第 8 格：今日各刀房溫溼度摘要卡（後台「溫溼度記錄」填入；缺值顯示「—」）
+function renderEnvCard(rooms) {
+  const env = MOCK_DATA.RoomEnv || {};
+  const now = new Date();
+  const dateStr = `${now.getMonth() + 1}/${now.getDate()}`;
+  const fmt = v => (v == null ? "—" : String(v));
+  const rows = rooms.map(r => {
+    const e = env[r.RoomId] || {};
+    return `
+      <div class="or-env-row">
+        <span class="or-env-room">${r.RoomId}</span>
+        <span class="or-env-val">${fmt(e.temperature)}<i>°C</i></span>
+        <span class="or-env-val">${fmt(e.humidity)}<i>%</i></span>
+      </div>`;
+  }).join("");
+  return `
+    <div class="or-env-card">
+      <div class="or-env-title">溫溼度<span class="or-env-date">${dateStr}</span></div>
+      <div class="or-env-body">${rows}</div>
+    </div>`;
+}
+
 function renderAllRooms(rooms) {
   const grid = document.getElementById("or-grid");
-  grid.innerHTML = rooms.map(renderRoomCard).join("");
+  grid.innerHTML = rooms.map(renderRoomCard).join("") + renderEnvCard(rooms);
   document.querySelectorAll(".or-card:not(.empty)").forEach(card => {
     card.addEventListener("click", () => {
       const id   = card.dataset.id;
