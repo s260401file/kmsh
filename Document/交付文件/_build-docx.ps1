@@ -9,6 +9,9 @@ param(
 $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.IO.Compression | Out-Null
 Add-Type -AssemblyName System.IO.Compression.FileSystem | Out-Null
+Add-Type -AssemblyName System.Drawing | Out-Null
+$script:Images = @()                 # each: @{ File; Part; RId }
+$InDir = Split-Path -Parent $In      # image paths resolve relative to the .md
 
 function Esc([string]$s) {
   if ($null -eq $s) { return '' }
@@ -88,6 +91,37 @@ function BuildTable([object[]]$rows) {
   }
   return '<w:tbl>' + $tblPr + $grid + $bodyRows + '</w:tbl>'
 }
+function ImageBlock([string]$spec) {
+  # spec = "file.png|caption" (caption optional). Image centered, width capped at
+  # the ~6.0in text column, scaled proportionally. ASCII-only (PS5.1 script decoding).
+  $parts = $spec -split '\|', 2
+  $file = $parts[0].Trim()
+  $cap = if ($parts.Count -gt 1) { $parts[1].Trim() } else { '' }
+  $path = Join-Path $InDir $file
+  if (-not (Test-Path -LiteralPath $path)) { return (Normal ('[missing image: ' + $file + ']')) }
+  $img = [System.Drawing.Image]::FromFile($path)
+  $pw = $img.Width; $ph = $img.Height; $img.Dispose()
+  $maxCx = 5486400                                # 6.0 in (text column) in EMU
+  $cxNative = [int64]$pw * 9525                   # px @96dpi -> EMU
+  $cx = [math]::Min($cxNative, $maxCx)
+  $cy = [int64]([double]$cx * $ph / $pw)
+  $n = $script:Images.Count + 1
+  $rid = 'rIdImg' + $n
+  $script:Images += @{ File = $path; Part = ('image' + $n + '.png'); RId = $rid }
+  $drawing = '<w:r><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0">' +
+    '<wp:extent cx="' + $cx + '" cy="' + $cy + '"/><wp:docPr id="' + $n + '" name="Image' + $n + '"/>' +
+    '<a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:pic>' +
+    '<pic:nvPicPr><pic:cNvPr id="' + $n + '" name="Image' + $n + '"/><pic:cNvPicPr/></pic:nvPicPr>' +
+    '<pic:blipFill><a:blip r:embed="' + $rid + '"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill>' +
+    '<pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="' + $cx + '" cy="' + $cy + '"/></a:xfrm>' +
+    '<a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr>' +
+    '</pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r>'
+  $out = Para $drawing '<w:pPr><w:jc w:val="center"/><w:spacing w:before="80" w:after="40"/></w:pPr>'
+  if ($cap -ne '') {
+    $out += Para (Runs $cap $false '<w:sz w:val="20"/><w:szCs w:val="20"/><w:color w:val="595959"/>') '<w:pPr><w:jc w:val="center"/><w:spacing w:after="120"/></w:pPr>'
+  }
+  return $out
+}
 
 $lines = Get-Content -LiteralPath $In -Encoding UTF8
 $blocks = New-Object System.Collections.ArrayList
@@ -96,6 +130,7 @@ while ($i -lt $lines.Count) {
   $t = $lines[$i].TrimEnd()
   if ($t -match '^\s*$') { $i++; continue }
   if ($t -eq '[[PAGEBREAK]]') { [void]$blocks.Add((PageBreak)); $i++; continue }
+  if ($t.StartsWith('@img ')) { [void]$blocks.Add((ImageBlock $t.Substring(5))); $i++; continue }
   if ($t -match '^---+$') { $i++; continue }
   if ($t.StartsWith('@C ')) { [void]$blocks.Add((CenterTitle $t.Substring(3) 44 $true)); $i++; continue }
   if ($t.StartsWith('@c ')) { [void]$blocks.Add((CenterTitle $t.Substring(3) 26 $false)); $i++; continue }
@@ -125,7 +160,7 @@ while ($i -lt $lines.Count) {
 
 $sectPr = '<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440" w:header="720" w:footer="720" w:gutter="0"/></w:sectPr>'
 $docXml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
-  '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>' +
+  '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"><w:body>' +
   ($blocks -join '') + $sectPr + '</w:body></w:document>'
 
 $stylesXml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
@@ -143,6 +178,7 @@ $ctypes = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
   '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">' +
   '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>' +
   '<Default Extension="xml" ContentType="application/xml"/>' +
+  '<Default Extension="png" ContentType="image/png"/>' +
   '<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>' +
   '<Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/>' +
   '</Types>'
@@ -150,9 +186,14 @@ $rootRels = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
   '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
   '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>' +
   '</Relationships>'
+$imgRels = ''
+foreach ($im in $script:Images) {
+  $imgRels += '<Relationship Id="' + $im.RId + '" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/' + $im.Part + '"/>'
+}
 $docRels = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
   '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
   '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>' +
+  $imgRels +
   '</Relationships>'
 
 function Add-Entry($zip, $name, $text) {
@@ -170,6 +211,13 @@ Add-Entry $zip '_rels/.rels' $rootRels
 Add-Entry $zip 'word/document.xml' $docXml
 Add-Entry $zip 'word/styles.xml' $stylesXml
 Add-Entry $zip 'word/_rels/document.xml.rels' $docRels
+foreach ($im in $script:Images) {
+  $e = $zip.CreateEntry('word/media/' + $im.Part)
+  $st = $e.Open()
+  $bytes = [System.IO.File]::ReadAllBytes($im.File)
+  $st.Write($bytes, 0, $bytes.Length)
+  $st.Dispose()
+}
 $zip.Dispose()
 $fs.Dispose()
 Write-Output ("OK: " + $Out + "  (" + $blocks.Count + " blocks)")
