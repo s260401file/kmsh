@@ -288,8 +288,8 @@
 
 /* ── Stats wrap ── */
 .w52-board .stats-wrap {
-  grid-column: 9 / 14;
-  grid-row: 1 / 7;
+  grid-column: 4 / 8;
+  grid-row: 3 / 11;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -467,16 +467,20 @@
 }
 .w52-board .duty-title { font-size: 22px; font-weight: 800; letter-spacing: 4px; }
 .w52-board .duty-date  { font-size: 15px; font-weight: 600; opacity: .95; }
+/* 值班表移到右上 7×5：三區改「橫向 3 欄並排」（比照 ICU 值班表版面） */
 .w52-board .duty-body {
   flex: 1; min-height: 0; overflow: hidden;
-  display: flex; flex-direction: column; gap: 9px; padding: 10px 13px;
+  display: grid; grid-template-columns: 1.15fr 1fr 1fr; gap: 0 14px; padding: 8px 12px;
+  align-items: start;
 }
+.w52-board .duty-sec { min-width: 0; }
+.w52-board .duty-sec + .duty-sec { border-left: 1px solid #E3EAE6; padding-left: 12px; }
 .w52-board .duty-sec-t {
   font-size: 15px; font-weight: 800; color: var(--accent-green);
   border-bottom: 1.5px solid #DCE8E1; padding-bottom: 3px; margin-bottom: 6px;
 }
-/* ① 值班醫療團隊（2 個 1 排；科別欄固定寬使姓名/分機對齊） */
-.w52-board .duty-rows { display: grid; grid-template-columns: 1fr 1fr; column-gap: 18px; row-gap: 5px; }
+/* ① 值班醫療團隊（橫向版面內改單欄；科別欄固定寬使姓名/分機對齊） */
+.w52-board .duty-rows { display: flex; flex-direction: column; row-gap: 5px; }
 .w52-board .duty-r {
   display: grid; grid-template-columns: 72px 1fr auto; align-items: baseline;
   font-size: 16px; column-gap: 6px; min-width: 0;
@@ -498,8 +502,8 @@
 .w52-board .sh-e { background: #7B1FA2; }  /* 小夜 */
 .w52-board .duty-sh-n { font-size: 16.5px; font-weight: 700; color: var(--text-primary); line-height: 1.3; }
 .w52-board .duty-sh-n + .duty-sh-n { margin-top: 2px; }
-/* ③ 照服員電話 */
-.w52-board .duty-aides { display: flex; flex-wrap: wrap; gap: 4px 18px; }
+/* ③ 照服員電話（橫向版面內改直向清單） */
+.w52-board .duty-aides { display: flex; flex-direction: column; gap: 4px; }
 .w52-board .duty-aide { font-size: 15px; color: var(--text-secondary); }
 .w52-board .duty-aide b { color: var(--text-primary); font-weight: 700; margin-right: 4px; }
 .w52-board .duty-aide span { font-family: var(--font-num); }

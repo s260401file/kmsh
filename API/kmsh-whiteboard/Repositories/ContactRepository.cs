@@ -163,4 +163,62 @@ public class ContactRepository : IContactRepository
                 new { Id = id }, cancellationToken: ct));
         return rows > 0;
     }
+
+    // ── 值班表聯絡電話 ContactPhone ──────────────────────────────
+    public async Task<IEnumerable<ContactPhoneItem>> GetPhoneAsync(
+        string unitCode, bool includeAll = false, CancellationToken ct = default)
+    {
+        var sql = """
+            SELECT Id, UnitCode, Title, Name, Extension, SortOrder, IsActive
+            FROM   [dbo].[ContactPhone]
+            WHERE  UnitCode = @UnitCode
+              AND  (@IncludeAll = 1 OR IsActive = 1)
+            ORDER  BY SortOrder, Id
+            """;
+        using var conn = _db.Create();
+        return await conn.QueryAsync<ContactPhoneItem>(
+            new CommandDefinition(sql, new { UnitCode = unitCode, IncludeAll = includeAll ? 1 : 0 }, cancellationToken: ct));
+    }
+
+    public async Task<ContactPhoneItem?> GetPhoneByIdAsync(int id, CancellationToken ct = default)
+    {
+        using var conn = _db.Create();
+        return await conn.QueryFirstOrDefaultAsync<ContactPhoneItem>(
+            new CommandDefinition("SELECT Id, UnitCode, Title, Name, Extension, SortOrder, IsActive FROM [dbo].[ContactPhone] WHERE Id = @Id",
+                new { Id = id }, cancellationToken: ct));
+    }
+
+    public async Task<int> CreatePhoneAsync(ContactPhoneUpsertRequest req, CancellationToken ct = default)
+    {
+        var sql = """
+            INSERT INTO [dbo].[ContactPhone] (UnitCode, Title, Name, Extension, SortOrder, IsActive, UpdatedAt, CreatedAt)
+            OUTPUT INSERTED.Id
+            VALUES (@UnitCode, @Title, @Name, @Extension, @SortOrder, @IsActive, GETDATE(), GETDATE())
+            """;
+        using var conn = _db.Create();
+        return await conn.ExecuteScalarAsync<int>(new CommandDefinition(sql, req, cancellationToken: ct));
+    }
+
+    public async Task<bool> UpdatePhoneAsync(int id, ContactPhoneUpsertRequest req, CancellationToken ct = default)
+    {
+        var sql = """
+            UPDATE [dbo].[ContactPhone]
+            SET    UnitCode = @UnitCode, Title = @Title, Name = @Name, Extension = @Extension,
+                   SortOrder = @SortOrder, IsActive = @IsActive, UpdatedAt = GETDATE()
+            WHERE  Id = @Id
+            """;
+        using var conn = _db.Create();
+        var rows = await conn.ExecuteAsync(new CommandDefinition(sql,
+            new { req.UnitCode, req.Title, req.Name, req.Extension, req.SortOrder, req.IsActive, Id = id }, cancellationToken: ct));
+        return rows > 0;
+    }
+
+    public async Task<bool> DeletePhoneAsync(int id, CancellationToken ct = default)
+    {
+        using var conn = _db.Create();
+        var rows = await conn.ExecuteAsync(
+            new CommandDefinition("DELETE FROM [dbo].[ContactPhone] WHERE Id = @Id",
+                new { Id = id }, cancellationToken: ct));
+        return rows > 0;
+    }
 }

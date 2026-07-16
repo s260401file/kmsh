@@ -80,6 +80,7 @@ const MENU_CONFIG = [
       { id: 'w52-shift', label: '三班護理師', available: true },   // 值班表三班護理師（每班可多人）
       { id: 'w52-oncall-display', label: '顯示值班醫師', available: true }, // 引用中央值班排程，選科別＋排序
       { id: 'w52-aide-display', label: '顯示照服員', available: true }, // 引用照服員主檔，選人＋排序
+      { id: 'w52-contact-phone', label: '顯示聯絡電話', available: true }, // 值班表面板聯絡電話清單（標題/名稱/電話）
       { id: 'round',     label: '查房表', available: true },        // W52 專屬（醫師資訊頁）
     ]
   },
@@ -429,6 +430,74 @@ function CommonManager({ units }) {
     <div>
       <UnitTabs units={units} active={activeUnit} onChange={setActiveUnit} />
       <CommonSection key={activeUnit} unitCode={activeUnit} />
+    </div>
+  )
+}
+
+// 顯示聯絡電話：值班表面板「聯絡電話」清單（標題＋名稱＋分機/電話＋排序＋啟用；比照常用電話，多標題）
+const emptyPhoneForm = { title: '', name: '', extension: '', sortOrder: 0, isActive: true }
+function ContactPhoneSection({ unitCode = 'W52' }) {
+  const { list, form, setForm, editId, msg, handleSubmit, handleEdit, handleDelete, handleToggle, resetForm } = useCrudSection({
+    emptyForm: emptyPhoneForm,
+    fetchList: () => contactApi.getPhone(unitCode, true),
+    create: (payload) => contactApi.createPhone(payload),
+    update: (id, payload) => contactApi.updatePhone(id, payload),
+    remove: (id) => contactApi.removePhone(id),
+    toPayload: (form) => ({ unitCode, title: form.title?.trim() || null, name: form.name.trim(), extension: form.extension?.trim() || null, sortOrder: Number(form.sortOrder) || 0, isActive: form.isActive }),
+    toForm: (item) => ({ title: item.title ?? '', name: item.name, extension: item.extension ?? '', sortOrder: item.sortOrder, isActive: item.isActive }),
+  })
+  return (
+    <div>
+      {msg.text && <div style={{ ...s.msg, background: msg.error ? '#fee2e2' : '#d1fae5', color: msg.error ? '#991b1b' : '#065f46' }}>{msg.text}</div>}
+      <div style={{ fontSize: '12px', color: '#9ca3af', marginBottom: '10px' }}>{unitCode} 值班表面板「聯絡電話」清單。標題可空；前台顯示為「標題 名稱 分機/電話」（例：書記 張聖宗 0265166）。前台呈現方式另議。</div>
+      <div style={s.formCard}>
+        <h4 style={s.formTitle}>{editId ? `修改聯絡電話 (ID: ${editId})` : '新增聯絡電話'}</h4>
+        <form onSubmit={handleSubmit}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0 16px' }}>
+            <div style={s.formRow}><label style={s.label}>標題（可空）</label><input style={s.input} value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} placeholder="書記 / 警衛" /></div>
+            <div style={s.formRow}><label style={s.label}>名稱 *</label><input style={s.input} value={form.name} required onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="張聖宗" /></div>
+            <div style={s.formRow}><label style={s.label}>分機 / 電話</label><input style={s.input} value={form.extension} onChange={e => setForm(f => ({ ...f, extension: e.target.value }))} placeholder="0265166" /></div>
+          </div>
+          <div style={{ display: 'flex', gap: '16px', alignItems: 'center', marginTop: '4px' }}>
+            <div style={s.formRow}><label style={s.label}>排序</label><input type="number" style={{ ...s.input, width: '80px' }} value={form.sortOrder} onChange={e => setForm(f => ({ ...f, sortOrder: Number(e.target.value) }))} /></div>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '14px', cursor: 'pointer' }}>
+              <input type="checkbox" checked={form.isActive} onChange={e => setForm(f => ({ ...f, isActive: e.target.checked }))} />啟用
+            </label>
+          </div>
+          <div style={{ marginTop: '14px', display: 'flex', gap: '8px' }}>
+            <button type="submit" style={s.btnPrimary}>{editId ? '儲存修改' : '+ 新增'}</button>
+            {editId && <button type="button" style={s.btnSecondary} onClick={resetForm}>取消</button>}
+          </div>
+        </form>
+      </div>
+      <div style={s.listCard}>
+        <h4 style={s.formTitle}>聯絡電話（共 {list.length} 筆）</h4>
+        {list.length === 0 ? <p style={{ color: '#9ca3af', fontSize: '14px' }}>尚無資料，請新增</p> : (
+          <table style={s.table}>
+            <thead><tr>{['ID','標題','名稱','分機/電話','排序','啟用','操作'].map(h => <th key={h} style={s.th}>{h}</th>)}</tr></thead>
+            <tbody>
+              {list.map((item, i) => (
+                <tr key={item.id} style={{ background: editId === item.id ? '#fef9c3' : i % 2 ? '#f9fafb' : '#fff' }}>
+                  <td style={s.td}>{item.id}</td>
+                  <td style={s.td}>{item.title || '—'}</td>
+                  <td style={s.td}>{item.name}</td>
+                  <td style={s.td}>{item.extension || '—'}</td>
+                  <td style={s.td}>{item.sortOrder}</td>
+                  <td style={s.td}>
+                    <button onClick={() => handleToggle(item)} style={{ ...s.badge, background: item.isActive ? '#d1fae5' : '#f3f4f6', color: item.isActive ? '#065f46' : '#6b7280' }}>
+                      {item.isActive ? '✓ 啟用' : '停用'}
+                    </button>
+                  </td>
+                  <td style={s.td}>
+                    <button style={s.btnEdit} onClick={() => handleEdit(item)}>編輯</button>
+                    <button style={s.btnDel} onClick={() => handleDelete(item.id, `確定刪除「${item.name}」？`)}>刪除</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
     </div>
   )
 }
@@ -3773,6 +3842,7 @@ export default function AdminPage() {
       case 'w52-shift':      return <ShiftRosterSection unit="W52" key="W52roster" />
       case 'w52-oncall-display': return <OnCallDisplaySection unitCode="W52" />
       case 'w52-aide-display': return <AideDisplaySection unitCode="W52" />
+      case 'w52-contact-phone': return <ContactPhoneSection unitCode="W52" />
       case 'icu-shift':      return <ShiftRosterSection unit="ICU" key="ICUroster" />
       case 'icu-oncall-display': return <OnCallDisplaySection unitCode="ICU" />
       case 'icu-aide-display': return <AideDisplaySection unitCode="ICU" />

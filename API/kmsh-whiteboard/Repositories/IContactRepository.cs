@@ -31,4 +31,11 @@ public interface IContactRepository
     Task<bool> UpdateCommonAsync(int id, CommonContactUpsertRequest req, CancellationToken ct = default);
     /// <summary>依 Id 實際刪除常用電話資料列，回傳是否有刪除成功。</summary>
     Task<bool> DeleteCommonAsync(int id, CancellationToken ct = default);
+
+    // 值班表聯絡電話（ContactPhone；比照常用電話，多標題欄）
+    Task<IEnumerable<ContactPhoneItem>> GetPhoneAsync(string unitCode, bool includeAll = false, CancellationToken ct = default);
+    Task<ContactPhoneItem?> GetPhoneByIdAsync(int id, CancellationToken ct = default);
+    Task<int> CreatePhoneAsync(ContactPhoneUpsertRequest req, CancellationToken ct = default);
+    Task<bool> UpdatePhoneAsync(int id, ContactPhoneUpsertRequest req, CancellationToken ct = default);
+    Task<bool> DeletePhoneAsync(int id, CancellationToken ct = default);
 }

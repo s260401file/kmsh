@@ -127,4 +127,43 @@ public class ContactController : ControllerBase
         var ok = await _repo.DeleteCommonAsync(id, ct);
         return ok ? NoContent() : NotFound();
     }
+
+    // ══ 值班表聯絡電話 ContactPhone ═══════════════════════════════
+
+    /// <summary>查詢某單位值班表聯絡電話清單（含標題）。</summary>
+    [HttpGet("phone")]
+    public async Task<IActionResult> GetPhone(
+        [FromQuery, DefaultValue("W52")] string unitCode,
+        [FromQuery, DefaultValue(false)] bool includeAll = false,
+        CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(unitCode))
+            return BadRequest(new { message = "unitCode 為必填" });
+        return Ok(await _repo.GetPhoneAsync(unitCode, includeAll, ct));
+    }
+
+    [HttpGet("phone/{id:int}")]
+    public async Task<IActionResult> GetPhoneById(int id, CancellationToken ct = default)
+    {
+        var item = await _repo.GetPhoneByIdAsync(id, ct);
+        return item is null ? NotFound() : Ok(item);
+    }
+
+    [HttpPost("phone")]
+    public async Task<IActionResult> CreatePhone([FromBody] ContactPhoneUpsertRequest req, CancellationToken ct = default)
+    {
+        var newId = await _repo.CreatePhoneAsync(req, ct);
+        return CreatedAtAction(nameof(GetPhoneById), new { id = newId }, await _repo.GetPhoneByIdAsync(newId, ct));
+    }
+
+    [HttpPut("phone/{id:int}")]
+    public async Task<IActionResult> UpdatePhone(int id, [FromBody] ContactPhoneUpsertRequest req, CancellationToken ct = default)
+    {
+        var ok = await _repo.UpdatePhoneAsync(id, req, ct);
+        return ok ? Ok(await _repo.GetPhoneByIdAsync(id, ct)) : NotFound();
+    }
+
+    [HttpDelete("phone/{id:int}")]
+    public async Task<IActionResult> DeletePhone(int id, CancellationToken ct = default)
+        => await _repo.DeletePhoneAsync(id, ct) ? NoContent() : NotFound();
 }

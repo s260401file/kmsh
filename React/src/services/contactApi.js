@@ -59,3 +59,20 @@ export async function updateCommon(id, data) {
 export async function removeCommon(id) {
   return handle(await apiFetch(`${BASE}/common/${id}`, { method: 'DELETE' }))
 }
+
+// ── 值班表聯絡電話（ContactPhone；含標題） ──────────────────────────
+// GET /api/Contact/phone?unitCode=&includeAll= → 取得單位值班表聯絡電話清單
+export async function getPhone(unitCode, includeAll = false) {
+  const p = new URLSearchParams({ unitCode })
+  if (includeAll) p.append('includeAll', 'true')
+  return handle(await apiFetch(`${BASE}/phone?${p}`))
+}
+export async function createPhone(data) {
+  return handle(await apiFetch(`${BASE}/phone`, { method: 'POST', headers, body: JSON.stringify(data) }))
+}
+export async function updatePhone(id, data) {
+  return handle(await apiFetch(`${BASE}/phone/${id}`, { method: 'PUT', headers, body: JSON.stringify(data) }))
+}
+export async function removePhone(id) {
+  return handle(await apiFetch(`${BASE}/phone/${id}`, { method: 'DELETE' }))
+}
