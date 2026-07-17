@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DbSync 維運手冊</title>
+<style>
+  :root{
+    --bg:#f6f8fa; --panel:#ffffff; --ink:#1a2530; --muted:#5a6b7b;
+    --line:#d8e0e8; --accent:#1565c0; --accent-soft:#e3f0fb;
+    --code-bg:#f2f5f8; --code-ink:#243447; --th:#eaf1f8; --zebra:#f8fafc;
+    --warn:#b8860b; --warn-soft:#fbf3dc; --ok:#2d7a55; --ok-soft:#e8f5ee;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#0f151b; --panel:#161e26; --ink:#e6edf3; --muted:#9fb0c0;
+      --line:#2a3742; --accent:#5aa2e6; --accent-soft:#16304a;
+      --code-bg:#0c1218; --code-ink:#cdd9e5; --th:#1c2a38; --zebra:#131b22;
+      --warn:#d9a93a; --warn-soft:#2a2410; --ok:#5cc08d; --ok-soft:#10261b;
+    }
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:"Microsoft JhengHei","PingFang TC","Noto Sans TC",-apple-system,"Segoe UI",sans-serif;
+    line-height:1.75; font-size:16px;
+  }
+  .wrap{max-width:1180px; margin:0 auto; padding:0 20px; display:grid; grid-template-columns:250px 1fr; gap:36px;}
+  /* header */
+  header.top{grid-column:1 / -1; padding:34px 4px 10px; border-bottom:2px solid var(--line); margin-bottom:8px;}
+  header.top h1{margin:0 0 6px; font-size:28px; letter-spacing:1px;}
+  header.top .sub{color:var(--muted); font-size:15px;}
+  header.top .chain{margin-top:18px;}
+  /* toc */
+  nav.toc{position:sticky; top:16px; align-self:start; max-height:calc(100vh - 32px); overflow:auto; font-size:14px; padding:6px 0;}
+  nav.toc .t{font-weight:700; color:var(--muted); font-size:12px; letter-spacing:1px; margin:2px 8px 8px;}
+  nav.toc a{display:block; padding:6px 10px; color:var(--ink); text-decoration:none; border-left:3px solid transparent; border-radius:0 6px 6px 0;}
+  nav.toc a:hover{background:var(--accent-soft); border-left-color:var(--accent);}
+  /* main */
+  main{min-width:0; padding-bottom:60px;}
+  section{background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:20px 26px; margin:0 0 20px; scroll-margin-top:16px;}
+  h2{font-size:20px; margin:2px 0 14px; padding-bottom:8px; border-bottom:1px solid var(--line); display:flex; align-items:baseline; gap:10px;}
+  h2 .n{color:#fff; background:var(--accent); font-size:13px; font-weight:700; border-radius:7px; padding:2px 9px; flex:none;}
+  h3{font-size:16px; margin:22px 0 8px; color:var(--accent);}
+  p{margin:8px 0;}
+  ul,ol{margin:8px 0; padding-left:22px;}
+  li{margin:4px 0;}
+  strong{color:var(--ink);}
+  code{font-family:"Cascadia Code",Consolas,"SFMono-Regular",Menlo,monospace; background:var(--code-bg); color:var(--code-ink); padding:1px 6px; border-radius:5px; font-size:.9em;}
+  pre{background:var(--code-bg); color:var(--code-ink); border:1px solid var(--line); border-radius:9px; padding:14px 16px; overflow-x:auto; font-size:13.5px; line-height:1.6;}
+  pre code{background:none; padding:0; font-size:inherit;}
+  .cmt{color:var(--muted);}
+  table{border-collapse:collapse; width:100%; margin:12px 0; font-size:14.5px; overflow:hidden;}
+  th,td{border:1px solid var(--line); padding:8px 11px; text-align:left; vertical-align:top;}
+  th{background:var(--th); font-weight:700;}
+  tbody tr:nth-child(even){background:var(--zebra);}
+  td code{white-space:nowrap;}
+  blockquote{margin:12px 0; padding:10px 16px; background:var(--accent-soft); border-left:4px solid var(--accent); border-radius:0 8px 8px 0; color:var(--ink);}
+  blockquote.warn{background:var(--warn-soft); border-left-color:var(--warn);}
+  .pill{display:inline-block; font-size:12px; font-weight:700; border-radius:20px; padding:2px 10px;}
+  .pill.ok{background:var(--ok-soft); color:var(--ok);}
+  .pill.warn{background:var(--warn-soft); color:var(--warn);}
+  /* data chain diagram */
+  .flow{display:flex; flex-wrap:wrap; align-items:center; gap:8px; font-size:14px;}
+  .flow .node{background:var(--panel); border:1.5px solid var(--accent); color:var(--ink); border-radius:9px; padding:8px 14px; font-weight:600; white-space:nowrap;}
+  .flow .node.src{border-color:var(--muted);}
+  .flow .node.tool{background:var(--accent); color:#fff; border-color:var(--accent);}
+  .flow .node.end{border-color:var(--ok);}
+  .flow .arw{color:var(--accent); font-weight:700; font-size:18px;}
+  footer{grid-column:1 / -1; border-top:1px solid var(--line); margin-top:10px; padding:18px 4px 40px; color:var(--muted); font-size:13px;}
+  @media (max-width:860px){
+    .wrap{grid-template-columns:1fr;}
+    nav.toc{position:static; max-height:none; border-bottom:1px solid var(--line); margin-bottom:8px;}
+    nav.toc{display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:2px;}
+    nav.toc .t{grid-column:1/-1;}
+  }
+  @media print{
+    body{background:#fff; color:#000; font-size:12px;}
+    .wrap{display:block; max-width:none; padding:0;}
+    nav.toc{display:none;}
+    section{border:none; border-radius:0; padding:0 0 6px; margin:0 0 10px; page-break-inside:avoid;}
+    header.top{border-color:#000;}
+    pre,table{page-break-inside:avoid;}
+    h2 .n{background:#000;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <h1>DbSync 維運手冊</h1>
+    <div class="sub">交接給院內資訊室人員 ‧ 本手冊偏「日常操作」；程式內部細節見各 <code>.cs</code> 檔註解與 <code>README.md</code>。</div>
+    <div class="chain flow">
+      <span class="node src">真實 DB2（HIS）</span>
+      <span class="arw">→</span>
+      <span class="node tool">DbSync</span>
+      <span class="arw">→</span>
+      <span class="node">DB2_DUMP（SQL Server）</span>
+      <span class="arw">→</span>
+      <span class="node">資訊室 API</span>
+      <span class="arw">→</span>
+      <span class="node end">護理電子白板</span>
+    </div>
+  </header>
+
+  <nav class="toc">
+    <div class="t">目錄</div>
+    <a href="#s1">1. 這是什麼</a>
+    <a href="#s2">2. 執行方式與退出碼</a>
+    <a href="#s3">3. 檔案與目錄</a>
+    <a href="#s4">4. 部署（VM）</a>
+    <a href="#s5">5. 設定檔 appsettings.json</a>
+    <a href="#s6">6. 同步模式 Mode 怎麼選</a>
+    <a href="#s7">7. 如何加開一張資料表</a>
+    <a href="#s8">8. Windows 工作排程器</a>
+    <a href="#s9">9. 日常維運</a>
+    <a href="#s10">10. 疑難排解</a>
+    <a href="#s11">11. 安全與注意事項</a>
+  </nav>
+
+  <main>
+
+    <section id="s1">
+      <h2><span class="n">1</span>這是什麼</h2>
+      <p>把<strong>真實 DB2（高榮 HIS）</strong>中白板需要的表，<strong>每幾分鐘增量同步</strong>到 <strong>SQL Server 的 <code>DB2_DUMP</code> 庫</strong>，讓白板前端讀得到近即時資料。</p>
+      <p><strong>定位＝並存分工：</strong>資訊室原本的整包 dump（Java，約 30 分鐘、人工手動）照常跑；DbSync 只負責<strong>白板用到的少數表、每 5 分鐘增量</strong>，讓白板不必等整包 dump。兩者都寫入源真值、交易短，最後寫入者正確，不衝突。</p>
+    </section>
+
+    <section id="s2">
+      <h2><span class="n">2</span>執行方式與退出碼</h2>
+<pre><code>DbSync.exe --tier fast     <span class="cmt">:: 白板子集（排程每 5 分鐘）</span>
+DbSync.exe --tier slow     <span class="cmt">:: 低頻/對帳（排程每 30 分鐘或每晚）</span></code></pre>
+      <table>
+        <thead><tr><th>命令列參數</th><th>說明</th></tr></thead>
+        <tbody>
+          <tr><td><code>--tier fast|slow</code></td><td>要跑哪一層（必填，預設 fast）。哪些表屬哪層看 appsettings 的 <code>Tier</code></td></tr>
+          <tr><td><code>--inspect-keys</code></td><td>唯讀診斷：印出各表在 DB2 的主鍵/唯一索引，供校正 <code>KeyCols</code>（不做同步）</td></tr>
+          <tr><td><code>--reprocess-hours N</code></td><td>忽略浮水印，強制從「N 小時前」重新撈（回補漏資料用）</td></tr>
+          <tr><td><code>--no-pause</code></td><td>跑完不暫停（排程情境用）</td></tr>
+          <tr><td><code>--pause-seconds N</code></td><td>雙擊執行時跑完停留 N 秒（預設 15）後自動關閉</td></tr>
+        </tbody>
+      </table>
+      <table>
+        <thead><tr><th>退出碼</th><th>意義（供排程器判讀）</th></tr></thead>
+        <tbody>
+          <tr><td><code>0</code></td><td>全部成功（或本輪因上一輪未跑完而跳過）</td></tr>
+          <tr><td><code>1</code></td><td>有表失敗或發生例外</td></tr>
+          <tr><td><code>2</code></td><td>參數錯誤</td></tr>
+        </tbody>
+      </table>
+      <p><strong>視窗行為：</strong>雙擊 <code>DbSync.exe</code> 或 <code>run-test.bat</code> 會跑完停住顯示結果（15 秒後自動關）；由排程/終端機執行則不暫停，看 <code>logs\</code> 即可。</p>
+    </section>
+
+    <section id="s3">
+      <h2><span class="n">3</span>檔案與目錄</h2>
+      <table>
+        <thead><tr><th>位置</th><th>用途</th></tr></thead>
+        <tbody>
+          <tr><td><code>DbSync.exe</code></td><td>主程式（self-contained，VM 免裝 .NET runtime）</td></tr>
+          <tr><td><code>appsettings.json</code></td><td><strong>設定檔（含帳密）</strong>。由 <code>appsettings.sample.json</code> 複製後填入。已被 <code>.gitignore</code> 排除，勿上傳版控</td></tr>
+          <tr><td><code>state\watermarks-fast.json</code><br><code>state\watermarks-slow.json</code></td><td><strong>浮水印</strong>：每表最後同步到的 Z* 時間。誤刪＝下次以「目標現有最大值」重新起算</td></tr>
+          <tr><td><code>logs\dbsync-{tier}-{yyyyMMdd}.log</code></td><td>每層別每日一個記錄檔</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="s4">
+      <h2><span class="n">4</span>部署（VM，須同時連得到來源 DB2 與目標 SQL Server）</h2>
+<pre><code>dotnet publish -c Release -r win-x64 --self-contained true -o publish</code></pre>
+      <ol>
+        <li>把 <code>publish\</code> 整包複製到 VM。</li>
+        <li>由 <code>appsettings.sample.json</code> 複製出 <code>appsettings.json</code>，填入實際兩端連線帳密。</li>
+        <li>依第 5 節設定要同步的表。</li>
+        <li>依第 8 節在工作排程器建兩個工作。</li>
+      </ol>
+    </section>
+
+    <section id="s5">
+      <h2><span class="n">5</span>設定檔 appsettings.json</h2>
+<pre><code>{
+  "Db2ConnectionString": "Server=DBGW1.vghks.gov.tw:50000;Database=DBDSNP2;UID=帳號;PWD=密碼;Connection Timeout=8;",
+  "SqlConnectionString": "Server=10.20.111.84;Database=DB2_DUMP;User Id=帳號;Password=密碼;Encrypt=False;TrustServerCertificate=True;",
+  "StateDir": "state",
+  "LogDir": "logs",
+  "CommandTimeoutSeconds": 300,
+  "Tables": [
+    { "Schema": "AM", "Name": "HCASE_4A0", "Tier": "fast", "Mode": "replacekey",
+      "WatermarkCol": "ZHCASE", "KeyCols": ["HHISNUM","HCASETYP","HCASENO"], "Filter": null, "Enabled": true }
+    <span class="cmt">/* ...其餘表... */</span>
+  ]
+}</code></pre>
+      <p><strong>每張表（Tables 內一筆）欄位：</strong></p>
+      <table>
+        <thead><tr><th>欄位</th><th>說明</th></tr></thead>
+        <tbody>
+          <tr><td><code>Schema</code> / <code>Name</code></td><td>表的 schema 與表名（來源與目標同名，如 <code>AM</code> / <code>HCASE_4A0</code>）</td></tr>
+          <tr><td><code>Tier</code></td><td><code>fast</code>（每 5 分）或 <code>slow</code>（每 30 分/每晚），對應排程</td></tr>
+          <tr><td><code>Mode</code></td><td>同步方式：<code>replacekey</code>（首選）/ <code>incremental</code> / <code>append</code> / <code>full</code>，見第 6 節</td></tr>
+          <tr><td><code>WatermarkCol</code></td><td>異動時間欄（HIS 多為 <code>Z</code> 開頭）。<code>replacekey</code>/<code>incremental</code>/<code>append</code> <strong>必填</strong>；<code>full</code> 不用</td></tr>
+          <tr><td><code>KeyCols</code></td><td>鍵欄位。<code>replacekey</code>＝案群組鍵（<strong>不需唯一</strong>）；<code>incremental</code>/<code>append</code>＝<strong>須唯一鍵</strong></td></tr>
+          <tr><td><code>Filter</code></td><td>可選的 <code>WHERE</code> 條件字串（不含 <code>WHERE</code> 兩字）；<code>null</code>＝全部</td></tr>
+          <tr><td><code>Enabled</code></td><td><code>false</code> 可暫停此表（不同步），無需刪除設定</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="s6">
+      <h2><span class="n">6</span>同步模式 Mode 怎麼選</h2>
+      <table>
+        <thead><tr><th>Mode</th><th>做法</th><th>需唯一鍵</th><th>何時用</th></tr></thead>
+        <tbody>
+          <tr><td><strong>replacekey</strong></td><td>Z* 找出有異動的「案群組」，把目標該群組整組刪除後、以來源現況重寫（單一交易）</td><td><span class="pill ok">否</span></td><td><strong>首選</strong>。HIS 表在 DB2 多半沒宣告唯一鍵，用這個最安全</td></tr>
+          <tr><td>incremental</td><td>Z* 撈異動列，以鍵 upsert（有則更新、無則新增）</td><td><span class="pill warn">是</span></td><td>確定該表 <code>KeyCols</code> 唯一時</td></tr>
+          <tr><td>append</td><td>同上但只 INSERT、不更新既有列</td><td><span class="pill warn">是</span></td><td>純新增、不回頭改的表（如日誌類）</td></tr>
+          <tr><td>full</td><td>全表拉進暫存表，整列雜湊比對 upsert＋刪除來源已無的列</td><td><span class="pill warn">是</span></td><td>小表或低頻對帳（建議掛 <code>slow</code>）</td></tr>
+        </tbody>
+      </table>
+      <blockquote><strong>經驗法則：</strong>不確定就用 <code>replacekey</code>。它免唯一鍵、且目標群組永遠與來源一致。<br>唯一限制：整個案「從來源消失」（跨群組刪除）增量偵測不到，需靠 <code>slow</code> 層 <code>full</code> 對帳補上。</blockquote>
+    </section>
+
+    <section id="s7">
+      <h2><span class="n">7</span>【重點】如何加開一張資料表</h2>
+      <blockquote>情境範例：白板新功能要用到<strong>護理站主檔</strong> <code>AM.HNURSTA_4A0</code>（表名為示意，實際依 HIS）。</blockquote>
+
+      <h3>步驟 1 — 先確認目標庫 DB2_DUMP 已有這張表</h3>
+      <p>本工具<strong>以「目標表的欄位」為準</strong>去抽取來源（<code>GetColumns</code> 讀目標 <code>sys.columns</code>、<code>RecreateStaging</code> 由目標結構複製暫存表）。所以 <strong>DB2_DUMP 必須先有 <code>AM.HNURSTA_4A0</code> 這張表</strong>，且欄位名稱與來源一致（要同步的欄位，目標要有）。</p>
+      <ul>
+        <li>若目標還沒有 → 先在 DB2_DUMP 依來源結構建好表（欄位名/型別比照來源）。</li>
+        <li>只想同步部分欄位 → 目標表只建那些欄位即可（工具只撈目標有的欄位）。</li>
+      </ul>
+
+      <h3>步驟 2 — 查來源的鍵與浮水印欄</h3>
+<pre><code>DbSync.exe --inspect-keys</code></pre>
+      <p>在 log 看 <code>AM.HNURSTA_4A0</code> 那行：</p>
+      <ul>
+        <li>有印出 <code>PK</code>/<code>UNIQUE</code> → 可用 <code>incremental</code>，<code>KeyCols</code> 填該鍵。</li>
+        <li>印出「<strong>DB2 無宣告 PK/唯一索引</strong>」→ 用 <code>replacekey</code>，<code>KeyCols</code> 填能代表「一筆案/一組」的欄位（如 <code>HHISNUM</code> 或 <code>HHISNUM</code>+<code>HCASENO</code>，允許重複、不需唯一）。</li>
+      </ul>
+      <p>再找該表的<strong>異動時間欄</strong>（<code>WatermarkCol</code>）：HIS 慣例多為 <code>Z</code> 開頭（如 <code>ZHNURSTA</code>）；可問 HIS 端或查該表結構。</p>
+
+      <h3>步驟 3 — 在 appsettings.json 的 Tables 加一筆</h3>
+<pre><code>{ "Schema": "AM", "Name": "HNURSTA_4A0", "Tier": "fast", "Mode": "replacekey",
+  "WatermarkCol": "ZHNURSTA", "KeyCols": ["HHISNUM"], "Filter": null, "Enabled": true }</code></pre>
+      <ul>
+        <li>只在白班尖峰時段要新鮮 → <code>Tier</code> 設 <code>fast</code>；純參考/量大 → 設 <code>slow</code>。</li>
+        <li>想先只同步某病房 → <code>Filter</code> 可填如 <code>"HNSTATN = 'W52'"</code>（純 WHERE 條件、不含 WHERE 字）。</li>
+      </ul>
+
+      <h3>步驟 4 — 手動試跑一次，看 log</h3>
+<pre><code>DbSync.exe --tier fast          <span class="cmt">:: 或直接雙擊 run-test.bat</span></code></pre>
+      <p>到 <code>logs\dbsync-fast-YYYYMMDD.log</code> 確認出現類似：</p>
+<pre><code>AM.HNURSTA_4A0｜replacekey 受影響案群組 N 列：刪除 x、寫入 y，浮水印 → 2026-07-07 09:15:00.000。</code></pre>
+      <ul>
+        <li>撈到筆數合理、無 ERROR → 成功。</li>
+        <li>首次執行：若目標表已有資料，會以「目標現有最大 Z*」起算（不會整表重灌）；若目標是空表，會從 1900 全撈（首撈較久，正常）。</li>
+      </ul>
+
+      <h3>步驟 5 — 完成</h3>
+      <p>排程用的是同一支 <code>DbSync.exe --tier fast</code>，<strong>無需改排程</strong>，下一輪就會自動帶到新表。到 DB2_DUMP 查 <code>SELECT COUNT(*) FROM AM.HNURSTA_4A0</code> 確認資料進來。</p>
+
+      <h3>常見錯誤</h3>
+      <table>
+        <thead><tr><th>log 訊息</th><th>原因 / 處置</th></tr></thead>
+        <tbody>
+          <tr><td><code>目標找不到表 AM.HNURSTA_4A0 或無欄位</code></td><td>目標 DB2_DUMP 還沒建這張表 → 回步驟 1</td></tr>
+          <tr><td><code>... 為 replacekey 模式但未設定 WatermarkCol/KeyCols</code></td><td>appsettings 少填 → 補上</td></tr>
+          <tr><td>撈 0 筆但你確定來源有資料</td><td><code>WatermarkCol</code> 填錯欄、或 <code>Filter</code> 太嚴 → 用 <code>--inspect-keys</code>/查表結構核對</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="s8">
+      <h2><span class="n">8</span>Windows 工作排程器設定</h2>
+      <p>建<strong>兩個</strong>工作，分別執行：</p>
+      <ul>
+        <li>工作 A：<code>DbSync.exe --tier fast</code>，觸發程序「重複間隔 <strong>5 分鐘</strong>、持續無限」。</li>
+        <li>工作 B：<code>DbSync.exe --tier slow</code>，觸發程序「重複間隔 <strong>30 分鐘</strong>」（或設每晚一次）。</li>
+      </ul>
+      <p>建議勾選：</p>
+      <ul>
+        <li>「<strong>不論使用者登入與否</strong>皆執行」。</li>
+        <li>「<strong>如果工作已在執行中，下列規則生效 → 不要啟動新的執行個體</strong>」（與程式內建 Mutex 雙重保險，避免重疊）。</li>
+        <li>「起始位置」設為 <code>DbSync.exe</code> 所在資料夾（確保讀到同目錄 appsettings/state/logs）。</li>
+      </ul>
+    </section>
+
+    <section id="s9">
+      <h2><span class="n">9</span>日常維運</h2>
+      <ul>
+        <li><strong>看每日 log</strong>：<code>logs\dbsync-fast-YYYYMMDD.log</code>。每輪有 <code>===== 開始/結束 =====</code> 與每表一行結果。</li>
+        <li><strong>判斷健康</strong>：結束行 <code>成功 N／N，失敗 0</code> 即正常；出現 <code>ERROR</code> 或 <code>失敗 &gt;0</code> 需查。</li>
+        <li><strong>浮水印</strong>：<code>state\watermarks-*.json</code> 記每表進度；正常無需手動碰。</li>
+        <li><strong>磁碟</strong>：log 每日一檔會累積，可自行加保留天數清理（例：保留 30 天）。</li>
+      </ul>
+    </section>
+
+    <section id="s10">
+      <h2><span class="n">10</span>疑難排解</h2>
+      <table>
+        <thead><tr><th>問題</th><th>處置</th></tr></thead>
+        <tbody>
+          <tr><td><strong>DB2 連不上</strong></td><td>確認 VM 到 <code>DBGW1.vghks.gov.tw:50000</code> 防火牆已開、帳密正確；log 會顯示連線例外。可先 <code>DbSync.exe --inspect-keys</code> 測連通</td></tr>
+          <tr><td><strong>某表一直失敗</strong></td><td>看該表 log 的錯誤訊息；常見為目標表結構與來源欄位不符、或 <code>WatermarkCol</code> 欄名錯</td></tr>
+          <tr><td><strong>漏同步/資料不對，要回補</strong></td><td><code>DbSync.exe --tier fast --reprocess-hours 24</code>（強制重撈近 24 小時，忽略浮水印）</td></tr>
+          <tr><td><strong>要某表整個重來</strong></td><td>編輯 <code>state\watermarks-{tier}.json</code> 刪掉該表那一行 → 下次以「目標現有最大值」重起；或先清空目標表再跑（會全撈）</td></tr>
+          <tr><td><strong>暫時停掉某表</strong></td><td>該表 <code>"Enabled": false</code>，不必刪設定</td></tr>
+          <tr><td><strong>兩輪跑太近會不會撞</strong></td><td>不會。每層別具名 Mutex（<code>Global\DbSync_{tier}</code>），上一輪沒跑完，本輪直接跳過（log 顯示 <code>[skip]</code>）</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="s11">
+      <h2><span class="n">11</span>安全與注意事項</h2>
+      <ul>
+        <li><code>appsettings.json</code> 含兩端帳密，<strong>勿上傳版控</strong>（已在 <code>.gitignore</code>）；VM 上請限制檔案存取權限。</li>
+        <li>連線值一律走參數/SqlBulkCopy，無 SQL Injection 風險；SQL 中的欄名來自系統目錄、非使用者輸入。</li>
+        <li>DbSync 對來源 DB2 <strong>只做 SELECT（唯讀）</strong>；只有目標 DB2_DUMP 會被寫入。</li>
+        <li>暫存表 <code>dbo._stg_*</code> 每輪用完即刪；若程式異常中止偶有殘留，可安全手動 <code>DROP</code>。</li>
+      </ul>
+      <blockquote class="warn"><strong>提醒：</strong>本手冊不記載實際帳號密碼；連線資訊由資訊室另行保管，僅維護於 VM 上的 <code>appsettings.json</code>。</blockquote>
+    </section>
+
+  </main>
+
+  <footer>
+    DbSync 維運手冊 ‧ 交接文件 ‧ 由 <code>維運手冊.md</code> 轉製為 HTML ‧ 高雄市立民生醫院護理科電子白板系統
+  </footer>
+
+</div>
+</body>
+</html>
