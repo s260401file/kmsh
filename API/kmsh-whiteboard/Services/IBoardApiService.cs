@@ -22,4 +22,7 @@ public interface IBoardApiService
 
     /// <summary>呼叫 Board_OR 取得手術排程清單（body {}，需 x-api-key）；字串已 trim。</summary>
     Task<List<BoardOrItem>> GetOrListAsync(CancellationToken ct = default);
+
+    /// <summary>呼叫 AICUPHY 取得 AICU 病人身體約束清單（body {}，需 x-api-key）；失敗回空清單（白板不中斷）。字串已 trim。</summary>
+    Task<List<AicuPhyItem>> GetAicuRestraintAsync(CancellationToken ct = default);
 }

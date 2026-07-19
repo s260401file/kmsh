@@ -159,6 +159,29 @@ public class BoardApiService : IBoardApiService
         return list;
     }
 
+    /// <summary>AICUPHY（AICU 身體約束）清單；同主機同 x-api-key。失敗回空清單（白板不中斷）。</summary>
+    public async Task<List<AicuPhyItem>> GetAicuRestraintAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            using var req = new HttpRequestMessage(HttpMethod.Post, "api/v1/AICUPHY") { Content = JsonContent.Create(new { }) };
+            if (!string.IsNullOrWhiteSpace(_options.ApiKey))
+                req.Headers.TryAddWithoutValidation("x-api-key", _options.ApiKey);
+            var resp = await _http.SendAsync(req, ct);
+            resp.EnsureSuccessStatusCode();
+            var raw = await resp.Content.ReadAsStringAsync(ct);
+            var parsed = JsonSerializer.Deserialize<AicuPhyResponse>(raw, _json);
+            var list = parsed?.Data ?? new List<AicuPhyItem>();
+            foreach (var it in list)
+            {
+                it.Hhisnum = Trim(it.Hhisnum); it.Hnamec = Trim(it.Hnamec);
+                it.Ward = Trim(it.Ward); it.Hbed = Trim(it.Hbed); it.Restraint = Trim(it.Restraint);
+            }
+            return list;
+        }
+        catch (Exception ex) { _logger.LogWarning(ex, "AICUPHY 取得失敗，約束以空續行"); return new(); }
+    }
+
     /// <summary>去除前後半形與全形空白。</summary>
     private static string? Trim(string? s)
         => string.IsNullOrEmpty(s) ? s : s.Trim().Trim('　');

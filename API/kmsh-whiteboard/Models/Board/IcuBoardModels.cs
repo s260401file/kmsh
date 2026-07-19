@@ -48,6 +48,7 @@ public class IcuPatientDto
     public bool Ventilator { get; set; }         // 氣管內管(ETT)
     public bool Crrt { get; set; }
     public bool Ng { get; set; }
+    public bool Restraint { get; set; }          // 身體約束（來源：院方 AICUPHY 即時 API，非自建 overlay）
     public bool Foley { get; set; }
     public bool Cvc { get; set; }
     public bool FallRisk { get; set; }

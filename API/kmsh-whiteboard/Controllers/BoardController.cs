@@ -166,6 +166,12 @@ public class BoardController : ControllerBase
             .GroupBy(e => e.Hhisnum!.Trim())
             .ToDictionary(g => g.Key, g => g.First());
 
+        // 身體約束：院方 AICUPHY 即時 API（目前僅回 AICU/4F）。以病歷號比對，Y=需約束。失敗回空 → 全 false，不影響看板。
+        var restraintByHis = (await _board.GetAicuRestraintAsync(ct))
+            .Where(x => !string.IsNullOrWhiteSpace(x.Hhisnum))
+            .GroupBy(x => x.Hhisnum!.Trim())
+            .ToDictionary(g => g.Key, g => string.Equals(g.First().Restraint, "Y", StringComparison.OrdinalIgnoreCase));
+
         // 責任護理師：改由「勾床配對」（依床號）決定（今日，AssignType=主護）。ICU 一床可多位 → 逗號並列。
         var today = DateTime.Today.ToString("yyyy-MM-dd");
         var nurseByBed = (await _staff.GetBedAssignAsync("ICU", today, "主護", false, ct))
@@ -205,6 +211,8 @@ public class BoardController : ControllerBase
                         Isolation = e?.Isolation,
                         Dnr = e?.Dnr ?? false, Ventilator = e?.Ventilator ?? false, Crrt = e?.Crrt ?? false,
                         Ng = e?.Ng ?? false, Foley = e?.Foley ?? false, Cvc = e?.CVC ?? false,
+                        Restraint = !string.IsNullOrWhiteSpace(o.Hhisnum) && restraintByHis.TryGetValue(o.Hhisnum!.Trim(), out var rst) && rst,  // 約束：AICUPHY（4F）
+
                         FallRisk = e?.FallRisk ?? false, Dependency = e?.Dependency, Confidential = e?.Confidential ?? false,
                         NoTreatment = e?.NoTreatment ?? false, Npo = e?.Npo ?? false, Allergy = e?.Allergy ?? false,
                         Rrt = e?.Rrt ?? false, Chemo = e?.Chemo ?? false, Transport = e?.Transport, Oxygen = e?.Oxygen ?? false,

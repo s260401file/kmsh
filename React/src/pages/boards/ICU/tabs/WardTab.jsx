@@ -92,6 +92,7 @@ function buildBadges(patient) {
   else if (patient.transport === '推床')                b.push('推床')
   if (patient.oxygen)                                   b.push('氧氣設備')
   if (patient.crrt)                                     b.push('洗腎')
+  if (patient.restraint)                                b.push('約束')
   return b
 }
 
@@ -216,6 +217,7 @@ const FILTER_BADGES = [
   {f:'RRT',cls:'badge-RRT',label:'RRT'},{f:'化療',cls:'badge-化療',label:'化療'},
   {f:'輪椅',cls:'badge-輪椅',label:'輪椅'},{f:'推床',cls:'badge-推床',label:'推床'},
   {f:'氧氣設備',cls:'badge-氧氣設備',label:'氧氣設備'},{f:'洗腎',cls:'badge-洗腎',label:'洗腎'},
+  {f:'約束',cls:'badge-約束',label:'約束'},
 ]
 // 依篩選鍵集合預先產生各徽章對應的 SVG 形狀樣式
 const FLAG_STYLE = makeFlagStyle(FILTER_BADGES.map(x => x.f))
@@ -301,9 +303,7 @@ export default function WardTab() {
               <div className={`ws-item${filter==='cond-a'?' active':''}`} data-filter="cond-a" onClick={()=>handleFilter('cond-a')}><div className="ws-value ws-sev-a">{stats.sevA}</div><div className="ws-label"><span className="sev-dot sev-dot-a"/>C級</div></div>
               <div className={`ws-item${filter==='cond-b'?' active':''}`} data-filter="cond-b" onClick={()=>handleFilter('cond-b')}><div className="ws-value ws-sev-b">{stats.sevB}</div><div className="ws-label"><span className="sev-dot sev-dot-b"/>B級</div></div>
               <div className={`ws-item${filter==='cond-c'?' active':''}`} data-filter="cond-c" onClick={()=>handleFilter('cond-c')}><div className="ws-value ws-sev-c">{stats.sevC}</div><div className="ws-label"><span className="sev-dot sev-dot-c"/>A級</div></div>
-              <div className={`ws-item${filter==='iso'?' active':''}`} data-filter="iso" onClick={()=>handleFilter('iso')}><div className="ws-value ws-iso">{stats.isolation}</div><div className="ws-label">隔離</div></div>
-              <div className={`ws-item${filter==='DNR'?' active':''}`} data-filter="DNR" onClick={()=>handleFilter('DNR')}><div className="ws-value ws-dnr">{stats.dnr}</div><div className="ws-label">DNR</div></div>
-              <div className={`ws-item${filter==='RRT'?' active':''}`} data-filter="RRT" onClick={()=>handleFilter('RRT')}><div className="ws-value ws-rrt">{stats.rrt}</div><div className="ws-label">RRT</div></div>
+              <div className={`ws-item${filter==='約束'?' active':''}`} data-filter="約束" onClick={()=>handleFilter('約束')}><div className="ws-value ws-restraint">{stats.restraint}</div><div className="ws-label">約束</div></div>
             </div>
             <div className="ws-row">
               <div className={`ws-item${filter==='tube-ett'?' active':''}`} data-filter="tube-ett" onClick={()=>handleFilter('tube-ett')}><div className="ws-value ws-ett">{stats.ett}</div><div className="ws-label">氣管內管</div></div>

@@ -47,6 +47,7 @@ export function getStats(beds) {
     isolation: beds.filter(b => b.status === 'isolation').length,
     dnr:       occ.filter(b => b.patient?.dnr).length,
     rrt:       occ.filter(b => b.patient?.rrt).length,
+    restraint: occ.filter(b => b.patient?.restraint).length,
     ett:       occ.filter(b => b.patient?.ventilator).length,
     ng:        occ.filter(b => b.patient?.ng).length,
     foley:     occ.filter(b => b.patient?.foley).length,

@@ -93,6 +93,7 @@
 .icu-board .ws-value.ws-iso{color:#AD1457} .icu-board .ws-value.ws-dnr{color:#6A1B9A} .icu-board .ws-value.ws-rrt{color:#B71C1C}
 .icu-board .ws-value.ws-ett{color:#E65100} .icu-board .ws-value.ws-ng{color:#6A1B9A}
 .icu-board .ws-value.ws-foley{color:#00838F} .icu-board .ws-value.ws-cvc{color:#2E7D32}
+.icu-board .ws-value.ws-restraint{color:#795548}
 .icu-board .sev-dot{display:inline-block;width:9px;height:9px;border-radius:50%;flex-shrink:0}
 .icu-board .sev-dot-a{background:#2E7D32} .icu-board .sev-dot-b{background:#C68000} .icu-board .sev-dot-c{background:#C62828}
 .icu-board .ws-item[data-filter]{cursor:pointer;transition:background .12s}
@@ -176,6 +177,7 @@
 .icu-board .flag-dot-RRT{--c:#C62828} .icu-board .flag-dot-化療{--c:#880E4F}
 .icu-board .flag-dot-輪椅{--c:#558B2F} .icu-board .flag-dot-推床{--c:#4E342E}
 .icu-board .flag-dot-氧氣設備{--c:#01579B} .icu-board .flag-dot-洗腎{--c:#006064}
+.icu-board .flag-dot-約束{--c:#795548}
 
 /* ══════════════════════════════════════════════
    抗生素 Tab 額外樣式（AntibioticTab 共用）
