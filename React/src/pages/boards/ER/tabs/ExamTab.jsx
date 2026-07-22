@@ -4,13 +4,15 @@
 import { usePolling } from '../../../../hooks/usePolling'
 import * as wardApi from '../../../../services/wardApi'
 import { CENSUS_MS } from '../../../../config/pollingConfig'
+import BoardLoading from '../../../../components/BoardLoading'
 import '../tabsCss/exam.css'
 
 export default function ExamTab() {
-  const { data } = usePolling(() => wardApi.getExamConsult('ER'), { intervalMs: CENSUS_MS, deps: ['ER'] })
+  const { data, loading } = usePolling(() => wardApi.getExamConsult('ER'), { intervalMs: CENSUS_MS, deps: ['ER'] })
   const Exams = data?.exams ?? []
   const Consults = data?.consults ?? []
 
+  if (loading) return <main className="main-content"><BoardLoading text="檢查／會診載入中…" /></main>
   return (
     <main className="main-content">
       <div className="ec-panel">

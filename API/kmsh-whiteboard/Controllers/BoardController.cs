@@ -5,6 +5,7 @@ using kmsh_whiteboard.Repositories;
 using kmsh_whiteboard.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace kmsh_whiteboard.Controllers;
 
@@ -25,9 +26,10 @@ public class BoardController : ControllerBase
     private readonly IOrReportRepository _orReport;
     private readonly IMasterDataRepository _master;
     private readonly IOnCallRepository _oncall;
+    private readonly IMemoryCache _cache;
     private readonly ILogger<BoardController> _logger;
 
-    public BoardController(IBoardApiService board, IWardRepository ward, IPersonnelRepository staff, ILdapAuthenticator ldap, ILdapAdminService ldapAdmin, IJwtTokenService jwt, IOrReportRepository orReport, IMasterDataRepository master, IOnCallRepository oncall, ILogger<BoardController> logger)
+    public BoardController(IBoardApiService board, IWardRepository ward, IPersonnelRepository staff, ILdapAuthenticator ldap, ILdapAdminService ldapAdmin, IJwtTokenService jwt, IOrReportRepository orReport, IMasterDataRepository master, IOnCallRepository oncall, IMemoryCache cache, ILogger<BoardController> logger)
     {
         _board = board;
         _ward = ward;
@@ -38,7 +40,27 @@ public class BoardController : ControllerBase
         _orReport = orReport;
         _master = master;
         _oncall = oncall;
+        _cache = cache;
         _logger = logger;
+    }
+
+    /// <summary>
+    /// 短 TTL 快取院方清單，並具「逾時/空值容錯」：TTL 內直接回快取；逾時後重抓，
+    /// 抓到「非空」才更新快取＋重置新鮮期，抓到「空」（院方逾時/失敗）則沿用上次成功值（不清空、不閃 0）。
+    /// </summary>
+    private async Task<List<T>> FreshOrStaleAsync<T>(string key, int ttlSeconds, Func<Task<List<T>>> fetch)
+    {
+        _cache.TryGetValue<List<T>>(key, out var stale);
+        if (_cache.TryGetValue(key + ":fresh", out _) && stale is not null) return stale;  // 仍新鮮
+        List<T> got;
+        try { got = await fetch() ?? new(); } catch { got = new(); }
+        if (got.Count > 0)
+        {
+            _cache.Set(key, got);                                                    // 無限期備援（下次成功即覆蓋）
+            _cache.Set(key + ":fresh", true, TimeSpan.FromSeconds(ttlSeconds));      // 新鮮期
+            return got;
+        }
+        return stale ?? got;                                                          // 抓到空→沿用上次成功值
     }
 
     // W52 病房 41 床版面（床位碼，對應前端 CSS 固定位置；床號 BedId = W52-<碼>）
@@ -1242,21 +1264,30 @@ public class BoardController : ControllerBase
     [HttpGet("{unitCode}/exam")]
     public async Task<IActionResult> GetExamConsult(string unitCode, CancellationToken ct = default)
     {
-        // 看板只顯示「設定時間（UpdatedAt，最後一次於後台設定）」起 24 小時內的項目；逾時自動下板。
-        // 例：7/10 18:00 設定 → 7/11 18:00 後不再顯示。UpdatedAt 由 SQL GETDATE()（本地時間）寫入，故以 DateTime.Now 比較。
+        // 會診：維持自建（WardExamConsult）。看板只顯示「設定時間（UpdatedAt，最後一次於後台設定）」起 24 小時內者；逾時自動下板。
         var cutoff = DateTime.Now.AddHours(-24);
         var rows = (await _ward.GetExamConsultAsync(unitCode, false, ct))
             .Where(r => r.UpdatedAt > cutoff)
             .ToList();
-        // 依規格書：以執行日「最新時間」排序，最新在前（檢查＝檢查時間 ScheduledDate+TimeSlot；會診＝會診時間 CompletedTime）
-        var exams = rows.Where(r => r.Kind == "檢查")
-            .OrderByDescending(r => r.ScheduledDate ?? "")
-            .ThenByDescending(r => r.TimeSlot ?? "")
-            .Select(r => new
+
+        // 檢查：改抽院方 Board_Examine（每列一項檢查；尚無會診）。只顯示「該站在床病人」的檢查。
+        // 病房代碼對應：W52→W52、ICU→AICU(＋CICU)、ER→MER；在床名單以病歷號比對。
+        var (examWards, inBedHis) = await ExamContextAsync(unitCode, ct);
+        // 院方全院檢查清單：45 秒快取（三站 /exam 共用），院方逾時則沿用上次成功值。
+        var examList = await FreshOrStaleAsync("exam:board:examine", 45, () => _board.GetExamineAsync(ct));
+        var exams = examList
+            .Where(x => examWards.Contains((x.Ward ?? "").Trim())
+                     && !string.IsNullOrWhiteSpace(x.Hhisnum)
+                     && inBedHis.Contains(x.Hhisnum!.Trim()))
+            .OrderBy(x => (x.Hbed ?? "").Trim())
+            .ThenBy(x => (x.ExamName ?? "").Trim())
+            .Select(x => new
         {
-            bedId = r.BedId, patientName = MaskName(r.PatientName), gender = r.Gender, examName = r.ItemName,
-            scheduledDate = r.ScheduledDate, timeSlot = r.TimeSlot, status = r.Status, notes = r.Notes
+            bedId = (x.Hbed ?? "").Trim(), patientName = MaskName(x.Hnamec), gender = (string?)null,
+            examName = (x.ExamName ?? "").Trim(), scheduledDate = FormatExamDate(x.AdmitDate), timeSlot = "",
+            status = MapExamStatus(x.Status), notes = ""
         });
+
         var consults = rows.Where(r => r.Kind == "會診")
             // 未完成（待回覆）視為進行中排最前，其餘依會診完成時間新到舊
             .OrderByDescending(r => string.IsNullOrWhiteSpace(r.CompletedTime) ? "9999-99-99 99:99" : r.CompletedTime)
@@ -1266,6 +1297,64 @@ public class BoardController : ControllerBase
             consultDoctor = r.Doctor, completedTime = r.CompletedTime, status = r.Status, notes = r.Notes
         });
         return Ok(new { exams, consults });
+    }
+
+    /// <summary>
+    /// 檢查看板：依站別取得「Board_Examine 病房代碼集合」與「在床病歷號集合」（供過濾為只在床病人）。
+    /// 在床名單 30 秒快取＋容錯：院方在床查詢逾時（回空）時沿用上次成功名單，避免檢查被濾成 0（閃 0）。
+    /// </summary>
+    private async Task<(HashSet<string> wards, HashSet<string> inBedHis)> ExamContextAsync(string unitCode, CancellationToken ct)
+    {
+        var u = (unitCode ?? "").Trim().ToUpperInvariant();
+        var wards = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        Func<Task<List<string>>> fetch;
+        switch (u)
+        {
+            case "ICU":
+                wards.Add("AICU"); wards.Add("CICU");
+                fetch = async () =>
+                {
+                    var h = new List<string>();
+                    foreach (var o in await SafeBoardAsync("AICU", ct)) if (!string.IsNullOrWhiteSpace(o.Hhisnum)) h.Add(o.Hhisnum!.Trim());
+                    foreach (var o in await SafeBoardAsync("CICU", ct)) if (!string.IsNullOrWhiteSpace(o.Hhisnum)) h.Add(o.Hhisnum!.Trim());
+                    return h;
+                };
+                break;
+            case "ER":
+                wards.Add("MER");
+                fetch = async () =>
+                {
+                    var h = new List<string>();
+                    try { foreach (var o in await _board.GetErListAsync(ct)) if (!string.IsNullOrWhiteSpace(o.Hhisnum)) h.Add(o.Hhisnum!.Trim()); } catch { }
+                    return h;
+                };
+                break;
+            default: // W52
+                wards.Add("W52");
+                fetch = async () =>
+                {
+                    var h = new List<string>();
+                    foreach (var o in await SafeBoardAsync("W52", ct)) if (!string.IsNullOrWhiteSpace(o.Hhisnum)) h.Add(o.Hhisnum!.Trim());
+                    return h;
+                };
+                break;
+        }
+        var list = await FreshOrStaleAsync($"exam:census:{u}", 30, fetch);
+        return (wards, new HashSet<string>(list, StringComparer.OrdinalIgnoreCase));
+    }
+
+    /// <summary>Board_Examine 狀態代碼→顯示。31 未執行、32 未排程、34 已排程；其他顯示原碼。</summary>
+    private static string MapExamStatus(string? code) => (code ?? "").Trim() switch
+    {
+        "31" => "未執行", "32" => "未排程", "34" => "已排程", var s => s
+    };
+
+    /// <summary>轉入日期（ISO/含 T）→ yyyy-MM-dd；無法解析則取前 10 碼或原字串。</summary>
+    private static string FormatExamDate(string? raw)
+    {
+        var s = (raw ?? "").Trim();
+        if (string.IsNullOrEmpty(s)) return "";
+        return DateTime.TryParse(s, out var d) ? d.ToString("yyyy-MM-dd") : (s.Length >= 10 ? s.Substring(0, 10) : s);
     }
 
     // 後台 CRUD

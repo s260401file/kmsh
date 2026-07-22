@@ -27,4 +27,7 @@
 .icu-board .ec-status-預約   { background:#1565C0 }
 .icu-board .ec-status-進行中 { background:#E65100 }
 .icu-board .ec-status-待安排 { background:#263238 }
+.icu-board .ec-status-未執行 { background:#E65100 }
+.icu-board .ec-status-未排程 { background:#607D8B }
+.icu-board .ec-status-已排程 { background:#1565C0 }
 .icu-board .ec-empty-row td { text-align:center;color:var(--text-muted);padding:32px 18px;font-size:18px }

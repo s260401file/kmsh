@@ -54,6 +54,9 @@ builder.Services.AddCors(options =>
               .AllowAnyHeader()
               .AllowAnyMethod()));
 
+// 院方 API 結果短 TTL 快取（供 /exam 之 Board_Examine 與在床名單共用，降低院方負載與延遲）
+builder.Services.AddMemoryCache();
+
 // ── SQL Server / Dapper ────────────────────────────────────────
 builder.Services.AddSingleton<DbConnectionFactory>();
 builder.Services.AddScoped<ITextRepository, TextRepository>();

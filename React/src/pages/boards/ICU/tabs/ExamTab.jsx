@@ -3,13 +3,15 @@
 import { usePolling } from '../../../../hooks/usePolling'
 import * as wardApi from '../../../../services/wardApi'
 import { CENSUS_MS } from '../../../../config/pollingConfig'
+import BoardLoading from '../../../../components/BoardLoading'
 import '../tabsCss/exam.css'
 
 export default function ExamTab() {
-  // 後端 /api/Board/ICU/exam（自建 WardExamConsult；免 F5 輪詢）
-  const { data } = usePolling(() => wardApi.getExamConsult('ICU'), { intervalMs: CENSUS_MS, deps: ['ICU'] })
+  // 後端 /api/Board/ICU/exam（檢查＝院方 Board_Examine、會診＝自建；免 F5 輪詢）
+  const { data, loading } = usePolling(() => wardApi.getExamConsult('ICU'), { intervalMs: CENSUS_MS, deps: ['ICU'] })
   const exams = data?.exams ?? []
   const consults = data?.consults ?? []
+  if (loading) return <main className="main-content"><BoardLoading text="檢查／會診載入中…" /></main>
   return (
     <main className="main-content">
       <div className="ec-panel">
@@ -25,7 +27,7 @@ export default function ExamTab() {
             </div>
             <div className="ec-table-wrap">
               <table className="ec-table">
-                <thead><tr><th>床號</th><th>姓名</th><th>檢查項目</th><th>預定日期</th><th>時段</th><th className="ec-th-center">狀態</th><th>備註</th></tr></thead>
+                <thead><tr><th>床號</th><th>姓名</th><th>檢查項目</th><th>轉入日</th><th>時段</th><th className="ec-th-center">狀態</th><th>備註</th></tr></thead>
                 <tbody>
                   {exams.length === 0
                     ? <tr className="ec-empty-row"><td colSpan="7">無待執行檢查</td></tr>

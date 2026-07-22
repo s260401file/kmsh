@@ -182,6 +182,30 @@ public class BoardApiService : IBoardApiService
         catch (Exception ex) { _logger.LogWarning(ex, "AICUPHY 取得失敗，約束以空續行"); return new(); }
     }
 
+    /// <summary>Board_Examine（院方檢查）全院清單；同主機同 x-api-key。失敗回空清單（白板不中斷）。</summary>
+    public async Task<List<BoardExamineItem>> GetExamineAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            using var req = new HttpRequestMessage(HttpMethod.Post, "api/v1/Board_Examine") { Content = JsonContent.Create(new { }) };
+            if (!string.IsNullOrWhiteSpace(_options.ApiKey))
+                req.Headers.TryAddWithoutValidation("x-api-key", _options.ApiKey);
+            var resp = await _http.SendAsync(req, ct);
+            resp.EnsureSuccessStatusCode();
+            var raw = await resp.Content.ReadAsStringAsync(ct);
+            var parsed = JsonSerializer.Deserialize<BoardExamineResponse>(raw, _json);
+            var list = parsed?.Data ?? new List<BoardExamineItem>();
+            foreach (var it in list)
+            {
+                it.Hhisnum = Trim(it.Hhisnum); it.Hnamec = Trim(it.Hnamec); it.Category = Trim(it.Category);
+                it.Ward = Trim(it.Ward); it.Hbed = Trim(it.Hbed); it.AdmitDate = Trim(it.AdmitDate);
+                it.Status = Trim(it.Status); it.ExamName = Trim(it.ExamName);
+            }
+            return list;
+        }
+        catch (Exception ex) { _logger.LogWarning(ex, "Board_Examine 取得失敗，檢查以空續行"); return new(); }
+    }
+
     /// <summary>去除前後半形與全形空白。</summary>
     private static string? Trim(string? s)
         => string.IsNullOrEmpty(s) ? s : s.Trim().Trim('　');
