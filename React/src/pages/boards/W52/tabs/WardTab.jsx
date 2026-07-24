@@ -20,6 +20,9 @@ const SHIFT_META = { '大夜': { cls: 'sh-n', letter: 'N' }, '白班': { cls: 's
 const W52_SHIFTS = ['大夜', '白班', '小夜', '12:00–20:00']
 const normShift = s => String(s ?? '').replace(/[–—-]/g, '-')   // 吸收 en-dash/hyphen 差異
 const nnToday = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` }
+// 值班表日期＝今日（民國年/MM/DD（週幾））；每次 render(輪詢)重算，跨日自動更新
+const ROC_DAYS = ['日', '一', '二', '三', '四', '五', '六']
+const rocDateLabel = () => { const d = new Date(); return `${d.getFullYear() - 1911}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}（${ROC_DAYS[d.getDay()]}）` }
 // 緊急應變編組 5 班（顯示順序）
 const EMERGENCY_TEAMS = ['通報班', '滅火班', '安全防護', '救護班', '避難引導']
 
@@ -257,7 +260,7 @@ export default function WardTab() {
             <div className="duty-panel" style={{ gridColumn: '8 / 15', gridRow: '1 / 7' }}>
               <div className="duty-head">
                 <span className="duty-title">值班表</span>
-                <span className="duty-date">115/06/22（日）</span>
+                <span className="duty-date">{rocDateLabel()}</span>
               </div>
               <div className="duty-body">
                 {/* ① 三班護理師（置最上；每班可多人；資料由後台「W52 管理→三班護理師」設定） */}

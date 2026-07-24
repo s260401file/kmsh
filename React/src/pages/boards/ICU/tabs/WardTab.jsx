@@ -19,12 +19,15 @@ const ICU_SHIFT_META = { '大夜': 'n', '白班': 'd', '小夜': 'e' }
 // 緊急應變編組 5 班（顯示順序，同 W52）
 const EMERGENCY_TEAMS = ['通報班', '滅火班', '安全防護', '救護班', '避難引導']
 const nnToday = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` }
+// 值班表日期＝今日（民國年/MM/DD（週幾））；每次 render(輪詢)重算，跨日自動更新
+const ROC_DAYS = ['日', '一', '二', '三', '四', '五', '六']
+const rocDateLabel = () => { const d = new Date(); return `${d.getFullYear() - 1911}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}（${ROC_DAYS[d.getDay()]}）` }
 
 // AICU 值班表面板（4F-01 下方 4×3 空區）。三班護理師接後台 getSchedule('ICU')；其餘先靜態
 function IcuDutyPanel({ shifts, emergencyTeams = [], oncall = [], aides = [], phones = [], nightSpecialist = '' }) {
   return (
     <div className="icu-duty-panel">
-      <div className="icu-duty-head"><span className="icu-duty-title">AICU 值班表</span><span className="icu-duty-date">115/07/02（四）</span></div>
+      <div className="icu-duty-head"><span className="icu-duty-title">AICU 值班表</span><span className="icu-duty-date">{rocDateLabel()}</span></div>
       <div className="icu-duty-body">
         {/* ① 三班護理師（接後台）＋ 緊急應變編組（5 組，由排班緊急編組歸類） */}
         <div className="icu-duty-col">

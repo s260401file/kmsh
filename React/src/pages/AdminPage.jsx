@@ -1017,9 +1017,9 @@ const WARD_BOOLS = [
   ['surgery','手術'],['exam','檢查'],['consult','會診'],
 ]
 // ER 專屬狀態旗標（只在 ER 單位顯示，不污染 W52/ICU 表單）
-// 留觀/待床由院方 Flow 帶入，後台不再設定（保留 DNR/轉入/轉出/住院/AAD/MBD/死亡）
+// 留觀/待床/轉入由院方帶入（轉入＝Board_HCA 策盟註記），後台不再設定（保留 DNR/轉出/住院/AAD/MBD/死亡）
 const ER_BOOLS = [
-  ['dnr','DNR'],['transferIn','轉入'],['transferOut','轉出'],
+  ['dnr','DNR'],['transferOut','轉出'],
   ['admitted','住院'],['aad','AAD'],['mbd','MBD'],['deceased','死亡'],
 ]
 const COND_OPTS = ['', '穩定', '重症', '危急']
@@ -1164,7 +1164,6 @@ function WardExtSection({ unitCode }) {
                     <option value="">無</option><option value="一般">一般</option><option value="加護">加護</option><option value="隔離">隔離</option>
                   </select></div>
                 <div style={s.formRow}><label style={s.label}>轉出醫院</label><input style={s.input} value={form.transferHospital} onChange={e => setF('transferHospital', e.target.value)} placeholder="轉往哪家醫院" /></div>
-                <div style={s.formRow}><label style={s.label}>轉入醫院</label><input style={s.input} value={form.transferInHospital} onChange={e => setF('transferInHospital', e.target.value)} placeholder="自哪家醫院轉入" /></div>
                 <div style={s.formRow}><label style={s.label}>住院床號</label><input style={s.input} value={form.admBedNo} onChange={e => setF('admBedNo', e.target.value)} placeholder="W52-031" /></div>
               </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px 16px', margin: '4px 0 12px' }}>

@@ -1,7 +1,7 @@
 // textApi.js — 文字資料 API 客戶端
 // 角色：封裝後端共用文字端點 /api/Text 的 CRUD。此端點以 category 區分用途
 //       （如 marquee 跑馬燈、bulletin_unit 科內公告、bulletin_hosp 院方公告），
-//       由佈告欄管理與 TestPage 等共用。
+//       供佈告欄／跑馬燈管理共用。
 import { apiFetch } from './http'
 
 const BASE = '/api/Text'

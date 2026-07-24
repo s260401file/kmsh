@@ -60,26 +60,13 @@ public class BoardApiService : IBoardApiService
             it.Department = Trim(it.Department);
         }
 
-        // 院方 Board_bed 自 2026-07 起 join 用藥 → 同一床位病人變成「每筆用藥一列」（例：AICU 8 人卻回 515 列）。
-        // 病人/病房/床位欄位在同病人各列皆相同、僅用藥列不同 → 以病歷號去重為「一床一列」，
-        // 回復看板/roster/occupancy 等消費端原本「一病人一列」的預期。若院方日後恢復單列，去重為冪等不影響。
+        // 院方 Board_bed 曾（2026-07）join 用藥 → 同病人每筆用藥一列（例：AICU 8 人卻回 515 列）。
+        // 用藥已改由獨立端點 Board_AICUUD（見 GetAicuUdAsync／antibiotic-live），此處只保留「以病歷號去重為一床一列」，
+        // 不再彙整用藥；院方若仍回多列，去重為冪等不影響（census 與用藥解耦）。
         var deduped = list
             .Where(x => !string.IsNullOrWhiteSpace(x.Hhisnum))
             .GroupBy(x => x.Hhisnum!.Trim())
-            .Select(g =>
-            {
-                var head = g.First();
-                // 各列的用藥彙整到代表列（去重後保留完整用藥清單，供 antibiotic/live 帶入）
-                head.Meds = g
-                    .Where(r => !string.IsNullOrWhiteSpace(r.Med))
-                    .Select(r => new BoardBedMed
-                    {
-                        Name = Trim(r.Med), StartDate = Trim(r.MedStartDate), StartTime = Trim(r.MedStartTime),
-                        EndDate = Trim(r.MedEndDate), EndTime = Trim(r.MedEndTime),
-                    })
-                    .ToList();
-                return head;
-            })
+            .Select(g => g.First())
             .ToList();
         _logger.LogInformation("Board_bed 病房={Ward}：原始 {Raw} 列，去重後 {Distinct} 人", ward, list.Count, deduped.Count);
         return deduped;
@@ -204,6 +191,53 @@ public class BoardApiService : IBoardApiService
             return list;
         }
         catch (Exception ex) { _logger.LogWarning(ex, "Board_Examine 取得失敗，檢查以空續行"); return new(); }
+    }
+
+    /// <summary>Board_AICUUD（院方 AICU 用藥/抗生素）清單；同主機同 x-api-key。失敗回空清單（白板不中斷）。</summary>
+    public async Task<List<BoardAicuUdItem>> GetAicuUdAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            using var req = new HttpRequestMessage(HttpMethod.Post, "api/v1/Board_AICUUD") { Content = JsonContent.Create(new { }) };
+            if (!string.IsNullOrWhiteSpace(_options.ApiKey))
+                req.Headers.TryAddWithoutValidation("x-api-key", _options.ApiKey);
+            var resp = await _http.SendAsync(req, ct);
+            resp.EnsureSuccessStatusCode();
+            var raw = await resp.Content.ReadAsStringAsync(ct);
+            var parsed = JsonSerializer.Deserialize<BoardAicuUdResponse>(raw, _json);
+            var list = parsed?.Data ?? new List<BoardAicuUdItem>();
+            foreach (var it in list)
+            {
+                it.Hhisnum = Trim(it.Hhisnum); it.Hnamec = Trim(it.Hnamec); it.Drug = Trim(it.Drug);
+                it.StartDate = Trim(it.StartDate); it.StartTime = Trim(it.StartTime);
+                it.EndDate = Trim(it.EndDate); it.EndTime = Trim(it.EndTime);
+            }
+            return list;
+        }
+        catch (Exception ex) { _logger.LogWarning(ex, "Board_AICUUD 取得失敗，抗生素以空續行"); return new(); }
+    }
+
+    /// <summary>Board_HCA（院方策盟註記，≠0＝轉入）清單；同主機同 x-api-key。失敗回空清單（白板不中斷）。</summary>
+    public async Task<List<BoardHcaItem>> GetHcaAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            using var req = new HttpRequestMessage(HttpMethod.Post, "api/v1/Board_HCA") { Content = JsonContent.Create(new { }) };
+            if (!string.IsNullOrWhiteSpace(_options.ApiKey))
+                req.Headers.TryAddWithoutValidation("x-api-key", _options.ApiKey);
+            var resp = await _http.SendAsync(req, ct);
+            resp.EnsureSuccessStatusCode();
+            var raw = await resp.Content.ReadAsStringAsync(ct);
+            var parsed = JsonSerializer.Deserialize<BoardHcaResponse>(raw, _json);
+            var list = parsed?.Data ?? new List<BoardHcaItem>();
+            foreach (var it in list)
+            {
+                it.Hhisnum = Trim(it.Hhisnum); it.Hnamec = Trim(it.Hnamec);
+                it.Ward = Trim(it.Ward); it.Hbed = Trim(it.Hbed); it.HcaMark = Trim(it.HcaMark);
+            }
+            return list;
+        }
+        catch (Exception ex) { _logger.LogWarning(ex, "Board_HCA 取得失敗，轉入以 overlay 續行"); return new(); }
     }
 
     /// <summary>去除前後半形與全形空白。</summary>

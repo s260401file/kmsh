@@ -1,13 +1,12 @@
 /*
  * App.jsx — 應用程式路由總表
  * 高雄民生醫院護理電子白板：定義 4 站白板（/w52 /icu /or /er）的巢狀路由，
- * 以及首頁 /、測試頁 /test、登入頁 /login，與受保護的後台 /admin。
+ * 以及首頁 /、登入頁 /login，與受保護的後台 /admin。
  * 各站皆為「Layout + 多個 Tab 子頁」的巢狀結構，由 Layout 內的 <Outlet> 渲染子分頁。
  */
 import { Navigate, Routes, Route } from 'react-router-dom'
 import { useAuth } from './context/AuthContext'
 import Home from './pages/Home'
-import TestPage from './pages/TestPage'
 import LoginPage from './pages/LoginPage'
 import AdminPage from './pages/AdminPage'
 
@@ -68,9 +67,8 @@ function ProtectedRoute({ children }) {
 function App() {
   return (
     <Routes>
-      {/* 一般頁面：首頁、測試頁、登入頁 */}
+      {/* 一般頁面：首頁、登入頁 */}
       <Route path="/" element={<Home />} />
-      <Route path="/test" element={<TestPage />} />
       <Route path="/login" element={<LoginPage />} />
       {/* 後台：以 ProtectedRoute 包裝，需登入才能進入 */}
       <Route path="/admin" element={<ProtectedRoute><AdminPage /></ProtectedRoute>} />

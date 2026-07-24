@@ -47,6 +47,14 @@ function BedCard({ bed, abxList, onClick }) {
 function AbxModal({ bed, abxList, onClose }) {
   const bedLabel = `${bed.floor}F-${String(bed.num).padStart(2, '0')}`
   const p = bed.patient
+  // 依結束時間排序：越小（越早結束）越上方；無結束時間（進行中）排最後
+  const sorted = [...abxList].sort((a, b) => {
+    const ea = a.endDateTime || '', eb = b.endDateTime || ''
+    if (!ea && !eb) return 0
+    if (!ea) return 1
+    if (!eb) return -1
+    return ea < eb ? -1 : ea > eb ? 1 : 0
+  })
   return (
     <div className="ab-modal-overlay show" onClick={e => e.target === e.currentTarget && onClose()}>
       <div className="ab-modal-box">
@@ -67,7 +75,7 @@ function AbxModal({ bed, abxList, onClose }) {
                   <tr><th>藥品名稱</th><th>開始時間</th><th>首次給藥時間</th><th>結束時間</th></tr>
                 </thead>
                 <tbody>
-                  {abxList.map(ab => (
+                  {sorted.map(ab => (
                     <tr key={ab.id}>
                       <td className="ab-td-drug">{ab.drugName}</td>
                       <td className="ab-td-time">{ab.startDateTime || '—'}</td>

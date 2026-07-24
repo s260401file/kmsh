@@ -373,6 +373,14 @@ public class BoardController : ControllerBase
             .GroupBy(e => e.Hhisnum!.Trim())
             .ToDictionary(g => g.Key, g => g.First());
 
+        // 轉入：院方 Board_HCA 策盟註記 ≠ "0"（且非空）＝ 自該機構轉入，值即來源機構名。以病歷號對 ER 在室病人。
+        var hcaByHis = (await _board.GetHcaAsync(ct))
+            .Where(h => !string.IsNullOrWhiteSpace(h.Hhisnum))
+            .GroupBy(h => h.Hhisnum!.Trim())
+            .ToDictionary(g => g.Key,
+                          g => g.Select(x => (x.HcaMark ?? "").Trim()).FirstOrDefault(m => m != "" && m != "0"));
+        string? HcaOf(BoardErItem o) => (!string.IsNullOrWhiteSpace(o.Hhisnum) && hcaByHis.TryGetValue(o.Hhisnum!.Trim(), out var m)) ? m : null;
+
         // 責任護理師：改由「我的病床」勾床（依床號）決定（今日，主護）。ER 一床可多位 → 逗號並列。
         var erToday = DateTime.Today.ToString("yyyy-MM-dd");
         var nurseByBed = (await _staff.GetBedAssignAsync("ER", erToday, "主護", false, ct))
@@ -420,9 +428,10 @@ public class BoardController : ControllerBase
             if (occByBed.TryGetValue(b.BedId, out var o))
             {
                 var e = ExtOf(o);
-                bed.Patient = BuildErPatient(o, e);
+                var hca = HcaOf(o);
+                bed.Patient = BuildErPatient(o, e, hca);
                 bed.Patient.Nurse = nurseByBed.TryGetValue(b.BedId, out var ern) && !string.IsNullOrWhiteSpace(ern) ? ern : null;  // 責任護理師＝我的病床勾床（可多位逗號並列）
-                bed.Status = DeriveErStatus(o, e);
+                bed.Status = DeriveErStatus(o, e, hca);
             }
             resp.Beds.Add(bed);
         }
@@ -433,18 +442,19 @@ public class BoardController : ControllerBase
         {
             if (placed.Contains(kv.Key)) continue;
             var e = ExtOf(kv.Value);
+            var hca = HcaOf(kv.Value);
             resp.Beds.Add(new ErBedDto
             {
                 BedId = kv.Key, Ward = kv.Value.Ward?.Trim(), Zone = "未配置", Unplaced = true,
-                SortOrder = 9000, Status = DeriveErStatus(kv.Value, e), Patient = BuildErPatient(kv.Value, e)
+                SortOrder = 9000, Status = DeriveErStatus(kv.Value, e, hca), Patient = BuildErPatient(kv.Value, e, hca)
             });
         }
 
         return Ok(resp);
     }
 
-    /// <summary>合併 Board_ER 真實病人 ＋ WardPatientExt overlay → ER 病人卡 DTO。</summary>
-    private static ErBedPatientDto BuildErPatient(BoardErItem o, WardPatientExtItem? e) => new()
+    /// <summary>合併 Board_ER 真實病人 ＋ WardPatientExt overlay ＋ 院方策盟(轉入) → ER 病人卡 DTO。</summary>
+    private static ErBedPatientDto BuildErPatient(BoardErItem o, WardPatientExtItem? e, string? hcaHospital) => new()
     {
         PatientName = MaskName(o.Hnamec), Gender = o.Hsex, BirthDate = FormatBirth(o.Hbirthdt), Age = CalcAge(o.Hbirthdt),
         MedRecord = o.Hhisnum, IdNo = o.Hidno, Doctor = o.Doctor, DoctorCard = o.DoctorCard,
@@ -461,10 +471,11 @@ public class BoardController : ControllerBase
         Observation = o.Flow == "A" || (e?.Observation ?? false),
         Awaiting = o.Flow == "4" || (e?.Awaiting ?? false),
         AwaitingType = o.Flow == "4" ? "一般" : e?.AwaitingType,
-        // 設定了轉入/轉出醫院時，視同已勾轉入/轉出（讓看板旗標、篩選、急診統計一致對應）
-        TransferIn = (e?.TransferIn ?? false) || !string.IsNullOrWhiteSpace(e?.TransferInHospital),
+        // 轉入＝院方策盟註記(≠0，值為來源機構名) 優先，否則沿用後台 overlay；轉出仍由 overlay。
+        TransferIn = !string.IsNullOrEmpty(hcaHospital) || (e?.TransferIn ?? false) || !string.IsNullOrWhiteSpace(e?.TransferInHospital),
         TransferOut = (e?.TransferOut ?? false) || !string.IsNullOrWhiteSpace(e?.TransferHospital),
-        TransferHospital = e?.TransferHospital, TransferInHospital = e?.TransferInHospital,
+        TransferHospital = e?.TransferHospital,
+        TransferInHospital = !string.IsNullOrEmpty(hcaHospital) ? hcaHospital : e?.TransferInHospital,
         // 設定了住院床號時，視同已勾住院（讓看板旗標、篩選、急診統計一致對應）
         Admitted = (e?.Admitted ?? false) || !string.IsNullOrWhiteSpace(e?.AdmBedNo), AdmBedNo = e?.AdmBedNo,
         Dnr = e?.Dnr ?? false, Aad = e?.Aad ?? false, Mbd = e?.Mbd ?? false, Deceased = e?.Deceased ?? false,
@@ -478,11 +489,11 @@ public class BoardController : ControllerBase
     private static string? ErArrivalTime(string? raw)
         => DateTime.TryParse(raw, out var d) ? d.ToString("HH:mm") : null;
 
-    /// <summary>推導床位狀態（隔離→轉床→待床→留觀→否則 occupied）；待床/留觀含院方 Flow(4/A)。空床由呼叫端設 empty。</summary>
-    private static string DeriveErStatus(BoardErItem o, WardPatientExtItem? e)
+    /// <summary>推導床位狀態（隔離→轉床→待床→留觀→否則 occupied）；轉入含院方策盟、待床/留觀含院方 Flow(4/A)。空床由呼叫端設 empty。</summary>
+    private static string DeriveErStatus(BoardErItem o, WardPatientExtItem? e, string? hcaHospital)
     {
         if (e is not null && !string.IsNullOrWhiteSpace(e.Isolation) && e.Isolation!.Trim() is not ("" or "無")) return "isolation";
-        if (e is not null && (e.TransferIn || e.TransferOut)) return "transfer";
+        if (!string.IsNullOrEmpty(hcaHospital) || (e is not null && (e.TransferIn || e.TransferOut))) return "transfer";
         if (o.Flow == "4" || (e?.Awaiting ?? false)) return "awaiting";
         if (o.Flow == "A" || (e?.Observation ?? false)) return "observation";
         return "occupied";
@@ -1392,38 +1403,29 @@ public class BoardController : ControllerBase
     public async Task<IActionResult> DeleteAntibiotic(int id, CancellationToken ct = default)
         => await _ward.DeleteAntibioticAsync(id, ct) ? NoContent() : NotFound();
 
-    /// <summary>看板：ICU 實際用藥（自院方 Board_bed 帶入，以病歷號對應在床病人）。
-    /// 目前欄名雖為「抗生素」實為全部用藥、暫不過濾藥品種類；僅取「使用中」(結束日 ≥ 今日或無結束日) 避免列出大量歷史。
-    /// 回傳與自建 antibiotic 相同的 camelCase 形狀，前端免改渲染。</summary>
+    /// <summary>看板：ICU 實際用藥（自院方 Board_AICUUD 專用端點帶入，與病室動態 census 解耦）。
+    /// 欄名雖為「抗生素」實為全部用藥、暫不過濾藥品種類；僅取「使用中」(結束日 ≥ 今日或無結束日) 避免列出大量歷史。
+    /// 前端以病歷號對在床病人顯示（非在床者自然不出現），故此處不需 census；回傳 camelCase 形狀不變，前端免改。</summary>
     [HttpGet("{unitCode}/antibiotic/live")]
     public async Task<IActionResult> GetAntibioticLive(string unitCode, CancellationToken ct = default)
     {
         if (unitCode.ToUpperInvariant() != "ICU") return Ok(Array.Empty<object>());
-        // AICU(4F)＋CICU(3F)；院方目前忽略病房參數會回同一份，跨呼叫以病歷號去重避免用藥重複計。
-        var beds = (await SafeBoardAsync("AICU", ct)).Concat(await SafeBoardAsync("CICU", ct))
-            .Where(b => !string.IsNullOrWhiteSpace(b.Hhisnum))
-            .GroupBy(b => b.Hhisnum!.Trim())
-            .Select(g => g.First())
-            .ToList();
+        var uds = await _board.GetAicuUdAsync(ct);
         var today = DateTime.Today;
         var rows = new List<object>();
         int id = 0;
-        foreach (var b in beds)
+        foreach (var u in uds)
         {
-            var his = b.Hhisnum!.Trim();
-            foreach (var m in b.Meds)
+            if (string.IsNullOrWhiteSpace(u.Hhisnum) || string.IsNullOrWhiteSpace(u.Drug)) continue;
+            var end = TryDate(u.EndDate);
+            if (end is { } ed && ed.Date < today) continue;   // 只留使用中（含未來/未結束）
+            rows.Add(new
             {
-                if (string.IsNullOrWhiteSpace(m.Name)) continue;
-                var end = TryDate(m.EndDate);
-                if (end is { } ed && ed.Date < today) continue;   // 只留使用中（含未來/未結束）
-                rows.Add(new
-                {
-                    id = ++id, hhisnum = his, drugName = m.Name,
-                    startDateTime = JoinDateTime(m.StartDate, m.StartTime),
-                    firstDoseDateTime = (string?)null,   // 院方未提供首次給藥
-                    endDateTime = JoinDateTime(m.EndDate, m.EndTime),
-                });
-            }
+                id = ++id, hhisnum = u.Hhisnum!.Trim(), drugName = u.Drug!.Trim(),
+                startDateTime = JoinDateTime(u.StartDate, u.StartTime),
+                firstDoseDateTime = (string?)null,   // 院方未提供首次給藥
+                endDateTime = JoinDateTime(u.EndDate, u.EndTime),
+            });
         }
         return Ok(rows);
     }

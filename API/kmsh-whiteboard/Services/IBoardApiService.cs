@@ -28,4 +28,10 @@ public interface IBoardApiService
 
     /// <summary>呼叫 Board_Examine 取得全院檢查清單（body {}，需 x-api-key）；失敗回空清單（白板不中斷）。字串已 trim。</summary>
     Task<List<BoardExamineItem>> GetExamineAsync(CancellationToken ct = default);
+
+    /// <summary>呼叫 Board_AICUUD 取得 AICU 用藥/抗生素清單（body {}，需 x-api-key）；失敗回空清單（白板不中斷）。字串已 trim。</summary>
+    Task<List<BoardAicuUdItem>> GetAicuUdAsync(CancellationToken ct = default);
+
+    /// <summary>呼叫 Board_HCA 取得策盟註記（body {}，需 x-api-key）；策盟註記≠0＝轉入。失敗回空清單（白板不中斷）。字串已 trim。</summary>
+    Task<List<BoardHcaItem>> GetHcaAsync(CancellationToken ct = default);
 }
