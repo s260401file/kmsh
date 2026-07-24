@@ -12,10 +12,14 @@ import { FlagDot, makeFlagStyle } from '../../../../utils/flagShapes'
 import { usePolling } from '../../../../hooks/usePolling'        // AICU 值班表：三班護理師輪詢
 import * as wardApi from '../../../../services/wardApi'
 import { getPhone } from '../../../../services/contactApi'         // 值班表聯絡電話（後台可維護）
+import { ContactValue, ContactRevealModal } from '../../../../components/ContactReveal'   // 聯絡資訊個資遮蔽（>7位數→點我顯示）
 import { CENSUS_MS } from '../../../../config/pollingConfig'
 
 // AICU 值班表三班色票：大夜=n(深灰) 白班=d(藍) 小夜=e(紫)
 const ICU_SHIFT_META = { '大夜': 'n', '白班': 'd', '小夜': 'e' }
+// 責任護理師班別顯示/排序順序；當前時段界線：大夜00–08、白班08–16、小夜16–24
+const SHIFT_ORDER = ['大夜', '白班', '小夜']
+const currentShift = () => { const h = new Date().getHours(); return h < 8 ? '大夜' : h < 16 ? '白班' : '小夜' }
 // 緊急應變編組 5 班（顯示順序，同 W52）
 const EMERGENCY_TEAMS = ['通報班', '滅火班', '安全防護', '救護班', '避難引導']
 const nnToday = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` }
@@ -25,7 +29,9 @@ const rocDateLabel = () => { const d = new Date(); return `${d.getFullYear() - 1
 
 // AICU 值班表面板（4F-01 下方 4×3 空區）。三班護理師接後台 getSchedule('ICU')；其餘先靜態
 function IcuDutyPanel({ shifts, emergencyTeams = [], oncall = [], aides = [], phones = [], nightSpecialist = '' }) {
+  const [reveal, setReveal] = useState(null)   // 聯絡資訊遮蔽：點「點我顯示」跳窗（{label,value}）
   return (
+    <>
     <div className="icu-duty-panel">
       <div className="icu-duty-head"><span className="icu-duty-title">AICU 值班表</span><span className="icu-duty-date">{rocDateLabel()}</span></div>
       <div className="icu-duty-body">
@@ -55,22 +61,24 @@ function IcuDutyPanel({ shifts, emergencyTeams = [], oncall = [], aides = [], ph
         <div className="icu-duty-col">
           <div className="icu-duty-sec-t">值班醫療團隊</div>
           {oncall.map(d => (
-            <div className="icu-duty-r" key={d.deptCode}><span className="icu-duty-role">{d.deptName}</span><span className="icu-duty-name">{d.doctorName || '—'}</span><span className="icu-duty-ext">{d.ext || ''}</span></div>
+            <div className="icu-duty-r" key={d.deptCode}><span className="icu-duty-role">{d.deptName}</span><span className="icu-duty-name">{d.doctorName || '—'}</span><ContactValue className="icu-duty-ext" label={`${d.deptName || ''} ${d.doctorName || ''}`.trim()} value={d.ext} onReveal={setReveal} /></div>
           ))}
         </div>
         {/* ③ 照服員（引用後台「顯示照服員」）＋ 聯絡電話（引用後台「顯示聯絡電話」） */}
         <div className="icu-duty-col">
           <div className="icu-duty-sec-t">照服員</div>
           {aides.map(a => (
-            <div className="icu-duty-r" key={a.aideId}><span className="icu-duty-name">{a.name}</span><span className="icu-duty-ext">{a.contact || ''}</span></div>
+            <div className="icu-duty-r" key={a.aideId}><span className="icu-duty-name">{a.name}</span><ContactValue className="icu-duty-ext" label={a.name} value={a.contact} onReveal={setReveal} /></div>
           ))}
           <div className="icu-duty-sec-t">聯絡電話</div>
           {phones.map(p => (
-            <div className="icu-duty-r" key={p.id}><span className="icu-duty-role">{p.title || ''}</span><span className="icu-duty-name">{p.name}</span><span className="icu-duty-ext">{p.extension || ''}</span></div>
+            <div className="icu-duty-r" key={p.id}><span className="icu-duty-role">{p.title || ''}</span><span className="icu-duty-name">{p.name}</span><ContactValue className="icu-duty-ext" label={[p.title, p.name].filter(Boolean).join(' ')} value={p.extension} onReveal={setReveal} /></div>
           ))}
         </div>
       </div>
     </div>
+    <ContactRevealModal reveal={reveal} onClose={() => setReveal(null)} />
+    </>
   )
 }
 
@@ -135,6 +143,8 @@ function BedCard({ bed, filteredOut, onClick }) {
   }
   const p = bed.patient
   const allBadges = buildBadges(p)
+  // 責任護理師：只顯示「當前時段」該床的主護（班別依三班排程對應）
+  const curNurses = (p.nurses ?? []).filter(n => n.shift === currentShift()).map(n => n.name).filter(Boolean)
   return (
     <div
       className={`bed-card ${bed.status} bed-${bed.id}${filteredOut ? ' filtered-out' : ''}`}
@@ -145,7 +155,12 @@ function BedCard({ bed, filteredOut, onClick }) {
         <span className={`patient-name ${p.gender === 'M' ? 'gender-m' : 'gender-f'}`}>{p.name}</span>
         <span className="patient-basic">{p.gender}/{p.age}</span>
       </div>
-      {p.doctor && <div className="card-row-dr">Dr {p.doctor}</div>}
+      {(p.doctor || curNurses.length > 0) && (
+        <div className="card-row-dr">
+          {p.doctor && <span className="cd-dr">Dr {p.doctor}</span>}
+          {curNurses.length > 0 && <span className="cd-nurse">{curNurses.join('、')}</span>}
+        </div>
+      )}
       {/* 病人註記區：每個徽章對應一個 SVG 形狀旗標 */}
       <div className="dots-row">
         {allBadges.map(b => <FlagDot key={b} k={b} flagStyle={FLAG_STYLE} />)}
@@ -164,6 +179,10 @@ function BedModal({ bed, onClose }) {
   const tubeMap = [['ventilator','氣管內管'],['ng','鼻胃管'],['foley','導尿管'],['cvc','中心靜脈導管']]
   const tubes = tubeMap.filter(([k]) => p[k]).map(([,v]) => v)
   const allBadges = buildBadges(p)
+  // 責任護理師依 大夜→白班→小夜 排序（未排班者排最後）
+  const orderedNurses = [...(p.nurses ?? [])]
+    .sort((a, b) => ((SHIFT_ORDER.indexOf(a.shift) + 1) || 99) - ((SHIFT_ORDER.indexOf(b.shift) + 1) || 99))
+    .map(n => n.name).filter(Boolean)
   return (
     <div className="modal-overlay show" onClick={e => e.target === e.currentTarget && onClose()}>
       <div className="modal-box">
@@ -186,7 +205,7 @@ function BedModal({ bed, onClose }) {
           </div>
           <div className="modal-row">
             <div className="modal-field"><div className="field-label">主治醫師</div><div className="field-value">{p.doctor}</div></div>
-            <div className="modal-field"><div className="field-label">責任護理師</div><div className="field-value">{p.nurse || '—'}</div></div>
+            <div className="modal-field"><div className="field-label">責任護理師</div><div className="field-value">{orderedNurses.length ? orderedNurses.join('、') : (p.nurse || '—')}</div></div>
           </div>
           <div className="modal-row">
             <div className="modal-field"><div className="field-label">入院日期</div><div className="field-value">{p.admission || '—'}</div></div>
@@ -240,8 +259,11 @@ export default function WardTab() {
   const emergencyTeams = useMemo(() => {
     const byTeam = Object.fromEntries(EMERGENCY_TEAMS.map(t => [t, []]))
     ;(schedData?.shifts ?? []).forEach(s => (s.nurses ?? []).forEach(n => {
-      const g = n.emergencyGroup
-      if (g && byTeam[g] && !byTeam[g].includes(n.peName)) byTeam[g].push(n.peName)
+      // 一人可屬多個編組（後台以逗號分隔存於 emergencyGroup）→ 拆解後各隊分別加入
+      String(n.emergencyGroup ?? '').split(',').forEach(g0 => {
+        const g = g0.trim()
+        if (g && byTeam[g] && !byTeam[g].includes(n.peName)) byTeam[g].push(n.peName)
+      })
     }))
     return EMERGENCY_TEAMS.map(t => ({ team: t, names: byTeam[t] }))
   }, [schedData])
@@ -257,6 +279,13 @@ export default function WardTab() {
   // 夜專師：夜/假護理師排程之今日「小夜」值班（全院共用，顯示於三班護理師標題右方）
   const { data: nnData } = usePolling(() => wardApi.getNightNurse(nnToday(), nnToday()), { intervalMs: CENSUS_MS, deps: ['ICU-night'] })
   const nightSpecialist = useMemo(() => { const rows = nnData ?? []; return (rows.find(r => r.slot === '小夜') || rows[0])?.name || '' }, [nnData])
+  // 護理行政值班（今日大夜/白班/小夜）：4F-02 右側 1×2 面板；資料來自 AdminDutyRoster（後台「護理行政值班排程」）
+  const { data: adminDutyData } = usePolling(() => wardApi.getAdminDuty(nnToday(), nnToday()), { intervalMs: CENSUS_MS, deps: ['ICU-adminduty'] })
+  const adminDuty = useMemo(() => {
+    const ad = { 大夜: '', 白班: '', 小夜: '' }
+    ;(adminDutyData ?? []).forEach(r => { if (ad[r.slot] !== undefined) ad[r.slot] = r.name || '' })
+    return ad
+  }, [adminDutyData])
   // 只顯示當前樓層；統計亦只計當前樓層（總床數 4F=20、3F=5）
   const floorBeds = useMemo(() => beds.filter(b => b.floor === floor), [beds, floor])
   const stats = useMemo(() => getStats(floorBeds), [floorBeds])
@@ -286,6 +315,16 @@ export default function WardTab() {
                   onClick={bed.status !== 'empty' ? () => setSelectedBed(bed) : undefined} />
               ))}
               {floor === 4 && <IcuDutyPanel shifts={shifts} emergencyTeams={emergencyTeams} oncall={onCallDocs} aides={aides} phones={phones} nightSpecialist={nightSpecialist} />}
+              {floor === 4 && (
+                <div className="icu-admin-duty" style={{ gridColumn: '6/8', gridRow: '1' }}>
+                  <div className="iad-title">護理行政值班</div>
+                  <div className="iad-body">
+                    {['大夜', '白班', '小夜'].map(k => (
+                      <div className="iad-row" key={k}><span className="iad-label">{k}</span><span className="iad-name">{adminDuty[k] || '—'}</span></div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

@@ -82,6 +82,14 @@ export async function getNightNurse(from, to) {
 export async function saveNightNurseMonth(body) {
   return handle(await apiFetch(`${BASE}/night-nurse/month`, { method: 'POST', headers, body: JSON.stringify(body) }))
 }
+// ── 護理行政值班表（AdminDutyRoster；無科別、每日大夜/白班/小夜）──
+export async function getAdminDuty(from, to) {
+  const p = new URLSearchParams(); if (from) p.set('from', from); if (to) p.set('to', to)
+  return handle(await apiFetch(`${BASE}/admin-duty?${p}`))
+}
+export async function saveAdminDutyMonth(body) {
+  return handle(await apiFetch(`${BASE}/admin-duty/month`, { method: 'POST', headers, body: JSON.stringify(body) }))
+}
 // ── 各單位「引用值班醫師」科別選取（UnitOnCallDept）──
 // GET {unitCode}/oncall-display → 該單位選取的值班科別（含順序＋deptName）；供後台載入
 export async function getUnitOnCallDepts(unitCode) {

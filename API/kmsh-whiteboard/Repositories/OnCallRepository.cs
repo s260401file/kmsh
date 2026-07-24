@@ -219,4 +219,45 @@ public class OnCallRepository : IOnCallRepository
         catch { tx.Rollback(); throw; }
         return n;
     }
+
+    // ── 護理行政值班表 AdminDutyRoster ──
+    private const string AdrCols = "Id, OnCallDate, Slot, Name, SortOrder, IsActive";
+
+    public async Task<IEnumerable<AdminDutyItem>> GetAdminDutyAsync(DateTime from, DateTime to, CancellationToken ct = default)
+    {
+        var sql = $@"SELECT {AdrCols} FROM [dbo].[AdminDutyRoster]
+                     WHERE IsActive=1 AND OnCallDate >= @From AND OnCallDate <= @To
+                     ORDER BY OnCallDate, SortOrder, Id";
+        using var conn = _db.Create();
+        return await conn.QueryAsync<AdminDutyItem>(
+            new CommandDefinition(sql, new { From = from.Date, To = to.Date }, cancellationToken: ct));
+    }
+
+    /// <summary>覆寫某月護理行政值班：交易內先刪該月既有列、再插入 entries（姓名空白略過）。回傳插入筆數。</summary>
+    public async Task<int> SaveAdminDutyMonthAsync(AdminDutyMonthSaveRequest req, CancellationToken ct = default)
+    {
+        var monthStart = new DateTime(req.Year, req.Month, 1);
+        var monthEnd = monthStart.AddMonths(1).AddDays(-1);
+        const string delSql = "DELETE FROM [dbo].[AdminDutyRoster] WHERE OnCallDate >= @Start AND OnCallDate <= @End";
+        const string insSql = @"INSERT INTO [dbo].[AdminDutyRoster] (OnCallDate, Slot, Name, SortOrder, IsActive, UpdatedAt, CreatedAt)
+                                VALUES (@OnCallDate, @Slot, @Name, @SortOrder, 1, GETDATE(), GETDATE())";
+        using var conn = _db.Create();
+        conn.Open();
+        using var tx = conn.BeginTransaction();
+        int n = 0;
+        try
+        {
+            await conn.ExecuteAsync(new CommandDefinition(delSql, new { Start = monthStart, End = monthEnd }, tx, cancellationToken: ct));
+            foreach (var e in req.Entries ?? new())
+            {
+                if (string.IsNullOrWhiteSpace(e.Name)) continue;   // 空格不寫
+                n += await conn.ExecuteAsync(new CommandDefinition(insSql,
+                    new { OnCallDate = DateTime.Parse(e.OnCallDate).Date, Slot = e.Slot ?? "", Name = e.Name!.Trim(), e.SortOrder },
+                    tx, cancellationToken: ct));
+            }
+            tx.Commit();
+        }
+        catch { tx.Rollback(); throw; }
+        return n;
+    }
 }

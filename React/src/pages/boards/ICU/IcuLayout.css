@@ -143,11 +143,13 @@
 .icu-board .bed-card.empty{background:var(--bg-card-empty);border-left:2px dashed var(--border-empty);cursor:default;align-items:center;justify-content:center;opacity:.6}
 .icu-board .bed-card.empty:hover{transform:none;box-shadow:var(--shadow-card)}
 .icu-board .card-row1{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
-.icu-board .bed-num{font-size:22px;font-weight:900;font-family:var(--font-num);color:var(--text-primary);letter-spacing:.5px;line-height:1}
+.icu-board .bed-num{font-size:27px;font-weight:900;font-family:var(--font-num);color:var(--text-primary);letter-spacing:.5px;line-height:1}
 .icu-board .card-row2{display:flex;align-items:baseline;gap:6px}
-.icu-board .patient-name{font-size:18px;font-weight:700;line-height:1}
-.icu-board .patient-basic{font-size:13px;color:var(--text-secondary);line-height:1}
-.icu-board .card-row-dr{font-size:14px;color:#1565C0;font-weight:600;line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.icu-board .patient-name{font-size:23px;font-weight:700;line-height:1}
+.icu-board .patient-basic{font-size:16px;color:var(--text-secondary);line-height:1}
+.icu-board .card-row-dr{font-size:18px;font-weight:600;line-height:1;display:flex;align-items:baseline;gap:8px;overflow:hidden}
+.icu-board .card-row-dr .cd-dr{color:#1565C0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex-shrink:0}
+.icu-board .card-row-dr .cd-nurse{color:#2E7D32;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 .icu-board .card-row3{display:flex;gap:4px;flex-wrap:wrap;align-items:center;margin-top:auto}
 .icu-board .empty-label{font-size:22px;font-weight:700;color:var(--text-empty)}
 .icu-board .empty-bed-num{font-size:18px;font-weight:900;font-family:var(--font-num);color:var(--text-empty);margin-bottom:6px}
@@ -241,6 +243,15 @@
 .icu-board .tb-stat-cvc   .tb-stat-value { color:#2E7D32; }
 .icu-board .tb-stat-crrt  .tb-stat-value { color:#B71C1C; }
 
+/* ── 護理行政值班面板（4F-02 右側 1×2 空區；今日大夜/白班/小夜）── */
+.icu-board .icu-admin-duty{background:#fff;border:1.5px solid var(--accent-green);border-radius:10px;display:flex;flex-direction:column;overflow:hidden;min-height:0}
+.icu-board .icu-admin-duty .iad-title{background:var(--accent-green);color:#fff;font-size:18px;font-weight:700;letter-spacing:1px;padding:3px 10px;flex-shrink:0}
+.icu-board .icu-admin-duty .iad-body{flex:1;display:grid;grid-template-columns:repeat(3,1fr);min-height:0}
+.icu-board .icu-admin-duty .iad-row{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:2px 4px;border-right:1px solid var(--divider);min-width:0}
+.icu-board .icu-admin-duty .iad-row:last-child{border-right:none}
+.icu-board .icu-admin-duty .iad-label{font-size:16px;color:var(--text-secondary);font-weight:700}
+.icu-board .icu-admin-duty .iad-name{font-size:22px;color:var(--text-primary);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+
 /* ══════════════════════════════════════════════
    AICU 值班表面板（病室動態 4F-01 下方 4×3 空區；三班接後台、其餘靜態）
    移植自 html_demo/icu-board/css/bulletin-panel.css
@@ -255,8 +266,8 @@
   display: flex; align-items: baseline; justify-content: space-between;
   background: var(--accent-green); color: #fff; padding: 5px 12px;
 }
-.icu-board .icu-duty-title { font-size: 21px; font-weight: 800; letter-spacing: 3px; }
-.icu-board .icu-duty-date  { font-size: 15px; opacity: .92; }
+.icu-board .icu-duty-title { font-size: 24px; font-weight: 800; letter-spacing: 3px; }
+.icu-board .icu-duty-date  { font-size: 17px; opacity: .92; }
 .icu-board .icu-duty-body {
   flex: 1; min-height: 0; overflow: hidden; padding: 7px 11px;
   display: grid; grid-template-columns: 1.05fr 1fr 1.12fr; gap: 0 13px;
@@ -264,20 +275,20 @@
 .icu-board .icu-duty-col { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
 .icu-board .icu-duty-col + .icu-duty-col { border-left: 1px solid #E3EAE6; padding-left: 12px; }
 .icu-board .icu-duty-sec-t {
-  font-size: 15px; font-weight: 800; color: var(--accent-green);
+  font-size: 18px; font-weight: 800; color: var(--accent-green);
   border-bottom: 1px solid #DCE8E1; padding-bottom: 2px; margin-bottom: 2px;
 }
-.icu-board .icu-duty-r { display: flex; align-items: baseline; gap: 6px; font-size: 15px; line-height: 1.35; }
-.icu-board .icu-duty-role { color: var(--text-secondary); flex-shrink: 0; width: 62px; }
+.icu-board .icu-duty-r { display: flex; align-items: baseline; gap: 6px; font-size: 18px; line-height: 1.35; }
+.icu-board .icu-duty-role { color: var(--text-secondary); flex-shrink: 0; width: 74px; }
 .icu-board .icu-duty-name { font-weight: 700; color: var(--text-primary); white-space: nowrap; }
-.icu-board .icu-duty-ext  { font-family: var(--font-num); color: var(--text-secondary); font-size: 14px; margin-left: auto; }
+.icu-board .icu-duty-ext  { font-family: var(--font-num); color: var(--text-secondary); font-size: 16px; margin-left: auto; }
 .icu-board .icu-duty-shift { display: flex; gap: 4px; }
 .icu-board .icu-sh { flex: 1; text-align: center; background: var(--bg-card-empty); border-radius: 5px; padding: 3px 1px; }
-.icu-board .icu-sh-k { font-size: 12px; font-weight: 700; color: #fff; padding: 1px 7px; border-radius: 8px; display: inline-block; margin-bottom: 2px; }
+.icu-board .icu-sh-k { font-size: 14px; font-weight: 700; color: #fff; padding: 1px 7px; border-radius: 8px; display: inline-block; margin-bottom: 2px; }
 .icu-board .icu-sh-k.n { background: #37474F; }
 .icu-board .icu-sh-k.d { background: #0288D1; }
 .icu-board .icu-sh-k.e { background: #7B1FA2; }
-.icu-board .icu-sh-n { font-size: 14px; font-weight: 700; color: var(--text-primary); display: block; line-height: 1.35; }
+.icu-board .icu-sh-n { font-size: 18px; font-weight: 700; color: var(--text-primary); display: block; line-height: 1.35; }
 .icu-board .icu-sh-n + .icu-sh-n { margin-top: 1px; }
 .icu-board .icu-tel { font-size: 14px; color: var(--text-secondary); line-height: 1.45; }
 .icu-board .icu-tel b { color: var(--text-primary); font-weight: 700; }

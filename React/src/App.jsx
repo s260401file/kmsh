@@ -4,8 +4,9 @@
  * 以及首頁 /、登入頁 /login，與受保護的後台 /admin。
  * 各站皆為「Layout + 多個 Tab 子頁」的巢狀結構，由 Layout 內的 <Outlet> 渲染子分頁。
  */
-import { Navigate, Routes, Route } from 'react-router-dom'
+import { Navigate, Routes, Route, useLocation } from 'react-router-dom'
 import { useAuth } from './context/AuthContext'
+import { useAutoReload } from './hooks/useAutoReload'
 import Home from './pages/Home'
 import LoginPage from './pages/LoginPage'
 import AdminPage from './pages/AdminPage'
@@ -65,6 +66,9 @@ function ProtectedRoute({ children }) {
 }
 
 function App() {
+  // 白板顯示頁（/w52 /icu /or /er）啟用「新版自動重整」；後台/登入/首頁不啟用
+  const { pathname } = useLocation()
+  useAutoReload(/^\/(w52|icu|or|er)(\/|$)/.test(pathname))
   return (
     <Routes>
       {/* 一般頁面：首頁、登入頁 */}

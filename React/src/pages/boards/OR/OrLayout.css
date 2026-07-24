@@ -64,6 +64,10 @@
 /* ── Modal ── */
 /* ── 檢視密碼鍵盤門檻（取代分頁內容，頁首/底部分頁仍在）── */
 .or-board .or-gate { flex:1; min-height:0; display:flex; align-items:center; justify-content:center; padding:20px; }
+/* 房卡詳情密碼模態：全屏遮罩，內部沿用 .or-gate 置中 */
+.or-board .or-gate-modal { position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:2000; display:flex; }
+.or-board .or-gate-cancel { margin-top:16px; padding:8px 28px; font-size:15px; font-weight:700; color:var(--text-secondary); background:#fff; border:1.5px solid var(--divider); border-radius:999px; cursor:pointer; }
+.or-board .or-gate-cancel:hover { background:#f2f2f2; }
 .or-board .or-gate-loading { flex:1; display:flex; align-items:center; justify-content:center; color:var(--text-muted); font-size:20px; }
 .or-board .or-gate-box { background:var(--bg-modal); border:1px solid var(--divider); border-radius:var(--radius-modal); box-shadow:var(--shadow-modal); padding:26px 30px 30px; width:360px; max-width:92vw; display:flex; flex-direction:column; align-items:center; }
 .or-board .or-gate-title { font-size:22px; font-weight:800; color:var(--accent-green); margin-bottom:18px; }

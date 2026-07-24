@@ -65,7 +65,7 @@ export default function ScheduleTab() {
                     {shift.nurses.map(n => (
                       <tr key={n.staffId}>
                         <td className="sc-td-role">{n.role}</td>
-                        <td>{n.peName}</td>
+                        <td className="sc-td-name">{n.peName}</td>
                         <td className="sc-td-ext">{n.extension}</td>
                         <td>
                           {n.bedNos.length > 0

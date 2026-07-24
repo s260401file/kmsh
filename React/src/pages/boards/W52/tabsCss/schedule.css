@@ -30,6 +30,7 @@
 .w52-board .sc-table td { font-size: 17px; color: var(--text-primary); padding: 12px 18px; vertical-align: middle; }
 .w52-board .sc-td-role { font-size: 14px; font-weight: 700; color: var(--text-muted); white-space: nowrap; }
 .w52-board .sc-td-ext { font-size: 15px; color: var(--text-secondary); white-space: nowrap; }
+.w52-board .sc-td-name { white-space: nowrap; }
 .w52-board .sc-beds { display: flex; flex-wrap: wrap; gap: 4px; }
 .w52-board .sc-bed-tag { font-size: 12px; font-weight: 700; font-family: var(--font-num); background: var(--bg-card-empty); color: var(--text-secondary); border: 1px solid var(--divider); border-radius: 4px; padding: 1px 6px; white-space: nowrap; }
 .w52-board .sc-beds-none { font-size: 14px; color: var(--text-muted); }

@@ -3,6 +3,7 @@
 // 每張卡片顯示今日「進行中/首台」手術＋「今日 N 台」，點卡片開啟 Modal 看今日全部台次。
 // 資料來源：後端 /api/Board/or（自建刀房主檔 ＋ Board_OR 今日排程 ＋ overlay；免 F5 輪詢）。
 import { useState, useMemo } from 'react'
+import { useOutletContext } from 'react-router-dom'
 import { useOrWard } from '../../../../hooks/useOrWard'
 import { useOrRoomEnv } from '../../../../hooks/useOrRoomEnv'   // 今日各刀房溫溼度
 import BoardLoading from '../../../../components/BoardLoading'   // 院方資料載入中動畫
@@ -173,6 +174,8 @@ function RoomModal({ room, onClose }) {
 }
 
 export default function WardTab() {
+  const { ensureUnlocked } = useOutletContext() || {}   // OR 檢視密碼門檻（點卡詳情需驗證，與頁籤共用解鎖）
+  const openRoom = room => (ensureUnlocked ? ensureUnlocked(() => setSelectedRoom(room)) : setSelectedRoom(room))
   const [filter, setFilter] = useState('all')          // 目前篩選條件（all/er/op/inp/busy/prep）
   const [selectedRoom, setSelectedRoom] = useState(null) // 目前開啟詳情的刀房
   const [showCompleted, setShowCompleted] = useState(false) // 今日已完成清單 Modal
@@ -213,7 +216,7 @@ export default function WardTab() {
                 key={room.RoomId}
                 room={room}
                 filteredOut={!isRoomVisible(room, filter)}
-                onClick={room.Status !== 'empty' ? () => setSelectedRoom(room) : undefined}
+                onClick={room.Status !== 'empty' ? () => openRoom(room) : undefined}
               />
             ))}
             <EnvCard rooms={rooms} envByRoom={envByRoom} date={envDate} />

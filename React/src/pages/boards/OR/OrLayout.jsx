@@ -45,9 +45,15 @@ export default function OrLayout() {
   const unlocked = Date.now() < until    // 每次 render（時鐘每秒）重算；逾時自動再上鎖
   const doUnlock = () => { const u = Date.now() + mins * 60000; sessionStorage.setItem(UNLOCK_KEY, String(u)); setUntil(u) }
 
+  // 手術動態房卡「詳情」需密碼：以 Outlet context 提供 ensureUnlocked 給 ward 子頁。
+  // 已解鎖/未設密碼→直接執行；否則跳出鍵盤模態，正確後 doUnlock（與頁籤門檻同一組時效）再執行。
+  const [pendingCb, setPendingCb] = useState(null)
+  const ensureUnlocked = cb => { if (!pwd || unlocked) { cb && cb() } else { setPendingCb(() => cb) } }
+  const onGateOk = () => { doUnlock(); const cb = pendingCb; setPendingCb(null); cb && cb() }
+
   // 內容區：第一頁/未設密碼/已解鎖→正常內容；載入中→佔位（避免內容閃現）；否則→鍵盤門檻
   const content =
-    (isFirst || (info !== null && !pwd) || unlocked) ? <Outlet />
+    (isFirst || (info !== null && !pwd) || unlocked) ? <Outlet context={{ ensureUnlocked, unlocked: !pwd || unlocked }} />
     : info === null ? <div className="or-gate-loading">載入中…</div>
     : <OrViewGate expected={pwd} onUnlock={doUnlock} />
 
@@ -80,6 +86,13 @@ export default function OrLayout() {
       </div>
 
       {content}
+
+      {/* 房卡詳情密碼模態：延用同一組 OrViewGate 與解鎖時效；正確後 doUnlock 並執行待辦動作 */}
+      {pendingCb && (
+        <div className="or-gate-modal">
+          <OrViewGate expected={pwd} onUnlock={onGateOk} onCancel={() => setPendingCb(null)} />
+        </div>
+      )}
 
       <nav className="bottom-tabs">
         {TABS.map(t => (

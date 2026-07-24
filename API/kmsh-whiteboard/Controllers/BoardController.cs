@@ -194,12 +194,25 @@ public class BoardController : ControllerBase
             .GroupBy(x => x.Hhisnum!.Trim())
             .ToDictionary(g => g.Key, g => string.Equals(g.First().Restraint, "Y", StringComparison.OrdinalIgnoreCase));
 
-        // 責任護理師：改由「勾床配對」（依床號）決定（今日，AssignType=主護）。ICU 一床可多位 → 逗號並列。
+        // 責任護理師：由「勾床配對」（依床號，今日，AssignType=主護）決定；班別再對應當日「三班護理師排程」。
         var today = DateTime.Today.ToString("yyyy-MM-dd");
-        var nurseByBed = (await _staff.GetBedAssignAsync("ICU", today, "主護", false, ct))
-            .Where(b => !string.IsNullOrWhiteSpace(b.BedId))
-            .GroupBy(b => b.BedId!)
-            .ToDictionary(g => g.Key, g => string.Join("，", g.Select(x => x.Name).Where(n => !string.IsNullOrWhiteSpace(n))), StringComparer.OrdinalIgnoreCase);
+        var assigns = (await _staff.GetBedAssignAsync("ICU", today, "主護", false, ct))
+            .Where(b => !string.IsNullOrWhiteSpace(b.BedId) && !string.IsNullOrWhiteSpace(b.Name))
+            .ToList();
+        // 護理師 → 班別（大夜/白班/小夜）：依當日三班排程，以 StaffId 對應（同員多班取第一筆）。
+        var shiftByStaff = (await _staff.GetScheduleAsync("ICU", today, false, ct))
+            .GroupBy(s => s.StaffId)
+            .ToDictionary(g => g.Key, g => g.First().Shift);
+        // 每床：責任護理師清單（含班別），保留勾床 SortOrder 順序。
+        var nursesByBed = assigns
+            .GroupBy(b => b.BedId!, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(g => g.Key, g => g.Select(x => new IcuNurseDto {
+                Name = x.Name!.Trim(),
+                Shift = shiftByStaff.TryGetValue(x.StaffId, out var sh) ? sh : null
+            }).ToList(), StringComparer.OrdinalIgnoreCase);
+        // 逗號並列（fallback：舊消費端）。
+        var nurseByBed = nursesByBed.ToDictionary(kv => kv.Key,
+            kv => string.Join("，", kv.Value.Select(n => n.Name)), StringComparer.OrdinalIgnoreCase);
 
         var resp = new IcuBoardResponse
         {
@@ -228,7 +241,8 @@ public class BoardController : ControllerBase
                         Department = string.IsNullOrWhiteSpace(o.Department) ? e?.Department : o.Department, Admission = FormatBirth(o.AdmitDate) ?? e?.AdmissionDate,
                         Diagnosis = string.IsNullOrWhiteSpace(o.Diagnosis) ? e?.Diagnosis : o.Diagnosis,  // 院方診斷優先
                         Doctor = string.IsNullOrWhiteSpace(o.Doctor) ? e?.AttendingDoctor : o.Doctor,
-                        Nurse = nurseByBed.TryGetValue(bed.Id, out var rn) && !string.IsNullOrWhiteSpace(rn) ? rn : null,  // 責任護理師＝勾床配對（可多位逗號並列）
+                        Nurse = nurseByBed.TryGetValue(bed.Id, out var rn) && !string.IsNullOrWhiteSpace(rn) ? rn : null,  // 責任護理師＝勾床配對（可多位逗號並列；fallback）
+                        Nurses = nursesByBed.TryGetValue(bed.Id, out var nl) ? nl : null,  // 含班別（依三班排程）
                         Condition = string.IsNullOrWhiteSpace(e?.Condition) ? "危急" : e!.Condition,  // ICU 病況預設 A級（危急）；無後台設定即 A
                         Isolation = e?.Isolation,
                         Dnr = e?.Dnr ?? false, Ventilator = e?.Ventilator ?? false, Crrt = e?.Crrt ?? false,
@@ -854,6 +868,22 @@ public class BoardController : ControllerBase
     [HttpPost("night-nurse/month")]
     public async Task<IActionResult> SaveNightNurseMonth([FromBody] NightNurseMonthSaveRequest req, CancellationToken ct = default)
         => Ok(new { saved = await _oncall.SaveNightNurseMonthAsync(req, ct) });
+
+    // ── 護理行政值班表 AdminDutyRoster（無科別；每日大夜/白班/小夜）──
+    /// <summary>護理行政值班（區間；供後台月曆載入／日後看板顯示）。GET 匿名。</summary>
+    [HttpGet("admin-duty")]
+    public async Task<IActionResult> GetAdminDuty([FromQuery] string? from, [FromQuery] string? to, CancellationToken ct = default)
+    {
+        var today = DateTime.Today;
+        var f = string.IsNullOrWhiteSpace(from) ? new DateTime(today.Year, today.Month, 1) : DateTime.Parse(from);
+        var t = string.IsNullOrWhiteSpace(to) ? f.AddMonths(1).AddDays(-1) : DateTime.Parse(to);
+        return Ok(await _oncall.GetAdminDutyAsync(f, t, ct));
+    }
+
+    /// <summary>護理行政值班 月曆整月存檔（覆寫該月）。</summary>
+    [HttpPost("admin-duty/month")]
+    public async Task<IActionResult> SaveAdminDutyMonth([FromBody] AdminDutyMonthSaveRequest req, CancellationToken ct = default)
+        => Ok(new { saved = await _oncall.SaveAdminDutyMonthAsync(req, ct) });
 
     // ── ER 三班醫護人員面板（自建；護理師掛人員管理）──────────────────
     /// <summary>看板：ER 四班面板，護理師 Staff.Id→姓名解析；回 camelCase。</summary>

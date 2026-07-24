@@ -8,7 +8,8 @@ import { CENSUS_MS } from '../../../../config/pollingConfig'
 import '../tabsCss/evacuation.css'
 
 const UNIT = 'ICU' // 本分頁固定查 ICU 單位
-const EMERGENCY_GROUPS = ['救護班', '滅火班', '安全防護', '避難引導', '通報班']
+const EMERGENCY_GROUPS = ['通報班', '滅火班', '安全防護', '救護班', '避難引導']   // 顯示順序（同看板）
+const CHARGE = '點班'   // 點班（來源 checkIn=IsCharge），列於編組之後
 
 export default function EvacuationTab() {
   const [hasImage, setHasImage] = useState(false)  // 是否已有避難圖可顯示
@@ -18,15 +19,22 @@ export default function EvacuationTab() {
     getImageInfo(UNIT).then(i => setHasImage(!!i)).catch(() => setHasImage(false))
   }, [])
 
-  // 緊急應變編組：取三班護理師今日排班，依緊急編組彙整（跨班別，去重姓名）
+  // 緊急應變編組：取三班護理師今日排班，依緊急編組彙整（跨班別，去重姓名）。一人可多組（逗號分隔）；點班取 checkIn。
   const { data: schedData } = usePolling(() => wardApi.getSchedule(UNIT), { intervalMs: CENSUS_MS, deps: ['ICU-ev-sched'] })
   const nurses = (schedData?.shifts ?? []).flatMap(s => s.nurses ?? [])
   const byGroup = {}
+  const charge = []
   nurses.forEach(n => {
-    if (!n.emergencyGroup || !n.peName) return
-    const a = (byGroup[n.emergencyGroup] = byGroup[n.emergencyGroup] || [])
-    if (!a.includes(n.peName)) a.push(n.peName)
+    if (!n.peName) return
+    String(n.emergencyGroup ?? '').split(',').forEach(g0 => {
+      const g = g0.trim()
+      if (!g) return
+      const a = (byGroup[g] = byGroup[g] || [])
+      if (!a.includes(n.peName)) a.push(n.peName)
+    })
+    if (n.checkIn && !charge.includes(n.peName)) charge.push(n.peName)
   })
+  const respRows = [...EMERGENCY_GROUPS.map(g => ({ k: g, names: byGroup[g] || [] })), { k: CHARGE, names: charge }]
 
   return (
     <main className="main-content" style={{ padding: 0 }}>
@@ -54,10 +62,10 @@ export default function EvacuationTab() {
             <div className="ev-card">
               <div className="ev-card-header">緊急應變編組</div>
               <div className="ev-resp">
-                {EMERGENCY_GROUPS.map(g => (
-                  <div className="ev-resp-row" key={g}>
-                    <span className="ev-resp-k">{g}</span>
-                    <span className="ev-resp-n">{byGroup[g]?.length ? byGroup[g].join('、') : '—'}</span>
+                {respRows.map(row => (
+                  <div className="ev-resp-row" key={row.k}>
+                    <span className="ev-resp-k">{row.k}</span>
+                    <span className="ev-resp-n">{row.names.length ? row.names.join('、') : '—'}</span>
                   </div>
                 ))}
               </div>

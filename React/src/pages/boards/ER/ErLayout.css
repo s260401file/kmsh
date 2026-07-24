@@ -94,8 +94,8 @@
 .er-board .ward-grid{display:grid;grid-template-columns:repeat(11,minmax(0,1fr));grid-template-rows:minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) minmax(0,0.35fr) minmax(0,1fr) minmax(0,0.2fr) minmax(0,0.5fr) minmax(0,1fr);gap:6px;padding:8px;flex:1;min-height:0;overflow:hidden}
 .er-board .ward-grid .bed-card{padding:9px 11px;gap:6px}
 .er-board .ward-grid .bed-num{font-size:16px}
-.er-board .ward-grid .patient-name{font-size:18px}
-.er-board .ward-grid .patient-basic{font-size:13px}
+.er-board .ward-grid .patient-name{font-size:20px}
+.er-board .ward-grid .patient-basic{font-size:14px}
 .er-board .ward-grid .empty-label{font-size:16px}
 .er-board .ward-grid .empty-bed-num{font-size:13px;margin-bottom:2px}
 .er-board .ward-grid .badge{font-size:12px;padding:2px 5px;line-height:17px}
@@ -125,21 +125,29 @@
 .er-board .staff-shifts .ss-body{flex:1;display:grid;grid-template-columns:repeat(4,1fr);min-height:0}
 .er-board .staff-shifts .ss-col{display:flex;flex-direction:column;justify-content:flex-start;gap:5px;padding:8px 10px;border-right:1px solid var(--divider)}
 .er-board .staff-shifts .ss-col:last-child{border-right:none}
-.er-board .staff-shifts .ss-shift{font-size:20px;font-weight:800;color:var(--text-primary);display:flex;align-items:baseline;gap:5px;flex-wrap:nowrap;white-space:nowrap}
-.er-board .staff-shifts .ss-time{font-size:14px;font-weight:600;color:var(--text-muted);font-family:var(--font-num)}
+.er-board .staff-shifts .ss-shift{font-size:22px;font-weight:800;color:var(--text-muted);display:flex;align-items:baseline;gap:5px;flex-wrap:nowrap;white-space:nowrap}
+.er-board .staff-shifts .ss-time{font-size:17px;font-weight:600;color:var(--text-muted);font-family:var(--font-num)}
 .er-board .staff-shifts .ss-doctor{font-size:19px;color:#1565C0;font-weight:600}
-.er-board .staff-shifts .ss-charge{font-size:19px;color:var(--text-secondary)}
+.er-board .staff-shifts .ss-charge{font-size:22px;font-weight:700;color:var(--text-primary)}
 .er-board .staff-shifts .ss-count{font-size:14px;color:var(--text-secondary)}
 .er-board .staff-shifts .ss-count b{font-size:20px;font-family:var(--font-num);color:var(--accent-red)}
+/* ── 護理行政值班面板（兒科留觀區上方 1×3 空區）── */
+.er-board .admin-duty-panel{display:flex;flex-direction:column;background:var(--bg-card-occ);border:1px solid var(--divider);border-radius:var(--radius-card);overflow:hidden;min-height:0}
+.er-board .admin-duty-panel .adp-title{background:var(--bg-floor-label);color:var(--accent-red);font-size:18px;font-weight:700;letter-spacing:1px;padding:4px 10px;border-bottom:1px solid var(--divider);flex-shrink:0}
+.er-board .admin-duty-panel .adp-body{flex:1;display:grid;grid-template-columns:repeat(3,1fr);min-height:0}
+.er-board .admin-duty-panel .adp-col{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:4px;border-right:1px solid var(--divider)}
+.er-board .admin-duty-panel .adp-col:last-child{border-right:none}
+.er-board .admin-duty-panel .adp-label{font-size:16px;color:var(--text-muted);font-weight:700}
+.er-board .admin-duty-panel .adp-name{font-size:24px;color:var(--text-primary);font-weight:700;line-height:1.1;text-align:center}
 /* ── 各科值班醫師面板（MER09 下方 5×2 空區）── */
 .er-board .oncall-panel{display:flex;flex-direction:column;background:var(--bg-card-occ);border:1px solid var(--divider);border-radius:var(--radius-card);overflow:hidden;min-height:0}
-.er-board .oncall-panel .oc-title{background:var(--bg-floor-label);color:var(--accent-red);font-size:15px;font-weight:700;letter-spacing:1px;padding:5px 12px;border-bottom:1px solid var(--divider);flex-shrink:0}
+.er-board .oncall-panel .oc-title{background:var(--bg-floor-label);color:var(--accent-red);font-size:18px;font-weight:700;letter-spacing:1px;padding:5px 12px;border-bottom:1px solid var(--divider);flex-shrink:0}
 .er-board .oncall-panel .oc-grid{flex:1;display:grid;grid-template-columns:repeat(5,1fr);grid-template-rows:repeat(2,1fr);min-height:0}
 .er-board .oncall-panel .oc-cell{display:flex;flex-direction:column;justify-content:center;gap:2px;padding:4px 9px;border-right:1px solid var(--divider);border-bottom:1px solid var(--divider);overflow:hidden}
-.er-board .oncall-panel .oc-dept{font-size:13px;font-weight:800;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.er-board .oncall-panel .oc-deptname{font-size:11px;font-weight:600;color:var(--text-muted)}
-.er-board .oncall-panel .oc-doc{font-size:14px;color:#1565C0;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.er-board .oncall-panel .oc-ext{font-size:11px;color:var(--text-muted);font-family:var(--font-num)}
+.er-board .oncall-panel .oc-dept{font-size:17px;font-weight:800;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.er-board .oncall-panel .oc-deptname{font-size:14px;font-weight:600;color:var(--text-muted)}
+.er-board .oncall-panel .oc-doc{font-size:18px;color:#1565C0;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.er-board .oncall-panel .oc-ext{font-size:14px;color:var(--text-muted);font-family:var(--font-num);margin-left:4px}
 /* 分區標示（區帶背景 + 區名）*/
 .er-board .zone-band{background:var(--bg-floor-label);border:1px solid #9FD3B9;border-radius:var(--radius-card);pointer-events:none}
 .er-board .zone-name{display:flex;align-items:center;justify-content:center;text-align:center;font-size:14px;font-weight:700;color:var(--accent-green);letter-spacing:1px;line-height:1.2;padding:2px;pointer-events:none}
@@ -160,10 +168,14 @@
 .er-board .bed-card.filtered-out{opacity:.2;pointer-events:none}
 .er-board .card-row1{display:flex;align-items:center;gap:5px;flex-wrap:nowrap}
 .er-board .card-row3{font-size:13px;color:#1565C0;font-weight:600;line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.er-board .ward-grid .card-row3{font-size:14px}
+.er-board .ward-grid .card-row3{font-size:18px}
 /* 急診手術室 OER01/OER02：同一格內上下疊放並等高（OER01 在上、OER02 在下） */
 .er-board .or-stack{display:flex;flex-direction:column;gap:6px;min-height:0;overflow:hidden}
 .er-board .or-stack .bed-card{flex:1 1 0;min-height:0;height:auto}
+/* 急診手術室疊放兩床(OER001/002)高度較矮，維持原字級不放大（4 class 蓋過 .ward-grid 放大規則） */
+.er-board .ward-grid .or-stack .patient-name{font-size:18px}
+.er-board .ward-grid .or-stack .patient-basic{font-size:13px}
+.er-board .ward-grid .or-stack .card-row3{font-size:14px}
 .er-board .bed-num{font-size:22px;font-weight:900;font-family:var(--font-num);color:var(--text-primary);letter-spacing:.5px;line-height:1}
 .er-board .card-row2{display:flex;align-items:baseline;gap:6px}
 .er-board .patient-name{font-size:18px;font-weight:700;line-height:1}

@@ -10,6 +10,7 @@ import { useWard } from '../../../../hooks/useWard'               // 病室動�
 import { usePolling } from '../../../../hooks/usePolling'         // 值班表三班護理師：定時輪詢後台設定
 import * as wardApi from '../../../../services/wardApi'
 import { getPhone } from '../../../../services/contactApi'          // 值班表聯絡電話（後台可維護）
+import { ContactValue, ContactRevealModal } from '../../../../components/ContactReveal'   // 聯絡資訊個資遮蔽（>7位數→點我顯示）
 import { CENSUS_MS } from '../../../../config/pollingConfig'
 import BoardLoading from '../../../../components/BoardLoading'     // 院方資料載入中動畫
 import { FlagDot, makeFlagStyle } from '../../../../utils/flagShapes' // 共用 SVG 旗標形狀系統
@@ -172,6 +173,7 @@ const FLAG_STYLE = makeFlagStyle(FILTER_BADGES)
 export default function WardTab() {
   const [filter, setFilter] = useState('all')          // 目前篩選的註記，'all' 為不篩選
   const [selectedBed, setSelectedBed] = useState(null) // 目前開啟詳情的床位，null 為未開啟
+  const [reveal, setReveal] = useState(null)           // 聯絡資訊遮蔽：點「點我顯示」跳窗（{label,value}）
   const { beds, loading } = useWard('W52')              // 後端聚合看板（真實在床＋自建臨床），定時輪詢
   const stats = useMemo(() => getStats(beds), [beds])   // 統計面板數值（總床/住院/各類別計數）
   // 值班表三班護理師：讀「當日」排班(StaffSchedule；後台「W52 管理→三班護理師」設定)，依班別分組、SortOrder＝點選順序
@@ -184,8 +186,11 @@ export default function WardTab() {
   const emergencyTeams = useMemo(() => {
     const byTeam = Object.fromEntries(EMERGENCY_TEAMS.map(t => [t, []]))
     ;(schedData?.shifts ?? []).forEach(s => (s.nurses ?? []).forEach(n => {
-      const g = n.emergencyGroup
-      if (g && byTeam[g] && !byTeam[g].includes(n.peName)) byTeam[g].push(n.peName)
+      // 一人可屬多個編組（後台以逗號分隔存於 emergencyGroup）→ 拆解後各隊分別加入
+      String(n.emergencyGroup ?? '').split(',').forEach(g0 => {
+        const g = g0.trim()
+        if (g && byTeam[g] && !byTeam[g].includes(n.peName)) byTeam[g].push(n.peName)
+      })
     }))
     return EMERGENCY_TEAMS.map(t => ({ team: t, names: byTeam[t] }))
   }, [schedData])
@@ -201,6 +206,9 @@ export default function WardTab() {
   // 夜專師：夜/假護理師排程之今日「小夜」值班（顯示於三班護理師標題右方）
   const { data: nnData } = usePolling(() => wardApi.getNightNurse(nnToday(), nnToday()), { intervalMs: CENSUS_MS, deps: ['W52-night'] })
   const nightSpecialist = useMemo(() => { const rows = nnData ?? []; return (rows.find(r => r.slot === '小夜') || rows[0])?.name || '' }, [nnData])
+  // 護理行政值班：今日大夜/白班/小夜（後台「ER 管理→護理行政值班排程」設定，ER/ICU 共用同源資料）
+  const { data: adminDutyData } = usePolling(() => wardApi.getAdminDuty(nnToday(), nnToday()), { intervalMs: CENSUS_MS, deps: ['W52-adminduty'] })
+  const adminDuty = useMemo(() => { const ad = { 大夜: '', 白班: '', 小夜: '' }; (adminDutyData ?? []).forEach(r => { if (ad[r.slot] !== undefined) ad[r.slot] = r.name || '' }); return ad }, [adminDutyData])
   // 點同一篩選鈕再按一次可取消（回到 all）；'all' 鈕本身不切回
   const handleFilter = f => setFilter(prev => (prev === f && f !== 'all') ? 'all' : f)
   // 開著的詳情彈窗：每次輪詢後用 BedId 從最新 beds 重新取回，內容跟著自動更新（約20秒）；病人離床則自動關閉
@@ -256,6 +264,16 @@ export default function WardTab() {
                 onClick={bed.Status !== 'empty' ? () => setSelectedBed(bed) : undefined} />
             ))}
 
+            {/* 護理行政值班（056 床右側 3 欄×2 列空區：欄 5–7 × 列 1–2；橫向 3 班） */}
+            <div className="w52-admin-duty" style={{ gridColumn: '5 / 8', gridRow: '1 / 3' }}>
+              <div className="iad-title">護理行政值班</div>
+              <div className="iad-body">
+                {['大夜', '白班', '小夜'].map(k => (
+                  <div className="iad-row" key={k}><span className="iad-label">{k}</span><span className="iad-name">{adminDuty[k] || '—'}</span></div>
+                ))}
+              </div>
+            </div>
+
             {/* 值班表面板（右上 7×6 空區：欄 8–14 × 列 1–6；與統計區對調） */}
             <div className="duty-panel" style={{ gridColumn: '8 / 15', gridRow: '1 / 7' }}>
               <div className="duty-head">
@@ -294,7 +312,7 @@ export default function WardTab() {
                   <div className="duty-sec-t">值班醫療團隊</div>
                   <div className="duty-rows">
                     {dutyDocs.map(d => (
-                      <div className="duty-r" key={d.deptCode}><span className="duty-role">{d.deptName}</span><span className="duty-name">{d.doctorName || '—'}</span><span className="duty-ext">{d.ext || ''}</span></div>
+                      <div className="duty-r" key={d.deptCode}><span className="duty-role">{d.deptName}</span><span className="duty-name">{d.doctorName || '—'}</span><ContactValue className="duty-ext" label={`${d.deptName || ''} ${d.doctorName || ''}`.trim()} value={d.ext} onReveal={setReveal} /></div>
                     ))}
                   </div>
                 </div>
@@ -303,13 +321,13 @@ export default function WardTab() {
                   <div className="duty-sec-t">照服員</div>
                   <div className="duty-aides">
                     {aides.map(a => (
-                      <span className="duty-aide" key={a.aideId}><b>{a.name}</b><span>{a.contact || ''}</span></span>
+                      <span className="duty-aide" key={a.aideId}><b>{a.name}</b><ContactValue label={a.name} value={a.contact} onReveal={setReveal} /></span>
                     ))}
                   </div>
                   <div className="duty-sec-t" style={{ marginTop: '10px' }}>聯絡電話</div>
                   <div className="duty-aides">
                     {phones.map(p => (
-                      <span className="duty-aide" key={p.id}><b>{[p.title, p.name].filter(Boolean).join(' ')}</b><span>{p.extension || ''}</span></span>
+                      <span className="duty-aide" key={p.id}><b>{[p.title, p.name].filter(Boolean).join(' ')}</b><ContactValue label={[p.title, p.name].filter(Boolean).join(' ')} value={p.extension} onReveal={setReveal} /></span>
                     ))}
                   </div>
                 </div>
@@ -332,6 +350,7 @@ export default function WardTab() {
 
       {/* 有選取床位時才掛載病人詳情彈窗 */}
       {liveSelectedBed && liveSelectedBed.Patient && <BedModal bed={liveSelectedBed} onClose={()=>setSelectedBed(null)} />}
+      <ContactRevealModal reveal={reveal} onClose={() => setReveal(null)} />
     </>
   )
 }

@@ -118,7 +118,8 @@ const MENU_CONFIG = [
       { id: 'er-ext',    label: '病人臨床補充', available: true },
       { id: 'er-exam',   label: '檢查/會診', available: true },
       { id: 'er-oncall-roster', label: '值班醫師排程', available: true },   // 每日輪值月曆（全院共用；已取代舊「各科值班醫師」）
-      { id: 'er-night-nurse', label: '夜/假護理師排程', available: true }, // 全院夜/假護理師月曆（無科別；小夜/小夜貳組）
+      { id: 'er-night-nurse', label: '專師值班排程', available: true }, // 專師值班月曆（無科別；小夜/小夜貳組）
+      { id: 'er-admin-duty', label: '護理行政值班排程', available: true }, // 護理行政值班月曆（無科別；大夜/白班/小夜）
       { id: 'er-oncall-display', label: '顯示值班醫師', available: true }, // 引用中央值班排程；ER 前台最多 10 科
       { id: 'er-shift',  label: '醫師/照服員設定', available: true },   // 原「三班醫護人員」；護理師改由三班護理師供給
       { id: 'er-shift-roster', label: '三班護理師', available: true },   // 護理師來源（餵 ER 看板三班面板）
@@ -1479,7 +1480,7 @@ function NightNurseScheduleSection() {
   return (
     <div>
       <PmMsg msg={msg} />
-      <div style={{ fontSize: '12px', color: '#9ca3af', marginBottom: '10px' }}>全院夜間及假日護理師值班（月曆）。選月份 → 每日填<b>小夜／小夜貳組</b>護理師（純文字），按「儲存本月」覆寫整月。<b>顯示於白板之設定日後再接</b>。</div>
+      <div style={{ fontSize: '12px', color: '#9ca3af', marginBottom: '10px' }}>專師值班（月曆）。選月份 → 每日填<b>小夜／小夜貳組</b>專師（純文字），按「儲存本月」覆寫整月。<b>顯示於白板之設定日後再接</b>。</div>
       <div style={s.formCard}>
         <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-end', flexWrap: 'wrap', marginBottom: '4px' }}>
           <div style={{ ...s.formRow, marginBottom: 0 }}><label style={s.label}>月份</label><input type="month" style={{ ...s.input, width: '170px' }} value={ym} onChange={e => setYm(e.target.value || pmToday().slice(0, 7))} /></div>
@@ -1487,7 +1488,7 @@ function NightNurseScheduleSection() {
         </div>
       </div>
       <div style={s.listCard}>
-        <h4 style={s.formTitle}>{ym} 夜/假護理師值班月曆（時段：{NIGHT_NURSE_SLOTS.join('/')}）</h4>
+        <h4 style={s.formTitle}>{ym} 專師值班月曆（時段：{NIGHT_NURSE_SLOTS.join('/')}）</h4>
         {loading ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#6b7280', padding: '12px 0' }}>
             <span style={{ width: '20px', height: '20px', border: '3px solid #d6e0ea', borderTopColor: '#2D7A55', borderRadius: '50%', animation: 'board-spin 0.9s linear infinite' }} />載入中…
@@ -1505,6 +1506,96 @@ function NightNurseScheduleSection() {
                   {NIGHT_NURSE_SLOTS.map(slot => (
                     <div key={slot} style={{ display: 'flex', alignItems: 'center', gap: '3px', marginBottom: '2px' }}>
                       <span style={{ fontSize: '10px', color: '#9ca3af', minWidth: '48px' }}>{slot}</span>
+                      <input style={{ flex: 1, minWidth: 0, boxSizing: 'border-box', padding: '3px 5px', fontSize: '12px', border: '1px solid #d1d5db', borderRadius: '4px', fontFamily: 'inherit' }}
+                        value={grid[`${dateIso}|${slot}`] ?? ''} placeholder="姓名" onChange={e => setCell(dateIso, slot, e.target.value)} />
+                    </div>
+                  ))}
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ── 護理行政值班排程（AdminDutyRoster；無科別、每日大夜/白班/小夜）────────────
+const ADMIN_DUTY_SLOTS = ['大夜', '白班', '小夜']
+function AdminDutyScheduleSection() {
+  const [ym, setYm] = useState(pmToday().slice(0, 7))     // 'YYYY-MM'
+  const [grid, setGrid] = useState({})                    // 'YYYY-MM-DD|slot' → name
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [msg, show] = pmMsgHook()
+
+  const [y, m] = ym.split('-').map(Number)
+  const daysInMonth = (y && m) ? new Date(y, m, 0).getDate() : 30
+  const firstWd = (y && m) ? new Date(y, m - 1, 1).getDay() : 1     // 0=日
+  const lead = firstWd === 0 ? 6 : firstWd - 1                       // 週一為首
+
+  const loadRoster = useCallback(async () => {
+    if (!y || !m) return
+    setLoading(true)
+    try {
+      const from = `${ym}-01`; const to = `${ym}-${String(new Date(y, m, 0).getDate()).padStart(2, '0')}`
+      const rows = await wardApi.getAdminDuty(from, to)
+      const g = {}; (rows ?? []).forEach(r => { g[`${String(r.onCallDate).slice(0, 10)}|${r.slot ?? ''}`] = r.name ?? '' })
+      setGrid(g)
+    } catch { show('讀取排程失敗', true) }
+    finally { setLoading(false) }
+  }, [ym, y, m])
+  useEffect(() => { loadRoster() }, [loadRoster])
+
+  const setCell = (dateIso, slot, name) => setGrid(g => ({ ...g, [`${dateIso}|${slot}`]: name }))
+
+  const save = async () => {
+    setSaving(true)
+    try {
+      const entries = []
+      Object.entries(grid).forEach(([key, name]) => {
+        if (!name) return
+        const [dt, slot] = key.split('|')
+        entries.push({ onCallDate: dt, slot, name, sortOrder: Math.max(0, ADMIN_DUTY_SLOTS.indexOf(slot)) + 1 })
+      })
+      await wardApi.saveAdminDutyMonth({ year: y, month: m, entries }); show(`已存 ${ym}（${entries.length} 筆）`); loadRoster()
+    } catch { show('存檔失敗', true) }
+    finally { setSaving(false) }
+  }
+
+  const cells = []
+  for (let i = 0; i < lead; i++) cells.push(null)
+  for (let d = 1; d <= daysInMonth; d++) cells.push(d)
+
+  return (
+    <div>
+      <PmMsg msg={msg} />
+      <div style={{ fontSize: '12px', color: '#9ca3af', marginBottom: '10px' }}>護理科護理行政值班（月曆）。選月份 → 每日填<b>大夜／白班／小夜</b>行政值班護理師（純文字），按「儲存本月」覆寫整月。<b>顯示於白板之設定日後再接</b>。</div>
+      <div style={s.formCard}>
+        <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-end', flexWrap: 'wrap', marginBottom: '4px' }}>
+          <div style={{ ...s.formRow, marginBottom: 0 }}><label style={s.label}>月份</label><input type="month" style={{ ...s.input, width: '170px' }} value={ym} onChange={e => setYm(e.target.value || pmToday().slice(0, 7))} /></div>
+          <button style={s.btnPrimary} onClick={save} disabled={saving || loading}>{saving ? '儲存中…' : '儲存本月'}</button>
+        </div>
+      </div>
+      <div style={s.listCard}>
+        <h4 style={s.formTitle}>{ym} 護理行政值班月曆（時段：{ADMIN_DUTY_SLOTS.join('/')}）</h4>
+        {loading ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#6b7280', padding: '12px 0' }}>
+            <span style={{ width: '20px', height: '20px', border: '3px solid #d6e0ea', borderTopColor: '#2D7A55', borderRadius: '50%', animation: 'board-spin 0.9s linear infinite' }} />載入中…
+          </div>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', gap: '4px' }}>
+            {['一', '二', '三', '四', '五', '六', '日'].map(w => <div key={w} style={{ textAlign: 'center', fontWeight: 700, fontSize: '13px', color: '#374151', padding: '4px 0' }}>{w}</div>)}
+            {cells.map((d, i) => {
+              if (d === null) return <div key={`b${i}`} />
+              const dateIso = `${ym}-${String(d).padStart(2, '0')}`
+              const wd = new Date(y, m - 1, d).getDay(); const weekend = wd === 0 || wd === 6
+              return (
+                <div key={dateIso} style={{ border: '1px solid #e5e7eb', borderRadius: '6px', padding: '4px', minHeight: '78px', background: weekend ? '#fafafa' : '#fff' }}>
+                  <div style={{ fontSize: '12px', fontWeight: 700, color: weekend ? '#b91c1c' : '#374151', marginBottom: '3px' }}>{d}</div>
+                  {ADMIN_DUTY_SLOTS.map(slot => (
+                    <div key={slot} style={{ display: 'flex', alignItems: 'center', gap: '3px', marginBottom: '2px' }}>
+                      <span style={{ fontSize: '10px', color: '#9ca3af', minWidth: '30px' }}>{slot}</span>
                       <input style={{ flex: 1, minWidth: 0, boxSizing: 'border-box', padding: '3px 5px', fontSize: '12px', border: '1px solid #d1d5db', borderRadius: '4px', fontFamily: 'inherit' }}
                         value={grid[`${dateIso}|${slot}`] ?? ''} placeholder="姓名" onChange={e => setCell(dateIso, slot, e.target.value)} />
                     </div>
@@ -2966,7 +3057,8 @@ function ErShiftPanelSection({ unit = 'ER' } = {}) {
 // ── W52 值班表三班護理師（每日排班；點選＝順序，可日期區間疊加）──────────────
 const ROSTER_SHIFTS = ['大夜', '白班', '小夜']                                       // 三站共用
 const EXTRA_SHIFT = '12:00–20:00'                                                    // 第 4 班（ER、W52 於小夜下方多此班；單一字串來源）
-const EMERGENCY_GROUPS = ['救護班', '滅火班', '安全防護', '避難引導', '通報班']       // 三站共用（含 ICU 的通報班）
+const GC_GROUPS = ['通報班', '滅火班', '安全防護', '救護班', '避難引導']              // 緊急編組顯示順序（同看板 EMERGENCY_TEAMS）
+const GC_CHARGE = '點班'                                                              // 點班列（沿用 IsCharge，非 EmergencyGroup）
 function ShiftRosterSection({ unit = 'W52' }) {
   const shiftList = (unit === 'ER' || unit === 'W52') ? [...ROSTER_SHIFTS, EXTRA_SHIFT] : ROSTER_SHIFTS   // ER、W52 於小夜下方多第 4 班（12:00–20:00）
   const emptySel = () => Object.fromEntries(shiftList.map(k => [k, []]))
@@ -2978,7 +3070,6 @@ function ShiftRosterSection({ unit = 'W52' }) {
   const [bedCountByStaff, setBedCountByStaff] = useState({})        // staffId → 該員在 listDate 的主護床數
   const [bedModalStaff, setBedModalStaff] = useState(null)          // {staffId,name}；null＝彈窗關閉
   const [bedVer, setBedVer] = useState(0)                           // 病床配對版本（存檔後 +1 觸發面板重載）
-  const [grpModalRow, setGrpModalRow] = useState(null)             // 緊急編組／點班彈窗的排班列；null＝關閉
   const [grpVer, setGrpVer] = useState(0)                           // 緊急編組版本（存檔後 +1 觸發面板重載）
   const [loading, setLoading] = useState(true)                      // 當前名單/床數載入中
   const [msg, show] = pmMsgHook()
@@ -3004,10 +3095,29 @@ function ShiftRosterSection({ unit = 'W52' }) {
   const save = async () => {
     const shifts = shiftList.map(k => ({ shift: k, staffIds: sel[k] || [] })).filter(x => x.staffIds.length)
     if (!shifts.length) { show('請先點選護理師', true); return }
-    try { await wardApi.setShiftRoster(unit, { from, to, shifts }); show(`已套用到 ${from}${to !== from ? ' ~ ' + to : ''}`); setSel(emptySel()); loadList() }
+    try { await wardApi.setShiftRoster(unit, { from, to, shifts }); show(`已套用到 ${from}${to !== from ? ' ~ ' + to : ''}`); setSel(emptySel()); loadList(); setGrpVer(v => v + 1); setBedVer(v => v + 1) }
     catch { show('儲存失敗', true) }
   }
-  const del = async (id) => { if (!window.confirm('刪除此排班？')) return; try { await wardApi.removeSchedule(id); show('已刪除'); loadList() } catch { show('刪除失敗', true) } }
+  const del = async (id) => {
+    const row = list.find(r => r.id === id)
+    if (!row) return
+    // 是否為該員當日最後一筆排班（是→連帶清主護配床；否→仍有其他班，保留配床）
+    const isLast = list.filter(x => x.staffId === row.staffId && x.id !== id).length === 0
+    const bedN = isLast ? (bedCountByStaff[row.staffId] || 0) : 0
+    const subs = []
+    if (bedN) subs.push(`我的病床 ${bedN} 床`)
+    if (row.emergencyGroup) subs.push(`編組：${row.emergencyGroup}`)
+    if (row.isCharge) subs.push('點班')
+    const ok = window.confirm(subs.length
+      ? `刪除「${row.name}」（${row.shift}）排班？\n將一併移除：${subs.join('、')}。\n確定刪除？`
+      : '刪除此排班？')
+    if (!ok) return
+    try {
+      if (bedN) await wardApi.setBedNurse(unit, { staffId: row.staffId, workDate: listDate, bedIds: [] })   // 清空該員當日主護配床
+      await wardApi.removeSchedule(id)   // 刪排班列（含其 emergencyGroup／isCharge）
+      show('已刪除'); loadList(); setGrpVer(v => v + 1); setBedVer(v => v + 1)
+    } catch { show('刪除失敗', true) }
+  }
   const byShift = {}; list.filter(r => (r.role || '').includes('護理')).forEach(r => { (byShift[r.shift] = byShift[r.shift] || []).push(r) })
   return (
     <div>
@@ -3058,7 +3168,7 @@ function ShiftRosterSection({ unit = 'W52' }) {
               {rows.length === 0 ? <span style={{ color: '#9ca3af' }}>—</span> : rows.map(r => (
                 <span key={r.id} style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', marginRight: '10px' }}>
                   <span style={{ color: '#9ca3af', fontSize: '11px' }}>{r.sortOrder}.</span>
-                  <button onClick={() => setGrpModalRow(r)} title="設定緊急編組／點班" style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', font: 'inherit', color: '#1d4ed8', textDecoration: 'underline' }}>{r.name}</button>
+                  <span style={{ font: 'inherit', color: '#111827' }}>{r.name}</span>
                   {r.emergencyGroup && <span style={{ color: '#9ca3af', fontSize: '11px' }}>·{r.emergencyGroup}</span>}
                   {r.isCharge && <span style={{ color: '#b45309', fontSize: '11px' }}>·點班</span>}
                   <button onClick={() => setBedModalStaff({ staffId: r.staffId, name: r.name })} style={{ ...s.btnDel, padding: '0 6px', fontSize: '11px', marginLeft: '2px', background: '#e0f2fe', color: '#075985' }}>我的病床{bedCountByStaff[r.staffId] ? `(${bedCountByStaff[r.staffId]})` : ''}</button>
@@ -3070,7 +3180,7 @@ function ShiftRosterSection({ unit = 'W52' }) {
         })}
       </div>
       <BedInfoPanel unit={unit} version={bedVer} />
-      <EmergencyGroupPanel unit={unit} version={grpVer} />
+      <GroupChargePanel unit={unit} version={grpVer} onSaved={() => { loadList(); setGrpVer(v => v + 1) }} />
       {bedModalStaff && (
         <div style={extEditOverlay} onClick={() => setBedModalStaff(null)}>
           <div style={extEditModal} onClick={e => e.stopPropagation()}>
@@ -3082,10 +3192,6 @@ function ShiftRosterSection({ unit = 'W52' }) {
             </div>
           </div>
         </div>
-      )}
-      {grpModalRow && (
-        <GroupChargeModal unit={unit} row={grpModalRow} workDate={listDate} onClose={() => setGrpModalRow(null)}
-          onSaved={() => { setGrpModalRow(null); loadList(); setGrpVer(v => v + 1) }} />
       )}
     </div>
   )
@@ -3269,48 +3375,6 @@ function AideDisplaySection({ unitCode = 'W52', maxSelect = 0 }) {
   )
 }
 
-// 緊急編組／點班彈窗：更新單筆排班的 EmergencyGroup 與 IsCharge
-function GroupChargeModal({ unit, row, workDate, onClose, onSaved }) {
-  const [eg, setEg] = useState(row.emergencyGroup ?? '')
-  const [isCharge, setIsCharge] = useState(!!row.isCharge)
-  const [msg, show] = pmMsgHook()
-  const [saving, setSaving] = useState(false)
-  const save = async () => {
-    setSaving(true)
-    try {
-      await wardApi.updateSchedule(row.id, {
-        staffId: row.staffId, unitCode: unit, workDate, shift: row.shift,
-        emergencyGroup: eg || null, isCharge, note: row.note ?? null,
-        sortOrder: row.sortOrder, isActive: true,
-      })
-      onSaved()
-    } catch { show('存檔失敗', true); setSaving(false) }
-  }
-  return (
-    <div style={extEditOverlay} onClick={onClose}>
-      <div style={{ ...extEditModal, width: '440px' }} onClick={e => e.stopPropagation()}>
-        <h4 style={s.formTitle}>緊急編組／點班：{row.name}（{workDate}）</h4>
-        <PmMsg msg={msg} />
-        <div style={s.formRow}>
-          <label style={s.label}>緊急編組</label>
-          <select style={s.input} value={eg} onChange={e => setEg(e.target.value)}>
-            <option value="">（未指定）</option>
-            {EMERGENCY_GROUPS.map(g => <option key={g} value={g}>{g}</option>)}
-          </select>
-        </div>
-        <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '14px', cursor: 'pointer', margin: '12px 0' }}>
-          <input type="checkbox" checked={isCharge} onChange={e => setIsCharge(e.target.checked)} />點班
-        </label>
-        <div style={{ marginTop: '10px', textAlign: 'right', display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-          <button style={s.btnSecondary} onClick={onClose}>取消</button>
-          <button style={s.btnPrimary} onClick={save} disabled={saving}>存檔</button>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-// 緊急編組：昨日/今日/明日三 tab，依組別列出護理師
 // 日期 tab：昨日/今日/明日 ＋ 之後 7 天（共 10 天，offset -1~+8）；昨/今/明有標籤，其餘只顯示 MM/DD
 function DayTabs({ active, onChange }) {
   return (
@@ -3328,48 +3392,98 @@ function DayTabs({ active, onChange }) {
   )
 }
 
-function EmergencyGroupPanel({ unit, version = 0 }) {
+// 緊急編組／點班設定：群組導向多選（一人可多組）。人員清單＝當日排班（護理），每項顯示「姓名 班別」，前有核取方塊。
+// 儲存＝逐列 updateSchedule：EmergencyGroup 以逗號 join 多組；點班寫 IsCharge。
+function GroupChargePanel({ unit, version = 0, onSaved }) {
   const [active, setActive] = useState(pmDateOffset(0))
-  const [rows, setRows] = useState([])
+  const [rows, setRows] = useState([])          // 當日護理排班列（一人一班一列）
+  const [sel, setSel] = useState({})             // { 組別: Set(rowId) }；組別 ∈ GC_GROUPS ∪ 點班
+  const [saving, setSaving] = useState(false)
   const [msg, show] = pmMsgHook()
   const load = useCallback(async () => {
-    try { setRows(((await wardApi.getScheduleList(unit, active, true)) ?? []).filter(r => r.emergencyGroup)) }
-    catch { show('讀取失敗', true) }
+    try {
+      const seq = [...ROSTER_SHIFTS, EXTRA_SHIFT]   // 大夜→白班→小夜→12:00–20:00
+      const rank = sh => { const i = seq.indexOf(sh); return i < 0 ? 90 : i }
+      const list = ((await wardApi.getScheduleList(unit, active, true)) ?? [])
+        .filter(r => (r.role || '').includes('護理'))
+        .sort((a, b) => (rank(a.shift) - rank(b.shift)) || ((a.sortOrder ?? 0) - (b.sortOrder ?? 0)))
+      setRows(list)
+      const init = {}; [...GC_GROUPS, GC_CHARGE].forEach(g => { init[g] = new Set() })
+      list.forEach(r => {
+        String(r.emergencyGroup ?? '').split(',').forEach(g0 => { const g = g0.trim(); if (init[g]) init[g].add(r.id) })
+        if (r.isCharge) init[GC_CHARGE].add(r.id)
+      })
+      setSel(init)
+    } catch { show('讀取失敗', true) }
   }, [unit, active, version])
   useEffect(() => { load() }, [load])
-  const byGroup = {}; rows.forEach(r => { (byGroup[r.emergencyGroup] = byGroup[r.emergencyGroup] || []).push(r) })
-  const has = EMERGENCY_GROUPS.some(g => (byGroup[g] || []).length)
+  const toggle = (g, id) => setSel(s => { const cur = new Set(s[g] ?? []); cur.has(id) ? cur.delete(id) : cur.add(id); return { ...s, [g]: cur } })
+  const save = async () => {
+    setSaving(true)
+    try {
+      let n = 0
+      for (const r of rows) {
+        const eg = GC_GROUPS.filter(g => sel[g]?.has(r.id)).join(',') || null
+        const isCharge = !!sel[GC_CHARGE]?.has(r.id)
+        if ((r.emergencyGroup || '') !== (eg || '') || !!r.isCharge !== isCharge) {
+          await wardApi.updateSchedule(r.id, {
+            staffId: r.staffId, unitCode: unit, workDate: active, shift: r.shift,
+            emergencyGroup: eg, isCharge, note: r.note ?? null, sortOrder: r.sortOrder, isActive: true,
+          })
+          n++
+        }
+      }
+      show(n ? `已存檔（更新 ${n} 筆）` : '無變更')
+      onSaved?.()
+      load()
+    } catch { show('存檔失敗', true) } finally { setSaving(false) }
+  }
   return (
     <div style={{ ...s.listCard, marginTop: '16px' }}>
       <PmMsg msg={msg} />
-      <h4 style={s.formTitle}>緊急編組</h4>
+      <h4 style={s.formTitle}>緊急編組／點班設定</h4>
+      <div style={{ fontSize: '12px', color: '#9ca3af', marginBottom: '10px' }}>核取各編組／點班的人員後按「存檔」。一人可同時屬多個編組；人員清單＝當日排班（大夜／白班／小夜／12:00–20:00）。</div>
       <DayTabs active={active} onChange={setActive} />
-      {!has
-        ? <div style={{ color: '#9ca3af', fontSize: '14px' }}>（該日尚無編組）</div>
-        : EMERGENCY_GROUPS.map(g => {
-          const list = byGroup[g] || []
-          return (
-            <div key={g} style={{ marginBottom: '8px', fontSize: '14px' }}>
-              <b style={{ color: '#075985' }}>{g}：</b>
-              {list.length === 0 ? <span style={{ color: '#9ca3af' }}>—</span> : list.map((r, i) => (
-                <span key={r.id} style={{ marginRight: '8px' }}>{r.name}{r.isCharge && <span style={{ color: '#b45309', fontSize: '11px' }}>（點班）</span>}{i < list.length - 1 ? '、' : ''}</span>
-              ))}
+      {rows.length === 0
+        ? <div style={{ color: '#9ca3af', fontSize: '14px' }}>（該日無排班人員）</div>
+        : [...GC_GROUPS, GC_CHARGE].map(g => (
+          <div key={g} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', padding: '8px 0', borderBottom: '1px solid #f1f5f9' }}>
+            <b style={{ minWidth: '76px', color: g === GC_CHARGE ? '#b45309' : '#075985', flexShrink: 0 }}>{g}：</b>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+              {rows.map(r => {
+                const on = !!sel[g]?.has(r.id)
+                return (
+                  <label key={r.id} style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '3px 9px', borderRadius: '16px', cursor: 'pointer', fontSize: '13px', border: on ? '1px solid #2D7A55' : '1px solid #d1d5db', background: on ? '#E8F5EE' : '#fff', color: on ? '#065f46' : '#374151' }}>
+                    <input type="checkbox" checked={on} onChange={() => toggle(g, r.id)} />
+                    {r.name}<span style={{ color: '#9ca3af', fontSize: '11px' }}>{r.shift}</span>
+                  </label>
+                )
+              })}
             </div>
-          )
-        })}
+          </div>
+        ))}
+      {rows.length > 0 && <button style={{ ...s.btnPrimary, marginTop: '14px' }} onClick={save} disabled={saving}>存檔</button>}
     </div>
   )
 }
 
-// 病床資訊：昨日/今日/明日三 tab，只列有配到主護護理師的病床
 function BedInfoPanel({ unit, version = 0 }) {
   const [active, setActive] = useState(pmDateOffset(0))
   const [rows, setRows] = useState([])
+  const [shiftByStaff, setShiftByStaff] = useState({})   // staffId → [班別]（依當日三班排程對應）
   const [msg, show] = pmMsgHook()
   const load = useCallback(async () => {
     try {
-      const r = (await wardApi.getBedAssign(unit, active, '主護', true)) ?? []
-      setRows(r.slice().sort((a, b) => String(a.bedId).localeCompare(String(b.bedId))))
+      const [r, sch] = await Promise.all([
+        wardApi.getBedAssign(unit, active, '主護', true),
+        wardApi.getScheduleList(unit, active, true),
+      ])
+      const m = {}; (sch ?? []).forEach(x => { if (x.staffId != null && x.shift) { const a = m[x.staffId] || (m[x.staffId] = []); if (!a.includes(x.shift)) a.push(x.shift) } })
+      setShiftByStaff(m)
+      // 同床多位護理師：以 大夜→白班→小夜(→12:00–20:00) 排序；未排班者置後
+      const seq = [...ROSTER_SHIFTS, EXTRA_SHIFT]
+      const rankOf = id => { const a = m[id] || []; return a.length ? Math.min(...a.map(sh => { const i = seq.indexOf(sh); return i < 0 ? 90 : i })) : 99 }
+      setRows((r ?? []).slice().sort((a, b) => String(a.bedId).localeCompare(String(b.bedId)) || (rankOf(a.staffId) - rankOf(b.staffId))))
     } catch { show('讀取失敗', true) }
   }, [unit, active, version])
   useEffect(() => { load() }, [load])
@@ -3386,6 +3500,9 @@ function BedInfoPanel({ unit, version = 0 }) {
               <div key={r.id ?? r.bedId} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '7px 10px', border: '1px solid #e5e7eb', borderRadius: '6px', fontSize: '14px' }}>
                 <span style={{ fontWeight: 700, minWidth: '46px', color: '#075985' }}>{String(r.bedId).replace(new RegExp('^' + unit + '-'), '')}</span>
                 <span>{r.name}</span>
+                {shiftByStaff[r.staffId]?.length > 0 && (
+                  <span style={{ color: '#2D7A55', fontSize: '12px', fontWeight: 600 }}>{shiftByStaff[r.staffId].join('/')}</span>
+                )}
               </div>
             ))}
           </div>
@@ -3794,6 +3911,7 @@ export default function AdminPage() {
       case 'er-ext':         return <WardExtSection key="ER"  unitCode="ER" />
       case 'er-oncall-roster': return <OnCallScheduleSection />
       case 'er-night-nurse': return <NightNurseScheduleSection />
+      case 'er-admin-duty': return <AdminDutyScheduleSection />
       case 'er-oncall-display': return <OnCallDisplaySection unitCode="ER" maxSelect={10} />
       case 'er-shift':       return <ErShiftPanelSection key="ERshift" />
       case 'w52-shift':      return <ShiftRosterSection unit="W52" key="W52roster" />

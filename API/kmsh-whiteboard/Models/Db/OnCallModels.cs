@@ -122,3 +122,33 @@ public class NightNurseEntry
     public string? Name { get; set; }
     public int SortOrder { get; set; }
 }
+
+// ── 護理行政值班表（AdminDutyRoster；無科別、每日三時段：大夜/白班/小夜）──
+
+/// <summary>護理行政值班某日某時段一列。</summary>
+public class AdminDutyItem
+{
+    public int Id { get; set; }
+    public DateTime OnCallDate { get; set; }
+    public string Slot { get; set; } = "";
+    public string? Name { get; set; }
+    public int SortOrder { get; set; }
+    public bool IsActive { get; set; }
+}
+
+/// <summary>護理行政值班月曆整月存檔請求（覆寫該月）。</summary>
+public class AdminDutyMonthSaveRequest
+{
+    public int Year { get; set; }
+    public int Month { get; set; }
+    public List<AdminDutyEntry> Entries { get; set; } = new();
+}
+
+/// <summary>護理行政值班月曆單格。</summary>
+public class AdminDutyEntry
+{
+    [Required] public string OnCallDate { get; set; } = "";   // yyyy-MM-dd
+    public string Slot { get; set; } = "";
+    public string? Name { get; set; }
+    public int SortOrder { get; set; }
+}

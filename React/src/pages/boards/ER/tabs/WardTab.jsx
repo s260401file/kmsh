@@ -12,6 +12,7 @@ import { useUnitInfo } from '../../../../hooks/useUnitInfo'          // 頁首�
 import { usePolling } from '../../../../hooks/usePolling'           // 各科值班醫師面板：定時輪詢自建資料
 import * as wardApi from '../../../../services/wardApi'
 import { BULLETIN_MS } from '../../../../config/pollingConfig'
+import { ContactValue, ContactRevealModal } from '../../../../components/ContactReveal'   // 分機/電話個資遮蔽（>9位數→點我顯示）
 import { FlagDot, makeFlagStyle } from '../../../../utils/flagShapes'
 
 // 檢傷分級：院方真實值 1/2/3 → A/B/C 三級（1→A 重症、2→B 中症、3→C 輕症）
@@ -220,6 +221,7 @@ export default function WardTab() {
   const [filter, setFilter] = useState('all')          // 目前選取的篩選類別
   const [selectedBed, setSelectedBed] = useState(null)  // 目前開啟詳情的床位
   const [showDeceased, setShowDeceased] = useState(false)  // 死亡類別彈窗開關
+  const [reveal, setReveal] = useState(null)           // 各科值班醫師分機/電話遮蔽：點「點我顯示」跳窗
   const { beds, deceasedCount, deceased, loading } = useErWard('ER')  // 後端聚合看板；死亡(不佔床)由 Board_ER_TypeE 計並帶明細
   const placedBeds = useMemo(() => beds.filter(b => !b.Unplaced), [beds])    // 有平面圖座標
   const unplacedBeds = useMemo(() => beds.filter(b => b.Unplaced), [beds])   // 不佔床病人（床碼未建主檔）→ 負1 下方面板
@@ -237,6 +239,14 @@ export default function WardTab() {
   const nursesByShift = useMemo(() => {
     const m = {}; (schedData?.shifts ?? []).forEach(s => { m[normShift(s.shiftType)] = (s.nurses ?? []).map(n => n.peName).filter(Boolean) }); return m
   }, [schedData])
+  // 護理行政值班（今日大夜/白班/小夜）：兒科留觀區上方 1×3 面板；資料來自後台「專師值班排程」同源之 AdminDutyRoster
+  const adToday = useMemo(() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` }, [])
+  const { data: adminDutyData } = usePolling(() => wardApi.getAdminDuty(adToday, adToday), { intervalMs: BULLETIN_MS, deps: ['ER-adminduty', adToday] })
+  const adminDuty = useMemo(() => {
+    const ad = { 大夜: '', 白班: '', 小夜: '' }
+    ;(adminDutyData ?? []).forEach(r => { if (ad[r.slot] !== undefined) ad[r.slot] = r.name || '' })
+    return ad
+  }, [adminDutyData])
   // 急診醫師/照服員只顯示白班(白)、大夜(夜) 於標題右側
   const dayDoc = shifts.find(s => s.shift === '白班')?.doctor
   const nightDoc = shifts.find(s => s.shift === '大夜')?.doctor
@@ -308,6 +318,16 @@ export default function WardTab() {
               </div>
             </div>
 
+            {/* 護理行政值班（兒科留觀區上方 1×3 空區，col4-6×row1）：今日大夜/白班/小夜 */}
+            <div className="admin-duty-panel" style={{ gridColumn: '4/7', gridRow: '1' }}>
+              <div className="adp-title">護理行政值班</div>
+              <div className="adp-body">
+                {['大夜', '白班', '小夜'].map(k => (
+                  <div className="adp-col" key={k}><span className="adp-label">{k}</span><span className="adp-name">{adminDuty[k] || '—'}</span></div>
+                ))}
+              </div>
+            </div>
+
             {/* 各科值班醫師面板（MER09 下方 5×2 空區，col7-11×row7-8）：對應實體急診白板右半，自建資料 */}
             <div className="oncall-panel" style={{ gridColumn: '7/12', gridRow: '7/9' }}>
               <div className="oc-title">各科值班醫師</div>
@@ -315,7 +335,7 @@ export default function WardTab() {
                 {onCallDocs.map(d => (
                   <div className="oc-cell" key={d.deptCode}>
                     <div className="oc-dept">{d.deptCode}<span className="oc-deptname"> {d.deptName}</span></div>
-                    <div className="oc-doc">{d.doctorName || '—'}{d.ext ? <span className="oc-ext"> #{d.ext}</span> : null}</div>
+                    <div className="oc-doc">{d.doctorName || '—'}{d.ext ? <ContactValue className="oc-ext" label={`${d.deptName || d.deptCode || ''} ${d.doctorName || ''}`.trim()} value={d.ext} onReveal={setReveal} /> : null}</div>
                   </div>
                 ))}
               </div>
@@ -412,6 +432,7 @@ export default function WardTab() {
 
       {liveSelectedBed && liveSelectedBed.Patient && <BedModal bed={liveSelectedBed} onClose={() => setSelectedBed(null)} />}
       {showDeceased && <DeceasedModal list={deceased} onClose={() => setShowDeceased(false)} />}
+      <ContactRevealModal reveal={reveal} onClose={() => setReveal(null)} />
     </>
   )
 }

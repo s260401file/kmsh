@@ -41,7 +41,8 @@ public class IcuPatientDto
     public string? Admission { get; set; }       // MM/DD（住院天數用）
     public string? Diagnosis { get; set; }
     public string? Doctor { get; set; }          // 主治
-    public string? Nurse { get; set; }           // 責護
+    public string? Nurse { get; set; }           // 責護（全日逗號並列；保留作 fallback）
+    public List<IcuNurseDto>? Nurses { get; set; } // 責任護理師（含班別，依三班排程對應）
     public string? Condition { get; set; }       // 穩定/重症/危急（畫面 C/B/A）
     public string? Isolation { get; set; }
     public bool Dnr { get; set; }
@@ -65,4 +66,11 @@ public class IcuPatientDto
     public bool Exam { get; set; }
     public bool Consult { get; set; }
     public string? Notes { get; set; }
+}
+
+/// <summary>ICU 責任護理師（勾床主護＋當日三班排程對應之班別）。</summary>
+public class IcuNurseDto
+{
+    public string Name { get; set; } = "";
+    public string? Shift { get; set; }           // 大夜/白班/小夜；null＝當日未排三班
 }

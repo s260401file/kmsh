@@ -30,4 +30,9 @@ public interface IOnCallRepository
     Task<IEnumerable<NightNurseItem>> GetNightNurseAsync(DateTime from, DateTime to, CancellationToken ct = default);
     /// <summary>覆寫某月夜/假護理師：交易內先刪該月、再插入 entries。回傳插入筆數。</summary>
     Task<int> SaveNightNurseMonthAsync(NightNurseMonthSaveRequest req, CancellationToken ct = default);
+
+    // ── 護理行政值班表 AdminDutyRoster ──
+    Task<IEnumerable<AdminDutyItem>> GetAdminDutyAsync(DateTime from, DateTime to, CancellationToken ct = default);
+    /// <summary>覆寫某月護理行政值班：交易內先刪該月、再插入 entries。回傳插入筆數。</summary>
+    Task<int> SaveAdminDutyMonthAsync(AdminDutyMonthSaveRequest req, CancellationToken ct = default);
 }
