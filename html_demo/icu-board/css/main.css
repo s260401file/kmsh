@@ -180,6 +180,7 @@ body { flex-direction: column; }
 .ws-value.ws-ng    { color: #6A1B9A; }
 .ws-value.ws-foley { color: #00838F; }
 .ws-value.ws-cvc   { color: #2E7D32; }
+.ws-value.ws-restraint { color: #795548; }
 
 .floor-title {
   background: var(--bg-floor-label);
@@ -399,3 +400,42 @@ body { flex-direction: column; }
   font-weight: 700;
   cursor: pointer;
 }
+
+/* ── 護理行政值班面板（4F-02 右側 1×2 空區；今日大夜/白班/小夜）── */
+.icu-admin-duty {
+  background: #fff;
+  border: 1.5px solid var(--accent-green);
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+}
+.icu-admin-duty .iad-title {
+  background: var(--accent-green);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  padding: 3px 10px;
+  flex-shrink: 0;
+}
+.icu-admin-duty .iad-body {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  min-height: 0;
+}
+.icu-admin-duty .iad-row {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  padding: 2px 4px;
+  border-right: 1px solid var(--divider);
+  min-width: 0;
+}
+.icu-admin-duty .iad-row:last-child { border-right: none; }
+.icu-admin-duty .iad-label { font-size: 14px; color: var(--text-secondary); font-weight: 700; }
+.icu-admin-duty .iad-name  { font-size: 18px; color: var(--text-primary); font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }

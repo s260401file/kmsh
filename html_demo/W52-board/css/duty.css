@@ -61,3 +61,12 @@
 .duty-aide { font-size: 15px; color: var(--text-secondary); }
 .duty-aide b { color: var(--text-primary); font-weight: 700; margin-right: 4px; }
 .duty-aide span { font-family: var(--font-num); }
+
+/* ── 護理行政值班（056 床右側 3 欄×2 列；橫向 3 班，比照 ICU icu-admin-duty） ── */
+.w52-admin-duty { background: #fff; border: 1.5px solid var(--accent-green); border-radius: 10px; display: flex; flex-direction: column; overflow: hidden; min-height: 0; }
+.w52-admin-duty .iad-title { background: var(--accent-green); color: #fff; font-size: 20px; font-weight: 700; letter-spacing: 1px; padding: 5px 12px; flex-shrink: 0; }
+.w52-admin-duty .iad-body { flex: 1; display: grid; grid-template-columns: repeat(3, 1fr); min-height: 0; }
+.w52-admin-duty .iad-row { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 4px 6px; border-right: 1px solid var(--divider); min-width: 0; }
+.w52-admin-duty .iad-row:last-child { border-right: none; }
+.w52-admin-duty .iad-label { font-size: 17px; color: var(--text-secondary); font-weight: 700; }
+.w52-admin-duty .iad-name { font-size: 19px; color: var(--text-primary); font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }

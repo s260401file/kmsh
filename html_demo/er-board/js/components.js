@@ -89,14 +89,56 @@ function renderStaffShifts(shifts) {
 }
 
 // 各科值班醫師（資料來自 MOCK_DATA.OnCall，屆時改 API）：5×2 格，科別代碼＋醫師＋分機
+// 分機/電話去除 # 前綴；數字位數 > 9（手機）改「點我顯示」跳窗（對應 React ContactValue）
 function renderOnCall(list) {
   const grid = document.getElementById("oc-grid");
   if (!grid || !list) return;
   grid.innerHTML = list.map(d => `
     <div class="oc-cell">
       <div class="oc-dept">${d.DeptCode}<span class="oc-deptname"> ${d.DeptName}</span></div>
-      <div class="oc-doc">${d.Doctor || "—"}${d.Ext ? `<span class="oc-ext"> #${d.Ext}</span>` : ""}</div>
+      <div class="oc-doc">${d.Doctor || "—"}${d.Ext ? contactValueHTML(`${d.DeptName || d.DeptCode || ""} ${d.Doctor || ""}`.trim(), d.Ext, "oc-ext") : ""}</div>
     </div>`).join("");
+}
+
+// 護理行政值班（今日大夜/白班/小夜）：兒科留觀區上方 1×3 面板
+function renderAdminDuty(ad) {
+  const body = document.getElementById("adp-body");
+  if (!body) return;
+  const a = ad || {};
+  body.innerHTML = ["大夜", "白班", "小夜"].map(k =>
+    `<div class="adp-col"><span class="adp-label">${k}</span><span class="adp-name">${a[k] || "—"}</span></div>`
+  ).join("");
+}
+
+// 死亡類別（不佔床）明細彈窗：列出病歷號＋轉出(死亡)日期/時間＋病房/病床
+function openDeceasedModal(list) {
+  const rows = list || [];
+  document.getElementById("dc-total").textContent = `共 ${rows.length} 筆`;
+  const body = document.getElementById("deceased-body");
+  if (rows.length === 0) {
+    body.innerHTML = `<div style="padding:24px;text-align:center;color:#7A8FA0">目前無死亡類別資料</div>`;
+  } else {
+    const th = 'style="text-align:left;padding:8px 12px;background:#F4F8F6;color:#3A5068;font-weight:700;font-size:14px;white-space:nowrap;border-bottom:1px solid #D6E0E8"';
+    const td = 'style="padding:9px 12px;border-bottom:1px solid #EEF2F5;font-size:15px"';
+    body.innerHTML = `
+      <table style="width:100%;border-collapse:collapse;font-family:var(--font-num,inherit)">
+        <thead><tr>${["病歷號","轉出日期","轉出時間","病房","病床"].map(h => `<th ${th}>${h}</th>`).join("")}</tr></thead>
+        <tbody>
+          ${rows.map(d => `
+            <tr>
+              <td style="padding:9px 12px;border-bottom:1px solid #EEF2F5;font-size:15px;font-weight:700">${d.MedRecord || "—"}</td>
+              <td ${td}>${d.OutDate || "—"}</td>
+              <td ${td}>${d.OutTime || "—"}</td>
+              <td ${td}>${d.Ward || "—"}</td>
+              <td ${td}>${d.Bed || "—"}</td>
+            </tr>`).join("")}
+        </tbody>
+      </table>`;
+  }
+  document.getElementById("deceasedModal").classList.add("show");
+}
+function closeDeceasedModal() {
+  document.getElementById("deceasedModal").classList.remove("show");
 }
 
 /* BedId → 合法 CSS class 名稱（轉換「負」字） */
@@ -160,6 +202,7 @@ function renderBedCard(bed) {
         <span class="patient-name ${genderCls}">${p.PatientName}</span>
         <span class="patient-basic">${p.Gender}/${p.Age}</span>
       </div>
+      ${p.Doctor ? `<div class="card-row3">Dr ${p.Doctor}</div>` : ""}
       <div class="dots-row">${dotsHTML(allBadges)}</div>
     </div>`;
 }

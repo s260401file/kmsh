@@ -1,3 +1,6 @@
+// ICU 加護病房 Mock Data ── 25 床（4F:20 + 3F:5）
+// Status: "occupied" | "isolation" | "transfer" | "discharge" | "empty"
+// nurses[]：責任護理師依三班（大夜/白班/小夜）。卡片顯示「當前時段」、彈窗依大夜→白班→小夜排序。
 const MOCK_DATA = {
   hospitalInfo: {
     name: "高雄市立民生醫院",
@@ -9,8 +12,10 @@ const MOCK_DATA = {
     // ── 4F beds ──
     { id:"F4-01", floor:4, num:1,  status:"occupied",
       patient:{ name:"林○志", gender:"M", age:72, admission:"05/10", diagnosis:"Septic shock, Pneumonia",
-                doctor:"蘇○醫師", nurse:"陳○護理師、王○護理師", condition:"重症", isolation:"無",
-                dnr:false, ventilator:true,  crrt:false, surgery:false, consult:false, rrt:false,
+                doctor:"蘇○醫師", nurse:"陳○護理師、王○護理師",
+                nurses:[{shift:"大夜",name:"何○護理師"},{shift:"白班",name:"陳○護理師"},{shift:"白班",name:"王○護理師"},{shift:"小夜",name:"曾○護理師"}],
+                condition:"重症", isolation:"無",
+                dnr:false, ventilator:true,  crrt:false, surgery:false, consult:false, rrt:false, restraint:false,
                 medRecord:"A234567890", idNo:"A2******90", birthDate:"1953/08/12", department:"胸腔內科",
                 fallRisk:false, dependency:null, confidential:false, noTreatment:false,
                 npo:true,  allergy:false, chemo:false, transport:null, oxygen:false, exam:false,
@@ -18,8 +23,10 @@ const MOCK_DATA = {
 
     { id:"F4-02", floor:4, num:2,  status:"occupied",
       patient:{ name:"張○芬", gender:"F", age:65, admission:"05/13", diagnosis:"Post-OP CABG D2",
-                doctor:"李○醫師", nurse:"周○護理師", condition:"重症", isolation:"無",
-                dnr:false, ventilator:true,  crrt:false, surgery:false, consult:false, rrt:false,
+                doctor:"李○醫師", nurse:"周○護理師",
+                nurses:[{shift:"大夜",name:"楊○護理師"},{shift:"白班",name:"周○護理師"},{shift:"小夜",name:"許○護理師"}],
+                condition:"重症", isolation:"無",
+                dnr:false, ventilator:true,  crrt:false, surgery:false, consult:false, rrt:false, restraint:false,
                 medRecord:"B345678901", idNo:"B3******01", birthDate:"1960/11/20", department:"心臟外科",
                 fallRisk:false, dependency:null, confidential:false, noTreatment:false,
                 npo:true,  allergy:true,  chemo:false, transport:null, oxygen:false, exam:false,
@@ -29,8 +36,10 @@ const MOCK_DATA = {
 
     { id:"F4-05", floor:4, num:5,  status:"occupied",
       patient:{ name:"黃○雄", gender:"M", age:80, admission:"05/11", diagnosis:"ICH, GCS E2M4Vt",
-                doctor:"洪○醫師", nurse:"郭○護理師", condition:"危急", isolation:"無",
-                dnr:true,  ventilator:true,  crrt:false, surgery:false, consult:false, rrt:true,
+                doctor:"洪○醫師", nurse:"郭○護理師",
+                nurses:[{shift:"大夜",name:"蔡○護理師"},{shift:"白班",name:"郭○護理師"},{shift:"小夜",name:"邱○護理師"}],
+                condition:"危急", isolation:"無",
+                dnr:true,  ventilator:true,  crrt:false, surgery:false, consult:false, rrt:true, restraint:true,
                 medRecord:"C456789012", idNo:"C4******12", birthDate:"1945/03/07", department:"神經外科",
                 fallRisk:true,  dependency:"L3", confidential:false, noTreatment:false,
                 npo:true,  allergy:false, chemo:false, transport:null, oxygen:false, exam:false,
@@ -38,8 +47,10 @@ const MOCK_DATA = {
 
     { id:"F4-06", floor:4, num:6,  status:"occupied",
       patient:{ name:"吳○雅", gender:"F", age:58, admission:"05/13", diagnosis:"AMI, Cardiogenic shock",
-                doctor:"弘○醫師", nurse:"賴○護理師", condition:"重症", isolation:"無",
-                dnr:false, ventilator:false, crrt:false, surgery:false, consult:false, rrt:false,
+                doctor:"弘○醫師", nurse:"賴○護理師",
+                nurses:[{shift:"大夜",name:"江○護理師"},{shift:"白班",name:"賴○護理師"},{shift:"小夜",name:"廖○護理師"}],
+                condition:"重症", isolation:"無",
+                dnr:false, ventilator:false, crrt:false, surgery:false, consult:false, rrt:false, restraint:false,
                 medRecord:"D567890123", idNo:"D5******23", birthDate:"1967/09/25", department:"心臟內科",
                 fallRisk:false, dependency:null, confidential:false, noTreatment:false,
                 npo:false, allergy:false, chemo:false, transport:null, oxygen:true,  exam:false,
@@ -47,8 +58,10 @@ const MOCK_DATA = {
 
     { id:"F4-07", floor:4, num:7,  status:"isolation",
       patient:{ name:"陳○祥", gender:"M", age:71, admission:"05/09", diagnosis:"Necrotizing fasciitis",
-                doctor:"蘇○醫師", nurse:"李○護理師", condition:"重症", isolation:"接觸隔離",
-                dnr:false, ventilator:true,  crrt:false, surgery:false, consult:false, rrt:false,
+                doctor:"蘇○醫師", nurse:"李○護理師",
+                nurses:[{shift:"大夜",name:"高○護理師"},{shift:"白班",name:"李○護理師"},{shift:"小夜",name:"蘇○護理師"}],
+                condition:"重症", isolation:"接觸隔離",
+                dnr:false, ventilator:true,  crrt:false, surgery:false, consult:false, rrt:false, restraint:false,
                 medRecord:"E678901234", idNo:"E6******34", birthDate:"1954/12/03", department:"整形外科",
                 fallRisk:false, dependency:null, confidential:false, noTreatment:false,
                 npo:false, allergy:true,  chemo:false, transport:null, oxygen:false, exam:false,
@@ -56,8 +69,10 @@ const MOCK_DATA = {
 
     { id:"F4-08", floor:4, num:8,  status:"occupied",
       patient:{ name:"許○麗", gender:"F", age:67, admission:"05/12", diagnosis:"Acute pancreatitis",
-                doctor:"李○醫師", nurse:"趙○護理師", condition:"重症", isolation:"無",
-                dnr:false, ventilator:false, crrt:false, surgery:false, consult:false, rrt:false,
+                doctor:"李○醫師", nurse:"趙○護理師",
+                nurses:[{shift:"大夜",name:"鄭○護理師"},{shift:"白班",name:"趙○護理師"},{shift:"小夜",name:"梁○護理師"}],
+                condition:"重症", isolation:"無",
+                dnr:false, ventilator:false, crrt:false, surgery:false, consult:false, rrt:false, restraint:false,
                 medRecord:"F789012345", idNo:"F7******45", birthDate:"1958/07/18", department:"腸胃科",
                 fallRisk:true,  dependency:null, confidential:false, noTreatment:false,
                 npo:false, allergy:false, chemo:false, transport:"輪椅", oxygen:false, exam:false,
@@ -65,8 +80,10 @@ const MOCK_DATA = {
 
     { id:"F4-09", floor:4, num:9,  status:"occupied",
       patient:{ name:"吳○志", gender:"M", age:54, admission:"05/14", diagnosis:"Post-OP AVR D1",
-                doctor:"明○醫師", nurse:"林○護理師", condition:"穩定", isolation:"無",
-                dnr:false, ventilator:false, crrt:false, surgery:true,  consult:false, rrt:false,
+                doctor:"明○醫師", nurse:"林○護理師",
+                nurses:[{shift:"大夜",name:"劉○護理師"},{shift:"白班",name:"林○護理師"},{shift:"小夜",name:"鍾○護理師"}],
+                condition:"穩定", isolation:"無",
+                dnr:false, ventilator:false, crrt:false, surgery:true,  consult:false, rrt:false, restraint:false,
                 medRecord:"G890123456", idNo:"G8******56", birthDate:"1971/04/30", department:"心臟外科",
                 fallRisk:false, dependency:null, confidential:false, noTreatment:false,
                 npo:true,  allergy:false, chemo:false, transport:null, oxygen:false, exam:false,
@@ -74,8 +91,10 @@ const MOCK_DATA = {
 
     { id:"F4-10", floor:4, num:10, status:"transfer",
       patient:{ name:"柯○芳", gender:"F", age:49, admission:"05/14", diagnosis:"Brain tumor, Post-OP",
-                doctor:"洪○醫師", nurse:"郭○護理師", condition:"穩定", isolation:"無",
-                dnr:false, ventilator:false, crrt:false, surgery:false, consult:false, rrt:false,
+                doctor:"洪○醫師", nurse:"郭○護理師",
+                nurses:[{shift:"大夜",name:"葉○護理師"},{shift:"白班",name:"郭○護理師"},{shift:"小夜",name:"方○護理師"}],
+                condition:"穩定", isolation:"無",
+                dnr:false, ventilator:false, crrt:false, surgery:false, consult:false, rrt:false, restraint:false,
                 medRecord:"H901234567", idNo:"H9******67", birthDate:"1976/06/14", department:"神經外科",
                 fallRisk:false, dependency:null, confidential:false, noTreatment:false,
                 npo:false, allergy:false, chemo:false, transport:null, oxygen:false, exam:true,
@@ -83,8 +102,10 @@ const MOCK_DATA = {
 
     { id:"F4-11", floor:4, num:11, status:"occupied",
       patient:{ name:"羅○平", gender:"M", age:76, admission:"05/13", diagnosis:"GI bleeding",
-                doctor:"李○醫師", nurse:"趙○護理師", condition:"重症", isolation:"無",
-                dnr:false, ventilator:false, crrt:false, surgery:false, consult:true,  rrt:false,
+                doctor:"李○醫師", nurse:"趙○護理師",
+                nurses:[{shift:"大夜",name:"呂○護理師"},{shift:"白班",name:"趙○護理師"},{shift:"小夜",name:"石○護理師"}],
+                condition:"重症", isolation:"無",
+                dnr:false, ventilator:false, crrt:false, surgery:false, consult:true,  rrt:false, restraint:false,
                 medRecord:"I012345678", idNo:"I0******78", birthDate:"1949/10/22", department:"腸胃科",
                 fallRisk:true,  dependency:null, confidential:false, noTreatment:false,
                 npo:true,  allergy:false, chemo:false, transport:null, oxygen:false, exam:false,
@@ -92,8 +113,10 @@ const MOCK_DATA = {
 
     { id:"F4-12", floor:4, num:12, status:"occupied",
       patient:{ name:"彭○輝", gender:"M", age:81, admission:"05/12", diagnosis:"CHF, Pulmonary edema",
-                doctor:"弘○醫師", nurse:"林○護理師", condition:"重症", isolation:"無",
-                dnr:true,  ventilator:false, crrt:false, surgery:false, consult:true,  rrt:false,
+                doctor:"弘○醫師", nurse:"林○護理師",
+                nurses:[{shift:"大夜",name:"何○護理師"},{shift:"白班",name:"林○護理師"},{shift:"小夜",name:"曾○護理師"}],
+                condition:"重症", isolation:"無",
+                dnr:true,  ventilator:false, crrt:false, surgery:false, consult:true,  rrt:false, restraint:false,
                 medRecord:"J123456789", idNo:"J1******89", birthDate:"1944/02/11", department:"心臟內科",
                 fallRisk:false, dependency:"L3", confidential:false, noTreatment:false,
                 npo:false, allergy:false, chemo:false, transport:null, oxygen:true,  exam:false,
@@ -103,8 +126,10 @@ const MOCK_DATA = {
 
     { id:"F4-15", floor:4, num:15, status:"isolation",
       patient:{ name:"王○任", gender:"M", age:64, admission:"05/11", diagnosis:"Septic shock, UTI",
-                doctor:"蘇○醫師", nurse:"陳○護理師", condition:"重症", isolation:"接觸隔離",
-                dnr:false, ventilator:false, crrt:false, surgery:false, consult:false, rrt:false,
+                doctor:"蘇○醫師", nurse:"陳○護理師",
+                nurses:[{shift:"大夜",name:"楊○護理師"},{shift:"白班",name:"陳○護理師"},{shift:"小夜",name:"許○護理師"}],
+                condition:"重症", isolation:"接觸隔離",
+                dnr:false, ventilator:false, crrt:false, surgery:false, consult:false, rrt:false, restraint:false,
                 medRecord:"K234567890", idNo:"K2******90", birthDate:"1961/05/09", department:"泌尿科",
                 fallRisk:true,  dependency:null, confidential:false, noTreatment:false,
                 npo:false, allergy:true,  chemo:false, transport:null, oxygen:false, exam:false,
@@ -112,8 +137,10 @@ const MOCK_DATA = {
 
     { id:"F4-16", floor:4, num:16, status:"isolation",
       patient:{ name:"周○等", gender:"M", age:58, admission:"05/10", diagnosis:"ARDS, COVID-19",
-                doctor:"蘇○醫師", nurse:"林○護理師", condition:"危急", isolation:"空氣隔離",
-                dnr:false, ventilator:true,  crrt:false, surgery:false, consult:false, rrt:false,
+                doctor:"蘇○醫師", nurse:"林○護理師",
+                nurses:[{shift:"大夜",name:"蔡○護理師"},{shift:"白班",name:"林○護理師"},{shift:"小夜",name:"邱○護理師"}],
+                condition:"危急", isolation:"空氣隔離",
+                dnr:false, ventilator:true,  crrt:false, surgery:false, consult:false, rrt:false, restraint:true,
                 medRecord:"L345678901", idNo:"L3******01", birthDate:"1967/08/17", department:"胸腔內科",
                 fallRisk:false, dependency:null, confidential:false, noTreatment:false,
                 npo:false, allergy:false, chemo:false, transport:null, oxygen:false, exam:false,
@@ -123,8 +150,10 @@ const MOCK_DATA = {
 
     { id:"F4-18", floor:4, num:18, status:"occupied",
       patient:{ name:"張○慧", gender:"F", age:76, admission:"05/10", diagnosis:"Liver cirrhosis, HE",
-                doctor:"李○醫師", nurse:"趙○護理師", condition:"重症", isolation:"無",
-                dnr:true,  ventilator:false, crrt:false, surgery:false, consult:true,  rrt:false,
+                doctor:"李○醫師", nurse:"趙○護理師",
+                nurses:[{shift:"大夜",name:"江○護理師"},{shift:"白班",name:"趙○護理師"},{shift:"小夜",name:"廖○護理師"}],
+                condition:"重症", isolation:"無",
+                dnr:true,  ventilator:false, crrt:false, surgery:false, consult:true,  rrt:false, restraint:false,
                 medRecord:"M456789012", idNo:"M4******12", birthDate:"1949/12/28", department:"肝膽腸胃科",
                 fallRisk:false, dependency:null, confidential:true,  noTreatment:false,
                 npo:false, allergy:false, chemo:false, transport:null, oxygen:false, exam:false,
@@ -132,8 +161,10 @@ const MOCK_DATA = {
 
     { id:"F4-19", floor:4, num:19, status:"occupied",
       patient:{ name:"蔡○男", gender:"M", age:69, admission:"05/14", diagnosis:"Post-OP Hemicolectomy",
-                doctor:"蘇○醫師", nurse:"林○護理師", condition:"穩定", isolation:"無",
-                dnr:false, ventilator:false, crrt:false, surgery:false, consult:false, rrt:false,
+                doctor:"蘇○醫師", nurse:"林○護理師",
+                nurses:[{shift:"大夜",name:"高○護理師"},{shift:"白班",name:"林○護理師"},{shift:"小夜",name:"蘇○護理師"}],
+                condition:"穩定", isolation:"無",
+                dnr:false, ventilator:false, crrt:false, surgery:false, consult:false, rrt:false, restraint:false,
                 medRecord:"N567890123", idNo:"N5******23", birthDate:"1956/03/19", department:"一般外科",
                 fallRisk:false, dependency:null, confidential:false, noTreatment:false,
                 npo:true,  allergy:false, chemo:false, transport:null, oxygen:false, exam:false,
@@ -141,8 +172,10 @@ const MOCK_DATA = {
 
     { id:"F4-20", floor:4, num:20, status:"occupied",
       patient:{ name:"黃○妹", gender:"F", age:84, admission:"05/13", diagnosis:"Acute heart failure",
-                doctor:"弘○醫師", nurse:"陳○護理師", condition:"重症", isolation:"無",
-                dnr:true,  ventilator:false, crrt:true,  surgery:false, consult:false, rrt:false,
+                doctor:"弘○醫師", nurse:"陳○護理師",
+                nurses:[{shift:"大夜",name:"鄭○護理師"},{shift:"白班",name:"陳○護理師"},{shift:"小夜",name:"梁○護理師"}],
+                condition:"重症", isolation:"無",
+                dnr:true,  ventilator:false, crrt:true,  surgery:false, consult:false, rrt:false, restraint:false,
                 medRecord:"O678901234", idNo:"O6******34", birthDate:"1941/11/05", department:"心臟內科",
                 fallRisk:true,  dependency:"L3", confidential:false, noTreatment:false,
                 npo:false, allergy:false, chemo:false, transport:"推床", oxygen:false, exam:false,
@@ -150,8 +183,10 @@ const MOCK_DATA = {
 
     { id:"F4-21", floor:4, num:21, status:"occupied",
       patient:{ name:"洪○宏", gender:"M", age:60, admission:"05/11", diagnosis:"Subdural hematoma",
-                doctor:"洪○醫師", nurse:"郭○護理師", condition:"重症", isolation:"無",
-                dnr:false, ventilator:false, crrt:false, surgery:false, consult:false, rrt:false,
+                doctor:"洪○醫師", nurse:"郭○護理師",
+                nurses:[{shift:"大夜",name:"劉○護理師"},{shift:"白班",name:"郭○護理師"},{shift:"小夜",name:"鍾○護理師"}],
+                condition:"重症", isolation:"無",
+                dnr:false, ventilator:false, crrt:false, surgery:false, consult:false, rrt:false, restraint:false,
                 medRecord:"P789012345", idNo:"P7******45", birthDate:"1965/07/23", department:"神經外科",
                 fallRisk:true,  dependency:null, confidential:false, noTreatment:false,
                 npo:false, allergy:false, chemo:false, transport:null, oxygen:true,  exam:false,
@@ -159,8 +194,10 @@ const MOCK_DATA = {
 
     { id:"F4-22", floor:4, num:22, status:"discharge",
       patient:{ name:"朱○正", gender:"M", age:62, admission:"05/13", diagnosis:"GI perforation, Post-OP",
-                doctor:"李○醫師", nurse:"趙○護理師", condition:"穩定", isolation:"無",
-                dnr:false, ventilator:false, crrt:false, surgery:false, consult:false, rrt:false,
+                doctor:"李○醫師", nurse:"趙○護理師",
+                nurses:[{shift:"大夜",name:"葉○護理師"},{shift:"白班",name:"趙○護理師"},{shift:"小夜",name:"方○護理師"}],
+                condition:"穩定", isolation:"無",
+                dnr:false, ventilator:false, crrt:false, surgery:false, consult:false, rrt:false, restraint:false,
                 medRecord:"Q890123456", idNo:"Q8******56", birthDate:"1963/09/16", department:"一般外科",
                 fallRisk:false, dependency:null, confidential:false, noTreatment:false,
                 npo:false, allergy:true,  chemo:false, transport:null, oxygen:false, exam:false,
@@ -169,8 +206,10 @@ const MOCK_DATA = {
     // ── 3F beds ──
     { id:"F3-01", floor:3, num:1,  status:"occupied",
       patient:{ name:"謝○恆", gender:"M", age:79, admission:"05/06", diagnosis:"Pneumonia, Sepsis",
-                doctor:"蘇○醫師", nurse:"林○護理師", condition:"重症", isolation:"接觸隔離",
-                dnr:false, ventilator:false, crrt:false, surgery:false, consult:true,  rrt:false,
+                doctor:"蘇○醫師", nurse:"林○護理師",
+                nurses:[{shift:"大夜",name:"呂○護理師"},{shift:"白班",name:"林○護理師"},{shift:"小夜",name:"石○護理師"}],
+                condition:"重症", isolation:"接觸隔離",
+                dnr:false, ventilator:false, crrt:false, surgery:false, consult:true,  rrt:false, restraint:false,
                 medRecord:"R901234567", idNo:"R9******67", birthDate:"1946/04/08", department:"胸腔內科",
                 fallRisk:true,  dependency:null, confidential:false, noTreatment:false,
                 npo:false, allergy:false, chemo:false, transport:null, oxygen:true,  exam:true,
@@ -178,8 +217,10 @@ const MOCK_DATA = {
 
     { id:"F3-02", floor:3, num:2,  status:"occupied",
       patient:{ name:"林○財", gender:"M", age:66, admission:"05/09", diagnosis:"Septic shock, Bacteremia",
-                doctor:"弘○醫師", nurse:"陳○護理師", condition:"重症", isolation:"無",
-                dnr:false, ventilator:true,  crrt:true,  surgery:false, consult:false, rrt:false,
+                doctor:"弘○醫師", nurse:"陳○護理師",
+                nurses:[{shift:"大夜",name:"何○護理師"},{shift:"白班",name:"陳○護理師"},{shift:"小夜",name:"曾○護理師"}],
+                condition:"重症", isolation:"無",
+                dnr:false, ventilator:true,  crrt:true,  surgery:false, consult:false, rrt:false, restraint:false,
                 medRecord:"S012345678", idNo:"S0******78", birthDate:"1959/01/30", department:"腎臟內科",
                 fallRisk:false, dependency:null, confidential:false, noTreatment:false,
                 npo:false, allergy:false, chemo:false, transport:null, oxygen:false, exam:false,
@@ -187,8 +228,10 @@ const MOCK_DATA = {
 
     { id:"F3-03", floor:3, num:3,  status:"occupied",
       patient:{ name:"彭○跨", gender:"M", age:75, admission:"05/12", diagnosis:"Stroke, Hemorrhage",
-                doctor:"洪○醫師", nurse:"郭○護理師", condition:"重症", isolation:"無",
-                dnr:true,  ventilator:false, crrt:false, surgery:false, consult:false, rrt:false,
+                doctor:"洪○醫師", nurse:"郭○護理師",
+                nurses:[{shift:"大夜",name:"楊○護理師"},{shift:"白班",name:"郭○護理師"},{shift:"小夜",name:"許○護理師"}],
+                condition:"重症", isolation:"無",
+                dnr:true,  ventilator:false, crrt:false, surgery:false, consult:false, rrt:false, restraint:false,
                 medRecord:"T123456789", idNo:"T1******89", birthDate:"1950/06/11", department:"神經內科",
                 fallRisk:false, dependency:"L3", confidential:false, noTreatment:false,
                 npo:false, allergy:false, chemo:false, transport:null, oxygen:false, exam:false,
@@ -198,8 +241,10 @@ const MOCK_DATA = {
 
     { id:"F3-05", floor:3, num:5,  status:"occupied",
       patient:{ name:"黎○達", gender:"M", age:68, admission:"05/15", diagnosis:"Aortic dissection, Post-OP",
-                doctor:"周○醫師", nurse:"林○護理師", condition:"重症", isolation:"無",
-                dnr:false, ventilator:true,  crrt:false, surgery:true,  consult:false, rrt:false,
+                doctor:"周○醫師", nurse:"林○護理師",
+                nurses:[{shift:"大夜",name:"蔡○護理師"},{shift:"白班",name:"林○護理師"},{shift:"小夜",name:"邱○護理師"}],
+                condition:"重症", isolation:"無",
+                dnr:false, ventilator:true,  crrt:false, surgery:true,  consult:false, rrt:false, restraint:false,
                 medRecord:"U234567890", idNo:"U2******90", birthDate:"1957/10/24", department:"心臟外科",
                 fallRisk:false, dependency:null, confidential:false, noTreatment:false,
                 npo:true,  allergy:false, chemo:false, transport:null, oxygen:false, exam:false,
@@ -208,20 +253,23 @@ const MOCK_DATA = {
 };
 
 function getStats(beds) {
-  const total    = beds.length;
-  const occ      = beds.filter(b => b.status !== "empty").length;
-  const surgery  = beds.filter(b => b.patient?.surgery).length;
-  const exam     = beds.filter(b => b.patient?.exam).length;
-  const consult  = beds.filter(b => b.patient?.consult).length;
-  const sevA     = beds.filter(b => b.patient?.condition === "穩定").length;
-  const sevB     = beds.filter(b => b.patient?.condition === "重症").length;
-  const sevC     = beds.filter(b => b.patient?.condition === "危急").length;
-  const isolation= beds.filter(b => b.status === "isolation").length;
-  const dnr      = beds.filter(b => b.patient?.dnr).length;
-  const rrt      = beds.filter(b => b.patient?.rrt).length;
-  const ett      = beds.filter(b => b.patient?.ventilator).length;
-  const ng       = beds.filter(b => b.patient?.ng).length;
-  const foley    = beds.filter(b => b.patient?.foley).length;
-  const cvc      = beds.filter(b => b.patient?.cvc).length;
-  return { total, occupied: occ, surgery, exam, consult, sevA, sevB, sevC, isolation, dnr, rrt, ett, ng, foley, cvc };
+  const occ      = beds.filter(b => b.status !== "empty");
+  return {
+    total:     beds.length,
+    occupied:  occ.length,
+    surgery:   occ.filter(b => b.patient?.surgery).length,
+    exam:      occ.filter(b => b.patient?.exam).length,
+    consult:   occ.filter(b => b.patient?.consult).length,
+    sevA:      occ.filter(b => b.patient?.condition === "穩定").length,
+    sevB:      occ.filter(b => b.patient?.condition === "重症").length,
+    sevC:      occ.filter(b => b.patient?.condition === "危急").length,
+    isolation: beds.filter(b => b.status === "isolation").length,
+    dnr:       occ.filter(b => b.patient?.dnr).length,
+    rrt:       occ.filter(b => b.patient?.rrt).length,
+    restraint: occ.filter(b => b.patient?.restraint).length,
+    ett:       occ.filter(b => b.patient?.ventilator).length,
+    ng:        occ.filter(b => b.patient?.ng).length,
+    foley:     occ.filter(b => b.patient?.foley).length,
+    cvc:       occ.filter(b => b.patient?.cvc).length,
+  };
 }

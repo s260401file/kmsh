@@ -32,7 +32,7 @@ function renderTubeList(beds) {
   const el = document.getElementById("tube-list");
 
   if (!activeBeds.length) {
-    el.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:32px;color:var(--text-muted);font-size:18px;">目前無住院病人</td></tr>`;
+    el.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:32px;color:var(--text-muted);font-size:18px;">目前無住院病人</td></tr>`;
     return;
   }
 
@@ -49,7 +49,6 @@ function renderTubeList(beds) {
         <td>${tubeCell(p.ng)}</td>
         <td>${tubeCell(p.foley)}</td>
         <td>${tubeCell(p.cvc)}</td>
-        <td>${tubeCell(p.crrt)}</td>
       </tr>`;
   }).join("");
 
@@ -59,11 +58,10 @@ function renderTubeList(beds) {
   const ng    = activeBeds.filter(b => b.patient.ng).length;
   const foley = activeBeds.filter(b => b.patient.foley).length;
   const cvc   = activeBeds.filter(b => b.patient.cvc).length;
-  const crrt  = activeBeds.filter(b => b.patient.crrt).length;
 
   stats.innerHTML = `
     <div class="tb-stat-item tb-stat-ett">
-      <span class="tb-stat-label">呼吸器</span>
+      <span class="tb-stat-label">氣管內管</span>
       <span class="tb-stat-value">${ett}</span>
     </div>
     <div class="tb-stat-item tb-stat-ng">
@@ -77,10 +75,6 @@ function renderTubeList(beds) {
     <div class="tb-stat-item tb-stat-cvc">
       <span class="tb-stat-label">中心靜脈</span>
       <span class="tb-stat-value">${cvc}</span>
-    </div>
-    <div class="tb-stat-item tb-stat-crrt">
-      <span class="tb-stat-label">CRRT</span>
-      <span class="tb-stat-value">${crrt}</span>
     </div>`;
 }
 

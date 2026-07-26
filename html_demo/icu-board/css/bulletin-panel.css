@@ -19,8 +19,8 @@
   display: flex; align-items: baseline; justify-content: space-between;
   background: var(--accent-green); color: #fff; padding: 5px 12px;
 }
-.icu-duty-title { font-size: 21px; font-weight: 800; letter-spacing: 3px; }
-.icu-duty-date  { font-size: 15px; opacity: .92; }
+.icu-duty-title { font-size: 24px; font-weight: 800; letter-spacing: 3px; }
+.icu-duty-date  { font-size: 17px; opacity: .92; }
 
 /* 內容：三欄 */
 .icu-duty-body {
@@ -30,24 +30,24 @@
 .icu-duty-col { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
 .icu-duty-col + .icu-duty-col { border-left: 1px solid #E3EAE6; padding-left: 12px; }
 .icu-duty-sec-t {
-  font-size: 15px; font-weight: 800; color: var(--accent-green);
+  font-size: 18px; font-weight: 800; color: var(--accent-green);
   border-bottom: 1px solid #DCE8E1; padding-bottom: 2px; margin-bottom: 2px;
 }
 
 /* 人員列：職稱 姓名 …分機 */
-.icu-duty-r { display: flex; align-items: baseline; gap: 6px; font-size: 15px; line-height: 1.35; }
-.icu-duty-role { color: var(--text-secondary); flex-shrink: 0; width: 62px; }
+.icu-duty-r { display: flex; align-items: baseline; gap: 6px; font-size: 18px; line-height: 1.35; }
+.icu-duty-role { color: var(--text-secondary); flex-shrink: 0; width: 74px; }
 .icu-duty-name { font-weight: 700; color: var(--text-primary); white-space: nowrap; }
-.icu-duty-ext  { font-family: var(--font-num); color: var(--text-secondary); font-size: 14px; margin-left: auto; }
+.icu-duty-ext  { font-family: var(--font-num); color: var(--text-secondary); font-size: 16px; margin-left: auto; }
 
 /* 三班（大夜/白/小夜）*/
 .icu-duty-shift { display: flex; gap: 4px; }
 .icu-sh { flex: 1; text-align: center; background: var(--bg-card-empty); border-radius: 5px; padding: 3px 1px; }
-.icu-sh-k { font-size: 12px; font-weight: 700; color: #fff; padding: 1px 7px; border-radius: 8px; display: inline-block; margin-bottom: 2px; }
+.icu-sh-k { font-size: 14px; font-weight: 700; color: #fff; padding: 1px 7px; border-radius: 8px; display: inline-block; margin-bottom: 2px; }
 .icu-sh-k.n { background: #37474F; }
 .icu-sh-k.d { background: #0288D1; }
 .icu-sh-k.e { background: #7B1FA2; }
-.icu-sh-n { font-size: 14px; font-weight: 700; color: var(--text-primary); display: block; line-height: 1.35; }
+.icu-sh-n { font-size: 18px; font-weight: 700; color: var(--text-primary); display: block; line-height: 1.35; }
 .icu-sh-n + .icu-sh-n { margin-top: 1px; }
 
 /* 電話（保留，供備援樣式） */

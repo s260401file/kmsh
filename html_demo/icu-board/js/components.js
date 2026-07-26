@@ -1,6 +1,6 @@
 // 標記樣式（10 形狀 × 實心/空心 = 20）：依固定順序循環指派，不對應註記語意（與 W52 同一套）
 const FLAG_ORDER = ["DNR","高危跌","依賴L1","依賴L2","依賴L3","隔離","保密","禁治療",
-  "禁食","過敏","RRT","化療","輪椅","推床","氧氣設備","洗腎"];
+  "禁食","過敏","RRT","化療","輪椅","推床","氧氣設備","洗腎","約束"];
 const STYLE_CYCLE = [
   "circle","tri-up","square","pentagon","cross","heart","teardrop","sun","star","tri-rt",
   "circle-o","tri-up-o","square-o","pentagon-o","cross-o","heart-o","teardrop-o","sun-o","star-o","tri-rt-o",
@@ -68,8 +68,13 @@ function buildBadges(patient) {
   else if (patient.transport === "推床")              b.push("推床");
   if (patient.oxygen)                                 b.push("氧氣設備");
   if (patient.crrt)                                   b.push("洗腎");
+  if (patient.restraint)                              b.push("約束");
   return b;
 }
+
+// 責任護理師：班別顯示/排序順序；當前時段界線 大夜00–08、白班08–16、小夜16–24
+const SHIFT_ORDER = ["大夜", "白班", "小夜"];
+function currentShift() { const h = new Date().getHours(); return h < 8 ? "大夜" : h < 16 ? "白班" : "小夜"; }
 
 function renderBedCard(bed) {
   if (bed.status === "empty") {
@@ -84,6 +89,11 @@ function renderBedCard(bed) {
   const genderAge  = `${p.gender}/${p.age}`;
   const genderCls  = p.gender === "M" ? "gender-m" : "gender-f";
   const allBadges  = buildBadges(p);
+  // 責任護理師：只顯示「當前時段」該床的主護（班別依三班排程對應）
+  const curNurses  = (p.nurses ?? []).filter(n => n.shift === currentShift()).map(n => n.name).filter(Boolean);
+  const drRowHTML  = (p.doctor || curNurses.length)
+    ? `<div class="card-row-dr">${p.doctor ? `<span class="cd-dr">Dr ${p.doctor}</span>` : ""}${curNurses.length ? `<span class="cd-nurse">${curNurses.join("、")}</span>` : ""}</div>`
+    : "";
   return `
     <div class="bed-card ${bed.status} bed-${bed.id}"
          data-id="${bed.id}" data-status="${bed.status}"
@@ -103,6 +113,7 @@ function renderBedCard(bed) {
         <span class="patient-name ${genderCls}">${p.name}</span>
         <span class="patient-basic">${genderAge}</span>
       </div>
+      ${drRowHTML}
       <div class="dots-row">${dotsHTML(allBadges)}</div>
     </div>`;
 }
@@ -117,9 +128,7 @@ function renderStats(beds) {
   document.getElementById("stat-sev-a").textContent    = s.sevA;
   document.getElementById("stat-sev-b").textContent    = s.sevB;
   document.getElementById("stat-sev-c").textContent    = s.sevC;
-  document.getElementById("stat-iso").textContent      = s.isolation;
-  document.getElementById("stat-dnr").textContent      = s.dnr;
-  document.getElementById("stat-rrt").textContent      = s.rrt;
+  document.getElementById("stat-restraint").textContent = s.restraint;
   document.getElementById("stat-ett").textContent      = s.ett;
   document.getElementById("stat-ng").textContent       = s.ng;
   document.getElementById("stat-foley").textContent    = s.foley;
@@ -128,9 +137,13 @@ function renderStats(beds) {
 
 // AICU 值班表（原型；資料為 mock，對照實體白板 aicu.jpg 左半，右半病床資訊不納入）
 // 顯示於 4F 平面 4F-01 下方 4×3 空區。部分手寫姓名為最佳判讀、待院方核對。
+function rocDateLabel() {
+  const d = new Date(); const days = ["日","一","二","三","四","五","六"];
+  return `${d.getFullYear() - 1911}/${String(d.getMonth() + 1).padStart(2, "0")}/${String(d.getDate()).padStart(2, "0")}（${days[d.getDay()]}）`;
+}
 function dutyRosterPanelHTML() {
   return `<div class="icu-duty-panel">
-      <div class="icu-duty-head"><span class="icu-duty-title">AICU 值班表</span><span class="icu-duty-date">115/07/02（四）</span></div>
+      <div class="icu-duty-head"><span class="icu-duty-title">AICU 值班表</span><span class="icu-duty-date">${rocDateLabel()}</span></div>
       <div class="icu-duty-body">
         <!-- ① 三班護理師（夜專師於標題右）＋ 緊急應變編組（5 組） -->
         <div class="icu-duty-col">
@@ -175,6 +188,18 @@ function dutyRosterPanelHTML() {
     </div>`;
 }
 
+// 護理行政值班面板（4F-02 右側 1×2 空區；今日大夜/白班/小夜）。資料 mock，對齊 React AdminDutyRoster。
+const ADMIN_DUTY = { "大夜": "李○玲", "白班": "陳○琪", "小夜": "黃○雯" };
+function adminDutyPanelHTML() {
+  const rows = ["大夜", "白班", "小夜"].map(k =>
+    `<div class="iad-row"><span class="iad-label">${k}</span><span class="iad-name">${ADMIN_DUTY[k] || "—"}</span></div>`
+  ).join("");
+  return `<div class="icu-admin-duty" style="grid-column:6/8;grid-row:1;">
+      <div class="iad-title">護理行政值班</div>
+      <div class="iad-body">${rows}</div>
+    </div>`;
+}
+
 // 單樓層渲染（對齊 React）：只畫目前樓層的床位＋該樓層統計，並更新標題與切換鈕
 function renderFloor(floor) {
   const floorBeds = MOCK_DATA.beds.filter(b => b.floor === floor);
@@ -191,8 +216,11 @@ function renderFloor(floor) {
     });
   });
 
-  // 4F 平面 4F-01 下方 4×3 空區放 AICU 值班表面板（3F 版面不同，不顯示）
-  if (floor === 4) grid.insertAdjacentHTML("beforeend", dutyRosterPanelHTML());
+  // 4F 平面 4F-01 下方 4×3 空區放 AICU 值班表面板 + 4F-02 右側護理行政值班（3F 版面不同，不顯示）
+  if (floor === 4) {
+    grid.insertAdjacentHTML("beforeend", dutyRosterPanelHTML());
+    grid.insertAdjacentHTML("beforeend", adminDutyPanelHTML());
+  }
 
   // 標題、切換鈕、統計
   document.getElementById("floor-label").textContent = `▌ ${floor}F　共 ${floorBeds.length} 床`;
@@ -215,14 +243,17 @@ function openModal(bed) {
   document.getElementById("m-dept").textContent    = p.department || "—";
   document.getElementById("m-diag").textContent    = p.diagnosis;
   document.getElementById("m-doctor").textContent  = p.doctor;
-  document.getElementById("m-nurse").textContent   = p.nurse;
+  // 責任護理師依 大夜→白班→小夜 排序（未排班者排最後）
+  const orderedNurses = [...(p.nurses ?? [])]
+    .sort((a, b) => ((SHIFT_ORDER.indexOf(a.shift) + 1) || 99) - ((SHIFT_ORDER.indexOf(b.shift) + 1) || 99))
+    .map(n => n.name).filter(Boolean);
+  document.getElementById("m-nurse").textContent   = orderedNurses.length ? orderedNurses.join("、") : (p.nurse || "—");
   document.getElementById("m-admit").textContent   = "2026/" + p.admission;
   document.getElementById("m-days").textContent    = daysSince >= 0 ? daysSince + " 天" : "—";
   document.getElementById("m-cond").textContent    = ({ "穩定":"C級", "重症":"B級", "危急":"A級" })[p.condition] || p.condition;
   document.getElementById("m-iso").textContent     = p.isolation || "無";
   document.getElementById("m-dnr").textContent     = p.dnr ? "是 ✓" : "否";
   document.getElementById("m-vent").textContent    = p.ventilator ? "使用中 ✓" : "無";
-  document.getElementById("m-crrt").textContent    = p.crrt ? "使用中 ✓" : "無";
   const tubeMap = [
     ["ventilator", "氣管內管"],
     ["ng",         "鼻胃管"],

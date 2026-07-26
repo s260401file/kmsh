@@ -47,9 +47,9 @@ function sortExams(items) {
   });
 }
 
-// 會診排序：進行中→待安排→已完成，已完成依完成時間降序
+// 會診排序：待回覆→已回覆→取消，已回覆依完成時間降序
 function sortConsults(items) {
-  const order = { "進行中": 0, "待安排": 1, "已完成": 2 };
+  const order = { "待回覆": 0, "已回覆": 1, "取消": 2 };
   return [...items].sort((a, b) => {
     const p = (order[a.Status] ?? 99) - (order[b.Status] ?? 99);
     if (p !== 0) return p;

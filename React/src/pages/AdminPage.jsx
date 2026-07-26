@@ -1014,7 +1014,7 @@ const WARD_BOOLS = [
   ['dnr','DNR'],['fallRisk','高危跌'],['confidential','保密'],['noTreatment','禁治療'],['npo','禁食'],
   ['allergy','過敏'],['rrt','RRT'],['chemo','化療'],['oxygen','氧氣'],['renal','洗腎'],
   ['portCath','人工血管'],['dlvc','雙腔靜脈'],['foley','導尿管'],['cvc','中心靜脈'],['cardiacCath','心導管'],
-  ['ventilator','呼吸器'],['crrt','CRRT'],['ng','鼻胃管'],
+  ['ventilator','氣管內管'],['ng','鼻胃管'],
   ['surgery','手術'],['exam','檢查'],['consult','會診'],
 ]
 // ER 專屬狀態旗標（只在 ER 單位顯示，不污染 W52/ICU 表單）
@@ -2259,6 +2259,7 @@ const PM_ASSIGN = ['主護', '主治', '專師']
 const pmToday = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` }
 const pmDateOffset = (n) => { const d = new Date(); d.setDate(d.getDate() + n); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` }
 const pmMD = iso => `${iso.slice(5, 7)}/${iso.slice(8, 10)}`   // yyyy-MM-dd → MM/DD
+const pmWD = iso => { const [y, m, d] = iso.split('-').map(Number); return '日一二三四五六'[new Date(y, m - 1, d).getDay()] }   // yyyy-MM-dd → 週幾（本地日期）
 const pmDate = v => (v ? String(v).slice(0, 10) : '')
 
 // 共用：載入人員清單（供下拉）
@@ -3384,7 +3385,7 @@ function DayTabs({ active, onChange }) {
         const label = n === -1 ? '昨日' : n === 0 ? '今日' : n === 1 ? '明日' : ''
         return (
           <button key={iso} style={{ ...s.unitTab, ...(active === iso ? s.unitTabActive : {}) }} onClick={() => onChange(iso)}>
-            {label ? `${label}（${pmMD(iso)}）` : pmMD(iso)}
+            {label ? `${label}（${pmMD(iso)}）` : `${pmMD(iso)}（${pmWD(iso)}）`}
           </button>
         )
       })}

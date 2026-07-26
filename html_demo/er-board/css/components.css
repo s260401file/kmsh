@@ -72,12 +72,15 @@
   color: var(--text-secondary);
   line-height: 1;
 }
+/* card-row3＝主治醫師（Dr）列，藍字單行 */
 .card-row3 {
-  display: flex;
-  gap: 4px;
-  flex-wrap: wrap;
-  align-items: center;
-  margin-top: auto;
+  font-size: 13px;
+  color: #1565C0;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .empty-label {
   font-size: 22px;

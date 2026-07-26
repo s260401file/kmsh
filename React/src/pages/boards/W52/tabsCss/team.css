@@ -19,10 +19,10 @@
 .w52-board .tm-card-count { font-size: 13px; font-weight: 900; color: var(--text-muted); font-family: var(--font-num); margin-left: auto; }
 .w52-board .tm-table { width: 100%; border-collapse: collapse; }
 .w52-board .tm-table thead tr { background: #E8F4EE; }
-.w52-board .tm-table th { font-size: 13px; font-weight: 700; color: var(--text-secondary); text-align: left; padding: 8px 16px; white-space: nowrap; border-bottom: 1px solid var(--divider); }
+.w52-board .tm-table th { font-size: 13px; font-weight: 700; color: var(--text-secondary); text-align: left; padding: 6px 16px; white-space: nowrap; border-bottom: 1px solid var(--divider); }
 .w52-board .tm-table tbody tr { border-bottom: 1px solid var(--bg-card-empty); }
 .w52-board .tm-table tbody tr:last-child { border-bottom: none; }
-.w52-board .tm-table td { font-size: 16px; color: var(--text-primary); padding: 10px 16px; vertical-align: middle; white-space: nowrap; }
+.w52-board .tm-table td { font-size: 16px; color: var(--text-primary); padding: 5px 16px; vertical-align: middle; white-space: nowrap; }
 .w52-board .tm-td-role { font-size: 13px; font-weight: 700; color: var(--text-muted); white-space: nowrap; }
 .w52-board .tm-td-dept { font-size: 14px; color: var(--text-muted); }
 .w52-board .tm-td-ext { font-size: 15px; font-weight: 700; font-family: var(--font-num); color: var(--text-secondary); white-space: nowrap; }

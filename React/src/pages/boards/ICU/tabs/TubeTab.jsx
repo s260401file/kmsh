@@ -1,6 +1,6 @@
 // TubeTab.jsx — ICU 管路分頁
 // 角色：以表格逐床列出各類管路使用狀態，每欄打勾(✓)或槓號(—)；底部彙整各管路使用人數。
-//   管路類別：呼吸器(ETT 氣管內管)、鼻胃管(NG)、導尿管(Foley)、中心靜脈導管(CVC)、CRRT(連續性腎臟替代療法)。
+//   管路類別：氣管內管(ETT)、鼻胃管(NG)、導尿管(Foley)、中心靜脈導管(CVC)。
 import { useMemo } from 'react'
 import { useIcuWard } from '../../../../hooks/useIcuWard'   // 與病室動態同源（真實在床＋後台管路勾選）
 import BoardLoading from '../../../../components/BoardLoading'   // 院方資料載入中動畫（同病室動態）
@@ -19,7 +19,6 @@ export default function TubeTab() {
     ng:    patients.filter(b => b.patient.ng).length,
     foley: patients.filter(b => b.patient.foley).length,
     cvc:   patients.filter(b => b.patient.cvc).length,
-    crrt:  patients.filter(b => b.patient.crrt).length,
   }), [patients])
 
   // 表格中表示「有/無」的小元件
@@ -41,11 +40,10 @@ export default function TubeTab() {
             <thead>
               <tr>
                 <th>床號</th><th>病患</th>
-                <th>呼吸器<br/>(ETT)</th>
+                <th>氣管內管<br/>(ETT)</th>
                 <th>鼻胃管<br/>(NG)</th>
                 <th>導尿管<br/>(Foley)</th>
                 <th>中心靜脈<br/>(CVC)</th>
-                <th>CRRT</th>
               </tr>
             </thead>
             <tbody>
@@ -64,7 +62,6 @@ export default function TubeTab() {
                     <td>{p.ng        ? <Check/> : <None/>}</td>
                     <td>{p.foley     ? <Check/> : <None/>}</td>
                     <td>{p.cvc       ? <Check/> : <None/>}</td>
-                    <td>{p.crrt      ? <Check/> : <None/>}</td>
                   </tr>
                 )
               })}
@@ -75,7 +72,7 @@ export default function TubeTab() {
         {/* 底部彙總：各管路目前使用人數 */}
         <div className="tb-stats">
           <div className="tb-stat-item tb-stat-ett">
-            <span className="tb-stat-label">呼吸器</span>
+            <span className="tb-stat-label">氣管內管</span>
             <span className="tb-stat-value">{stats.ett}</span>
           </div>
           <div className="tb-stat-item tb-stat-ng">
@@ -89,10 +86,6 @@ export default function TubeTab() {
           <div className="tb-stat-item tb-stat-cvc">
             <span className="tb-stat-label">中心靜脈</span>
             <span className="tb-stat-value">{stats.cvc}</span>
-          </div>
-          <div className="tb-stat-item tb-stat-crrt">
-            <span className="tb-stat-label">CRRT</span>
-            <span className="tb-stat-value">{stats.crrt}</span>
           </div>
         </div>
       </div>

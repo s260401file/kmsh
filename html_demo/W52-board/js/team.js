@@ -15,17 +15,27 @@ function updateClock() {
 
 // ── 單一群組卡片 ──
 // React 對應：<TeamGroupCard group={group} />
+// 表頭欄位順序：科別 / 職別 / 姓名 / 電話·分機（分機原樣、手機遮蔽為「點我顯示」）
 function renderTeamGroupCard(group) {
-  const rowsHtml = group.Members.map(m => {
-    const isLeader = group.GroupKey === "leader";
-    return `
-      <tr class="${isLeader ? "tm-row-leader" : ""}">
-        <td class="tm-td-role">${m.Role}</td>
-        <td>${m.Name}</td>
-        <td class="tm-td-dept">${m.Department}</td>
-        <td class="tm-td-ext">${m.Ext}</td>
-      </tr>`;
-  }).join("");
+  const rowsHtml = group.Members.length === 0
+    ? `<tr class="tm-empty-row"><td colspan="4">—</td></tr>`
+    : group.Members.map(m => {
+      const contacts = [m.Ext, m.Mobile].filter(Boolean);
+      const label = `${m.Role || ""} ${m.Name || ""}`.trim();
+      const contactHtml = contacts.length === 0
+        ? "—"
+        : contacts.map((v, i) =>
+            (i > 0 ? `<span style="margin:0 6px;color:var(--divider);">·</span>` : "") +
+            contactValueHTML(label, v)
+          ).join("");
+      return `
+        <tr>
+          <td class="tm-td-dept">${m.Department || "—"}</td>
+          <td class="tm-td-role">${m.Role}</td>
+          <td>${m.Name}</td>
+          <td class="tm-td-ext">${contactHtml}</td>
+        </tr>`;
+    }).join("");
 
   return `
     <div class="tm-card">
@@ -37,10 +47,10 @@ function renderTeamGroupCard(group) {
       <table class="tm-table">
         <thead>
           <tr>
+            <th>科別</th>
             <th>職別</th>
             <th>姓名</th>
-            <th>科別/專長</th>
-            <th>分機</th>
+            <th>電話/分機</th>
           </tr>
         </thead>
         <tbody>${rowsHtml}</tbody>

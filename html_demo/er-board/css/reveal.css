@@ -1,0 +1,47 @@
+/* reveal.css — 值班表聯絡資訊個資遮蔽（對應 React ContactReveal.css；W52 值班表/照護團隊共用） */
+.cr-reveal {
+  font: inherit;
+  color: #1565C0;
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: underline dotted;
+  text-underline-offset: 2px;
+  white-space: nowrap;
+}
+.cr-reveal:hover { color: #0d47a1; text-decoration-style: solid; }
+
+.cr-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  z-index: 3000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.cr-box {
+  background: #fff;
+  border-radius: 14px;
+  padding: 26px 32px;
+  min-width: 260px;
+  max-width: 90vw;
+  text-align: center;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.28);
+  font-family: "Microsoft JhengHei", "PingFang TC", "Noto Sans TC", system-ui, sans-serif;
+}
+.cr-label { font-size: 18px; font-weight: 700; color: #1a2530; margin-bottom: 10px; }
+.cr-value {
+  font-size: 30px; font-weight: 800; letter-spacing: 1px; color: #0e5238;
+  font-family: "Cascadia Code", Consolas, "SFMono-Regular", monospace;
+  word-break: break-all;
+}
+.cr-close {
+  margin-top: 20px;
+  padding: 9px 30px;
+  font-size: 15px; font-weight: 700;
+  color: #fff; background: #1565C0;
+  border: none; border-radius: 999px; cursor: pointer;
+}
+.cr-close:hover { background: #0d47a1; }

@@ -1,7 +1,7 @@
 // ──────────────────────────────────────────────────────────────
 // 檢查 / 會診 渲染邏輯 — ICU 版
-// 欄位使用 camelCase（與 ICU mockData 一致）
-// React 對應：<ExamTable /> + <ConsultTable />
+// 欄位使用 camelCase（對齊後端 GET /api/Board/ICU/exam）
+// React 對應：ExamTab.jsx（左＝檢查表格、右＝會診表格）
 // ──────────────────────────────────────────────────────────────
 
 function updateClock() {
@@ -13,50 +13,34 @@ function updateClock() {
   document.getElementById("clock-time").textContent = timeStr;
 }
 
-function fmtDate(s) {
-  return s ? s.replace(/-/g, "/") : "";
-}
-
-function fmtTimeSlot(slot, time) {
-  const tag = slot === "上午" ? "AM" : slot === "下午" ? "PM" : slot;
-  return `${tag} ${time}`;
-}
-
-function fmtDateTime(s) {
-  if (!s) return "—";
-  return s.replace(/-/g, "/");
-}
-
-// 檢查排序：待執行→預約→已完成，同狀態依預定時間升序
+// 檢查排序：未執行→未排程→已排程→已完成，同狀態依轉入日升序
 function sortExams(items) {
-  const order = { "待執行": 0, "預約": 1, "已完成": 2 };
+  const order = { "未執行": 0, "未排程": 1, "已排程": 2, "已完成": 3 };
   return [...items].sort((a, b) => {
     const p = (order[a.status] ?? 99) - (order[b.status] ?? 99);
     if (p !== 0) return p;
-    const ad = (a.scheduledDate + a.scheduledTime).replace(/[-:]/g, "");
-    const bd = (b.scheduledDate + b.scheduledTime).replace(/[-:]/g, "");
-    return ad.localeCompare(bd);
+    return (a.scheduledDate || "").localeCompare(b.scheduledDate || "");
   });
 }
 
-// 會診排序：進行中→待安排→已完成
+// 會診排序：待回覆→已回覆→進行中→待安排→取消，同狀態依完成時間新→舊
 function sortConsults(items) {
-  const order = { "進行中": 0, "待安排": 1, "已完成": 2 };
+  const order = { "待回覆": 0, "已回覆": 1, "進行中": 2, "待安排": 3, "取消": 4 };
   return [...items].sort((a, b) => {
     const p = (order[a.status] ?? 99) - (order[b.status] ?? 99);
     if (p !== 0) return p;
-    return (b.completedAt || "").localeCompare(a.completedAt || "");
+    return (b.completedTime || "").localeCompare(a.completedTime || "");
   });
 }
 
-// ── (5.1) 檢查表格 ──
-// React 對應：<ExamTable items={items} />
+// ── 檢查表格 ──
+// React 對應：左欄 ec-card
 function renderExams(items) {
   const el = document.getElementById("exam-list");
-  document.getElementById("ec-exam-count").textContent = items.length ? `${items.length} 筆` : "";
+  document.getElementById("ec-exam-count").textContent = `${items.length} 筆`;
 
   if (!items.length) {
-    el.innerHTML = `<tr class="ec-empty-row"><td colspan="7">無檢查資料</td></tr>`;
+    el.innerHTML = `<tr class="ec-empty-row"><td colspan="7">無待執行檢查</td></tr>`;
     return;
   }
 
@@ -65,24 +49,24 @@ function renderExams(items) {
     return `
       <tr>
         <td class="ec-td-bed">${e.bedId}</td>
-        <td class="ec-td-name ${genderCls}">${e.patientName}</td>
+        <td class="ec-td-name"><span class="${genderCls}">${e.patientName}</span></td>
         <td class="ec-td-item">${e.examName}</td>
-        <td class="ec-td-date">${fmtDate(e.scheduledDate)}</td>
-        <td class="ec-td-time">${fmtTimeSlot(e.timeSlot, e.scheduledTime)}</td>
+        <td class="ec-td-date">${e.scheduledDate || ""}</td>
+        <td class="ec-td-time">${e.timeSlot || ""}</td>
         <td class="ec-td-status"><span class="ec-status ec-status-${e.status}">${e.status}</span></td>
-        <td class="ec-td-remark">${e.remarks || "—"}</td>
+        <td class="ec-td-remark">${e.notes || "—"}</td>
       </tr>`;
   }).join("");
 }
 
-// ── (5.2) 會診表格 ──
-// React 對應：<ConsultTable items={items} />
+// ── 會診表格 ──
+// React 對應：右欄 ec-card
 function renderConsults(items) {
   const el = document.getElementById("consult-list");
-  document.getElementById("ec-consult-count").textContent = items.length ? `${items.length} 筆` : "";
+  document.getElementById("ec-consult-count").textContent = `${items.length} 筆`;
 
   if (!items.length) {
-    el.innerHTML = `<tr class="ec-empty-row"><td colspan="7">無會診資料</td></tr>`;
+    el.innerHTML = `<tr class="ec-empty-row"><td colspan="7">無待會診</td></tr>`;
     return;
   }
 
@@ -91,12 +75,12 @@ function renderConsults(items) {
     return `
       <tr>
         <td class="ec-td-bed">${c.bedId}</td>
-        <td class="ec-td-name ${genderCls}">${c.patientName}</td>
+        <td class="ec-td-name"><span class="${genderCls}">${c.patientName}</span></td>
         <td class="ec-td-item">${c.consultDept}</td>
         <td class="ec-td-doctor">${c.consultDoctor}</td>
-        <td class="ec-td-time">${fmtDateTime(c.completedAt)}</td>
+        <td class="ec-td-time">${c.completedTime || "—"}</td>
         <td class="ec-td-status"><span class="ec-status ec-status-${c.status}">${c.status}</span></td>
-        <td class="ec-td-remark">${c.remarks || "—"}</td>
+        <td class="ec-td-remark">${c.notes || "—"}</td>
       </tr>`;
   }).join("");
 }

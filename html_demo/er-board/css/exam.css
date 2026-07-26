@@ -102,4 +102,7 @@
 .ec-status-完成   { background: #E8F5EE; color: var(--accent-green); }
 .ec-status-待回覆 { background: #FFF3CD; color: #856404; }
 .ec-status-已回覆 { background: #E8F5EE; color: var(--accent-green); }
+.ec-status-未執行 { background: #FFF3CD; color: #856404; }
+.ec-status-未排程 { background: #ECEFF1; color: #546E7A; }
+.ec-status-已排程 { background: #E3F2FD; color: #1565C0; }
 .ec-note { font-size: 13px; color: var(--text-muted); }

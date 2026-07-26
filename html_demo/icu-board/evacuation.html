@@ -223,16 +223,10 @@
         <!-- 右欄：緊急應變編組（取自三班護理師今日排班的緊急編組） -->
         <div class="ev-side">
 
-          <!-- 緊急應變編組（由三班護理師排班歸類；演練時第一眼看到） -->
+          <!-- 緊急應變編組（由三班護理師排班歸類；順序：通報班→滅火班→安全防護→救護班→避難引導→點班） -->
           <div class="ev-card">
             <div class="ev-card-header">緊急應變編組</div>
-            <div class="ev-resp">
-              <div class="ev-resp-row"><span class="ev-resp-k">救護班</span><span class="ev-resp-n">葉怡廷、劉妍伶</span></div>
-              <div class="ev-resp-row"><span class="ev-resp-k">滅火班</span><span class="ev-resp-n">高佩君、江延衛</span></div>
-              <div class="ev-resp-row"><span class="ev-resp-k">安全防護</span><span class="ev-resp-n">李妍萱</span></div>
-              <div class="ev-resp-row"><span class="ev-resp-k">避難引導</span><span class="ev-resp-n">蘇紋如、林碧霞</span></div>
-              <div class="ev-resp-row"><span class="ev-resp-k">通報班</span><span class="ev-resp-n">鄭婷</span></div>
-            </div>
+            <div class="ev-resp" id="ev-resp"><!-- 由 evacuation.js 依排班渲染 --></div>
           </div>
 
         </div>

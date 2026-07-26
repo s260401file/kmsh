@@ -30,4 +30,7 @@
 .icu-board .ec-status-未執行 { background:#E65100 }
 .icu-board .ec-status-未排程 { background:#607D8B }
 .icu-board .ec-status-已排程 { background:#1565C0 }
+.icu-board .ec-status-待回覆 { background:#B45309 }
+.icu-board .ec-status-已回覆 { background:#2E7D32 }
+.icu-board .ec-status-取消   { background:#607D8B }
 .icu-board .ec-empty-row td { text-align:center;color:var(--text-muted);padding:32px 18px;font-size:18px }

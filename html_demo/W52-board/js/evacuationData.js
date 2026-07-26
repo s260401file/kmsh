@@ -49,13 +49,15 @@ const _MOCK_EVACUATION = {
 
     // ── 緊急應變編組 ──
     // 對應 React：取三班護理師今日排班的 EmergencyGroup 彙整（跨班別、去重姓名）
-    // 順序與後台一致：救護班 / 滅火班 / 安全防護 / 避難引導 / 通報班
+    // 順序與後台一致：通報班 → 滅火班 → 安全防護 → 救護班 → 避難引導；點班（IsCharge）列於編組之後
+    // 一人可同時出現在多組（emergencyGroup 逗號分隔）
     "EmergencyGroups": [
+      { "Group": "通報班",   "Members": ["陳○梅"] },
+      { "Group": "滅火班",   "Members": ["蔡○柔", "王○惠"] },
+      { "Group": "安全防護", "Members": ["黃○萍"] },
       { "Group": "救護班",   "Members": ["陳○梅", "鄭○雲"] },
-      { "Group": "滅火班",   "Members": ["蔡○柔"] },
-      { "Group": "安全防護", "Members": ["王○惠", "黃○萍"] },
       { "Group": "避難引導", "Members": ["吳○萱"] },
-      { "Group": "通報班",   "Members": ["林○靜"] }
+      { "Group": "點班",     "Members": ["陳○梅"] }
     ]
   }
 };

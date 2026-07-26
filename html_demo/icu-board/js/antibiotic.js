@@ -104,12 +104,20 @@ function openAbxModal(bed) {
   if (!abxList || abxList.length === 0) {
     body.innerHTML = `<div class="ab-modal-empty">此病人目前無抗生素使用紀錄</div>`;
   } else {
-    const rows = abxList.map(ab => `
+    // 依結束時間排序：越小（越早結束）越上方；無結束時間（進行中）排最後（對齊 React AbxModal）
+    const sorted = [...abxList].sort((a, b) => {
+      const ea = a.endDateTime || "", eb = b.endDateTime || "";
+      if (!ea && !eb) return 0;
+      if (!ea) return 1;
+      if (!eb) return -1;
+      return ea < eb ? -1 : ea > eb ? 1 : 0;
+    });
+    const rows = sorted.map(ab => `
       <tr>
         <td class="ab-td-drug">${ab.drugName}</td>
-        <td class="ab-td-time">${ab.startDateTime}</td>
-        <td class="ab-td-time">${ab.firstDoseDateTime}</td>
-        <td class="ab-td-time">${ab.endDateTime}</td>
+        <td class="ab-td-time">${ab.startDateTime || "—"}</td>
+        <td class="ab-td-time">${ab.firstDoseDateTime || "—"}</td>
+        <td class="ab-td-time">${ab.endDateTime || "—"}</td>
       </tr>`).join("");
 
     body.innerHTML = `

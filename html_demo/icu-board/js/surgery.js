@@ -28,8 +28,8 @@ function getDateRange(todayStr) {
     const wds = ["日","一","二","三","四","五","六"];
     out.push({
       dateStr:  `${y}-${m}-${day}`,
-      display:  `${m}/${day}`,
-      weekday:  `（${wds[dd.getDay()]}）`,
+      display:  `${dd.getMonth() + 1}/${dd.getDate()}`,   // React：不補零
+      weekday:  `(${wds[dd.getDay()]})`,                  // React：半形括號
       isToday:  i === 0
     });
   }
@@ -75,17 +75,13 @@ function renderSurgeryList(items, selectedDate) {
   const el = document.getElementById("surgery-list");
   const dayItems = items.filter(i => i.date === selectedDate);
 
-  const d = new Date(selectedDate);
-  const wds = ["日","一","二","三","四","五","六"];
-  const label = selectedDate === TODAY
-    ? "當日手術"
-    : `${selectedDate.replace(/-/g,"/")} (${wds[d.getDay()]}) 手術`;
-
-  document.getElementById("surg-date-label").textContent = label;
-  document.getElementById("surg-count").textContent = dayItems.length ? `${dayItems.length} 筆` : "";
+  // React：標題固定「當日手術」，計數不含「取消」、單位「台」，恆顯示
+  document.getElementById("surg-date-label").textContent = "當日手術";
+  const activeCount = dayItems.filter(i => i.status !== "取消").length;
+  document.getElementById("surg-count").textContent = `${activeCount} 台`;
 
   if (!dayItems.length) {
-    el.innerHTML = `<tr class="surg-empty-row"><td colspan="8">此日期無手術排程</td></tr>`;
+    el.innerHTML = `<tr class="surg-empty-row"><td colspan="8">本日無手術排程</td></tr>`;
     return;
   }
 
@@ -96,14 +92,13 @@ function renderSurgeryList(items, selectedDate) {
 function renderDateBar(dates, activeDate, allItems) {
   const bar = document.getElementById("sr-date-bar");
   bar.innerHTML = dates.map(d => {
-    const count = allItems.filter(i => i.date === d.dateStr).length;
     let cls = "sr-date-btn";
     if (d.isToday)             cls += " is-today";
     if (d.dateStr === activeDate) cls += " active";
     return `
       <button class="${cls}" data-date="${d.dateStr}">
         ${d.display}
-        <span class="sr-date-weekday">${d.weekday}${count ? ` · ${count}筆` : ""}</span>
+        <span class="sr-date-weekday">${d.weekday}</span>
       </button>`;
   }).join("");
 

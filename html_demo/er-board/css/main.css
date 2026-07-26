@@ -151,16 +151,24 @@ body { flex-direction: column; }
   overflow: hidden;
 }
 
-/* 12 欄版面卡片文字 */
+/* 12 欄版面卡片文字（放大字級；急診手術室 OER001/OER002 維持較小） */
 .ward-grid .bed-card     { padding: 9px 11px; gap: 6px; }
 .ward-grid .bed-num      { font-size: 16px; }
-.ward-grid .patient-name { font-size: 18px; }
-.ward-grid .patient-basic{ font-size: 13px; }
+.ward-grid .patient-name { font-size: 20px; }
+.ward-grid .patient-basic{ font-size: 14px; }
+.ward-grid .card-row3    { font-size: 18px; }
 .ward-grid .empty-label  { font-size: 16px; }
 .ward-grid .empty-bed-num{ font-size: 13px; margin-bottom: 2px; }
 .ward-grid .badge        { font-size: 12px; padding: 2px 5px; line-height: 17px; }
 .ward-grid .badge-more   { font-size: 11px; padding: 1px 4px; line-height: 17px; }
 .ward-grid .triage-badge { font-size: 12px; padding: 2px 5px; line-height: 17px; }
+/* 急診手術室疊放兩床(OER001/OER002)高度較矮，維持原字級不放大 */
+.ward-grid .bed-OER001 .patient-name,
+.ward-grid .bed-OER002 .patient-name { font-size: 18px; }
+.ward-grid .bed-OER001 .patient-basic,
+.ward-grid .bed-OER002 .patient-basic { font-size: 13px; }
+.ward-grid .bed-OER001 .card-row3,
+.ward-grid .bed-OER002 .card-row3 { font-size: 14px; }
 
 /* ── 負壓隔離室（R1-R2，C1）── */
 .bed-MER101  { grid-column: 1; grid-row: 1; }
@@ -246,9 +254,9 @@ body { flex-direction: column; }
 }
 .staff-shifts .ss-col:last-child { border-right: none; }
 .staff-shifts .ss-shift {
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 800;
-  color: var(--text-primary);
+  color: var(--text-muted);
   display: flex;
   align-items: baseline;
   gap: 5px;
@@ -256,15 +264,54 @@ body { flex-direction: column; }
   white-space: nowrap;
 }
 .staff-shifts .ss-time {
-  font-size: 14px;
+  font-size: 17px;
   font-weight: 600;
   color: var(--text-muted);
   font-family: var(--font-num);
 }
 .staff-shifts .ss-doctor { font-size: 19px; color: var(--accent-blue, #1565C0); font-weight: 600; }
-.staff-shifts .ss-charge { font-size: 19px; color: var(--text-secondary); }
+.staff-shifts .ss-charge { font-size: 22px; font-weight: 700; color: var(--text-primary); }
 .staff-shifts .ss-count { font-size: 14px; color: var(--text-secondary); }
 .staff-shifts .ss-count b { font-size: 20px; font-family: var(--font-num); color: var(--accent-red); }
+
+/* ── 護理行政值班面板（兒科留觀區上方 1×3 空區）── */
+.admin-duty-panel {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-card-occ);
+  border: 1px solid var(--divider);
+  border-radius: var(--radius-card);
+  overflow: hidden;
+  min-height: 0;
+}
+.admin-duty-panel .adp-title {
+  background: var(--bg-floor-label);
+  color: var(--accent-red);
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  padding: 4px 10px;
+  border-bottom: 1px solid var(--divider);
+  flex-shrink: 0;
+}
+.admin-duty-panel .adp-body {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  min-height: 0;
+}
+.admin-duty-panel .adp-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 4px;
+  border-right: 1px solid var(--divider);
+}
+.admin-duty-panel .adp-col:last-child { border-right: none; }
+.admin-duty-panel .adp-label { font-size: 16px; color: var(--text-muted); font-weight: 700; }
+.admin-duty-panel .adp-name { font-size: 24px; color: var(--text-primary); font-weight: 700; line-height: 1.1; text-align: center; }
 
 /* ── 各科值班醫師面板（MER09 下方）── */
 .oncall-panel {
@@ -279,7 +326,7 @@ body { flex-direction: column; }
 .oncall-panel .oc-title {
   background: var(--bg-floor-label);
   color: var(--accent-red);
-  font-size: 15px;
+  font-size: 18px;
   font-weight: 700;
   letter-spacing: 1px;
   padding: 5px 12px;
@@ -303,10 +350,10 @@ body { flex-direction: column; }
   border-bottom: 1px solid var(--divider);
   overflow: hidden;
 }
-.oncall-panel .oc-dept { font-size: 13px; font-weight: 800; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.oncall-panel .oc-deptname { font-size: 11px; font-weight: 600; color: var(--text-muted); }
-.oncall-panel .oc-doc { font-size: 14px; color: var(--accent-blue, #1565C0); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.oncall-panel .oc-ext { font-size: 11px; color: var(--text-muted); font-family: var(--font-num); }
+.oncall-panel .oc-dept { font-size: 17px; font-weight: 800; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.oncall-panel .oc-deptname { font-size: 14px; font-weight: 600; color: var(--text-muted); }
+.oncall-panel .oc-doc { font-size: 18px; color: var(--accent-blue, #1565C0); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.oncall-panel .oc-ext { font-size: 14px; color: var(--text-muted); font-family: var(--font-num); margin-left: 4px; }
 .zone-label {
   display: flex;
   align-items: center;

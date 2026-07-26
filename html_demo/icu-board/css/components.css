@@ -62,6 +62,30 @@
   color: var(--text-secondary);
   line-height: 1;
 }
+/* 醫師 + 當前時段責任護理師（護理師綠字） */
+.card-row-dr {
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  overflow: hidden;
+}
+.card-row-dr .cd-dr {
+  color: #1565C0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-shrink: 0;
+}
+.card-row-dr .cd-nurse {
+  color: #2E7D32;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
 .card-row3 {
   display: flex;
   gap: 4px;
@@ -139,6 +163,7 @@
 .flag-dot-推床     { --c: #4E342E; }
 .flag-dot-氧氣設備 { --c: #01579B; }
 .flag-dot-洗腎     { --c: #006064; }
+.flag-dot-約束     { --c: #795548; }
 /* +N more 指示器 */
 .badge-more {
   display: inline-flex;

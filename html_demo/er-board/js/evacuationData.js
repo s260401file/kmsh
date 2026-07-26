@@ -7,13 +7,15 @@ const EVACUATION_DATA = {
   Data: {
     WardCode: "ER",
     QueryDate: "2026-06-03",
-    // 固定 5 組：救護班／滅火班／安全防護／避難引導／通報班（與 React EMERGENCY_GROUPS 一致）
+    // 顯示順序（同後台/React）：通報班→滅火班→安全防護→救護班→避難引導，點班列於編組之後
+    // 一人可跨多組（如 李○婷、張○惠）；點班來源 checkIn=IsCharge
     EmergencyGroups: [
-      { Group: "救護班",   Members: ["李○婷", "周○娟"] },
+      { Group: "通報班",   Members: ["黃○珠", "李○婷"] },
       { Group: "滅火班",   Members: ["張○惠", "許○雯"] },
-      { Group: "安全防護", Members: ["蔡○芸"] },
+      { Group: "安全防護", Members: ["蔡○芸", "張○惠"] },
+      { Group: "救護班",   Members: ["李○婷", "周○娟"] },
       { Group: "避難引導", Members: ["王○琳", "陳○華"] },
-      { Group: "通報班",   Members: ["黃○珠"] }
+      { Group: "點班",     Members: ["周○娟"] }
     ]
   }
 };

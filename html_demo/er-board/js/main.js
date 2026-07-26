@@ -62,16 +62,21 @@ document.addEventListener("DOMContentLoaded", () => {
   renderLegendShapes();
   renderStaffShifts(MOCK_DATA.ShiftStaff);
   renderOnCall(MOCK_DATA.OnCall);
+  renderAdminDuty(MOCK_DATA.AdminDuty);
 
-  // 死亡(N)：顯示於底部「死亡」篩選旗標旁（示意；正式版由 Board_ER_TypeE 另計、不佔床）
-  const dc = getStats(MOCK_DATA.Beds).deceased;
-  document.getElementById("deceased-count").textContent = `(${dc})`;
+  // 死亡(N)：不佔床死亡類別（Board_ER_TypeE）筆數，顯示於底部「死亡」旗標旁
+  const deceasedList = MOCK_DATA.Deceased || [];
+  document.getElementById("deceased-count").textContent = `(${deceasedList.length})`;
 
   updateClock();
   setInterval(updateClock, 1000);
 
+  // 「死亡」旗標＝不佔床類別，點擊開明細彈窗（非床位篩選）；其餘照舊反白床位
   document.querySelectorAll("[data-filter]").forEach(btn => {
-    btn.addEventListener("click", () => setFilter(btn.dataset.filter));
+    btn.addEventListener("click", () => {
+      if (btn.dataset.filter === "死亡") openDeceasedModal(deceasedList);
+      else setFilter(btn.dataset.filter);
+    });
   });
 
   document.getElementById("bedModal").addEventListener("click", e => {
@@ -79,6 +84,12 @@ document.addEventListener("DOMContentLoaded", () => {
   });
   document.getElementById("modalClose").addEventListener("click", closeModal);
   document.getElementById("modalCloseBtn").addEventListener("click", closeModal);
+
+  document.getElementById("deceasedModal").addEventListener("click", e => {
+    if (e.target === e.currentTarget) closeDeceasedModal();
+  });
+  document.getElementById("deceasedClose").addEventListener("click", closeDeceasedModal);
+  document.getElementById("deceasedCloseBtn").addEventListener("click", closeDeceasedModal);
 
   initTabs();
 });

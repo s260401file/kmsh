@@ -214,6 +214,13 @@ public class BoardController : ControllerBase
         var nurseByBed = nursesByBed.ToDictionary(kv => kv.Key,
             kv => string.Join("，", kv.Value.Select(n => n.Name)), StringComparer.OrdinalIgnoreCase);
 
+        // 會診：與 /exam 看板同源（自建 WardExamConsult：Kind=會診、設定後 24h 內），依床號(F4-01) 對應到床 → 供看板旗標/統計。
+        var consultCutoff = DateTime.Now.AddHours(-24);
+        var consultBeds = (await _ward.GetExamConsultAsync("ICU", false, ct))
+            .Where(r => r.Kind == "會診" && r.UpdatedAt > consultCutoff && !string.IsNullOrWhiteSpace(r.BedId))
+            .Select(r => r.BedId!.Trim())
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
         var resp = new IcuBoardResponse
         {
             HospitalInfo = new IcuHospitalInfo { Name = "高雄市立民生醫院", Ward = "ICU", WardDirector = "王○明", HeadNurse = "陳○美" },
@@ -252,7 +259,9 @@ public class BoardController : ControllerBase
                         FallRisk = e?.FallRisk ?? false, Dependency = e?.Dependency, Confidential = e?.Confidential ?? false,
                         NoTreatment = e?.NoTreatment ?? false, Npo = e?.Npo ?? false, Allergy = e?.Allergy ?? false,
                         Rrt = e?.Rrt ?? false, Chemo = e?.Chemo ?? false, Transport = e?.Transport, Oxygen = e?.Oxygen ?? false,
-                        Surgery = e?.Surgery ?? false, Exam = e?.Exam ?? false, Consult = e?.Consult ?? false, Notes = e?.Notes
+                        Surgery = e?.Surgery ?? false, Exam = e?.Exam ?? false,
+                        Consult = consultBeds.Contains(bed.Id) || (e?.Consult ?? false),  // 會診＝自建 WardExamConsult(24h) 或臨床補充旗標
+                        Notes = e?.Notes
                     };
                 }
                 resp.Beds.Add(bed);

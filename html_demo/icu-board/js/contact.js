@@ -18,7 +18,7 @@ function updateClock() {
 function renderDutyContacts(items) {
   if (!items.length) {
     document.getElementById("duty-list").innerHTML =
-      `<tr class="ct-empty-row"><td colspan="5">無當日值班資料</td></tr>`;
+      `<tr class="ct-empty-row"><td colspan="5">尚無值班資料</td></tr>`;
     return;
   }
 
@@ -26,9 +26,9 @@ function renderDutyContacts(items) {
     <tr>
       <td>${item.dutyTitle}</td>
       <td>${item.name}</td>
-      <td class="ct-ext">分機 ${item.extension}</td>
+      <td class="ct-ext">${item.extension || "—"}</td>
       <td class="ct-mobile">${item.mobile || "—"}</td>
-      <td class="ct-slot">${item.timeSlot}</td>
+      <td class="ct-slot">${item.timeSlot || "—"}</td>
     </tr>`
   ).join("");
 }
@@ -38,14 +38,14 @@ function renderDutyContacts(items) {
 function renderCommonContacts(items) {
   if (!items.length) {
     document.getElementById("common-list").innerHTML =
-      `<tr class="ct-empty-row"><td colspan="2">無常用電話資料</td></tr>`;
+      `<tr class="ct-empty-row"><td colspan="2">尚無常用電話</td></tr>`;
     return;
   }
 
   document.getElementById("common-list").innerHTML = items.map(item => `
     <tr>
       <td>${item.name}</td>
-      <td class="ct-ext ct-col-ext">分機 ${item.extension}</td>
+      <td class="ct-ext ct-col-ext">${item.extension}</td>
     </tr>`
   ).join("");
 }

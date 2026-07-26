@@ -217,8 +217,7 @@ function BedModal({ bed, onClose }) {
             <div className="modal-field"><div className="field-label">DNR</div><div className="field-value">{p.dnr ? '是 ✓' : '否'}</div></div>
           </div>
           <div className="modal-row">
-            <div className="modal-field"><div className="field-label">呼吸器</div><div className="field-value">{p.ventilator ? '使用中 ✓' : '無'}</div></div>
-            <div className="modal-field"><div className="field-label">CRRT</div><div className="field-value">{p.crrt ? '使用中 ✓' : '無'}</div></div>
+            <div className="modal-field"><div className="field-label">氣管內管</div><div className="field-value">{p.ventilator ? '使用中 ✓' : '無'}</div></div>
           </div>
           <div className="modal-row"><div className="modal-field full"><div className="field-label">管路</div><div className="field-value" style={{fontSize:'15px',fontWeight:'400'}}>{tubes.length ? tubes.join('、') : '無'}</div></div></div>
           <div className="modal-row"><div className="modal-field full"><div className="field-label">備註</div><div className="field-value" style={{fontSize:'15px',fontWeight:'400'}}>{p.notes || '無'}</div></div></div>

@@ -1,63 +1,54 @@
 // ──────────────────────────────────────────────────────────────
-// 避難圖 Mock 資料 — ICU 版
-// ICU 位於 3F / 4F，採簡單矩形佈局
-// 欄位（camelCase，延續 ICU 規範）：
-//   evacPlan: evacPlanId, floorNo, wardName, imagePath, pdfPath,
-//             description, updatedAt, lastDrillDate
-//   equipment[]: equipmentId, equipmentName, location, quantity, lastCheckDate
-//   emergencyContacts[]: contactId, name, extension
+// 避難圖 Mock 資料 — ICU 版（對齊 React EvacuationTab）
 //
-// TODO 正式上線：return fetch(`/api/wards/ICU/evacuation`).then(r => r.json())
+// React 的緊急應變編組不再有獨立資料表，而是「取三班護理師今日排班」，
+// 依每位護理師的 emergencyGroup（逗號分隔、一人可多組）彙整，
+// 另以 checkIn 旗標推出「點班」。故此 mock 改為排班（schedule）形狀：
+//
+//   schedule.shifts[]:  shiftType（大夜/白班/小夜）, nurses[]
+//   nurses[]: peName（姓名，已遮罩）, emergencyGroup（逗號分隔）, checkIn（點班）
+//
+// TODO 正式上線：return fetch(`/api/wards/ICU/schedule`).then(r => r.json())
+//   對應 React：wardApi.getSchedule('ICU')
 // ──────────────────────────────────────────────────────────────
 
-const _MOCK_ICU_EVACUATION = {
+const _MOCK_ICU_SCHEDULE = {
   success: true,
   message: "",
   data: {
     wardCode: "ICU",
-    queryDate: "2026-06-03",
-
-    // ── (10) 避難圖主資料 ──
-    evacPlan: {
-      evacPlanId: 1,
-      floorNo: "3F/4F",
-      wardName: "ICU 加護病房",
-      imagePath: null,         // demo 使用 inline SVG
-      pdfPath: null,
-      description: "ICU 位於 3F（5床）及 4F（20床），主要逃生方向為各樓層兩側樓梯間，集合點為 1F 門診廣場。",
-      updatedAt: "2026-05-01",
-      lastDrillDate: "2026-04-28"
-    },
-
-    // ── 避難設備清單 ──
-    equipment: [
-      { equipmentId:1,  equipmentName:"滅火器",     location:"4F 護理站旁",     quantity:1, lastCheckDate:"2026-04-20" },
-      { equipmentId:2,  equipmentName:"滅火器",     location:"4F 東側走廊",     quantity:1, lastCheckDate:"2026-04-20" },
-      { equipmentId:3,  equipmentName:"滅火器",     location:"4F 西側走廊",     quantity:1, lastCheckDate:"2026-04-20" },
-      { equipmentId:4,  equipmentName:"滅火器",     location:"3F 護理站旁",     quantity:1, lastCheckDate:"2026-04-20" },
-      { equipmentId:5,  equipmentName:"緊急照明",   location:"4F 走廊全區",     quantity:8, lastCheckDate:"2026-05-01" },
-      { equipmentId:6,  equipmentName:"緊急照明",   location:"3F 走廊全區",     quantity:4, lastCheckDate:"2026-05-01" },
-      { equipmentId:7,  equipmentName:"安全門",     location:"4F 東側樓梯間",   quantity:1, lastCheckDate:"2026-05-01" },
-      { equipmentId:8,  equipmentName:"安全門",     location:"4F 西側樓梯間",   quantity:1, lastCheckDate:"2026-05-01" },
-      { equipmentId:9,  equipmentName:"安全門",     location:"3F 東側樓梯間",   quantity:1, lastCheckDate:"2026-05-01" },
-      { equipmentId:10, equipmentName:"氧氣切換閥", location:"4F 護理站後方",   quantity:1, lastCheckDate:"2026-03-20" },
-      { equipmentId:11, equipmentName:"氧氣切換閥", location:"3F 護理站後方",   quantity:1, lastCheckDate:"2026-03-20" },
-      { equipmentId:12, equipmentName:"醫療緊急包", location:"4F / 3F 護理站", quantity:2, lastCheckDate:"2026-05-10" },
-      { equipmentId:13, equipmentName:"集合點",     location:"1F 門診廣場",     quantity:1, lastCheckDate:null }
-    ],
-
-    // ── 緊急聯絡電話 ──
-    emergencyContacts: [
-      { contactId:1, name:"院內保全",       extension:"9119" },
-      { contactId:2, name:"院內急救 RRT",   extension:"1234" },
-      { contactId:3, name:"消防隊（外線）", extension:"119"  }
+    queryDate: "2026-07-26",
+    shifts: [
+      {
+        shiftType: "大夜",
+        nurses: [
+          { peName: "鄭○婷", emergencyGroup: "通報班",       checkIn: true  }, // 點班
+          { peName: "高○君", emergencyGroup: "滅火班,安全防護", checkIn: false }  // 一人多組
+        ]
+      },
+      {
+        shiftType: "白班",
+        nurses: [
+          { peName: "江○衛", emergencyGroup: "滅火班",   checkIn: false },
+          { peName: "李○萱", emergencyGroup: "安全防護", checkIn: false },
+          { peName: "葉○廷", emergencyGroup: "救護班",   checkIn: false }
+        ]
+      },
+      {
+        shiftType: "小夜",
+        nurses: [
+          { peName: "劉○伶", emergencyGroup: "救護班",   checkIn: false },
+          { peName: "蘇○如", emergencyGroup: "避難引導", checkIn: false },
+          { peName: "林○霞", emergencyGroup: "避難引導", checkIn: false }
+        ]
+      }
     ]
   }
 };
 
 // ── API 模擬函式 ──────────────────────────────────────────────
-// React 遷移：useEffect(() => { getIcuEvacuation(wardCode).then(setData) }, [wardCode])
-// TODO 正式上線：return fetch(`/api/wards/ICU/evacuation`).then(r => r.json())
-async function getIcuEvacuation(wardCode) {
-  return Promise.resolve(_MOCK_ICU_EVACUATION);
+// 對齊 React：wardApi.getSchedule(unit) → { shifts: [...] }
+// TODO 正式上線：return fetch(`/api/wards/ICU/schedule`).then(r => r.json())
+async function getIcuSchedule(unit) {
+  return Promise.resolve(_MOCK_ICU_SCHEDULE);
 }

@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="css/reset.css">
   <link rel="stylesheet" href="css/main.css">
   <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/reveal.css">
   <link rel="stylesheet" href="css/duty.css">
 </head>
 <body>
@@ -126,6 +127,16 @@
           </div>
         </div>
 
+        <!-- ── 護理行政值班（056 床右側 3 欄×2 列空區：欄 5–7 × 列 1–2；橫向 3 班）── -->
+        <div class="w52-admin-duty" style="grid-column:5/8;grid-row:1/3">
+          <div class="iad-title">護理行政值班</div>
+          <div class="iad-body">
+            <div class="iad-row"><span class="iad-label">大夜</span><span class="iad-name">周○芬</span></div>
+            <div class="iad-row"><span class="iad-label">白班</span><span class="iad-name">李○玲</span></div>
+            <div class="iad-row"><span class="iad-label">小夜</span><span class="iad-name">張○如</span></div>
+          </div>
+        </div>
+
         <!-- ── 值班表面板（右上 7×6 空區：欄 8–14 × 列 1–6；與統計區對調）── -->
         <!-- 內容改「橫向 3 欄並排」：①三班護理師＋緊急應變編組 ②值班醫療團隊 ③照服員＋聯絡電話 -->
         <div class="duty-panel" style="grid-column:8/15;grid-row:1/7">
@@ -183,11 +194,11 @@
             <div class="duty-sec">
               <div class="duty-sec-t">照服員</div>
               <div class="duty-aides">
-                <span class="duty-aide"><b>春花</b><span>0988818966</span></span>
-                <span class="duty-aide"><b>瑞雲</b><span>0915821732</span></span>
-                <span class="duty-aide"><b>佳誉</b><span>0955155023</span></span>
-                <span class="duty-aide"><b>覆晴</b><span>0988383132</span></span>
-                <span class="duty-aide"><b>永美</b><span>0920401127</span></span>
+                <span class="duty-aide"><b>春花</b><button type="button" class="cr-reveal" data-label="春花" data-value="0988818966">點我顯示</button></span>
+                <span class="duty-aide"><b>瑞雲</b><button type="button" class="cr-reveal" data-label="瑞雲" data-value="0915821732">點我顯示</button></span>
+                <span class="duty-aide"><b>佳誉</b><button type="button" class="cr-reveal" data-label="佳誉" data-value="0955155023">點我顯示</button></span>
+                <span class="duty-aide"><b>覆晴</b><button type="button" class="cr-reveal" data-label="覆晴" data-value="0988383132">點我顯示</button></span>
+                <span class="duty-aide"><b>永美</b><button type="button" class="cr-reveal" data-label="永美" data-value="0920401127">點我顯示</button></span>
               </div>
               <div class="duty-sec-t" style="margin-top:10px;">聯絡電話</div>
               <div class="duty-aides">
@@ -341,6 +352,7 @@
     </div>
   </div>
 
+  <script src="js/reveal.js"></script>
   <script src="js/mockData.js"></script>
   <script src="js/components.js"></script>
   <script src="js/main.js"></script>

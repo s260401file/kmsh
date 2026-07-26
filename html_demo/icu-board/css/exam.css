@@ -194,14 +194,20 @@
   min-width: 56px;
 }
 
-/* 檢查狀態 */
+/* 檢查狀態（Board_Examine：31 未執行／32 未排程／34 已排程；及舊制值） */
 .ec-status-待執行 { background: #263238; }
 .ec-status-已完成 { background: #2E7D32; }
 .ec-status-預約   { background: #1565C0; }
-
-/* 會診狀態 */
 .ec-status-進行中 { background: #E65100; }
 .ec-status-待安排 { background: #263238; }
+.ec-status-未執行 { background: #E65100; }
+.ec-status-未排程 { background: #607D8B; }
+.ec-status-已排程 { background: #1565C0; }
+
+/* 會診狀態（WardExamConsult） */
+.ec-status-待回覆 { background: #B45309; }
+.ec-status-已回覆 { background: #2E7D32; }
+.ec-status-取消   { background: #607D8B; }
 
 /* ── 空狀態 ── */
 .ec-empty-row td {

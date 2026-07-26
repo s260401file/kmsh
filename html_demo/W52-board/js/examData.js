@@ -11,7 +11,7 @@
 //   Consultations[]： ConsultId, BedNo, PatientName, Gender, Age,
 //                     ConsultDept, ConsultDoctor,
 //                     CompletedAt("yyyy-MM-dd HH:mm"),
-//                     Status("已完成"|"進行中"|"待安排"), Remarks
+//                     Status("待回覆"|"已回覆"|"取消"), Remarks
 //
 // 正式上線時替換 getExamConsult() 內部為 fetch() 呼叫即可
 // ──────────────────────────────────────────────────────────────
@@ -103,7 +103,7 @@ const _MOCK_EXAM_CONSULT = {
         "ConsultDept": "心臟外科",
         "ConsultDoctor": "黃○誠 主任",
         "CompletedAt": "2026-06-03 07:45",
-        "Status": "已完成",
+        "Status": "已回覆",
         "Remarks": "建議 MVR"
       },
       {
@@ -114,8 +114,8 @@ const _MOCK_EXAM_CONSULT = {
         "Age": 62,
         "ConsultDept": "感染科",
         "ConsultDoctor": "魏○欣 醫師",
-        "CompletedAt": "2026-06-03 09:00",
-        "Status": "進行中",
+        "CompletedAt": "—",
+        "Status": "待回覆",
         "Remarks": "MRSA 治療調整"
       },
       {
@@ -127,7 +127,7 @@ const _MOCK_EXAM_CONSULT = {
         "ConsultDept": "腎臟科",
         "ConsultDoctor": "陳○科 醫師",
         "CompletedAt": "2026-06-02 23:55",
-        "Status": "已完成",
+        "Status": "已回覆",
         "Remarks": "建議啟動 CRRT"
       },
       {
@@ -138,9 +138,9 @@ const _MOCK_EXAM_CONSULT = {
         "Age": 53,
         "ConsultDept": "新陳代謝",
         "ConsultDoctor": "李○醫師",
-        "CompletedAt": "2026-06-02 14:00",
-        "Status": "已完成",
-        "Remarks": "出院後門診追蹤"
+        "CompletedAt": "—",
+        "Status": "取消",
+        "Remarks": "已出院，會診取消"
       },
       {
         "ConsultId": 5,
@@ -150,8 +150,8 @@ const _MOCK_EXAM_CONSULT = {
         "Age": 59,
         "ConsultDept": "復健科",
         "ConsultDoctor": "陳○雅 醫師",
-        "CompletedAt": "2026-06-03 14:30",
-        "Status": "待安排",
+        "CompletedAt": "—",
+        "Status": "待回覆",
         "Remarks": "壓瘡照護評估"
       }
     ]

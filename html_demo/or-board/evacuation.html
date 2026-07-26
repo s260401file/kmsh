@@ -40,78 +40,70 @@
     <span>2026/05/24 手術室公告：今日共安排 7 台手術，OR-05 MVR 預計 13:00 完成，ICU 床位已預留，相關科別請備妥接收。</span>
   </div>
 
-  <!-- ── Main content ── -->
-  <main class="main-content">
+  <!-- ── Main content（整頁顯示後台上傳的避難圖圖片；此原型以內嵌示意圖代表）── -->
+  <main class="main-content" style="padding:0;">
     <div class="ev-panel">
-
-      <!-- 面板標題 -->
       <div class="ev-title">
         <span class="ev-title-bar"></span>
         避難圖
-        <span class="ev-title-meta" id="ev-floor-info"></span>
       </div>
+      <div class="ev-map-wrap" style="display:flex;align-items:center;justify-content:center;flex:1;padding:0;">
+        <!-- 後台上傳圖片（EvacuationTab：整頁 <img> objectFit contain）；原型以 inline SVG 示意 -->
+        <svg viewBox="0 0 1000 620" preserveAspectRatio="xMidYMid meet"
+             style="width:100%;height:100%;" xmlns="http://www.w3.org/2000/svg" role="img"
+             aria-label="手術室避難逃生圖">
+          <rect x="0" y="0" width="1000" height="620" fill="#FFFFFF"/>
+          <rect x="0" y="0" width="1000" height="70" fill="#E64A19"/>
+          <text x="500" y="46" text-anchor="middle" fill="#FFFFFF" font-size="30" font-weight="700"
+                font-family="Microsoft JhengHei UI, sans-serif">5F 手術室 避難逃生圖</text>
 
-      <!-- 雙欄 -->
-      <div class="ev-columns">
+          <!-- 平面外框 -->
+          <rect x="40" y="100" width="920" height="400" fill="#F0F8F4" stroke="#CBD9E3" stroke-width="2" rx="10"/>
+          <text x="60" y="128" fill="#3A5068" font-size="17" font-weight="700" font-family="Microsoft JhengHei UI, sans-serif">手術室（OR-01～03、OR-05～08）</text>
 
-        <!-- 左欄：OR 平面示意圖 -->
-        <div class="ev-map-wrap">
+          <!-- 樓梯間 -->
+          <rect x="800" y="112" width="140" height="46" fill="#FFF9C4" stroke="#F9A825" stroke-width="1.5" rx="6"/>
+          <text x="870" y="141" text-anchor="middle" fill="#F57F17" font-size="18" font-weight="700" font-family="Microsoft JhengHei UI, sans-serif">樓梯間</text>
 
-          <div class="ev-floor-plan-title">5F 手術室平面示意</div>
+          <!-- 刀房方塊（兩列） -->
+          <g font-family="Microsoft JhengHei UI, sans-serif" font-size="22" font-weight="700">
+            <rect x="80"  y="200" width="180" height="90" fill="#C8E6C9" stroke="#81C784" stroke-width="2" rx="8"/>
+            <text x="170" y="252" text-anchor="middle" fill="#2E7D32">OR-01</text>
+            <rect x="290" y="200" width="180" height="90" fill="#C8E6C9" stroke="#81C784" stroke-width="2" rx="8"/>
+            <text x="380" y="252" text-anchor="middle" fill="#2E7D32">OR-02</text>
+            <rect x="500" y="200" width="180" height="90" fill="#C8E6C9" stroke="#81C784" stroke-width="2" rx="8"/>
+            <text x="590" y="252" text-anchor="middle" fill="#2E7D32">OR-03</text>
+            <rect x="710" y="200" width="180" height="90" fill="#C8E6C9" stroke="#81C784" stroke-width="2" rx="8"/>
+            <text x="800" y="252" text-anchor="middle" fill="#2E7D32">OR-05</text>
 
-          <div class="ev-floor-plan">
-            <div class="ev-floor-label">手術室（OR-01～03、OR-05～08）</div>
-            <div class="ev-stairs">樓梯間</div>
-            <div class="ev-or-grid">
-              <div class="ev-or-room">OR-01</div>
-              <div class="ev-or-room">OR-02</div>
-              <div class="ev-or-room">OR-03</div>
-              <div class="ev-or-room">OR-05</div>
-              <div class="ev-or-room">OR-06</div>
-              <div class="ev-or-room">OR-07</div>
-              <div class="ev-or-room">OR-08</div>
-              <div class="ev-or-room ev-or-exit">緊急出口</div>
-            </div>
-            <div class="ev-exit-arrow">
-              <span class="ev-arrow">↓</span>
-              <span class="ev-arrow-label">避難方向 → 1F 集合點</span>
-            </div>
-          </div>
+            <rect x="80"  y="310" width="180" height="90" fill="#C8E6C9" stroke="#81C784" stroke-width="2" rx="8"/>
+            <text x="170" y="362" text-anchor="middle" fill="#2E7D32">OR-06</text>
+            <rect x="290" y="310" width="180" height="90" fill="#C8E6C9" stroke="#81C784" stroke-width="2" rx="8"/>
+            <text x="380" y="362" text-anchor="middle" fill="#2E7D32">OR-07</text>
+            <rect x="500" y="310" width="180" height="90" fill="#C8E6C9" stroke="#81C784" stroke-width="2" rx="8"/>
+            <text x="590" y="362" text-anchor="middle" fill="#2E7D32">OR-08</text>
+            <rect x="710" y="310" width="180" height="90" fill="#FFCDD2" stroke="#EF9A9A" stroke-width="2" rx="8"/>
+            <text x="800" y="356" text-anchor="middle" fill="#C62828" font-size="19">緊急出口</text>
+            <text x="800" y="382" text-anchor="middle" fill="#C62828" font-size="15" font-weight="400">EXIT ▶</text>
+          </g>
+
+          <!-- 避難方向箭頭 -->
+          <text x="500" y="452" text-anchor="middle" fill="#E64A19" font-size="30" font-weight="700" font-family="Microsoft JhengHei UI, sans-serif">↓</text>
+          <text x="500" y="484" text-anchor="middle" fill="#E64A19" font-size="18" font-weight="700" font-family="Microsoft JhengHei UI, sans-serif">避難方向 → 1F 戶外集合點</text>
 
           <!-- 圖例 -->
-          <div class="ev-legend">
-            <div class="ev-legend-item">
-              <span class="ev-legend-dot dot-room"></span>手術室
-            </div>
-            <div class="ev-legend-item">
-              <span class="ev-legend-dot dot-exit"></span>緊急出口
-            </div>
-            <div class="ev-legend-item">
-              <span class="ev-legend-dot dot-stairs"></span>樓梯間
-            </div>
-          </div>
+          <g font-family="Microsoft JhengHei UI, sans-serif" font-size="17">
+            <rect x="60"  y="530" width="22" height="22" fill="#C8E6C9" stroke="#81C784" stroke-width="1.5" rx="4"/>
+            <text x="92"  y="547" fill="#3A5068">手術室</text>
+            <rect x="230" y="530" width="22" height="22" fill="#FFCDD2" stroke="#EF9A9A" stroke-width="1.5" rx="4"/>
+            <text x="262" y="547" fill="#3A5068">緊急出口</text>
+            <rect x="420" y="530" width="22" height="22" fill="#FFF9C4" stroke="#F9A825" stroke-width="1.5" rx="4"/>
+            <text x="452" y="547" fill="#3A5068">樓梯間</text>
+          </g>
 
-        </div>
-
-        <!-- 右欄：設備清單 + 緊急聯絡 -->
-        <div class="ev-side">
-
-          <!-- 緊急設備 -->
-          <div class="ev-card">
-            <div class="ev-card-header">
-              避難設備清單
-              <span class="ev-card-count" id="ev-equip-count"></span>
-            </div>
-            <div class="ev-equip-list" id="equip-list"></div>
-          </div>
-
-          <!-- 緊急聯絡 -->
-          <div class="ev-card">
-            <div class="ev-card-header">緊急聯絡</div>
-            <div class="ev-contacts" id="emerg-contacts"></div>
-          </div>
-
-        </div>
+          <text x="500" y="595" text-anchor="middle" fill="#7A8FA0" font-size="15"
+                font-family="Microsoft JhengHei UI, sans-serif">＊本圖由管理後台上傳，實際避難路線以現場標示與消防演練為準　（更新日：2026/07）</text>
+        </svg>
       </div>
     </div>
   </main>
@@ -129,7 +121,6 @@
   </nav>
 
   <script src="js/mockData.js"></script>
-  <script src="js/evacuationData.js"></script>
   <script src="js/evacuation.js"></script>
 </body>
 </html>

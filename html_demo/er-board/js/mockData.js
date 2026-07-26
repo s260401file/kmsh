@@ -281,6 +281,17 @@ const MOCK_DATA = {
     { DeptCode: "PED", DeptName: "小兒",   Doctor: "周○安", Ext: "3208" },
     { DeptCode: "URO", DeptName: "泌尿",   Doctor: "鄭○宏", Ext: "3209" },
     { DeptCode: "ENT", DeptName: "耳鼻喉", Doctor: "許○德", Ext: "3210" }
+  ],
+
+  // 護理行政值班（今日大夜/白班/小夜）：兒科留觀區上方 1×3 面板
+  // 正式版取自後台「專師值班排程」同源之 AdminDutyRoster；此為示意
+  AdminDuty: { 大夜: "何○玲", 白班: "楊○芬", 小夜: "郭○君" },
+
+  // 死亡類別（Board_ER_TypeE，不佔床）：點底部「死亡」旗標開啟明細彈窗
+  // 欄位：病歷號 / 轉出(死亡)日期 / 轉出時間 / 病房 / 病床（示意，遮蔽）
+  Deceased: [
+    { MedRecord: "Q801234583", OutDate: "05/24", OutTime: "02:15", Ward: "急診", Bed: "MER004" },
+    { MedRecord: "R901234584", OutDate: "05/23", OutTime: "23:40", Ward: "急診", Bed: "OER003" }
   ]
 };
 

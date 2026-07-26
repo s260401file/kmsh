@@ -6,9 +6,9 @@
   <title>高雄市立民生醫院 ICU 電子白板</title>
   <link rel="stylesheet" href="css/variables.css?v=19">
   <link rel="stylesheet" href="css/reset.css?v=19">
-  <link rel="stylesheet" href="css/main.css?v=20">
-  <link rel="stylesheet" href="css/components.css?v=19">
-  <link rel="stylesheet" href="css/bulletin-panel.css?v=3">
+  <link rel="stylesheet" href="css/main.css?v=21">
+  <link rel="stylesheet" href="css/components.css?v=20">
+  <link rel="stylesheet" href="css/bulletin-panel.css?v=4">
 </head>
 <body>
 
@@ -92,17 +92,9 @@
             <div class="ws-value ws-sev-c" id="stat-sev-c">—</div>
             <div class="ws-label"><span class="sev-dot sev-dot-c"></span>A級</div>
           </div>
-          <div class="ws-item" data-filter="iso">
-            <div class="ws-value ws-iso" id="stat-iso">—</div>
-            <div class="ws-label">隔離</div>
-          </div>
-          <div class="ws-item" data-filter="DNR">
-            <div class="ws-value ws-dnr" id="stat-dnr">—</div>
-            <div class="ws-label">DNR</div>
-          </div>
-          <div class="ws-item" data-filter="RRT">
-            <div class="ws-value ws-rrt" id="stat-rrt">—</div>
-            <div class="ws-label">RRT</div>
+          <div class="ws-item" data-filter="約束">
+            <div class="ws-value ws-restraint" id="stat-restraint">—</div>
+            <div class="ws-label">約束</div>
           </div>
         </div>
         <div class="ws-row">
@@ -147,6 +139,7 @@
     <button class="badge badge-filter" data-filter="推床"><span class="flag-dot flag-dot-推床"></span>推床</button>
     <button class="badge badge-filter" data-filter="氧氣設備"><span class="flag-dot flag-dot-氧氣設備"></span>氧氣設備</button>
     <button class="badge badge-filter" data-filter="洗腎"><span class="flag-dot flag-dot-洗腎"></span>洗腎</button>
+    <button class="badge badge-filter" data-filter="約束"><span class="flag-dot flag-dot-約束"></span>約束</button>
   </div>
 
   <!-- ── Bottom tabs ── -->
@@ -234,12 +227,8 @@
         </div>
         <div class="modal-row">
           <div class="modal-field">
-            <div class="field-label">呼吸器</div>
+            <div class="field-label">氣管內管</div>
             <div class="field-value" id="m-vent"></div>
-          </div>
-          <div class="modal-field">
-            <div class="field-label">CRRT</div>
-            <div class="field-value" id="m-crrt"></div>
           </div>
         </div>
         <div class="modal-row">

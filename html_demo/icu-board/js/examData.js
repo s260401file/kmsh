@@ -1,13 +1,16 @@
 // ──────────────────────────────────────────────────────────────
 // 檢查 / 會診 Mock 資料 — ICU 版
-// 欄位（camelCase，延續 ICU 規範）：
-//   examinations[]: examId, bedId, patientName, gender, age,
-//                   examName, scheduledDate, timeSlot, scheduledTime,
-//                   status("待執行"|"已完成"|"預約"), remarks
-//   consultations[]: consultId, bedId, patientName, gender, age,
-//                    consultDept, consultDoctor, completedAt, status, remarks
+// 對齊後端 GET /api/Board/ICU/exam（camelCase）：
+//   檢查＝院方 Board_Examine（每列一項檢查）→ exams[]
+//     status 由代碼對應：31 未執行 / 32 未排程 / 34 已排程
+//     欄位：bedId, patientName, gender, examName, scheduledDate(轉入日),
+//           timeSlot, status, notes
+//   會診＝自建 WardExamConsult（設定後 24h 內顯示）→ consults[]
+//     status：待回覆 / 已回覆 / 進行中 / 待安排 / 取消
+//     欄位：bedId, patientName, gender, consultDept, consultDoctor,
+//           completedTime, status, notes
 //
-// TODO 正式上線：return fetch(`/api/wards/ICU/exam-consult?date=${date}`).then(r => r.json())
+// TODO 正式上線：return fetch(`/api/Board/ICU/exam`).then(r => r.json())
 // ──────────────────────────────────────────────────────────────
 
 const _MOCK_ICU_EXAM_CONSULT = {
@@ -17,7 +20,7 @@ const _MOCK_ICU_EXAM_CONSULT = {
     wardCode: "ICU",
     queryDate: "2026-06-03",
 
-    // ── (5.1) 檢查清單 ──
+    // ── 檢查清單（院方 Board_Examine，只顯示本站在床病人）──
     examinations: [
       {
         examId: 1,
@@ -28,9 +31,8 @@ const _MOCK_ICU_EXAM_CONSULT = {
         examName: "Chest CT w/ contrast",
         scheduledDate: "2026-06-03",
         timeSlot: "上午",
-        scheduledTime: "09:00",
-        status: "待執行",
-        remarks: "肺炎評估"
+        status: "未執行",
+        notes: "肺炎評估"
       },
       {
         examId: 2,
@@ -41,9 +43,8 @@ const _MOCK_ICU_EXAM_CONSULT = {
         examName: "Echocardiogram",
         scheduledDate: "2026-06-03",
         timeSlot: "上午",
-        scheduledTime: "10:30",
-        status: "已完成",
-        remarks: "心臟功能評估"
+        status: "已排程",
+        notes: "心臟功能評估"
       },
       {
         examId: 3,
@@ -54,9 +55,8 @@ const _MOCK_ICU_EXAM_CONSULT = {
         examName: "Wound culture (x3)",
         scheduledDate: "2026-06-03",
         timeSlot: "上午",
-        scheduledTime: "07:00",
-        status: "已完成",
-        remarks: "細菌培養追蹤"
+        status: "已排程",
+        notes: "細菌培養追蹤"
       },
       {
         examId: 4,
@@ -67,9 +67,8 @@ const _MOCK_ICU_EXAM_CONSULT = {
         examName: "Brain MRI",
         scheduledDate: "2026-06-03",
         timeSlot: "下午",
-        scheduledTime: "14:00",
-        status: "待執行",
-        remarks: "術後評估"
+        status: "未排程",
+        notes: "術後評估"
       },
       {
         examId: 5,
@@ -78,11 +77,10 @@ const _MOCK_ICU_EXAM_CONSULT = {
         gender: "M",
         age: 79,
         examName: "Sputum culture",
-        scheduledDate: "2026-06-03",
+        scheduledDate: "2026-06-02",
         timeSlot: "上午",
-        scheduledTime: "06:00",
-        status: "已完成",
-        remarks: "肺炎病原追蹤"
+        status: "已排程",
+        notes: "肺炎病原追蹤"
       },
       {
         examId: 6,
@@ -93,9 +91,8 @@ const _MOCK_ICU_EXAM_CONSULT = {
         examName: "Chest X-ray (portable)",
         scheduledDate: "2026-06-04",
         timeSlot: "上午",
-        scheduledTime: "07:00",
-        status: "預約",
-        remarks: "肺水腫追蹤"
+        status: "未執行",
+        notes: "肺水腫追蹤"
       },
       {
         examId: 7,
@@ -106,13 +103,12 @@ const _MOCK_ICU_EXAM_CONSULT = {
         examName: "Urine culture",
         scheduledDate: "2026-06-03",
         timeSlot: "上午",
-        scheduledTime: "06:30",
-        status: "已完成",
-        remarks: "UTI 治療評估"
+        status: "已排程",
+        notes: "UTI 治療評估"
       }
     ],
 
-    // ── (5.2) 會診清單 ──
+    // ── 會診清單（自建 WardExamConsult，設定後 24h 內）──
     consultations: [
       {
         consultId: 1,
@@ -122,9 +118,9 @@ const _MOCK_ICU_EXAM_CONSULT = {
         age: 72,
         consultDept: "感染科",
         consultDoctor: "魏○欣 醫師",
-        completedAt: "2026-06-03 08:30",
-        status: "已完成",
-        remarks: "抗生素方案調整建議"
+        completedTime: "2026-06-03 08:30",
+        status: "已回覆",
+        notes: "抗生素方案調整建議"
       },
       {
         consultId: 2,
@@ -134,9 +130,9 @@ const _MOCK_ICU_EXAM_CONSULT = {
         age: 80,
         consultDept: "復健科",
         consultDoctor: "陳○雅 醫師",
-        completedAt: "2026-06-03 10:00",
-        status: "進行中",
-        remarks: "神經復健評估"
+        completedTime: "",
+        status: "待回覆",
+        notes: "神經復健評估"
       },
       {
         consultId: 3,
@@ -146,9 +142,9 @@ const _MOCK_ICU_EXAM_CONSULT = {
         age: 76,
         consultDept: "腸胃科",
         consultDoctor: "黃○誠 主任",
-        completedAt: "2026-06-03 07:45",
-        status: "已完成",
-        remarks: "消化道出血處置建議"
+        completedTime: "2026-06-03 07:45",
+        status: "已回覆",
+        notes: "消化道出血處置建議"
       },
       {
         consultId: 4,
@@ -158,9 +154,9 @@ const _MOCK_ICU_EXAM_CONSULT = {
         age: 81,
         consultDept: "心臟內科",
         consultDoctor: "弘○醫師",
-        completedAt: "2026-06-02 16:00",
-        status: "已完成",
-        remarks: "心衰竭治療調整"
+        completedTime: "",
+        status: "進行中",
+        notes: "心衰竭治療調整"
       },
       {
         consultId: 5,
@@ -170,9 +166,9 @@ const _MOCK_ICU_EXAM_CONSULT = {
         age: 79,
         consultDept: "胸腔外科",
         consultDoctor: "蘇○醫師",
-        completedAt: "2026-06-03 14:30",
+        completedTime: "",
         status: "待安排",
-        remarks: "胸腔引流評估"
+        notes: "胸腔引流評估"
       },
       {
         consultId: 6,
@@ -182,17 +178,16 @@ const _MOCK_ICU_EXAM_CONSULT = {
         age: 76,
         consultDept: "肝膽腸胃科",
         consultDoctor: "李○醫師",
-        completedAt: "2026-06-02 14:00",
-        status: "已完成",
-        remarks: "肝性腦病處理建議"
+        completedTime: "2026-06-02 14:00",
+        status: "取消",
+        notes: "會診已由主治醫師取消"
       }
     ]
   }
 };
 
 // ── API 模擬函式 ──────────────────────────────────────────────
-// React 遷移：useEffect(() => { getIcuExamConsult(wardCode, date).then(setData) }, [wardCode, date])
-// TODO 正式上線：return fetch(`/api/wards/ICU/exam-consult?date=${date}`).then(r => r.json())
+// TODO 正式上線：return fetch(`/api/Board/ICU/exam`).then(r => r.json())
 async function getIcuExamConsult(wardCode, date) {
   return Promise.resolve(_MOCK_ICU_EXAM_CONSULT);
 }
