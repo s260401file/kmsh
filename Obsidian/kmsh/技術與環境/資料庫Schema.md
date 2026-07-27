@@ -55,7 +55,7 @@ tags: [kmsh, 技術, 資料庫]
 > OR 手術派班（`OrShiftStaff`/`OrShiftRoom`）、特殊交班（`OrHandover`）**已上線**（非 mock）。
 
 ## ★★ 後續批次新增表（schema_v9～v40，皆已上線）
-> 隨後台功能陸續擴充；schema 檔以 `schema_vNN_*.sql` 版本化、可重複執行、以 `sqlcmd -f 65001`（UTF-8）套用。**目前最高為 v40**。
+> 隨後台功能陸續擴充；schema 檔以 `schema_vNN_*.sql` 版本化、可重複執行、以 `sqlcmd -f 65001`（UTF-8）套用。**目前最高為 v44**。
 
 | # / DDL | 表 | 鍵 | 用途 / 對應功能 |
 |---|---|---|---|
@@ -72,6 +72,10 @@ tags: [kmsh, 技術, 資料庫]
 | v37 | `UnitCareAide` | `UNIQUE(UnitCode,AideId)` | **各單位「顯示照服員」**：選人＋順序，引用照服員主檔。 |
 | v38 | `ContactPhone` | `(UnitCode,…)` | **值班表「聯絡電話」清單**（標題＋名稱＋分機/電話＋排序）；比照常用電話多標題。後台「顯示聯絡電話」。 |
 | v40 | `NightNurseRoster` | `Id` | **夜/假護理師排程**（全院、無科別、只選月份；每日兩時段 小夜/小夜貳組；姓名純文字）。ER 管理維護；看板「夜專師」取當日小夜。 |
+| v41 | `AdminDutyRoster` | `(UnitCode,OnCallDate,Slot)` | **護理行政值班排程**（大夜/白班/小夜；無科別）。後台 ER 管理維護；W52(056右)/ICU(4F-02右)/ER 看板面板顯示。 |
+| v42 | *(ALTER)* `StaffSchedule.EmergencyGroup` | — | **加寬 NVARCHAR(20)→(60)**：緊急編組改「一人可多組」，逗號多值存於同欄。 |
+| v43 | `ErDoctor` | `Id` | **ER 急診醫師主檔**（姓名/DeptCode 軟關聯 Department/Ext/Note/SortOrder/IsActive）。供 ER 緊急編組納入醫師。後台 ER 管理「急診醫師」。 |
+| v44 | `ErDoctorGroup` | `UNIQUE(WorkDate,ErDoctorId)` | **急診醫師每日緊急編組/點班**（`EmergencyGroup` 逗號多組＋`IsCharge`）；比照護理師模型但對象為 `ErDoctor`（非 `Staff`）。後台緊急編組設定(ER)寫入、er/evacuation 讀取。 |
 
 **一床多位責任護理師（2026-07）**：`BedStaffAssignment` 無 one-per-bed 唯一鍵，原由 `SetBedNurseAsync` 程式強制「一床一主護」。W52/ICU/ER 三站已放寬（略過「移除他人同床」步驟），一床可多位護理師；看板責任護理師以逗號並列。ER 仍以自建 `ErBed`；W52/ICU 以床碼裸碼對應（曾有 `W52-001` vs `001` key 不符 bug，已修）。
 
