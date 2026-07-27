@@ -17,6 +17,7 @@ public class OnCallDeptItem
     public string? HolidayContact { get; set; }    // 假日緊急聯絡
     public string? Ext { get; set; }               // 預設分機
     public string? Mobile { get; set; }            // 預設手機/MVPN
+    public string? OwnerUnit { get; set; }         // 所屬/排班單位（ER/ICU…）；排程頁科別下拉依此過濾，NULL 不過濾
     public int SortOrder { get; set; }
     public bool IsActive { get; set; }
     public DateTime UpdatedAt { get; set; }
@@ -34,6 +35,7 @@ public class OnCallDeptUpsertRequest
     public string? HolidayContact { get; set; }
     public string? Ext { get; set; }
     public string? Mobile { get; set; }
+    public string? OwnerUnit { get; set; }
     public int SortOrder { get; set; }
     public bool IsActive { get; set; } = true;
 }

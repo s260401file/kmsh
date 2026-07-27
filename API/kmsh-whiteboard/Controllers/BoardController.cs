@@ -804,8 +804,8 @@ public class BoardController : ControllerBase
     // ── 各科值班醫師「每日輪值排程」（月曆後台；顯示端日後接）──────────────
     // 科別設定 OnCallDept
     [HttpGet("oncall-dept")]
-    public async Task<IActionResult> GetOnCallDepts([FromQuery] bool includeAll = true, CancellationToken ct = default)
-        => Ok(await _oncall.GetDeptsAsync(includeAll, ct));
+    public async Task<IActionResult> GetOnCallDepts([FromQuery] bool includeAll = true, [FromQuery] string? ownerUnit = null, CancellationToken ct = default)
+        => Ok(await _oncall.GetDeptsAsync(includeAll, ownerUnit, ct));
 
     [HttpGet("oncall-dept/{id:int}")]
     public async Task<IActionResult> GetOnCallDeptById(int id, CancellationToken ct = default)
@@ -851,23 +851,45 @@ public class BoardController : ControllerBase
     public async Task<IActionResult> GetOnCallBoard([FromQuery] string? date, CancellationToken ct = default)
     {
         var d = string.IsNullOrWhiteSpace(date) ? DateTime.Today : DateTime.Parse(date);
-        var depts = (await _oncall.GetDeptsAsync(false, ct)).OrderBy(x => x.SortOrder).ThenBy(x => x.Id).ToList();
+        var depts = (await _oncall.GetDeptsAsync(false, null, ct)).OrderBy(x => x.SortOrder).ThenBy(x => x.Id).ToList();
         var rows = (await _oncall.GetDayAsync(d, ct)).ToList();
         var result = depts.Select(dp => BuildOnCallEntry(dp.DeptCode, dp.DeptName, rows));
         return Ok(result);
     }
 
     // 值班醫師「日切點」：每日 08:00 交班；08:00 前仍算前一日（未帶明確 date 時採用）。
-    private const int OnCallCutoverHour = 8;
+    private const int OnCallCutoverHour = 8;      // 日班/交班起點 08:00
+    private const int DayShiftEndHour = 17;       // 日班結束 17:30 → 之後為夜班
+    private const int DayShiftEndMinute = 30;
     private static DateTime OnCallEffectiveDate()
         => DateTime.Now.Hour < OnCallCutoverHour ? DateTime.Today.AddDays(-1) : DateTime.Today;
 
-    // 某科當日值班醫師挑選：多時段科（內科）取 Slot=值班；無值班列或單一時段科取當日該科第一列。
+    // 日/夜兩班科（如呼吸治療科）當下是否日班窗：08:00–17:30 日班、其餘夜班。
+    // 與 OnCallEffectiveDate 搭配：00:00–08:00 屬前一日夜班、日窗屬當日日班、17:30–24:00 屬當日夜班。
+    private static bool OnCallIsDayShift()
+    {
+        var now = DateTime.Now;
+        if (now.Hour < OnCallCutoverHour) return false;                                   // 00:00–08:00 → 夜班
+        if (now.Hour > DayShiftEndHour) return false;                                     // 18:00 之後 → 夜班
+        if (now.Hour == DayShiftEndHour && now.Minute >= DayShiftEndMinute) return false; // 17:30–18:00 → 夜班
+        return true;                                                                      // 08:00–17:30 → 日班
+    }
+
+    // 某科當日值班醫師挑選：
+    //  日/夜兩班科（呼吸治療科 Slot=日班/夜班）→ 依當下時間帶當前班別；
+    //  多時段科（內科 值班/上午/下午）→ 取 Slot=值班；
+    //  無值班列或單一時段科 → 取當日該科第一列。
     private static object BuildOnCallEntry(string deptCode, string? deptName, List<OnCallRosterItem> rows)
     {
         var drows = rows.Where(r => r.DeptCode == deptCode).OrderBy(r => r.SortOrder).ThenBy(r => r.Id).ToList();
-        var pick = drows.Count <= 1 ? drows.FirstOrDefault()
-                 : (drows.FirstOrDefault(r => r.Slot == "值班") ?? drows.First());
+        var dayNight = drows.Where(r => r.Slot == "日班" || r.Slot == "夜班").ToList();
+        OnCallRosterItem? pick;
+        if (dayNight.Count > 0)
+            pick = dayNight.FirstOrDefault(r => r.Slot == (OnCallIsDayShift() ? "日班" : "夜班")) ?? dayNight.First();
+        else if (drows.Count <= 1)
+            pick = drows.FirstOrDefault();
+        else
+            pick = drows.FirstOrDefault(r => r.Slot == "值班") ?? drows.First();
         return new { deptCode, deptName, doctorName = pick?.DoctorName, ext = pick?.Ext, mobile = pick?.Mobile, slot = pick?.Slot };
     }
 

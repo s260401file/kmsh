@@ -6,7 +6,7 @@ namespace kmsh_whiteboard.Repositories;
 public interface IOnCallRepository
 {
     // ── 科別設定 OnCallDept ──
-    Task<IEnumerable<OnCallDeptItem>> GetDeptsAsync(bool includeAll = true, CancellationToken ct = default);
+    Task<IEnumerable<OnCallDeptItem>> GetDeptsAsync(bool includeAll = true, string? ownerUnit = null, CancellationToken ct = default);
     Task<OnCallDeptItem?> GetDeptByIdAsync(int id, CancellationToken ct = default);
     Task<int> CreateDeptAsync(OnCallDeptUpsertRequest req, CancellationToken ct = default);
     Task<bool> UpdateDeptAsync(int id, OnCallDeptUpsertRequest req, CancellationToken ct = default);

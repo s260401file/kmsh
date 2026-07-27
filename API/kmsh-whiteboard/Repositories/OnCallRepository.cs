@@ -13,16 +13,20 @@ public class OnCallRepository : IOnCallRepository
     private readonly DbConnectionFactory _db;
     public OnCallRepository(DbConnectionFactory db) => _db = db;
 
-    private const string DeptCols = "Id, DeptCode, DeptName, Slots, CallOutRule, Remark, HolidayContact, Ext, Mobile, SortOrder, IsActive, UpdatedAt, CreatedAt";
+    private const string DeptCols = "Id, DeptCode, DeptName, Slots, CallOutRule, Remark, HolidayContact, Ext, Mobile, OwnerUnit, SortOrder, IsActive, UpdatedAt, CreatedAt";
     private const string RosterCols = "Id, DeptCode, OnCallDate, Slot, DoctorName, Ext, Mobile, EmpNo, Note, SortOrder, IsActive, UpdatedAt, CreatedAt";
 
     // ── 科別設定 OnCallDept ──
-    public async Task<IEnumerable<OnCallDeptItem>> GetDeptsAsync(bool includeAll = true, CancellationToken ct = default)
+    public async Task<IEnumerable<OnCallDeptItem>> GetDeptsAsync(bool includeAll = true, string? ownerUnit = null, CancellationToken ct = default)
     {
         var sql = $@"SELECT {DeptCols} FROM [dbo].[OnCallDept]
-                     WHERE (@IncludeAll=1 OR IsActive=1) ORDER BY SortOrder, Id";
+                     WHERE (@IncludeAll=1 OR IsActive=1)
+                       AND (@OwnerUnit IS NULL OR OwnerUnit=@OwnerUnit)
+                     ORDER BY SortOrder, Id";
         using var conn = _db.Create();
-        return await conn.QueryAsync<OnCallDeptItem>(new CommandDefinition(sql, new { IncludeAll = includeAll ? 1 : 0 }, cancellationToken: ct));
+        return await conn.QueryAsync<OnCallDeptItem>(new CommandDefinition(sql,
+            new { IncludeAll = includeAll ? 1 : 0, OwnerUnit = string.IsNullOrWhiteSpace(ownerUnit) ? null : ownerUnit },
+            cancellationToken: ct));
     }
 
     public async Task<OnCallDeptItem?> GetDeptByIdAsync(int id, CancellationToken ct = default)
@@ -34,9 +38,9 @@ public class OnCallRepository : IOnCallRepository
 
     public async Task<int> CreateDeptAsync(OnCallDeptUpsertRequest req, CancellationToken ct = default)
     {
-        var sql = @"INSERT INTO [dbo].[OnCallDept] (DeptCode, DeptName, Slots, CallOutRule, Remark, HolidayContact, Ext, Mobile, SortOrder, IsActive, UpdatedAt, CreatedAt)
+        var sql = @"INSERT INTO [dbo].[OnCallDept] (DeptCode, DeptName, Slots, CallOutRule, Remark, HolidayContact, Ext, Mobile, OwnerUnit, SortOrder, IsActive, UpdatedAt, CreatedAt)
                     OUTPUT INSERTED.Id
-                    VALUES (@DeptCode, @DeptName, @Slots, @CallOutRule, @Remark, @HolidayContact, @Ext, @Mobile, @SortOrder, @IsActive, GETDATE(), GETDATE())";
+                    VALUES (@DeptCode, @DeptName, @Slots, @CallOutRule, @Remark, @HolidayContact, @Ext, @Mobile, @OwnerUnit, @SortOrder, @IsActive, GETDATE(), GETDATE())";
         using var conn = _db.Create();
         return await conn.ExecuteScalarAsync<int>(new CommandDefinition(sql, req, cancellationToken: ct));
     }
@@ -45,11 +49,11 @@ public class OnCallRepository : IOnCallRepository
     {
         var sql = @"UPDATE [dbo].[OnCallDept] SET
                     DeptCode=@DeptCode, DeptName=@DeptName, Slots=@Slots, CallOutRule=@CallOutRule, Remark=@Remark,
-                    HolidayContact=@HolidayContact, Ext=@Ext, Mobile=@Mobile, SortOrder=@SortOrder, IsActive=@IsActive, UpdatedAt=GETDATE()
+                    HolidayContact=@HolidayContact, Ext=@Ext, Mobile=@Mobile, OwnerUnit=@OwnerUnit, SortOrder=@SortOrder, IsActive=@IsActive, UpdatedAt=GETDATE()
                     WHERE Id=@Id";
         using var conn = _db.Create();
         var rows = await conn.ExecuteAsync(new CommandDefinition(sql,
-            new { req.DeptCode, req.DeptName, req.Slots, req.CallOutRule, req.Remark, req.HolidayContact, req.Ext, req.Mobile, req.SortOrder, req.IsActive, Id = id },
+            new { req.DeptCode, req.DeptName, req.Slots, req.CallOutRule, req.Remark, req.HolidayContact, req.Ext, req.Mobile, req.OwnerUnit, req.SortOrder, req.IsActive, Id = id },
             cancellationToken: ct));
         return rows > 0;
     }

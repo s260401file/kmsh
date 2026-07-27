@@ -52,8 +52,9 @@ export async function removeOnCall(id) {
   return handle(await apiFetch(`${BASE}/oncall/${id}`, { method: 'DELETE' }))
 }
 // ── 各科值班醫師「每日輪值排程」（OnCallDept 科別設定 + OnCallRoster 每日輪值）──
-export async function getOnCallDepts(includeAll = true) {
-  return handle(await apiFetch(`${BASE}/oncall-dept?includeAll=${includeAll ? 'true' : 'false'}`))
+export async function getOnCallDepts(includeAll = true, ownerUnit) {
+  const p = new URLSearchParams(); p.set('includeAll', includeAll ? 'true' : 'false'); if (ownerUnit) p.set('ownerUnit', ownerUnit)
+  return handle(await apiFetch(`${BASE}/oncall-dept?${p}`))
 }
 export async function createOnCallDept(d) { return handle(await apiFetch(`${BASE}/oncall-dept`, { method: 'POST', headers, body: JSON.stringify(d) })) }
 export async function updateOnCallDept(id, d) { return handle(await apiFetch(`${BASE}/oncall-dept/${id}`, { method: 'PUT', headers, body: JSON.stringify(d) })) }

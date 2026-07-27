@@ -92,6 +92,7 @@ const MENU_CONFIG = [
       { id: 'icu-ext',  label: '病人臨床補充', available: true },  // 3F/4F 不分（以病歷號為鍵）
       { id: 'icu-exam', label: '檢查/會診', available: true },
       { id: 'icu-shift', label: '三班護理師', available: true },   // 值班表三班護理師（每班可多人；W52 式）
+      { id: 'icu-oncall-roster', label: '值班醫師排程', available: true }, // 每日輪值月曆（僅列 OwnerUnit=ICU 科別，如呼吸治療科日/夜兩班）
       { id: 'icu-oncall-display', label: '顯示值班醫師', available: true }, // 引用中央值班排程，選科別＋排序
       { id: 'icu-aide-display', label: '顯示照服員', available: true }, // 引用照服員主檔，選人＋排序
       { id: 'icu-contact-phone', label: '顯示聯絡電話', available: true }, // 值班表面板聯絡電話清單
@@ -117,7 +118,7 @@ const MENU_CONFIG = [
       { id: 'er-acct',   label: '帳號設定', available: true },
       { id: 'er-ext',    label: '病人臨床補充', available: true },
       { id: 'er-exam',   label: '檢查/會診', available: true },
-      { id: 'er-oncall-roster', label: '值班醫師排程', available: true },   // 每日輪值月曆（全院共用；已取代舊「各科值班醫師」）
+      { id: 'er-oncall-roster', label: '值班醫師排程', available: true },   // 每日輪值月曆（僅列 OwnerUnit=ER 科別；呼吸治療科等改由所屬單位排）
       { id: 'er-night-nurse', label: '專師值班排程', available: true }, // 專師值班月曆（無科別；小夜/小夜貳組）
       { id: 'er-admin-duty', label: '護理行政值班排程', available: true }, // 護理行政值班月曆（無科別；大夜/白班/小夜）
       { id: 'er-oncall-display', label: '顯示值班醫師', available: true }, // 引用中央值班排程；ER 前台最多 10 科
@@ -1321,7 +1322,7 @@ function OnCallCellSelect({ options, value, onChange }) {
 }
 
 // 各科值班醫師「每日輪值排程」— 月曆後台（選科別＋月份→每日下拉填醫師；含科別規則/備註）
-function OnCallScheduleSection() {
+function OnCallScheduleSection({ unitCode } = {}) {
   const [depts, setDepts] = useState([])
   const [deptCode, setDeptCode] = useState('')
   const [ym, setYm] = useState(pmToday().slice(0, 7))     // 'YYYY-MM'
@@ -1341,8 +1342,8 @@ function OnCallScheduleSection() {
   const docOptions = [...new Map(doctors.map(d => [d.name, { value: d.name, label: `${d.name}${d.ext ? `（分機 ${d.ext}）` : ''}` }])).values()]
 
   useEffect(() => {
-    wardApi.getOnCallDepts(true).then(ds => { setDepts(ds ?? []); if ((ds ?? []).length) setDeptCode(p => p || ds[0].deptCode) }).catch(() => show('讀取科別失敗', true))
-  }, [])   // eslint-disable-line react-hooks/exhaustive-deps
+    wardApi.getOnCallDepts(true, unitCode).then(ds => { setDepts(ds ?? []); if ((ds ?? []).length) setDeptCode(p => p || ds[0].deptCode) }).catch(() => show('讀取科別失敗', true))
+  }, [unitCode])   // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!deptCode) return
@@ -4019,7 +4020,7 @@ export default function AdminPage() {
       case 'icu-ext':        return <WardExtSection key="ICU" unitCode="ICU" />
       case 'or-ext':         return <WardExtSection key="OR"  unitCode="OR" />
       case 'er-ext':         return <WardExtSection key="ER"  unitCode="ER" />
-      case 'er-oncall-roster': return <OnCallScheduleSection />
+      case 'er-oncall-roster': return <OnCallScheduleSection key="ERroster2" unitCode="ER" />
       case 'er-night-nurse': return <NightNurseScheduleSection />
       case 'er-admin-duty': return <AdminDutyScheduleSection />
       case 'er-oncall-display': return <OnCallDisplaySection unitCode="ER" maxSelect={10} />
@@ -4030,6 +4031,7 @@ export default function AdminPage() {
       case 'w52-aide-display': return <AideDisplaySection unitCode="W52" />
       case 'w52-contact-phone': return <ContactPhoneSection unitCode="W52" />
       case 'icu-shift':      return <ShiftRosterSection unit="ICU" key="ICUroster" />
+      case 'icu-oncall-roster': return <OnCallScheduleSection key="ICUroster2" unitCode="ICU" />
       case 'icu-oncall-display': return <OnCallDisplaySection unitCode="ICU" />
       case 'icu-aide-display': return <AideDisplaySection unitCode="ICU" />
       case 'icu-contact-phone': return <ContactPhoneSection unitCode="ICU" />
