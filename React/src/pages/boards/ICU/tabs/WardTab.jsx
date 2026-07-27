@@ -22,6 +22,8 @@ const SHIFT_ORDER = ['大夜', '白班', '小夜']
 const currentShift = () => { const h = new Date().getHours(); return h < 8 ? '大夜' : h < 16 ? '白班' : '小夜' }
 // 緊急應變編組 5 班（顯示順序，同 W52）
 const EMERGENCY_TEAMS = ['通報班', '滅火班', '安全防護', '救護班', '避難引導']
+// 院方 Board_bed「動態」代碼 → 中文（病床卡詳情顯示）
+const MOVEMENT_LABEL = { A: '住院中', D: '已出院', E: '病故', I: '通知出院', M: '允許出院', T: '轉院' }
 const nnToday = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` }
 // 值班表日期＝今日（民國年/MM/DD（週幾））；每次 render(輪詢)重算，跨日自動更新
 const ROC_DAYS = ['日', '一', '二', '三', '四', '五', '六']
@@ -215,6 +217,7 @@ function BedModal({ bed, onClose }) {
           <div className="modal-row">
             <div className="modal-field"><div className="field-label">隔離狀態</div><div className="field-value">{p.isolation || '無'}</div></div>
             <div className="modal-field"><div className="field-label">DNR</div><div className="field-value">{p.dnr ? '是 ✓' : '否'}</div></div>
+            <div className="modal-field"><div className="field-label">動向狀態</div><div className="field-value">{MOVEMENT_LABEL[p.movement] || p.movement || '—'}</div></div>
           </div>
           <div className="modal-row">
             <div className="modal-field"><div className="field-label">氣管內管</div><div className="field-value">{p.ventilator ? '使用中 ✓' : '無'}</div></div>

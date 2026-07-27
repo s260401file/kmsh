@@ -167,6 +167,7 @@ public class BoardController : ControllerBase
                     Diagnosis = string.IsNullOrWhiteSpace(o.Diagnosis) ? e?.Diagnosis : o.Diagnosis,  // 院方診斷優先
                     AttendingDoctor = string.IsNullOrWhiteSpace(o.Doctor) ? e?.AttendingDoctor : o.Doctor,  // 院方負責醫師優先
                     PrimaryNurse = nurseByBed.TryGetValue(code, out var rn) && !string.IsNullOrWhiteSpace(rn) ? rn : null,  // 責任護理師＝我的病床勾床（裸碼對應，可多位逗號並列）
+                    Movement = o.Movement,   // 院方動態
                     Condition = e?.Condition,
                     Isolation = e?.Isolation,
                     Dnr = e?.Dnr ?? false,
@@ -290,6 +291,7 @@ public class BoardController : ControllerBase
                         Doctor = string.IsNullOrWhiteSpace(o.Doctor) ? e?.AttendingDoctor : o.Doctor,
                         Nurse = nurseByBed.TryGetValue(bed.Id, out var rn) && !string.IsNullOrWhiteSpace(rn) ? rn : null,  // 責任護理師＝勾床配對（可多位逗號並列；fallback）
                         Nurses = nursesByBed.TryGetValue(bed.Id, out var nl) ? nl : null,  // 含班別（依三班排程）
+                        Movement = o.Movement,   // 院方動態
                         Condition = string.IsNullOrWhiteSpace(e?.Condition) ? "危急" : e!.Condition,  // ICU 病況預設 A級（危急）；無後台設定即 A
                         Isolation = e?.Isolation,
                         Dnr = e?.Dnr ?? false, Ventilator = e?.Ventilator ?? false, Crrt = e?.Crrt ?? false,
@@ -538,7 +540,7 @@ public class BoardController : ControllerBase
         AwaitingType = o.Flow == "4" ? "一般" : e?.AwaitingType,
         // 轉入＝院方策盟註記(≠0，值為來源機構名) 優先，否則沿用後台 overlay；轉出仍由 overlay。
         TransferIn = !string.IsNullOrEmpty(hcaHospital) || (e?.TransferIn ?? false) || !string.IsNullOrWhiteSpace(e?.TransferInHospital),
-        TransferOut = (e?.TransferOut ?? false) || !string.IsNullOrWhiteSpace(e?.TransferHospital),
+        TransferOut = (e?.TransferOut ?? false) || !string.IsNullOrWhiteSpace(e?.TransferHospital) || o.Flow == "M",   // M=報轉榮院 → 轉出
         TransferHospital = e?.TransferHospital,
         TransferInHospital = !string.IsNullOrEmpty(hcaHospital) ? hcaHospital : e?.TransferInHospital,
         // 設定了住院床號時，視同已勾住院（讓看板旗標、篩選、急診統計一致對應）
@@ -558,7 +560,7 @@ public class BoardController : ControllerBase
     private static string DeriveErStatus(BoardErItem o, WardPatientExtItem? e, string? hcaHospital)
     {
         if (e is not null && !string.IsNullOrWhiteSpace(e.Isolation) && e.Isolation!.Trim() is not ("" or "無")) return "isolation";
-        if (!string.IsNullOrEmpty(hcaHospital) || (e is not null && (e.TransferIn || e.TransferOut))) return "transfer";
+        if (!string.IsNullOrEmpty(hcaHospital) || (e is not null && (e.TransferIn || e.TransferOut)) || o.Flow == "M") return "transfer";
         if (o.Flow == "4" || (e?.Awaiting ?? false)) return "awaiting";
         if (o.Flow == "A" || (e?.Observation ?? false)) return "observation";
         return "occupied";

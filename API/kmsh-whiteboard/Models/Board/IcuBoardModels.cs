@@ -44,6 +44,7 @@ public class IcuPatientDto
     public string? Nurse { get; set; }           // 責護（全日逗號並列；保留作 fallback）
     public List<IcuNurseDto>? Nurses { get; set; } // 責任護理師（含班別，依三班排程對應）
     public string? Condition { get; set; }       // 穩定/重症/危急（畫面 C/B/A）
+    public string? Movement { get; set; }         // 院方動態：A住院中/D已出院/E病故/I通知出院/M允許出院/T轉院
     public string? Isolation { get; set; }
     public bool Dnr { get; set; }
     public bool Ventilator { get; set; }         // 氣管內管(ETT)

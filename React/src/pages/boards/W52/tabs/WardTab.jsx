@@ -26,6 +26,8 @@ const ROC_DAYS = ['日', '一', '二', '三', '四', '五', '六']
 const rocDateLabel = () => { const d = new Date(); return `${d.getFullYear() - 1911}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}（${ROC_DAYS[d.getDay()]}）` }
 // 緊急應變編組 5 班（顯示順序）
 const EMERGENCY_TEAMS = ['通報班', '滅火班', '安全防護', '救護班', '避難引導']
+// 院方 Board_bed「動態」代碼 → 中文（病床卡詳情顯示）
+const MOVEMENT_LABEL = { A: '住院中', D: '已出院', E: '病故', I: '通知出院', M: '允許出院', T: '轉院' }
 
 // 由病人資料 + 床位狀態組出該床要顯示的註記字串陣列（順序即顯示順序）
 function buildBadges(patient, bedStatus = '') {
@@ -151,6 +153,7 @@ function BedModal({ bed, onClose }) {
           <div className="modal-row">
             <div className="modal-field"><div className="field-label">隔離狀態</div><div className="field-value">{p.Isolation || '無'}</div></div>
             <div className="modal-field"><div className="field-label">DNR</div><div className="field-value">{p.Dnr ? '是 ✓' : '否'}</div></div>
+            <div className="modal-field"><div className="field-label">動向狀態</div><div className="field-value">{MOVEMENT_LABEL[p.Movement] || p.Movement || '—'}</div></div>
           </div>
           <div className="modal-row"><div className="modal-field full"><div className="field-label">管路</div><div className="field-value" style={{fontSize:'15px',fontWeight:'400'}}>{tubes.length ? tubes.join('、') : '無'}</div></div></div>
           <div className="modal-row"><div className="modal-field full"><div className="field-label">備註</div><div className="field-value" style={{fontSize:'15px',fontWeight:'400'}}>{p.Notes || '無'}</div></div></div>

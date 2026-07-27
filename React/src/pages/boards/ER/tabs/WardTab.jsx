@@ -22,6 +22,12 @@ const GRADE_LABEL = { A: 'A級 重症', B: 'B級 中症', C: 'C級 輕症' }
 // 各級的中文病況描述（Modal 檢傷分級徽章後的說明文字）
 const GRADE_DESC = { A: '重症', B: '中症', C: '輕症' }
 
+// 院方「病患動向」(Flow) 代碼 → 中文（病床卡詳情顯示；M=報轉榮院另計入轉出，A=留觀，4=待床一般由後端判定）
+const FLOW_LABEL = {
+  A: '留觀中', C: '急救間', D: '出院', E: '病故', I: '通知出院', M: '報轉榮院', O: '診間', X: '取消掛號',
+  '1': '手術室', '2': '產房', '3': '血液透析室', '4': '已辦理急診轉住院手續', '5': '恢復室', '6': '自行離院', '7': '病故', '8': 'OHCA',
+}
+
 // 依病人各布林欄位組出要顯示的狀態旗標標籤陣列（死亡 / MBD / AAD / 轉出入 / DNR / 留觀 / 住院）
 function buildBadges(patient) {
   if (!patient) return []
@@ -155,6 +161,7 @@ function BedModal({ bed, onClose }) {
             <div className="modal-field"><div className="field-label">DNR</div><div className="field-value">{p.Dnr ? '是 ✓' : '否'}</div></div>
             <div className="modal-field"><div className="field-label">急診狀態</div><div className="field-value">{erStatuses.length > 0 ? erStatuses.join('、') : '看診中'}</div></div>
           </div>
+          <div className="modal-row"><div className="modal-field"><div className="field-label">動向狀態</div><div className="field-value">{FLOW_LABEL[p.Flow] || p.Flow || '—'}</div></div></div>
           {(p.TransferHospital || p.TransferInHospital || p.Admitted) && <div className="modal-row">
             <div className="modal-field"><div className="field-label">轉出醫院</div><div className="field-value">{p.TransferHospital || '—'}</div></div>
             <div className="modal-field"><div className="field-label">轉入醫院</div><div className="field-value">{p.TransferInHospital || '—'}</div></div>

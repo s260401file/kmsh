@@ -44,6 +44,7 @@ public class WardPatientDto
     [JsonPropertyName("AttendingDoctor")] public string? AttendingDoctor { get; set; }
     [JsonPropertyName("PrimaryNurse")]    public string? PrimaryNurse { get; set; }
     [JsonPropertyName("Condition")]       public string? Condition { get; set; }
+    [JsonPropertyName("Movement")]        public string? Movement { get; set; }   // 院方動態：A住院中/D已出院/E病故/I通知出院/M允許出院/T轉院
     [JsonPropertyName("Isolation")]       public string? Isolation { get; set; }
     [JsonPropertyName("Dnr")]             public bool Dnr { get; set; }
     [JsonPropertyName("FallRisk")]        public bool FallRisk { get; set; }

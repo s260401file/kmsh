@@ -19,6 +19,7 @@ public class BoardBedItem
     [JsonPropertyName("科別")]     public string? Department { get; set; }// 院方已回傳（可帶入，免後台自建）
     [JsonPropertyName("病房")]     public string? Hnursta { get; set; }
     [JsonPropertyName("床位")]     public string? Hbed { get; set; }    // 如 006
+    [JsonPropertyName("動態")]     public string? Movement { get; set; }// A住院中/D已出院/E病故/I通知出院/M允許出院/T轉院
     // 院方 2026-07 起把用藥 join 進來 → 同病人每筆用藥一列（欄名「抗生素」，實為全部用藥）。
     [JsonPropertyName("抗生素")]     public string? Med { get; set; }          // 藥品名稱（實為全用藥，非僅抗生素）
     [JsonPropertyName("開始使用日期")] public string? MedStartDate { get; set; }  // ISO

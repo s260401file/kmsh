@@ -1163,13 +1163,13 @@ function WardExtSection({ unitCode }) {
           {unitCode === 'ER' && (
             <>
               {/* 到院日/到院時間由院方 Board_ER 帶入，後台不再輸入 */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0 16px', marginBottom: '8px' }}>
+              {/* 轉出醫院已移除：轉出改由院方動向(Flow=M)自動帶入。待床「一般」鎖定：由院方動向(Flow=4)自動帶入，後台只設加護/隔離。 */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 16px', marginBottom: '8px' }}>
                 <div style={s.formRow}><label style={s.label}>待床</label>
                   <select style={s.input} value={form.awaiting ? form.awaitingType : ''}
                     onChange={e => { const v = e.target.value; setForm(f => ({ ...f, awaiting: v !== '', awaitingType: v })) }}>
-                    <option value="">無</option><option value="一般">一般</option><option value="加護">加護</option><option value="隔離">隔離</option>
+                    <option value="">無</option><option value="一般" disabled>一般（院方帶入）</option><option value="加護">加護</option><option value="隔離">隔離</option>
                   </select></div>
-                <div style={s.formRow}><label style={s.label}>轉出醫院</label><input style={s.input} value={form.transferHospital} onChange={e => setF('transferHospital', e.target.value)} placeholder="轉往哪家醫院" /></div>
                 <div style={s.formRow}><label style={s.label}>住院床號</label><input style={s.input} value={form.admBedNo} onChange={e => setF('admBedNo', e.target.value)} placeholder="W52-031" /></div>
               </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px 16px', margin: '4px 0 12px' }}>
