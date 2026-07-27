@@ -25,6 +25,16 @@ public interface IMasterDataRepository
     Task<bool> UpdateCareAideAsync(int id, CareAideUpsertRequest req, CancellationToken ct = default);
     Task<bool> DeleteCareAideAsync(int id, CancellationToken ct = default);
 
+    // ── ER 急診醫師 ──
+    Task<IEnumerable<ErDoctorItem>> GetErDoctorsAsync(bool includeAll, CancellationToken ct = default);
+    Task<int> CreateErDoctorAsync(ErDoctorUpsertRequest req, CancellationToken ct = default);
+    Task<bool> UpdateErDoctorAsync(int id, ErDoctorUpsertRequest req, CancellationToken ct = default);
+    Task<bool> DeleteErDoctorAsync(int id, CancellationToken ct = default);
+
+    // ── ER 急診醫師 每日緊急編組／點班 ──
+    Task<IEnumerable<ErDoctorGroupItem>> GetErDoctorGroupsAsync(string workDate, CancellationToken ct = default);
+    Task<int> SaveErDoctorGroupAsync(string workDate, IEnumerable<ErDoctorGroupEntry> entries, CancellationToken ct = default);
+
     // ── 各單位「顯示照服員」選取 UnitCareAide ──
     Task<IEnumerable<UnitCareAideItem>> GetUnitAidesAsync(string unitCode, CancellationToken ct = default);
     /// <summary>覆寫某單位整組照服員選取（先刪後插）。回傳插入筆數。</summary>

@@ -10,6 +10,7 @@ import '../tabsCss/evacuation.css'
 const UNIT = 'ER'   // 本分頁固定對應急診站
 const EMERGENCY_GROUPS = ['通報班', '滅火班', '安全防護', '救護班', '避難引導']   // 顯示順序（同後台）
 const CHARGE = '點班'   // 點班（來源 checkIn=IsCharge），列於編組之後
+const todayIso = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` }
 
 export default function EvacuationTab() {
   const [hasImage, setHasImage] = useState(false)  // 是否已有上傳的避難圖
@@ -19,21 +20,23 @@ export default function EvacuationTab() {
     getImageInfo(UNIT).then(i => setHasImage(!!i)).catch(() => setHasImage(false))
   }, [])
 
-  // 緊急應變編組：取三班護理師今日排班，依緊急編組彙整（跨班別，去重姓名）
+  // 緊急應變編組：取三班護理師今日排班＋急診醫師今日編組，依緊急編組彙整（跨班別，去重姓名）
   const { data: schedData } = usePolling(() => wardApi.getSchedule(UNIT), { intervalMs: CENSUS_MS, deps: ['ER-ev-sched'] })
-  const nurses = (schedData?.shifts ?? []).flatMap(s => s.nurses ?? [])
+  const { data: docGroups } = usePolling(() => wardApi.getErDoctorGroups(todayIso()), { intervalMs: CENSUS_MS, deps: ['ER-ev-docgrp'] })
   const byGroup = {}
   const charge = []
-  nurses.forEach(n => {
-    if (!n.peName) return
-    String(n.emergencyGroup ?? '').split(',').forEach(g0 => {
+  const addMember = (name, emergencyGroup, isCharge) => {
+    if (!name) return
+    String(emergencyGroup ?? '').split(',').forEach(g0 => {
       const g = g0.trim()
       if (!g) return
       const a = (byGroup[g] = byGroup[g] || [])
-      if (!a.includes(n.peName)) a.push(n.peName)
+      if (!a.includes(name)) a.push(name)
     })
-    if (n.checkIn && !charge.includes(n.peName)) charge.push(n.peName)
-  })
+    if (isCharge && !charge.includes(name)) charge.push(name)
+  }
+  ;(schedData?.shifts ?? []).flatMap(s => s.nurses ?? []).forEach(n => addMember(n.peName, n.emergencyGroup, n.checkIn))
+  ;(docGroups ?? []).forEach(d => addMember(d.name, d.emergencyGroup, d.isCharge))   // 急診醫師（與護理師併列）
   const respRows = [...EMERGENCY_GROUPS.map(g => ({ k: g, names: byGroup[g] || [] })), { k: CHARGE, names: charge }]
 
   return (

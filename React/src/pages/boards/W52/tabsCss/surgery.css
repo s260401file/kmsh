@@ -30,12 +30,13 @@
 .w52-board .surg-basic { font-size: 13px; color: var(--text-muted); margin-left: 4px; }
 .w52-board .surg-td-time { font-size: 16px; font-weight: 700; font-family: var(--font-num); color: var(--text-primary); }
 .w52-board .surg-td-or { font-size: 14px; font-weight: 600; color: var(--text-secondary); background: var(--bg-card-empty); padding: 2px 8px; border-radius: 4px; font-family: var(--font-num); }
-.w52-board .surg-td-procedure { font-size: 15px; color: var(--text-primary); white-space: normal; min-width: 180px; max-width: 280px; line-height: 1.35; }
-.w52-board .surg-td-diagnosis { font-size: 14px; color: var(--text-muted); white-space: normal; min-width: 110px; max-width: 200px; line-height: 1.35; }
+.w52-board .surg-table td.surg-td-procedure { font-size: 15px; color: var(--text-primary); white-space: normal; word-break: break-word; min-width: 180px; max-width: 280px; line-height: 1.35; }
+.w52-board .surg-table td.surg-td-diagnosis { font-size: 14px; color: var(--text-muted); white-space: normal; word-break: break-word; min-width: 110px; max-width: 220px; line-height: 1.35; }
 .w52-board .surg-td-anesthesia { font-size: 14px; color: var(--text-secondary); }
 .w52-board .surg-td-surgeon { font-size: 15px; color: var(--text-primary); }
 .w52-board .surg-td-status { text-align: center; white-space: nowrap; }
 .w52-board .surg-status { display: inline-flex; align-items: center; justify-content: center; padding: 4px 14px; border-radius: var(--radius-badge); font-size: 13px; font-weight: 800; color: #FFFFFF; letter-spacing: 0.5px; white-space: nowrap; min-width: 56px; }
+.w52-board .surg-status-排程   { background: #607D8B; }
 .w52-board .surg-status-待手術 { background: #1565C0; }
 .w52-board .surg-status-手術中 { background: #E65100; }
 .w52-board .surg-status-已完成 { background: #2E7D32; }

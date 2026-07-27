@@ -855,6 +855,11 @@ public class BoardController : ControllerBase
         return Ok(result);
     }
 
+    // 值班醫師「日切點」：每日 08:00 交班；08:00 前仍算前一日（未帶明確 date 時採用）。
+    private const int OnCallCutoverHour = 8;
+    private static DateTime OnCallEffectiveDate()
+        => DateTime.Now.Hour < OnCallCutoverHour ? DateTime.Today.AddDays(-1) : DateTime.Today;
+
     // 某科當日值班醫師挑選：多時段科（內科）取 Slot=值班；無值班列或單一時段科取當日該科第一列。
     private static object BuildOnCallEntry(string deptCode, string? deptName, List<OnCallRosterItem> rows)
     {
@@ -881,7 +886,7 @@ public class BoardController : ControllerBase
     {
         var selected = (await _oncall.GetUnitDeptsAsync(unitCode, ct)).ToList();   // 已依 SortOrder
         if (selected.Count == 0) return Ok(Array.Empty<object>());
-        var d = string.IsNullOrWhiteSpace(date) ? DateTime.Today : DateTime.Parse(date);
+        var d = string.IsNullOrWhiteSpace(date) ? OnCallEffectiveDate() : DateTime.Parse(date);   // 08:00 前算前一日
         var rows = (await _oncall.GetDayAsync(d, ct)).ToList();
         var result = selected.Select(s => BuildOnCallEntry(s.DeptCode, s.DeptName, rows));
         return Ok(result);
@@ -1261,15 +1266,42 @@ public class BoardController : ControllerBase
             .Where(r => !string.IsNullOrWhiteSpace(r.ChartNo) && inBed.Contains(r.ChartNo!.Trim()))
             .ToList();
 
-        var list = rows.Select(r => new OrSurgeryListItem
+        // 交叉參照院方 Board_OR 當日快照（OrDailySurgery）：提供「已完成」訊號＋補上 OPORDER 常缺的診斷文字。
+        var daily = (await _ward.GetOrDailyAsync(f, t, ct)).ToList();
+        // 已完成：OrDailySurgery.Completed（院方 Board_OR 消失即標完成），以「病歷號｜日期」比對；OPORDER EndTime=00:00 佔位不可用。
+        var completedKeys = daily.Where(d => d.Completed && !string.IsNullOrWhiteSpace(d.Hhisnum))
+            .Select(d => $"{d.Hhisnum.Trim()}|{d.SurgeryDate:yyyy-MM-dd}")
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        // 診斷補充：OPORDER 的 ORDIAG 常為空，改以 Board_OR 診斷補上（先「病歷號｜日期｜時間」精準對應，再退回「病歷號｜日期」）。
+        var dailyDiag = daily.Where(d => !string.IsNullOrWhiteSpace(d.Hhisnum) && !string.IsNullOrWhiteSpace(d.Diagnosis)).ToList();
+        var diagByExact = dailyDiag
+            .GroupBy(d => $"{d.Hhisnum.Trim()}|{d.SurgeryDate:yyyy-MM-dd}|{(d.OpTime ?? "").Trim()}")
+            .ToDictionary(g => g.Key, g => g.First().Diagnosis!.Trim(), StringComparer.OrdinalIgnoreCase);
+        var diagByPatientDate = dailyDiag
+            .GroupBy(d => $"{d.Hhisnum.Trim()}|{d.SurgeryDate:yyyy-MM-dd}")
+            .ToDictionary(g => g.Key, g => g.First().Diagnosis!.Trim(), StringComparer.OrdinalIgnoreCase);
+
+        var list = rows.Select(r =>
         {
-            OrRoom = r.RoomId ?? r.Room, Date = r.OpDate.ToString("yyyy-MM-dd"), ScheduledTime = r.OpTime,
-            PatientName = MaskName(r.PatientName), Gender = r.Sex, Age = r.Age,
-            Procedure = r.SurgeryName, Diagnosis = r.IcdCodes, AnesthesiaMethod = r.Anesthesia,
-            AttendingSurgeon = r.SurgeonName,
-            Status = (r.StatusCode == "82" || !string.IsNullOrWhiteSpace(r.CancelReason)) ? "取消"
-                     : !string.IsNullOrWhiteSpace(r.EndTime) ? "已完成"
-                     : DeriveSurgeryStatus(r.OpDate, r.OpTime, now, today)
+            string st = (r.StatusCode == "82" || !string.IsNullOrWhiteSpace(r.CancelReason)) ? "取消"
+                     : completedKeys.Contains($"{r.ChartNo!.Trim()}|{r.OpDate:yyyy-MM-dd}") ? "已完成"
+                     : DeriveSurgeryStatus(r.OpDate, r.OpTime, now, today);
+            if (st == "手術中" || st == "待手術") st = "排程";   // W52/ICU 手術頁：未完成/未取消一律顯示「排程」（無手術中/待手術之分）
+            var diag = r.Diagnosis;
+            if (string.IsNullOrWhiteSpace(diag))   // OPORDER 無診斷 → 補 Board_OR 診斷
+            {
+                var chart = r.ChartNo!.Trim(); var dstr = r.OpDate.ToString("yyyy-MM-dd");
+                diag = diagByExact.TryGetValue($"{chart}|{dstr}|{(r.OpTime ?? "").Trim()}", out var de) ? de
+                     : diagByPatientDate.TryGetValue($"{chart}|{dstr}", out var dp) ? dp : r.Diagnosis;
+            }
+            return new OrSurgeryListItem
+            {
+                OrRoom = r.RoomId ?? r.Room, Date = r.OpDate.ToString("yyyy-MM-dd"), ScheduledTime = r.OpTime,
+                PatientName = MaskName(r.PatientName), Gender = r.Sex, Age = r.Age,
+                Procedure = r.SurgeryName, Diagnosis = diag, AnesthesiaMethod = r.Anesthesia,
+                AttendingSurgeon = r.SurgeonName,
+                Status = st
+            };
         }).OrderBy(x => x.Date).ThenBy(x => x.ScheduledTime).ToList();
         return Ok(list);
     }
@@ -1774,6 +1806,28 @@ public class BoardController : ControllerBase
     [HttpDelete("care-aide/{id:int}")]
     public async Task<IActionResult> DeleteCareAide(int id, CancellationToken ct = default)
         => await _master.DeleteCareAideAsync(id, ct) ? NoContent() : NotFound();
+
+    // ── ER 急診醫師主檔 ErDoctor（供 ER 緊急編組納入醫師）─────
+    [HttpGet("er-doctor")]
+    public async Task<IActionResult> GetErDoctors([FromQuery] bool includeAll = true, CancellationToken ct = default)
+        => Ok(await _master.GetErDoctorsAsync(includeAll, ct));
+    [HttpPost("er-doctor")]
+    public async Task<IActionResult> CreateErDoctor([FromBody] ErDoctorUpsertRequest req, CancellationToken ct = default)
+    { var id = await _master.CreateErDoctorAsync(req, ct); return Ok(new { id }); }
+    [HttpPut("er-doctor/{id:int}")]
+    public async Task<IActionResult> UpdateErDoctor(int id, [FromBody] ErDoctorUpsertRequest req, CancellationToken ct = default)
+        => await _master.UpdateErDoctorAsync(id, req, ct) ? NoContent() : NotFound();
+    [HttpDelete("er-doctor/{id:int}")]
+    public async Task<IActionResult> DeleteErDoctor(int id, CancellationToken ct = default)
+        => await _master.DeleteErDoctorAsync(id, ct) ? NoContent() : NotFound();
+
+    // ── ER 急診醫師 每日緊急編組／點班 ─────
+    [HttpGet("er-doctor-group")]
+    public async Task<IActionResult> GetErDoctorGroups([FromQuery] string date, CancellationToken ct = default)
+        => Ok(await _master.GetErDoctorGroupsAsync(date, ct));
+    [HttpPost("er-doctor-group")]
+    public async Task<IActionResult> SaveErDoctorGroup([FromBody] ErDoctorGroupSaveRequest req, CancellationToken ct = default)
+    { var n = await _master.SaveErDoctorGroupAsync(req.WorkDate, req.Entries, ct); return Ok(new { saved = n }); }
 
     // ── 各單位「顯示照服員」選取 UnitCareAide ─────
     /// <summary>某單位選取顯示的照服員（含順序＋姓名／聯絡方式）。供後台設定頁載入與前台顯示。</summary>

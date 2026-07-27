@@ -27,12 +27,13 @@
 .icu-board .surg-gender-m { color:#1565C0 }
 .icu-board .surg-gender-f { color:#AD1457 }
 .icu-board .surg-basic { font-size:13px;color:var(--text-muted);margin-left:4px }
-.icu-board .surg-td-procedure { font-size:15px;color:var(--text-primary);white-space:normal;min-width:180px;max-width:280px;line-height:1.35 }
-.icu-board .surg-td-diagnosis { font-size:14px;color:var(--text-muted);white-space:normal;min-width:110px;max-width:200px;line-height:1.35 }
+.icu-board .surg-table td.surg-td-procedure { font-size:15px;color:var(--text-primary);white-space:normal;word-break:break-word;min-width:180px;max-width:280px;line-height:1.35 }
+.icu-board .surg-table td.surg-td-diagnosis { font-size:14px;color:var(--text-muted);white-space:normal;word-break:break-word;min-width:110px;max-width:220px;line-height:1.35 }
 .icu-board .surg-td-anesthesia { font-size:14px;color:var(--text-secondary) }
 .icu-board .surg-td-surgeon { font-size:15px;color:var(--text-primary) }
 .icu-board .surg-td-status { text-align:center;white-space:nowrap }
 .icu-board .surg-status { display:inline-flex;align-items:center;justify-content:center;padding:4px 14px;border-radius:var(--radius-badge);font-size:13px;font-weight:800;color:#fff;letter-spacing:.5px;white-space:nowrap;min-width:56px }
+.icu-board .surg-status-排程   { background:#607D8B }
 .icu-board .surg-status-待手術 { background:#1565C0 }
 .icu-board .surg-status-手術中 { background:#E65100 }
 .icu-board .surg-status-已完成 { background:#2E7D32 }

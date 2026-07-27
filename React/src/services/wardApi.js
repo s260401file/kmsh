@@ -310,6 +310,14 @@ export async function getCareAides(includeAll = true) { return handle(await apiF
 export async function createCareAide(data) { return handle(await apiFetch(`${BASE}/care-aide`, { method: 'POST', headers, body: JSON.stringify(data) })) }
 export async function updateCareAide(id, data) { return handle(await apiFetch(`${BASE}/care-aide/${id}`, { method: 'PUT', headers, body: JSON.stringify(data) })) }
 export async function removeCareAide(id) { return handle(await apiFetch(`${BASE}/care-aide/${id}`, { method: 'DELETE' })) }
+// ER 急診醫師主檔（供 ER 緊急編組納入醫師）
+export async function getErDoctors(includeAll = true) { return handle(await apiFetch(`${BASE}/er-doctor?includeAll=${includeAll ? 'true' : 'false'}`)) }
+export async function createErDoctor(data) { return handle(await apiFetch(`${BASE}/er-doctor`, { method: 'POST', headers, body: JSON.stringify(data) })) }
+export async function updateErDoctor(id, data) { return handle(await apiFetch(`${BASE}/er-doctor/${id}`, { method: 'PUT', headers, body: JSON.stringify(data) })) }
+export async function removeErDoctor(id) { return handle(await apiFetch(`${BASE}/er-doctor/${id}`, { method: 'DELETE' })) }
+// ER 急診醫師 每日緊急編組／點班
+export async function getErDoctorGroups(date) { return handle(await apiFetch(`${BASE}/er-doctor-group?date=${encodeURIComponent(date)}`)) }
+export async function saveErDoctorGroups(data) { return handle(await apiFetch(`${BASE}/er-doctor-group`, { method: 'POST', headers, body: JSON.stringify(data) })) }
 // 各單位「顯示照服員」選取（UnitCareAide）
 // GET {unitCode}/aide-display → 該單位選取的照服員（含順序＋姓名／聯絡方式）；供後台載入與前台顯示
 export async function getUnitCareAides(unitCode) { return handle(await apiFetch(`${BASE}/${unitCode}/aide-display`)) }

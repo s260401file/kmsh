@@ -67,6 +67,55 @@ public class CareAideUpsertRequest
     public bool IsActive { get; set; } = true;
 }
 
+/// <summary>ER 急診醫師主檔一列（DeptName 由 Department join 帶出供顯示；供 ER 緊急編組納入醫師）。</summary>
+public class ErDoctorItem
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = "";
+    public string? DeptCode { get; set; }          // 科別代碼（對應 Department.Code）
+    public string? DeptName { get; set; }          // 科別中文（join 帶出）
+    public string? Ext { get; set; }               // 分機
+    public string? Note { get; set; }              // 備註
+    public int SortOrder { get; set; }
+    public bool IsActive { get; set; }
+    public DateTime UpdatedAt { get; set; }
+    public DateTime CreatedAt { get; set; }
+}
+
+public class ErDoctorUpsertRequest
+{
+    public string Name { get; set; } = "";
+    public string? DeptCode { get; set; }
+    public string? Ext { get; set; }
+    public string? Note { get; set; }
+    public int SortOrder { get; set; }
+    public bool IsActive { get; set; } = true;
+}
+
+/// <summary>ER 急診醫師「每日緊急編組／點班」一列（join ErDoctor/Department 帶出姓名/科別/分機）。</summary>
+public class ErDoctorGroupItem
+{
+    public int ErDoctorId { get; set; }
+    public string Name { get; set; } = "";
+    public string? DeptName { get; set; }
+    public string? Ext { get; set; }
+    public string? EmergencyGroup { get; set; }    // 逗號分隔多組
+    public bool IsCharge { get; set; }
+}
+
+/// <summary>某日整組急診醫師編組儲存（先刪該日後插）。</summary>
+public class ErDoctorGroupSaveRequest
+{
+    public string WorkDate { get; set; } = "";     // yyyy-MM-dd
+    public List<ErDoctorGroupEntry> Entries { get; set; } = new();
+}
+public class ErDoctorGroupEntry
+{
+    public int ErDoctorId { get; set; }
+    public string? EmergencyGroup { get; set; }
+    public bool IsCharge { get; set; }
+}
+
 /// <summary>某單位選取顯示的一位照服員（含順序；姓名／聯絡方式由 CareAide join 帶出）。</summary>
 public class UnitCareAideItem
 {

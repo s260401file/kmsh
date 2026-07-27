@@ -64,8 +64,7 @@ export default function SurgeryTab() {
         <div className="surg-card">
           <div className="surg-card-header">
             當日手術
-            {/* 台數計算排除「取消」 */}
-            <span className="surg-card-count">{items.filter(i => i.status !== '取消').length} 台</span>
+            <span className="surg-card-count">{items.length} 筆</span>
           </div>
           <div className="surg-table-wrap">
             <table className="surg-table">

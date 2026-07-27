@@ -5,17 +5,20 @@ import { useMemo } from 'react'
 import { usePolling } from '../../../../hooks/usePolling'
 import * as wardApi from '../../../../services/wardApi'
 import { CENSUS_MS } from '../../../../config/pollingConfig'
+import BoardLoading from '../../../../components/BoardLoading'     // 院方資料載入中動畫（同病室動態）
 import '../tabsCss/surgery.css'
 
 const STATUS_ORDER = ['手術中','待手術','已完成','取消']      // 列表排序優先序
 
 export default function SurgeryTab() {
   // 後端已只回「W52 在床病人當日手術」，前端不再做日期過濾；與病室動態在床名單同頻(20s)輪詢
-  const { data } = usePolling(() => wardApi.getUnitSurgeries('W52'), { intervalMs: CENSUS_MS, deps: ['W52'] })
+  const { data, loading } = usePolling(() => wardApi.getUnitSurgeries('W52'), { intervalMs: CENSUS_MS, deps: ['W52'] })
 
   const items = useMemo(() =>
     [...(data ?? [])].sort((a, b) => STATUS_ORDER.indexOf(a.status) - STATUS_ORDER.indexOf(b.status)),
     [data])
+
+  if (loading) return <main className="main-content"><BoardLoading /></main>   // 院方資料載入中
 
   return (
     <main className="main-content">
@@ -28,7 +31,7 @@ export default function SurgeryTab() {
         <div className="surg-card">
           <div className="surg-card-header">
             當日手術
-            <span className="surg-card-count">{items.filter(i => i.status !== '取消').length} 台</span>
+            <span className="surg-card-count">{items.length} 筆</span>
           </div>
           <div className="surg-table-wrap">
             <table className="surg-table">
