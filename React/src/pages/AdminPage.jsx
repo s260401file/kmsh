@@ -1023,6 +1023,10 @@ const ER_BOOLS = [
   ['dnr','DNR'],['transferOut','轉出'],
   ['admitted','住院'],['aad','AAD'],['mbd','MBD'],['deceased','死亡'],
 ]
+// W52/ICU：手術/檢查/會診 統計改由實際來源(surgery、exam 頁)判定，臨床補充不再設定此三註記
+const WARD_BOOLS_NOSEC = WARD_BOOLS.filter(([k]) => !['surgery', 'exam', 'consult'].includes(k))
+// 依單位取得該站的臨床補充旗標清單
+const boolsForUnit = (u) => u === 'ER' ? ER_BOOLS : (u === 'W52' || u === 'ICU') ? WARD_BOOLS_NOSEC : WARD_BOOLS
 const COND_OPTS = ['', '穩定', '重症', '危急']
 const BEDSTATUS_OPTS = ['', 'occupied', 'isolation', 'transfer', 'transfer-in', 'discharge']
 const ISO_OPTS = ['', '無', '接觸隔離', '飛沫隔離', '空氣隔離', '負壓隔離']
@@ -1192,7 +1196,7 @@ function WardExtSection({ unitCode }) {
           {unitCode !== 'ER' && (<>
           <label style={s.label}>註記旗標</label>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px 16px', margin: '4px 0 12px' }}>
-            {WARD_BOOLS.map(([k, lbl]) => (
+            {boolsForUnit(unitCode).map(([k, lbl]) => (
               <label key={k} style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px', cursor: 'pointer' }}>
                 <input type="checkbox" checked={form[k]} onChange={e => setF(k, e.target.checked)} />{lbl}
               </label>
@@ -1227,7 +1231,7 @@ function WardExtSection({ unitCode }) {
                   const ext = extByHis[p.hhisnum?.trim()]
                   // 「已設定」依實際內容判定（旗標/病況/隔離/床位狀態/運送/依賴度/備註）；全清空→未設定
                   const summary = ext ? [
-                    ...(unitCode === 'ER' ? ER_BOOLS : WARD_BOOLS).filter(([k]) => ext[k]).map(([, l]) => l),
+                    ...boolsForUnit(unitCode).filter(([k]) => ext[k]).map(([, l]) => l),
                     ...(ext.isolation && ext.isolation !== '無' ? ['隔離'] : []),
                     ...(ext.awaiting ? ['待床' + (ext.awaitingType || '')] : []),
                     ...(unitCode !== 'ER' ? [
@@ -1260,7 +1264,7 @@ function WardExtSection({ unitCode }) {
             <thead><tr>{['病歷號', unitCode === 'OR' ? '刀房' : '床號', ...(unitCode === 'OR' ? ['科別'] : []), '責護','病況','狀態','旗標','操作'].map(h => <th key={h} style={s.th}>{h}</th>)}</tr></thead>
             <tbody>
               {list.map((item, i) => {
-                const flags = WARD_BOOLS.filter(([k]) => item[k]).map(([, l]) => l)
+                const flags = boolsForUnit(unitCode).filter(([k]) => item[k]).map(([, l]) => l)
                   .concat(item.isolation && item.isolation !== '無' ? ['隔離'] : [])
                 return (
                   <tr key={item.id} style={{ background: editId === item.id ? '#fef9c3' : i % 2 ? '#f9fafb' : '#fff' }}>

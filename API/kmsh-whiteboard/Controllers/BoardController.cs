@@ -113,6 +113,28 @@ public class BoardController : ControllerBase
             .GroupBy(b => BareBed(b.BedId))
             .ToDictionary(g => g.Key, g => string.Join("，", g.Select(x => x.Name).Where(n => !string.IsNullOrWhiteSpace(n))), StringComparer.OrdinalIgnoreCase);
 
+        // 手術/檢查/會診：改由「實際來源」以病歷號判定（對應 w52/surgery、w52/exam），不再用臨床補充旗標。
+        var inBedHis = occ.Where(o => !string.IsNullOrWhiteSpace(o.Hhisnum))
+            .Select(o => o.Hhisnum!.Trim()).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        // 檢查：院方 Board_Examine（Ward=W52 且在床）→ 病歷號集合（與 /exam 看板同源、共用 45 秒快取）
+        var w52ExamList = await FreshOrStaleAsync("exam:board:examine", 45, () => _board.GetExamineAsync(ct));
+        var examHis = w52ExamList
+            .Where(x => string.Equals((x.Ward ?? "").Trim(), "W52", StringComparison.OrdinalIgnoreCase)
+                     && !string.IsNullOrWhiteSpace(x.Hhisnum) && inBedHis.Contains(x.Hhisnum!.Trim()))
+            .Select(x => x.Hhisnum!.Trim()).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        // 手術：本地 OrSurgery（今日，在床病歷號）→ 病歷號集合
+        var surgeryHis = (await _ward.GetOrSurgeryListAsync(DateTime.Today, DateTime.Today, ct))
+            .Where(r => !string.IsNullOrWhiteSpace(r.ChartNo) && inBedHis.Contains(r.ChartNo!.Trim()))
+            .Select(r => r.ChartNo!.Trim()).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        // 會診：自建 WardExamConsult（Kind=會診, 24h）→ 病歷號＋床號(去 W52- 前綴)兩鍵，取穩健
+        var w52ConsultCut = DateTime.Now.AddHours(-24);
+        var w52ConsultRows = (await _ward.GetExamConsultAsync("W52", false, ct))
+            .Where(r => r.Kind == "會診" && r.UpdatedAt > w52ConsultCut).ToList();
+        var consultHis = w52ConsultRows.Where(r => !string.IsNullOrWhiteSpace(r.Hhisnum))
+            .Select(r => r.Hhisnum!.Trim()).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var consultBeds = w52ConsultRows.Where(r => !string.IsNullOrWhiteSpace(r.BedId))
+            .Select(r => BareBed(r.BedId)).ToHashSet(StringComparer.OrdinalIgnoreCase);
+
         foreach (var code in W52_BEDS)
         {
             var bedId = $"W52-{code}";
@@ -164,9 +186,10 @@ public class BoardController : ControllerBase
                     Foley = e?.Foley ?? false,
                     CVC = e?.CVC ?? false,
                     CardiacCath = e?.CardiacCath ?? false,
-                    Surgery = e?.Surgery ?? false,
-                    Exam = e?.Exam ?? false,
-                    Consult = e?.Consult ?? false,
+                    // 手術/檢查/會診：改由實際來源(病歷號)判定，取代原臨床補充旗標
+                    Surgery = !string.IsNullOrWhiteSpace(o.Hhisnum) && surgeryHis.Contains(o.Hhisnum!.Trim()),
+                    Exam = !string.IsNullOrWhiteSpace(o.Hhisnum) && examHis.Contains(o.Hhisnum!.Trim()),
+                    Consult = (!string.IsNullOrWhiteSpace(o.Hhisnum) && consultHis.Contains(o.Hhisnum!.Trim())) || consultBeds.Contains(code),
                     Notes = e?.Notes
                 }
             });
@@ -214,10 +237,27 @@ public class BoardController : ControllerBase
         var nurseByBed = nursesByBed.ToDictionary(kv => kv.Key,
             kv => string.Join("，", kv.Value.Select(n => n.Name)), StringComparer.OrdinalIgnoreCase);
 
-        // 會診：與 /exam 看板同源（自建 WardExamConsult：Kind=會診、設定後 24h 內），依床號(F4-01) 對應到床 → 供看板旗標/統計。
+        // 手術/檢查/會診：改由「實際來源」以病歷號判定（對應 icu/surgery、icu/exam），不再用臨床補充旗標。
+        var icuInBedHis = occ4.Concat(occ3).Where(o => !string.IsNullOrWhiteSpace(o.Hhisnum))
+            .Select(o => o.Hhisnum!.Trim()).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        // 檢查：院方 Board_Examine（Ward=AICU/CICU 且在床）→ 病歷號集合（與 /exam 看板同源、共用 45 秒快取）
+        var icuExamList = await FreshOrStaleAsync("exam:board:examine", 45, () => _board.GetExamineAsync(ct));
+        var icuExamHis = icuExamList
+            .Where(x => (string.Equals((x.Ward ?? "").Trim(), "AICU", StringComparison.OrdinalIgnoreCase)
+                     || string.Equals((x.Ward ?? "").Trim(), "CICU", StringComparison.OrdinalIgnoreCase))
+                     && !string.IsNullOrWhiteSpace(x.Hhisnum) && icuInBedHis.Contains(x.Hhisnum!.Trim()))
+            .Select(x => x.Hhisnum!.Trim()).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        // 手術：本地 OrSurgery（今日，在床病歷號）→ 病歷號集合
+        var icuSurgeryHis = (await _ward.GetOrSurgeryListAsync(DateTime.Today, DateTime.Today, ct))
+            .Where(r => !string.IsNullOrWhiteSpace(r.ChartNo) && icuInBedHis.Contains(r.ChartNo!.Trim()))
+            .Select(r => r.ChartNo!.Trim()).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        // 會診：自建 WardExamConsult（Kind=會診, 24h）→ 病歷號＋床號(F4-01)兩鍵，取穩健
         var consultCutoff = DateTime.Now.AddHours(-24);
-        var consultBeds = (await _ward.GetExamConsultAsync("ICU", false, ct))
-            .Where(r => r.Kind == "會診" && r.UpdatedAt > consultCutoff && !string.IsNullOrWhiteSpace(r.BedId))
+        var icuConsultRows = (await _ward.GetExamConsultAsync("ICU", false, ct))
+            .Where(r => r.Kind == "會診" && r.UpdatedAt > consultCutoff).ToList();
+        var icuConsultHis = icuConsultRows.Where(r => !string.IsNullOrWhiteSpace(r.Hhisnum))
+            .Select(r => r.Hhisnum!.Trim()).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var consultBeds = icuConsultRows.Where(r => !string.IsNullOrWhiteSpace(r.BedId))
             .Select(r => r.BedId!.Trim())
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
@@ -259,8 +299,10 @@ public class BoardController : ControllerBase
                         FallRisk = e?.FallRisk ?? false, Dependency = e?.Dependency, Confidential = e?.Confidential ?? false,
                         NoTreatment = e?.NoTreatment ?? false, Npo = e?.Npo ?? false, Allergy = e?.Allergy ?? false,
                         Rrt = e?.Rrt ?? false, Chemo = e?.Chemo ?? false, Transport = e?.Transport, Oxygen = e?.Oxygen ?? false,
-                        Surgery = e?.Surgery ?? false, Exam = e?.Exam ?? false,
-                        Consult = consultBeds.Contains(bed.Id) || (e?.Consult ?? false),  // 會診＝自建 WardExamConsult(24h) 或臨床補充旗標
+                        // 手術/檢查/會診：改由實際來源(病歷號)判定，取代原臨床補充旗標
+                        Surgery = !string.IsNullOrWhiteSpace(o.Hhisnum) && icuSurgeryHis.Contains(o.Hhisnum!.Trim()),
+                        Exam = !string.IsNullOrWhiteSpace(o.Hhisnum) && icuExamHis.Contains(o.Hhisnum!.Trim()),
+                        Consult = (!string.IsNullOrWhiteSpace(o.Hhisnum) && icuConsultHis.Contains(o.Hhisnum!.Trim())) || consultBeds.Contains(bed.Id),
                         Notes = e?.Notes
                     };
                 }
