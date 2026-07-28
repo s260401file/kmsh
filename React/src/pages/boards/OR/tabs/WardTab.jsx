@@ -219,7 +219,8 @@ export default function WardTab() {
                 onClick={room.Status !== 'empty' ? () => openRoom(room) : undefined}
               />
             ))}
-            <EnvCard rooms={rooms} envByRoom={envByRoom} date={envDate} />
+            {/* 溫溼度卡（第 8 格）暫先移除、留空不顯示；日後恢復把下行取消註解即可
+            <EnvCard rooms={rooms} envByRoom={envByRoom} date={envDate} /> */}
           </div>
         </div>
 

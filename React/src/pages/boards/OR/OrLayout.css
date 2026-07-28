@@ -31,7 +31,6 @@
 .or-board .staff-label { font-size:14px; color:var(--text-stats); opacity:.75; margin-bottom:2px; }
 .or-board .staff-name { font-size:26px; font-weight:700; color:var(--text-stats); }
 .or-board .header-right { text-align:right; width:220px; }
-.or-board .update-label { font-size:13px; color:var(--text-stats); opacity:.75; }
 .or-board .clock-date { font-size:16px; color:var(--text-stats); opacity:.85; }
 .or-board .clock-time { font-size:30px; font-weight:700; font-family:var(--font-num); color:var(--text-stats); letter-spacing:1px; }
 

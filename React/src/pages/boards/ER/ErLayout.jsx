@@ -45,7 +45,6 @@ export default function ErLayout() {
           </div>}
         </div>
         <div className="header-right">
-          <div className="update-label">資料更新時間：剛剛</div>
           <div className="clock-date">{date}</div>
           <div className="clock-time">{time}</div>
         </div>

@@ -44,7 +44,6 @@ export default function W52Layout() {
           {(hLbl || hNam) && <div className="staff-block"><div className="staff-label">{hLbl}</div><div className="staff-name">{hNam}</div></div>}
         </div>
         <div className="header-right">
-          <div className="update-label">資料更新時間：剛剛</div>
           <div className="clock-date">{date}</div>
           <div className="clock-time">{time}</div>
         </div>

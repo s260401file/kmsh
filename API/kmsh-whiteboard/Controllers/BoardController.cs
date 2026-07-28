@@ -876,7 +876,8 @@ public class BoardController : ControllerBase
     }
 
     // 某科當日值班醫師挑選：
-    //  日/夜兩班科（呼吸治療科 Slot=日班/夜班）→ 依當下時間帶當前班別；
+    //  日/夜兩班科（呼吸治療科 Slot=日班/夜班）→ 只帶「當下班別」該列；當前班別無人排(該列為空)則顯示空，
+    //    絕不回退到另一班（否則白班空、夜班有人時，白班時段會誤顯示夜班醫師）。
     //  多時段科（內科 值班/上午/下午）→ 取 Slot=值班；
     //  無值班列或單一時段科 → 取當日該科第一列。
     private static object BuildOnCallEntry(string deptCode, string? deptName, List<OnCallRosterItem> rows)
@@ -885,7 +886,7 @@ public class BoardController : ControllerBase
         var dayNight = drows.Where(r => r.Slot == "日班" || r.Slot == "夜班").ToList();
         OnCallRosterItem? pick;
         if (dayNight.Count > 0)
-            pick = dayNight.FirstOrDefault(r => r.Slot == (OnCallIsDayShift() ? "日班" : "夜班")) ?? dayNight.First();
+            pick = dayNight.FirstOrDefault(r => r.Slot == (OnCallIsDayShift() ? "日班" : "夜班"));   // 當前班別；無則空（不回退另一班）
         else if (drows.Count <= 1)
             pick = drows.FirstOrDefault();
         else
