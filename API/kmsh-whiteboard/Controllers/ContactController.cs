@@ -142,6 +142,7 @@ public class ContactController : ControllerBase
         return Ok(await _repo.GetPhoneAsync(unitCode, includeAll, ct));
     }
 
+    /// <summary>取得單筆聯絡電話。</summary>
     [HttpGet("phone/{id:int}")]
     public async Task<IActionResult> GetPhoneById(int id, CancellationToken ct = default)
     {
@@ -149,6 +150,7 @@ public class ContactController : ControllerBase
         return item is null ? NotFound() : Ok(item);
     }
 
+    /// <summary>新增聯絡電話。</summary>
     [HttpPost("phone")]
     public async Task<IActionResult> CreatePhone([FromBody] ContactPhoneUpsertRequest req, CancellationToken ct = default)
     {
@@ -156,6 +158,7 @@ public class ContactController : ControllerBase
         return CreatedAtAction(nameof(GetPhoneById), new { id = newId }, await _repo.GetPhoneByIdAsync(newId, ct));
     }
 
+    /// <summary>更新聯絡電話。</summary>
     [HttpPut("phone/{id:int}")]
     public async Task<IActionResult> UpdatePhone(int id, [FromBody] ContactPhoneUpsertRequest req, CancellationToken ct = default)
     {
@@ -163,6 +166,7 @@ public class ContactController : ControllerBase
         return ok ? Ok(await _repo.GetPhoneByIdAsync(id, ct)) : NotFound();
     }
 
+    /// <summary>刪除聯絡電話。</summary>
     [HttpDelete("phone/{id:int}")]
     public async Task<IActionResult> DeletePhone(int id, CancellationToken ct = default)
         => await _repo.DeletePhoneAsync(id, ct) ? NoContent() : NotFound();

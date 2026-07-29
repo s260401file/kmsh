@@ -779,6 +779,7 @@ public class BoardController : ControllerBase
     public async Task<IActionResult> GetOnCall(string unitCode, [FromQuery] bool includeAll = false, CancellationToken ct = default)
         => Ok(await _ward.GetOnCallAsync(unitCode, includeAll, ct));
 
+    /// <summary>取得單筆值班醫師（ER 每日各科）。</summary>
     [HttpGet("oncall/{id:int}")]
     public async Task<IActionResult> GetOnCallById(int id, CancellationToken ct = default)
     {
@@ -786,6 +787,7 @@ public class BoardController : ControllerBase
         return item is null ? NotFound() : Ok(item);
     }
 
+    /// <summary>新增值班醫師（ER 每日各科）。</summary>
     [HttpPost("oncall")]
     public async Task<IActionResult> CreateOnCall([FromBody] ErOnCallDoctorUpsertRequest req, CancellationToken ct = default)
     {
@@ -793,20 +795,24 @@ public class BoardController : ControllerBase
         return CreatedAtAction(nameof(GetOnCallById), new { id }, await _ward.GetOnCallByIdAsync(id, ct));
     }
 
+    /// <summary>更新值班醫師（ER 每日各科）。</summary>
     [HttpPut("oncall/{id:int}")]
     public async Task<IActionResult> UpdateOnCall(int id, [FromBody] ErOnCallDoctorUpsertRequest req, CancellationToken ct = default)
         => await _ward.UpdateOnCallAsync(id, req, ct) ? Ok(await _ward.GetOnCallByIdAsync(id, ct)) : NotFound();
 
+    /// <summary>刪除值班醫師（ER 每日各科）。</summary>
     [HttpDelete("oncall/{id:int}")]
     public async Task<IActionResult> DeleteOnCall(int id, CancellationToken ct = default)
         => await _ward.DeleteOnCallAsync(id, ct) ? NoContent() : NotFound();
 
     // ── 各科值班醫師「每日輪值排程」（月曆後台；顯示端日後接）──────────────
     // 科別設定 OnCallDept
+    /// <summary>查詢值班醫師科別清單。</summary>
     [HttpGet("oncall-dept")]
     public async Task<IActionResult> GetOnCallDepts([FromQuery] bool includeAll = true, [FromQuery] string? ownerUnit = null, CancellationToken ct = default)
         => Ok(await _oncall.GetDeptsAsync(includeAll, ownerUnit, ct));
 
+    /// <summary>取得單筆值班醫師科別。</summary>
     [HttpGet("oncall-dept/{id:int}")]
     public async Task<IActionResult> GetOnCallDeptById(int id, CancellationToken ct = default)
     {
@@ -814,6 +820,7 @@ public class BoardController : ControllerBase
         return item is null ? NotFound() : Ok(item);
     }
 
+    /// <summary>新增值班醫師科別。</summary>
     [HttpPost("oncall-dept")]
     public async Task<IActionResult> CreateOnCallDept([FromBody] OnCallDeptUpsertRequest req, CancellationToken ct = default)
     {
@@ -821,15 +828,18 @@ public class BoardController : ControllerBase
         return CreatedAtAction(nameof(GetOnCallDeptById), new { id }, await _oncall.GetDeptByIdAsync(id, ct));
     }
 
+    /// <summary>更新值班醫師科別。</summary>
     [HttpPut("oncall-dept/{id:int}")]
     public async Task<IActionResult> UpdateOnCallDept(int id, [FromBody] OnCallDeptUpsertRequest req, CancellationToken ct = default)
         => await _oncall.UpdateDeptAsync(id, req, ct) ? Ok(await _oncall.GetDeptByIdAsync(id, ct)) : NotFound();
 
+    /// <summary>刪除值班醫師科別。</summary>
     [HttpDelete("oncall-dept/{id:int}")]
     public async Task<IActionResult> DeleteOnCallDept(int id, CancellationToken ct = default)
         => await _oncall.DeleteDeptAsync(id, ct) ? NoContent() : NotFound();
 
     // 每日輪值 OnCallRoster
+    /// <summary>查詢值班醫師每日排班（可依科別與日期區間）。</summary>
     [HttpGet("oncall-roster")]
     public async Task<IActionResult> GetOnCallRoster([FromQuery] string? deptCode, [FromQuery] string? from, [FromQuery] string? to, CancellationToken ct = default)
     {
@@ -917,14 +927,17 @@ public class BoardController : ControllerBase
         return Ok(result);
     }
 
+    /// <summary>新增值班醫師每日排班。</summary>
     [HttpPost("oncall-roster")]
     public async Task<IActionResult> CreateOnCallRoster([FromBody] OnCallRosterUpsertRequest req, CancellationToken ct = default)
         => Ok(new { id = await _oncall.CreateRosterAsync(req, ct) });
 
+    /// <summary>更新值班醫師每日排班。</summary>
     [HttpPut("oncall-roster/{id:int}")]
     public async Task<IActionResult> UpdateOnCallRoster(int id, [FromBody] OnCallRosterUpsertRequest req, CancellationToken ct = default)
         => await _oncall.UpdateRosterAsync(id, req, ct) ? NoContent() : NotFound();
 
+    /// <summary>刪除值班醫師每日排班。</summary>
     [HttpDelete("oncall-roster/{id:int}")]
     public async Task<IActionResult> DeleteOnCallRoster(int id, CancellationToken ct = default)
         => await _oncall.DeleteRosterAsync(id, ct) ? NoContent() : NotFound();
@@ -983,18 +996,23 @@ public class BoardController : ControllerBase
         return Ok(data);
     }
     // 後台 CRUD（固定四班，主要用 PUT；POST/DELETE 備用）
+    /// <summary>查詢某單位ER 三班醫護面板（醫師／照服員）清單。</summary>
     [HttpGet("{unitCode}/shiftpanel-list")]
     public async Task<IActionResult> GetErShiftList(string unitCode, [FromQuery] bool includeAll = true, CancellationToken ct = default)
         => Ok(await _ward.GetErShiftAsync(unitCode, includeAll, ct));
+    /// <summary>取得單筆ER 三班醫護面板（醫師／照服員）。</summary>
     [HttpGet("shiftpanel/{id:int}")]
     public async Task<IActionResult> GetErShiftById(int id, CancellationToken ct = default)
     { var x = await _ward.GetErShiftByIdAsync(id, ct); return x is null ? NotFound() : Ok(x); }
+    /// <summary>新增ER 三班醫護面板（醫師／照服員）。</summary>
     [HttpPost("shiftpanel")]
     public async Task<IActionResult> CreateErShift([FromBody] ErShiftStaffUpsertRequest req, CancellationToken ct = default)
     { var id = await _ward.CreateErShiftAsync(req, ct); return CreatedAtAction(nameof(GetErShiftById), new { id }, await _ward.GetErShiftByIdAsync(id, ct)); }
+    /// <summary>更新ER 三班醫護面板（醫師／照服員）。</summary>
     [HttpPut("shiftpanel/{id:int}")]
     public async Task<IActionResult> UpdateErShift(int id, [FromBody] ErShiftStaffUpsertRequest req, CancellationToken ct = default)
         => await _ward.UpdateErShiftAsync(id, req, ct) ? Ok(await _ward.GetErShiftByIdAsync(id, ct)) : NotFound();
+    /// <summary>刪除ER 三班醫護面板（醫師／照服員）。</summary>
     [HttpDelete("shiftpanel/{id:int}")]
     public async Task<IActionResult> DeleteErShift(int id, CancellationToken ct = default)
         => await _ward.DeleteErShiftAsync(id, ct) ? NoContent() : NotFound();
@@ -1005,6 +1023,7 @@ public class BoardController : ControllerBase
     public async Task<IActionResult> GetErBeds(string unitCode, [FromQuery] bool includeAll = false, CancellationToken ct = default)
         => Ok(await _ward.GetErBedsAsync(unitCode, includeAll, ct));
 
+    /// <summary>取得單筆ER 床位主檔。</summary>
     [HttpGet("bed/{id:int}")]
     public async Task<IActionResult> GetErBedById(int id, CancellationToken ct = default)
     {
@@ -1012,6 +1031,7 @@ public class BoardController : ControllerBase
         return item is null ? NotFound() : Ok(item);
     }
 
+    /// <summary>新增ER 床位主檔。</summary>
     [HttpPost("bed")]
     public async Task<IActionResult> CreateErBed([FromBody] ErBedUpsertRequest req, CancellationToken ct = default)
     {
@@ -1019,10 +1039,12 @@ public class BoardController : ControllerBase
         return CreatedAtAction(nameof(GetErBedById), new { id }, await _ward.GetErBedByIdAsync(id, ct));
     }
 
+    /// <summary>更新ER 床位主檔。</summary>
     [HttpPut("bed/{id:int}")]
     public async Task<IActionResult> UpdateErBed(int id, [FromBody] ErBedUpsertRequest req, CancellationToken ct = default)
         => await _ward.UpdateErBedAsync(id, req, ct) ? Ok(await _ward.GetErBedByIdAsync(id, ct)) : NotFound();
 
+    /// <summary>刪除ER 床位主檔。</summary>
     [HttpDelete("bed/{id:int}")]
     public async Task<IActionResult> DeleteErBed(int id, CancellationToken ct = default)
         => await _ward.DeleteErBedAsync(id, ct) ? NoContent() : NotFound();
@@ -1033,6 +1055,7 @@ public class BoardController : ControllerBase
     public async Task<IActionResult> GetOrRooms(string unitCode, [FromQuery] bool includeAll = false, CancellationToken ct = default)
         => Ok(await _ward.GetOrRoomsAsync(unitCode, includeAll, ct));
 
+    /// <summary>取得單筆OR 刀房主檔。</summary>
     [HttpGet("room/{id:int}")]
     public async Task<IActionResult> GetOrRoomById(int id, CancellationToken ct = default)
     {
@@ -1040,6 +1063,7 @@ public class BoardController : ControllerBase
         return item is null ? NotFound() : Ok(item);
     }
 
+    /// <summary>新增OR 刀房主檔。</summary>
     [HttpPost("room")]
     public async Task<IActionResult> CreateOrRoom([FromBody] OrRoomUpsertRequest req, CancellationToken ct = default)
     {
@@ -1047,10 +1071,12 @@ public class BoardController : ControllerBase
         return CreatedAtAction(nameof(GetOrRoomById), new { id }, await _ward.GetOrRoomByIdAsync(id, ct));
     }
 
+    /// <summary>更新OR 刀房主檔。</summary>
     [HttpPut("room/{id:int}")]
     public async Task<IActionResult> UpdateOrRoom(int id, [FromBody] OrRoomUpsertRequest req, CancellationToken ct = default)
         => await _ward.UpdateOrRoomAsync(id, req, ct) ? Ok(await _ward.GetOrRoomByIdAsync(id, ct)) : NotFound();
 
+    /// <summary>刪除OR 刀房主檔。</summary>
     [HttpDelete("room/{id:int}")]
     public async Task<IActionResult> DeleteOrRoom(int id, CancellationToken ct = default)
         => await _ward.DeleteOrRoomAsync(id, ct) ? NoContent() : NotFound();
@@ -1344,52 +1370,67 @@ public class BoardController : ControllerBase
     }
 
     // 班級人員 CRUD（後台）
+    /// <summary>查詢某單位OR 手術派班班別人員（護理長／麻醉／體循）清單。</summary>
     [HttpGet("{unitCode}/shiftstaff")]
     public async Task<IActionResult> GetShiftStaff(string unitCode, [FromQuery] bool includeAll = false, CancellationToken ct = default)
         => Ok(await _ward.GetShiftStaffAsync(unitCode, includeAll, ct));
+    /// <summary>取得單筆OR 手術派班班別人員（護理長／麻醉／體循）。</summary>
     [HttpGet("shiftstaff/{id:int}")]
     public async Task<IActionResult> GetShiftStaffById(int id, CancellationToken ct = default)
     { var x = await _ward.GetShiftStaffByIdAsync(id, ct); return x is null ? NotFound() : Ok(x); }
+    /// <summary>新增OR 手術派班班別人員（護理長／麻醉／體循）。</summary>
     [HttpPost("shiftstaff")]
     public async Task<IActionResult> CreateShiftStaff([FromBody] OrShiftStaffUpsertRequest req, CancellationToken ct = default)
     { var id = await _ward.CreateShiftStaffAsync(req, ct); return CreatedAtAction(nameof(GetShiftStaffById), new { id }, await _ward.GetShiftStaffByIdAsync(id, ct)); }
+    /// <summary>更新OR 手術派班班別人員（護理長／麻醉／體循）。</summary>
     [HttpPut("shiftstaff/{id:int}")]
     public async Task<IActionResult> UpdateShiftStaff(int id, [FromBody] OrShiftStaffUpsertRequest req, CancellationToken ct = default)
         => await _ward.UpdateShiftStaffAsync(id, req, ct) ? Ok(await _ward.GetShiftStaffByIdAsync(id, ct)) : NotFound();
+    /// <summary>刪除OR 手術派班班別人員（護理長／麻醉／體循）。</summary>
     [HttpDelete("shiftstaff/{id:int}")]
     public async Task<IActionResult> DeleteShiftStaff(int id, CancellationToken ct = default)
         => await _ward.DeleteShiftStaffAsync(id, ct) ? NoContent() : NotFound();
 
     // 房×班 刷手/流動 CRUD（後台）
+    /// <summary>查詢某單位OR 手術派班刀房人員清單。</summary>
     [HttpGet("{unitCode}/shiftroom")]
     public async Task<IActionResult> GetShiftRoom(string unitCode, [FromQuery] bool includeAll = false, CancellationToken ct = default)
         => Ok(await _ward.GetShiftRoomAsync(unitCode, includeAll, ct));
+    /// <summary>取得單筆OR 手術派班刀房人員。</summary>
     [HttpGet("shiftroom/{id:int}")]
     public async Task<IActionResult> GetShiftRoomById(int id, CancellationToken ct = default)
     { var x = await _ward.GetShiftRoomByIdAsync(id, ct); return x is null ? NotFound() : Ok(x); }
+    /// <summary>新增OR 手術派班刀房人員。</summary>
     [HttpPost("shiftroom")]
     public async Task<IActionResult> CreateShiftRoom([FromBody] OrShiftRoomUpsertRequest req, CancellationToken ct = default)
     { var id = await _ward.CreateShiftRoomAsync(req, ct); return CreatedAtAction(nameof(GetShiftRoomById), new { id }, await _ward.GetShiftRoomByIdAsync(id, ct)); }
+    /// <summary>更新OR 手術派班刀房人員。</summary>
     [HttpPut("shiftroom/{id:int}")]
     public async Task<IActionResult> UpdateShiftRoom(int id, [FromBody] OrShiftRoomUpsertRequest req, CancellationToken ct = default)
         => await _ward.UpdateShiftRoomAsync(id, req, ct) ? Ok(await _ward.GetShiftRoomByIdAsync(id, ct)) : NotFound();
+    /// <summary>刪除OR 手術派班刀房人員。</summary>
     [HttpDelete("shiftroom/{id:int}")]
     public async Task<IActionResult> DeleteShiftRoom(int id, CancellationToken ct = default)
         => await _ward.DeleteShiftRoomAsync(id, ct) ? NoContent() : NotFound();
 
     // 特殊交班 CRUD（後台）；list 路由用 handover-list 以避免與 board 的 or/handover 衝突
+    /// <summary>查詢某單位OR 特殊交班清單。</summary>
     [HttpGet("{unitCode}/handover-list")]
     public async Task<IActionResult> GetHandoverList(string unitCode, [FromQuery] bool includeAll = false, CancellationToken ct = default)
         => Ok(await _ward.GetHandoverAsync(unitCode, includeAll, ct));
+    /// <summary>取得單筆OR 特殊交班。</summary>
     [HttpGet("handover/{id:int}")]
     public async Task<IActionResult> GetHandoverById(int id, CancellationToken ct = default)
     { var x = await _ward.GetHandoverByIdAsync(id, ct); return x is null ? NotFound() : Ok(x); }
+    /// <summary>新增OR 特殊交班。</summary>
     [HttpPost("handover")]
     public async Task<IActionResult> CreateHandover([FromBody] OrHandoverUpsertRequest req, CancellationToken ct = default)
     { var id = await _ward.CreateHandoverAsync(req, ct); return CreatedAtAction(nameof(GetHandoverById), new { id }, await _ward.GetHandoverByIdAsync(id, ct)); }
+    /// <summary>更新OR 特殊交班。</summary>
     [HttpPut("handover/{id:int}")]
     public async Task<IActionResult> UpdateHandover(int id, [FromBody] OrHandoverUpsertRequest req, CancellationToken ct = default)
         => await _ward.UpdateHandoverAsync(id, req, ct) ? Ok(await _ward.GetHandoverByIdAsync(id, ct)) : NotFound();
+    /// <summary>刪除OR 特殊交班。</summary>
     [HttpDelete("handover/{id:int}")]
     public async Task<IActionResult> DeleteHandover(int id, CancellationToken ct = default)
         => await _ward.DeleteHandoverAsync(id, ct) ? NoContent() : NotFound();
@@ -1507,18 +1548,23 @@ public class BoardController : ControllerBase
     }
 
     // 後台 CRUD
+    /// <summary>查詢某單位檢查／會診明細清單。</summary>
     [HttpGet("{unitCode}/examconsult")]
     public async Task<IActionResult> GetExamConsultList(string unitCode, [FromQuery] bool includeAll = true, CancellationToken ct = default)
         => Ok(await _ward.GetExamConsultAsync(unitCode, includeAll, ct));
+    /// <summary>取得單筆檢查／會診明細。</summary>
     [HttpGet("examconsult/{id:int}")]
     public async Task<IActionResult> GetExamConsultById(int id, CancellationToken ct = default)
     { var x = await _ward.GetExamConsultByIdAsync(id, ct); return x is null ? NotFound() : Ok(x); }
+    /// <summary>新增檢查／會診明細。</summary>
     [HttpPost("examconsult")]
     public async Task<IActionResult> CreateExamConsult([FromBody] WardExamConsultUpsertRequest req, CancellationToken ct = default)
     { var id = await _ward.CreateExamConsultAsync(req, ct); return CreatedAtAction(nameof(GetExamConsultById), new { id }, await _ward.GetExamConsultByIdAsync(id, ct)); }
+    /// <summary>更新檢查／會診明細。</summary>
     [HttpPut("examconsult/{id:int}")]
     public async Task<IActionResult> UpdateExamConsult(int id, [FromBody] WardExamConsultUpsertRequest req, CancellationToken ct = default)
         => await _ward.UpdateExamConsultAsync(id, req, ct) ? Ok(await _ward.GetExamConsultByIdAsync(id, ct)) : NotFound();
+    /// <summary>刪除檢查／會診明細。</summary>
     [HttpDelete("examconsult/{id:int}")]
     public async Task<IActionResult> DeleteExamConsult(int id, CancellationToken ct = default)
         => await _ward.DeleteExamConsultAsync(id, ct) ? NoContent() : NotFound();
@@ -1528,15 +1574,19 @@ public class BoardController : ControllerBase
     [HttpGet("{unitCode}/antibiotic")]
     public async Task<IActionResult> GetAntibiotic(string unitCode, [FromQuery] bool includeAll = false, CancellationToken ct = default)
         => Ok(await _ward.GetAntibioticAsync(unitCode, includeAll, ct));
+    /// <summary>取得單筆ICU 抗生素明細。</summary>
     [HttpGet("antibiotic/{id:int}")]
     public async Task<IActionResult> GetAntibioticById(int id, CancellationToken ct = default)
     { var x = await _ward.GetAntibioticByIdAsync(id, ct); return x is null ? NotFound() : Ok(x); }
+    /// <summary>新增ICU 抗生素明細。</summary>
     [HttpPost("antibiotic")]
     public async Task<IActionResult> CreateAntibiotic([FromBody] IcuAntibioticUpsertRequest req, CancellationToken ct = default)
     { var id = await _ward.CreateAntibioticAsync(req, ct); return CreatedAtAction(nameof(GetAntibioticById), new { id }, await _ward.GetAntibioticByIdAsync(id, ct)); }
+    /// <summary>更新ICU 抗生素明細。</summary>
     [HttpPut("antibiotic/{id:int}")]
     public async Task<IActionResult> UpdateAntibiotic(int id, [FromBody] IcuAntibioticUpsertRequest req, CancellationToken ct = default)
         => await _ward.UpdateAntibioticAsync(id, req, ct) ? Ok(await _ward.GetAntibioticByIdAsync(id, ct)) : NotFound();
+    /// <summary>刪除ICU 抗生素明細。</summary>
     [HttpDelete("antibiotic/{id:int}")]
     public async Task<IActionResult> DeleteAntibiotic(int id, CancellationToken ct = default)
         => await _ward.DeleteAntibioticAsync(id, ct) ? NoContent() : NotFound();
@@ -1588,15 +1638,19 @@ public class BoardController : ControllerBase
         if (!includeAll) foreach (var r in rows) r.PatientName = MaskName(r.PatientName);
         return Ok(rows);
     }
+    /// <summary>取得單筆照護提醒。</summary>
     [HttpGet("care-reminder/{id:int}")]
     public async Task<IActionResult> GetCareReminderById(int id, CancellationToken ct = default)
     { var x = await _ward.GetCareReminderByIdAsync(id, ct); return x is null ? NotFound() : Ok(x); }
+    /// <summary>新增照護提醒。</summary>
     [HttpPost("care-reminder")]
     public async Task<IActionResult> CreateCareReminder([FromBody] CareReminderUpsertRequest req, CancellationToken ct = default)
     { var id = await _ward.CreateCareReminderAsync(req, ct); return CreatedAtAction(nameof(GetCareReminderById), new { id }, await _ward.GetCareReminderByIdAsync(id, ct)); }
+    /// <summary>更新照護提醒。</summary>
     [HttpPut("care-reminder/{id:int}")]
     public async Task<IActionResult> UpdateCareReminder(int id, [FromBody] CareReminderUpsertRequest req, CancellationToken ct = default)
         => await _ward.UpdateCareReminderAsync(id, req, ct) ? Ok(await _ward.GetCareReminderByIdAsync(id, ct)) : NotFound();
+    /// <summary>刪除照護提醒。</summary>
     [HttpDelete("care-reminder/{id:int}")]
     public async Task<IActionResult> DeleteCareReminder(int id, CancellationToken ct = default)
         => await _ward.DeleteCareReminderAsync(id, ct) ? NoContent() : NotFound();
@@ -1604,12 +1658,15 @@ public class BoardController : ControllerBase
     // ═══════════════ 人員管理（v14：人員/角色/排班/床位指派/查房/交班/照護團隊）═══════════════
 
     // ── 人員主檔 ──
+    /// <summary>查詢人員／帳號清單。</summary>
     [HttpGet("personnel")]
     public async Task<IActionResult> GetStaff([FromQuery] bool includeAll = true, CancellationToken ct = default)
         => Ok(await _staff.GetStaffAsync(includeAll, ct));
+    /// <summary>取得單筆人員／帳號。</summary>
     [HttpGet("personnel/{id:int}")]
     public async Task<IActionResult> GetStaffById(int id, CancellationToken ct = default)
     { var x = await _staff.GetStaffByIdAsync(id, ct); return x is null ? NotFound() : Ok(x); }
+    /// <summary>新增人員／帳號。</summary>
     [HttpPost("personnel")]
     public async Task<IActionResult> CreateStaff([FromBody] StaffUpsertRequest req, CancellationToken ct = default)
     {
@@ -1620,6 +1677,7 @@ public class BoardController : ControllerBase
             catch (Exception ex) { _logger.LogWarning(ex, "建 Staff 後連動建 AD 失敗（{Emp}）", req.EmployeeNo); }
         return CreatedAtAction(nameof(GetStaffById), new { id }, await _staff.GetStaffByIdAsync(id, ct));
     }
+    /// <summary>更新人員／帳號。</summary>
     [HttpPut("personnel/{id:int}")]
     public async Task<IActionResult> UpdateStaff(int id, [FromBody] StaffUpsertRequest req, CancellationToken ct = default)
     {
@@ -1641,6 +1699,7 @@ public class BoardController : ControllerBase
         }
         return Ok(await _staff.GetStaffByIdAsync(id, ct));
     }
+    /// <summary>刪除人員／帳號。</summary>
     [HttpDelete("personnel/{id:int}")]
     public async Task<IActionResult> DeleteStaff(int id, CancellationToken ct = default)
     {
@@ -1770,32 +1829,41 @@ public class BoardController : ControllerBase
     }
 
     // ── 人員×單位×角色 ──
+    /// <summary>查詢人員單位角色（照護團隊分組）清單。</summary>
     [HttpGet("unitrole")]
     public async Task<IActionResult> GetUnitRoles([FromQuery] int? staffId, [FromQuery] string? unit, [FromQuery] bool includeAll = true, CancellationToken ct = default)
         => Ok(await _staff.GetUnitRolesAsync(staffId, unit, includeAll, ct));
+    /// <summary>取得單筆人員單位角色（照護團隊分組）。</summary>
     [HttpGet("unitrole/{id:int}")]
     public async Task<IActionResult> GetUnitRoleById(int id, CancellationToken ct = default)
     { var x = await _staff.GetUnitRoleByIdAsync(id, ct); return x is null ? NotFound() : Ok(x); }
+    /// <summary>新增人員單位角色（照護團隊分組）。</summary>
     [HttpPost("unitrole")]
     public async Task<IActionResult> CreateUnitRole([FromBody] StaffUnitRoleUpsertRequest req, CancellationToken ct = default)
     { var id = await _staff.CreateUnitRoleAsync(req, ct); return CreatedAtAction(nameof(GetUnitRoleById), new { id }, await _staff.GetUnitRoleByIdAsync(id, ct)); }
+    /// <summary>更新人員單位角色（照護團隊分組）。</summary>
     [HttpPut("unitrole/{id:int}")]
     public async Task<IActionResult> UpdateUnitRole(int id, [FromBody] StaffUnitRoleUpsertRequest req, CancellationToken ct = default)
         => await _staff.UpdateUnitRoleAsync(id, req, ct) ? Ok(await _staff.GetUnitRoleByIdAsync(id, ct)) : NotFound();
+    /// <summary>刪除人員單位角色（照護團隊分組）。</summary>
     [HttpDelete("unitrole/{id:int}")]
     public async Task<IActionResult> DeleteUnitRole(int id, CancellationToken ct = default)
         => await _staff.DeleteUnitRoleAsync(id, ct) ? NoContent() : NotFound();
 
     // ── 全院共用主檔：科別 Department（先建科別、再建醫師）────────────
+    /// <summary>查詢科別主檔清單。</summary>
     [HttpGet("department")]
     public async Task<IActionResult> GetDepartments([FromQuery] bool includeAll = true, CancellationToken ct = default)
         => Ok(await _master.GetDepartmentsAsync(includeAll, ct));
+    /// <summary>新增科別主檔。</summary>
     [HttpPost("department")]
     public async Task<IActionResult> CreateDepartment([FromBody] DepartmentUpsertRequest req, CancellationToken ct = default)
     { var id = await _master.CreateDepartmentAsync(req, ct); return Ok(new { id }); }
+    /// <summary>更新科別主檔。</summary>
     [HttpPut("department/{id:int}")]
     public async Task<IActionResult> UpdateDepartment(int id, [FromBody] DepartmentUpsertRequest req, CancellationToken ct = default)
         => await _master.UpdateDepartmentAsync(id, req, ct) ? NoContent() : NotFound();
+    /// <summary>刪除科別主檔。</summary>
     [HttpDelete("department/{id:int}")]
     public async Task<IActionResult> DeleteDepartment(int id, CancellationToken ct = default)
     {
@@ -1805,51 +1873,65 @@ public class BoardController : ControllerBase
     }
 
     // ── 全院共用主檔：醫師 Doctor（DeptCode 對應 Department.Code）─────
+    /// <summary>查詢醫師主檔清單。</summary>
     [HttpGet("doctor")]
     public async Task<IActionResult> GetDoctors([FromQuery] bool includeAll = true, [FromQuery] string? deptCode = null, CancellationToken ct = default)
         => Ok(await _master.GetDoctorsAsync(includeAll, deptCode, ct));
+    /// <summary>新增醫師主檔。</summary>
     [HttpPost("doctor")]
     public async Task<IActionResult> CreateDoctor([FromBody] DoctorUpsertRequest req, CancellationToken ct = default)
     { var id = await _master.CreateDoctorAsync(req, ct); return Ok(new { id }); }
+    /// <summary>更新醫師主檔。</summary>
     [HttpPut("doctor/{id:int}")]
     public async Task<IActionResult> UpdateDoctor(int id, [FromBody] DoctorUpsertRequest req, CancellationToken ct = default)
         => await _master.UpdateDoctorAsync(id, req, ct) ? NoContent() : NotFound();
+    /// <summary>刪除醫師主檔。</summary>
     [HttpDelete("doctor/{id:int}")]
     public async Task<IActionResult> DeleteDoctor(int id, CancellationToken ct = default)
         => await _master.DeleteDoctorAsync(id, ct) ? NoContent() : NotFound();
 
     // ── 全院共用主檔：照服員 CareAide ─────
+    /// <summary>查詢照服員主檔清單。</summary>
     [HttpGet("care-aide")]
     public async Task<IActionResult> GetCareAides([FromQuery] bool includeAll = true, CancellationToken ct = default)
         => Ok(await _master.GetCareAidesAsync(includeAll, ct));
+    /// <summary>新增照服員主檔。</summary>
     [HttpPost("care-aide")]
     public async Task<IActionResult> CreateCareAide([FromBody] CareAideUpsertRequest req, CancellationToken ct = default)
     { var id = await _master.CreateCareAideAsync(req, ct); return Ok(new { id }); }
+    /// <summary>更新照服員主檔。</summary>
     [HttpPut("care-aide/{id:int}")]
     public async Task<IActionResult> UpdateCareAide(int id, [FromBody] CareAideUpsertRequest req, CancellationToken ct = default)
         => await _master.UpdateCareAideAsync(id, req, ct) ? NoContent() : NotFound();
+    /// <summary>刪除照服員主檔。</summary>
     [HttpDelete("care-aide/{id:int}")]
     public async Task<IActionResult> DeleteCareAide(int id, CancellationToken ct = default)
         => await _master.DeleteCareAideAsync(id, ct) ? NoContent() : NotFound();
 
     // ── ER 急診醫師主檔 ErDoctor（供 ER 緊急編組納入醫師）─────
+    /// <summary>查詢急診醫師名單清單。</summary>
     [HttpGet("er-doctor")]
     public async Task<IActionResult> GetErDoctors([FromQuery] bool includeAll = true, CancellationToken ct = default)
         => Ok(await _master.GetErDoctorsAsync(includeAll, ct));
+    /// <summary>新增急診醫師名單。</summary>
     [HttpPost("er-doctor")]
     public async Task<IActionResult> CreateErDoctor([FromBody] ErDoctorUpsertRequest req, CancellationToken ct = default)
     { var id = await _master.CreateErDoctorAsync(req, ct); return Ok(new { id }); }
+    /// <summary>更新急診醫師名單。</summary>
     [HttpPut("er-doctor/{id:int}")]
     public async Task<IActionResult> UpdateErDoctor(int id, [FromBody] ErDoctorUpsertRequest req, CancellationToken ct = default)
         => await _master.UpdateErDoctorAsync(id, req, ct) ? NoContent() : NotFound();
+    /// <summary>刪除急診醫師名單。</summary>
     [HttpDelete("er-doctor/{id:int}")]
     public async Task<IActionResult> DeleteErDoctor(int id, CancellationToken ct = default)
         => await _master.DeleteErDoctorAsync(id, ct) ? NoContent() : NotFound();
 
     // ── ER 急診醫師 每日緊急編組／點班 ─────
+    /// <summary>查詢急診緊急應變編組清單。</summary>
     [HttpGet("er-doctor-group")]
     public async Task<IActionResult> GetErDoctorGroups([FromQuery] string date, CancellationToken ct = default)
         => Ok(await _master.GetErDoctorGroupsAsync(date, ct));
+    /// <summary>儲存某日急診緊急應變編組（整批覆寫）。</summary>
     [HttpPost("er-doctor-group")]
     public async Task<IActionResult> SaveErDoctorGroup([FromBody] ErDoctorGroupSaveRequest req, CancellationToken ct = default)
     { var n = await _master.SaveErDoctorGroupAsync(req.WorkDate, req.Entries, ct); return Ok(new { saved = n }); }
@@ -1900,18 +1982,23 @@ public class BoardController : ControllerBase
     }
 
     // ── 排班 CRUD（admin）──
+    /// <summary>查詢某單位三班護理師每日排班清單。</summary>
     [HttpGet("{unitCode}/schedule-list")]
     public async Task<IActionResult> GetScheduleList(string unitCode, [FromQuery] string? date, [FromQuery] bool includeAll = true, CancellationToken ct = default)
         => Ok(await _staff.GetScheduleAsync(unitCode, date, includeAll, ct));
+    /// <summary>取得單筆三班護理師每日排班。</summary>
     [HttpGet("schedule/{id:int}")]
     public async Task<IActionResult> GetScheduleById(int id, CancellationToken ct = default)
     { var x = await _staff.GetScheduleByIdAsync(id, ct); return x is null ? NotFound() : Ok(x); }
+    /// <summary>新增三班護理師每日排班。</summary>
     [HttpPost("schedule")]
     public async Task<IActionResult> CreateSchedule([FromBody] StaffScheduleUpsertRequest req, CancellationToken ct = default)
     { var id = await _staff.CreateScheduleAsync(req, ct); return CreatedAtAction(nameof(GetScheduleById), new { id }, await _staff.GetScheduleByIdAsync(id, ct)); }
+    /// <summary>更新三班護理師每日排班。</summary>
     [HttpPut("schedule/{id:int}")]
     public async Task<IActionResult> UpdateSchedule(int id, [FromBody] StaffScheduleUpsertRequest req, CancellationToken ct = default)
         => await _staff.UpdateScheduleAsync(id, req, ct) ? Ok(await _staff.GetScheduleByIdAsync(id, ct)) : NotFound();
+    /// <summary>刪除三班護理師每日排班。</summary>
     [HttpDelete("schedule/{id:int}")]
     public async Task<IActionResult> DeleteSchedule(int id, CancellationToken ct = default)
         => await _staff.DeleteScheduleAsync(id, ct) ? NoContent() : NotFound();
@@ -1931,18 +2018,23 @@ public class BoardController : ControllerBase
     }
 
     // ── 床位指派 CRUD（主護勾床／醫師-床）──
+    /// <summary>查詢某單位護理師負責床位指派清單。</summary>
     [HttpGet("{unitCode}/bedassign")]
     public async Task<IActionResult> GetBedAssign(string unitCode, [FromQuery] string? date, [FromQuery] string? type, [FromQuery] bool includeAll = true, CancellationToken ct = default)
         => Ok(await _staff.GetBedAssignAsync(unitCode, date, type, includeAll, ct));
+    /// <summary>取得單筆護理師負責床位指派。</summary>
     [HttpGet("bedassign/{id:int}")]
     public async Task<IActionResult> GetBedAssignById(int id, CancellationToken ct = default)
     { var x = await _staff.GetBedAssignByIdAsync(id, ct); return x is null ? NotFound() : Ok(x); }
+    /// <summary>新增護理師負責床位指派。</summary>
     [HttpPost("bedassign")]
     public async Task<IActionResult> CreateBedAssign([FromBody] BedStaffAssignmentUpsertRequest req, CancellationToken ct = default)
     { var id = await _staff.CreateBedAssignAsync(req, ct); return CreatedAtAction(nameof(GetBedAssignById), new { id }, await _staff.GetBedAssignByIdAsync(id, ct)); }
+    /// <summary>更新護理師負責床位指派。</summary>
     [HttpPut("bedassign/{id:int}")]
     public async Task<IActionResult> UpdateBedAssign(int id, [FromBody] BedStaffAssignmentUpsertRequest req, CancellationToken ct = default)
         => await _staff.UpdateBedAssignAsync(id, req, ct) ? Ok(await _staff.GetBedAssignByIdAsync(id, ct)) : NotFound();
+    /// <summary>刪除護理師負責床位指派。</summary>
     [HttpDelete("bedassign/{id:int}")]
     public async Task<IActionResult> DeleteBedAssign(int id, CancellationToken ct = default)
         => await _staff.DeleteBedAssignAsync(id, ct) ? NoContent() : NotFound();
@@ -1984,18 +2076,23 @@ public class BoardController : ControllerBase
     }
 
     // ── 查房表 CRUD ──
+    /// <summary>查詢某單位醫師查房表清單。</summary>
     [HttpGet("{unitCode}/round-list")]
     public async Task<IActionResult> GetRoundList(string unitCode, [FromQuery] string? date, [FromQuery] bool includeAll = true, CancellationToken ct = default)
         => Ok(await _staff.GetRoundAsync(unitCode, date, includeAll, ct));
+    /// <summary>取得單筆醫師查房表。</summary>
     [HttpGet("round/{id:int}")]
     public async Task<IActionResult> GetRoundById(int id, CancellationToken ct = default)
     { var x = await _staff.GetRoundByIdAsync(id, ct); return x is null ? NotFound() : Ok(x); }
+    /// <summary>新增醫師查房表。</summary>
     [HttpPost("round")]
     public async Task<IActionResult> CreateRound([FromBody] DoctorRoundUpsertRequest req, CancellationToken ct = default)
     { var id = await _staff.CreateRoundAsync(req, ct); return CreatedAtAction(nameof(GetRoundById), new { id }, await _staff.GetRoundByIdAsync(id, ct)); }
+    /// <summary>更新醫師查房表。</summary>
     [HttpPut("round/{id:int}")]
     public async Task<IActionResult> UpdateRound(int id, [FromBody] DoctorRoundUpsertRequest req, CancellationToken ct = default)
         => await _staff.UpdateRoundAsync(id, req, ct) ? Ok(await _staff.GetRoundByIdAsync(id, ct)) : NotFound();
+    /// <summary>刪除醫師查房表。</summary>
     [HttpDelete("round/{id:int}")]
     public async Task<IActionResult> DeleteRound(int id, CancellationToken ct = default)
         => await _staff.DeleteRoundAsync(id, ct) ? NoContent() : NotFound();
@@ -2033,49 +2130,63 @@ public class BoardController : ControllerBase
     }
 
     // ── 護理交班 CRUD ──
+    /// <summary>查詢某單位護理交班班別清單。</summary>
     [HttpGet("{unitCode}/handover-shifts")]
     public async Task<IActionResult> GetHandoverShifts(string unitCode, [FromQuery] string? date, [FromQuery] bool includeAll = true, CancellationToken ct = default)
         => Ok(await _staff.GetHandoverShiftsAsync(unitCode, date, null, includeAll, ct));
+    /// <summary>取得單筆護理交班班別。</summary>
     [HttpGet("handover-shift/{id:int}")]
     public async Task<IActionResult> GetHandoverShiftById(int id, CancellationToken ct = default)
     { var x = await _staff.GetHandoverShiftByIdAsync(id, ct); return x is null ? NotFound() : Ok(x); }
+    /// <summary>新增護理交班班別。</summary>
     [HttpPost("handover-shift")]
     public async Task<IActionResult> CreateHandoverShift([FromBody] HandoverShiftUpsertRequest req, CancellationToken ct = default)
     { var id = await _staff.CreateHandoverShiftAsync(req, ct); return CreatedAtAction(nameof(GetHandoverShiftById), new { id }, await _staff.GetHandoverShiftByIdAsync(id, ct)); }
+    /// <summary>更新護理交班班別。</summary>
     [HttpPut("handover-shift/{id:int}")]
     public async Task<IActionResult> UpdateHandoverShift(int id, [FromBody] HandoverShiftUpsertRequest req, CancellationToken ct = default)
         => await _staff.UpdateHandoverShiftAsync(id, req, ct) ? Ok(await _staff.GetHandoverShiftByIdAsync(id, ct)) : NotFound();
+    /// <summary>刪除護理交班班別。</summary>
     [HttpDelete("handover-shift/{id:int}")]
     public async Task<IActionResult> DeleteHandoverShift(int id, CancellationToken ct = default)
         => await _staff.DeleteHandoverShiftAsync(id, ct) ? NoContent() : NotFound();
 
+    /// <summary>查詢某交班班別下的病人清單。</summary>
     [HttpGet("handover-shift/{shiftId:int}/patients")]
     public async Task<IActionResult> GetHandoverPatients(int shiftId, CancellationToken ct = default)
         => Ok(await _staff.GetHandoverPatientsAsync(shiftId, ct));
+    /// <summary>新增護理交班病人。</summary>
     [HttpPost("handover-patient")]
     public async Task<IActionResult> CreateHandoverPatient([FromBody] HandoverPatientUpsertRequest req, CancellationToken ct = default)
     { var id = await _staff.CreateHandoverPatientAsync(req, ct); return Ok(new { id }); }
+    /// <summary>更新護理交班病人。</summary>
     [HttpPut("handover-patient/{id:int}")]
     public async Task<IActionResult> UpdateHandoverPatient(int id, [FromBody] HandoverPatientUpsertRequest req, CancellationToken ct = default)
         => await _staff.UpdateHandoverPatientAsync(id, req, ct) ? NoContent() : NotFound();
+    /// <summary>刪除護理交班病人。</summary>
     [HttpDelete("handover-patient/{id:int}")]
     public async Task<IActionResult> DeleteHandoverPatient(int id, CancellationToken ct = default)
         => await _staff.DeleteHandoverPatientAsync(id, ct) ? NoContent() : NotFound();
 
+    /// <summary>查詢某交班病人的交班事項。</summary>
     [HttpGet("handover-patient/{patientId:int}/notes")]
     public async Task<IActionResult> GetHandoverNotes(int patientId, CancellationToken ct = default)
         => Ok(await _staff.GetHandoverNotesAsync(patientId, ct));
+    /// <summary>新增護理交班事項。</summary>
     [HttpPost("handover-note")]
     public async Task<IActionResult> CreateHandoverNote([FromBody] HandoverNoteUpsertRequest req, CancellationToken ct = default)
     { var id = await _staff.CreateHandoverNoteAsync(req, ct); return Ok(new { id }); }
+    /// <summary>更新護理交班事項。</summary>
     [HttpPut("handover-note/{id:int}")]
     public async Task<IActionResult> UpdateHandoverNote(int id, [FromBody] HandoverNoteUpsertRequest req, CancellationToken ct = default)
         => await _staff.UpdateHandoverNoteAsync(id, req, ct) ? NoContent() : NotFound();
+    /// <summary>刪除護理交班事項。</summary>
     [HttpDelete("handover-note/{id:int}")]
     public async Task<IActionResult> DeleteHandoverNote(int id, CancellationToken ct = default)
         => await _staff.DeleteHandoverNoteAsync(id, ct) ? NoContent() : NotFound();
 
     // ── 照護團隊：看板組裝（TeamTab）── 由 StaffUnitRole 依 GroupKey 分組
+    /// <summary>照護團隊看板：依角色（病房主管／主治／住院／專科護理師／護理師／醫事）分組回傳。</summary>
     [HttpGet("{unitCode}/team")]
     public async Task<IActionResult> GetTeamBoard(string unitCode, CancellationToken ct = default)
     {

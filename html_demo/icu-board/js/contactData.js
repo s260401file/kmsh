@@ -78,7 +78,6 @@ const _MOCK_ICU_CONTACTS = {
       { contactId: 108, name: "感染管制",                extension: "1414" },
       { contactId: 109, name: "血庫",                    extension: "1616" },
       { contactId: 110, name: "供應中心 (CSR)",         extension: "1515" },
-      { contactId: 111, name: "腎臟透析室",              extension: "4500" },
       { contactId: 112, name: "呼吸治療科",              extension: "4420" },
       { contactId: 113, name: "資訊室",                  extension: "1818" },
       { contactId: 114, name: "總務 / 工務",             extension: "1919 / 1920" }

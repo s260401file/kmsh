@@ -91,7 +91,7 @@ tags: [kmsh, 資料來源, HIS, 分析]
 ### ✅ 已解掉
 - **檢查/檢驗結果**：`OR.RESULT`（狀態 RSSTATUS/異常旗標）＋ `OR.RESNUM`（數值 RNRESVAL、正常值上下限 RNNRHIGH/LOW、單位、異常）＋ `OR.RESTEXT`（文字報告 RTRESTXT）。**申請(OR.ORDER)→結果鏈完整**。
 - **過敏（住院/門診）候選**：`MR.EMRTRE` **HALERGY（過敏信息 nchar100）**；急診 `ER.ETROOT` ETDRUG、`BIMBA.ERDISPAT` ETDRUGC。
-- **洗腎/透析（部分）**：無乾淨「當班透析清單」表；可由醫囑名稱 `OR.ORDER`/`TR.TRORDER` TRPROCED 過濾，或帳務側透析床編號 `AR.ARBROOT` ARHIMOID。洗腎室為第二階段。
+- **洗腎/透析（部分）**：無乾淨「當班透析清單」表；可由醫囑名稱 `OR.ORDER`/`TR.TRORDER` TRPROCED 過濾，或帳務側透析床編號 `AR.ARBROOT` ARHIMOID。
 - **呼吸器（天數）**：`BL.BLNHICAS` BLRT21DT/BLRTCNT（呼吸器累計日數）—**健保側、僅天數**，非置入/換管管理。
 
 ### ⛔ 重大結論：以下「全字典 0 筆」→ 不在這 81 報表庫

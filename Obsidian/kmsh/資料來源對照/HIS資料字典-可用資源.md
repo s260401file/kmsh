@@ -108,7 +108,7 @@ FROM   UD.UDORDER;
 SELECT HHISNUM, HALERGY FROM MR.EMRTRE;
 ```
 
-> **字典列為相關、白板尚未實際取用（8 張，先不列 SELECT）**：`AM.HADDRESS`（住址，個資不顯示）、`ER.ERCRANN`/`ER.ERWARNIN`（重症通報/到院前預警，尚無對應功能）、`UD.UDLOG`/`UD.UDDRGPF`（給藥日誌/藥檔，抗生素改由 `UD.UDORDER` 取）、`TR.TRORDER`（治療醫囑，洗腎室第二階段 TRPROCED 候選）、`MR.EMRCASEO`/`MR.EMRDIAGO`（門診就醫/診斷，本案以住院/急診為主）。＝ 18 張已取用 ＋ 8 張未取用 ＝ **26 張**。
+> **字典列為相關、白板尚未實際取用（8 張，先不列 SELECT）**：`AM.HADDRESS`（住址，個資不顯示）、`ER.ERCRANN`/`ER.ERWARNIN`（重症通報/到院前預警，尚無對應功能）、`UD.UDLOG`/`UD.UDDRGPF`（給藥日誌/藥檔，抗生素改由 `UD.UDORDER` 取）、`TR.TRORDER`（治療醫囑，TRPROCED 候選）、`MR.EMRCASEO`/`MR.EMRDIAGO`（門診就醫/診斷，本案以住院/急診為主）。＝ 18 張已取用 ＋ 8 張未取用 ＝ **26 張**。
 
 ## 模組總覽（81 表分布）
 AM 病患/住院急診/醫師/轉床 · AR 門診帳務/排程 · BICMA/BIMBA/BL 帳務 · **ER 檢傷** · HE 慢性病 · IC 出院疾病分類 · MR 電子病歷 · **OR 醫囑/手術/報告** · RS 門診掛號 · TR 治療 · **UD 藥品/給藥**。

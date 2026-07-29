@@ -48,7 +48,7 @@
 .or-board .filter-label { font-size:17px; color:var(--text-muted); margin-right:4px; }
 .or-board .filter-btn { padding:5px 18px; border-radius:var(--radius-pill); font-size:17px; font-weight:600; border:1.5px solid var(--filter-border); color:var(--text-secondary); background:transparent; transition:background .15s,color .15s; }
 .or-board .filter-btn.active,.or-board .filter-btn:hover { background:var(--filter-active-bg); color:var(--filter-active-text); }
-.or-board .filter-bar .badge-filter { cursor:pointer; font-size:15px; padding:6px 14px; line-height:20px; transition:transform .1s,box-shadow .1s; }
+.or-board .filter-bar .badge-filter { cursor:pointer; font-size:17px; padding:6px 14px; line-height:20px; transition:transform .1s,box-shadow .1s; }
 .or-board .filter-bar .badge-filter:hover { transform:translateY(-1px); box-shadow:0 2px 8px rgba(0,0,0,0.35); }
 .or-board .filter-bar .badge-filter.active { box-shadow:0 0 0 2.5px #1A2635,0 0 0 5px rgba(0,0,0,0.15); }
 

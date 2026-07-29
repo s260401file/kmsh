@@ -41,7 +41,7 @@ function IcuDutyPanel({ shifts, emergencyTeams = [], oncall = [], aides = [], ph
         <div className="icu-duty-col">
           <div className="icu-duty-sec-t" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '6px' }}>
             <span>三班護理師</span>
-            {nightSpecialist && <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)' }}><span style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>夜專師：</span>{nightSpecialist}</span>}
+            {nightSpecialist && <span style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-primary)' }}><span style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>夜專師：</span>{nightSpecialist}</span>}
           </div>
           <div className="icu-duty-shift">
             {shifts.map(sh => {
