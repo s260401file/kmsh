@@ -18,6 +18,7 @@ public class OnCallDeptItem
     public string? Ext { get; set; }               // 預設分機
     public string? Mobile { get; set; }            // 預設手機/MVPN
     public string? OwnerUnit { get; set; }         // 所屬/排班單位（ER/ICU…）；排程頁科別下拉依此過濾，NULL 不過濾
+    public string? DoctorSource { get; set; }      // 醫師下拉來源：NULL＝Doctor 主檔(依 DeptCode)；'ErDoctor'＝急診醫師主檔
     public int SortOrder { get; set; }
     public bool IsActive { get; set; }
     public DateTime UpdatedAt { get; set; }
@@ -36,6 +37,7 @@ public class OnCallDeptUpsertRequest
     public string? Ext { get; set; }
     public string? Mobile { get; set; }
     public string? OwnerUnit { get; set; }
+    public string? DoctorSource { get; set; }
     public int SortOrder { get; set; }
     public bool IsActive { get; set; } = true;
 }

@@ -40,10 +40,13 @@ public class OrSurgeryDto
     [JsonPropertyName("AnesType")]      public string? AnesType { get; set; }     // 麻醉原碼
     [JsonPropertyName("SurgerySource")] public string? SurgerySource { get; set; }// 來源→急/門/住刀（暫定）
     [JsonPropertyName("ScheduledTime")] public string? ScheduledTime { get; set; }// 手術時間
-    // ── overlay ──
-    [JsonPropertyName("SurgeryStatus")] public string? SurgeryStatus { get; set; }
-    [JsonPropertyName("StartTime")]     public string? StartTime { get; set; }
-    [JsonPropertyName("EndTime")]       public string? EndTime { get; set; }
+    // ── overlay（狀態/起訖來自 OR_SYSTEM；無對應時退回 WardPatientExt 手動登記）──
+    [JsonPropertyName("SurgeryStatus")] public string? SurgeryStatus { get; set; } // 待手術/等候中/手術中/手術結束/已離開
+    [JsonPropertyName("StartTime")]     public string? StartTime { get; set; }     // 進手術室 ENT_TIME (HH:mm)
+    [JsonPropertyName("EndTime")]       public string? EndTime { get; set; }       // 手術結束 CUT_TIME (HH:mm)
+    [JsonPropertyName("ArriveTime")]    public string? ArriveTime { get; set; }    // 到達等候區 COM_TIME (HH:mm)
+    [JsonPropertyName("LeaveTime")]     public string? LeaveTime { get; set; }     // 離開刀房 RES_TIME (HH:mm)
+    [JsonPropertyName("Destination")]   public string? Destination { get; set; }   // 已離開去向：恢復室/等候區/加護病房
     [JsonPropertyName("Department")]    public string? Department { get; set; }
     [JsonPropertyName("ScrubNurse")]    public string? ScrubNurse { get; set; }
     [JsonPropertyName("CircNurse")]     public string? CircNurse { get; set; }

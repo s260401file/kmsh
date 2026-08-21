@@ -34,4 +34,10 @@ public interface IBoardApiService
 
     /// <summary>呼叫 Board_HCA 取得策盟註記（body {}，需 x-api-key）；策盟註記≠0＝轉入。失敗回空清單（白板不中斷）。字串已 trim。</summary>
     Task<List<BoardHcaItem>> GetHcaAsync(CancellationToken ct = default);
+
+    /// <summary>呼叫 Board_Note 取得全院臨床註記（洗腎／禁治療／禁食，body {}，需 x-api-key）；失敗回空清單（白板不中斷）。字串已 trim。</summary>
+    Task<List<BoardNoteItem>> GetNoteAsync(CancellationToken ct = default);
+
+    /// <summary>呼叫 OR_SYSTEM 取得手術流程時間軸（到達／進房／結束／離開＋去向，body {}，需 x-api-key）；失敗回空清單（白板不中斷）。字串已 trim。</summary>
+    Task<List<OrSystemItem>> GetOrSystemAsync(CancellationToken ct = default);
 }

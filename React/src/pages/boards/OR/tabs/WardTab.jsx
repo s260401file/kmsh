@@ -24,9 +24,9 @@ function isRoomVisible(room, filter) {
     case 'er':   return p?.SurgerySource === '急診刀'
     case 'op':   return p?.SurgerySource === '門診刀'
     case 'inp':  return p?.SurgerySource === '住院刀'
-    case 'busy': return room.Status === 'in-surgery'
-    case 'prep': return room.Status === 'scheduled'
-    case 'done': return room.Status === 'completed'
+    case 'busy': return p?.SurgeryStatus === '手術中' || p?.SurgeryStatus === '手術結束'
+    case 'prep': return p?.SurgeryStatus === '待手術' || p?.SurgeryStatus === '等候中'
+    case 'done': return p?.SurgeryStatus === '已離開'
     default:     return false
   }
 }
@@ -57,7 +57,7 @@ function RoomCard({ room, filteredOut, onClick }) {
     )
   }
   const p = room.Patient
-  const status = p.SurgeryStatus || '排程'
+  const status = p.SurgeryStatus || '待手術'
   return (
     <div
       className={`or-card ${room.Status} ${sourceClass(p.SurgerySource)}${filteredOut ? ' filtered-out' : ''}`}
@@ -67,6 +67,7 @@ function RoomCard({ room, filteredOut, onClick }) {
         <span className="room-num">{room.RoomId}</span>
         {p.SurgerySource && <span className={`badge badge-${p.SurgerySource}`}>{p.SurgerySource}</span>}
         <span className={`badge badge-${status}`}>{status}</span>
+        {p.Destination && <span className="badge badge-dest">→{p.Destination}</span>}
         {room.TodayCount > 1 && <span className="badge badge-count">今日 {room.TodayCount} 台</span>}
       </div>
       <div className="card-row2">
@@ -111,8 +112,9 @@ function RoomModal({ room, onClose }) {
   const initIdx = curIdx >= 0 ? curIdx : Math.max(0, list.findIndex(s => s.SurgeryStatus === '手術中'))
   const [idx, setIdx] = useState(initIdx)
   const p = list[idx] || room.Patient
-  const status = p.SurgeryStatus || '排程'
+  const status = p.SurgeryStatus || '待手術'
   const duration = calcDuration(p.StartTime, p.EndTime)
+  const started = status === '手術中' || status === '手術結束' || status === '已離開'
   return (
     <div className="modal-overlay show" onClick={e => e.target === e.currentTarget && onClose()}>
       <div className="modal-box">
@@ -124,6 +126,7 @@ function RoomModal({ room, onClose }) {
             <div className="modal-badges">
               {p.SurgerySource && <span className={`badge badge-${p.SurgerySource}`}>{p.SurgerySource}</span>}
               <span className={`badge badge-${status}`}>{status}</span>
+              {p.Destination && <span className="badge badge-dest">→{p.Destination}</span>}
             </div>
           </div>
           <button className="modal-close" onClick={onClose}>✕</button>
@@ -157,13 +160,19 @@ function RoomModal({ room, onClose }) {
           <div className="modal-row">
             <div className="modal-field"><div className="field-label">麻醉方式</div><div className="field-value">{p.AnesType || '—'}</div></div>
             <div className="modal-field"><div className="field-label">手術來源</div><div className="field-value">{p.SurgerySource || '—'}</div></div>
-            <div className="modal-field"><div className="field-label">手術狀態</div><div className="field-value">{status}</div></div>
+            <div className="modal-field"><div className="field-label">手術狀態</div><div className="field-value">{status}{p.Destination ? `（→${p.Destination}）` : ''}</div></div>
           </div>
           <div className="modal-row">
             <div className="modal-field"><div className="field-label">排程時間</div><div className="field-value">{p.ScheduledTime || '—'}</div></div>
-            <div className="modal-field"><div className="field-label">開始時間</div><div className="field-value">{(status === '手術中' || status === '已完成') ? (p.StartTime || '—') : '—'}</div></div>
+            <div className="modal-field"><div className="field-label">進房時間</div><div className="field-value">{started ? (p.StartTime || '—') : '—'}</div></div>
             <div className="modal-field"><div className="field-label">結束時間</div><div className="field-value">{p.EndTime || (status === '手術中' ? '進行中' : '—')}</div></div>
             <div className="modal-field"><div className="field-label">手術時長</div><div className="field-value">{duration}</div></div>
+          </div>
+          <div className="modal-row">
+            <div className="modal-field"><div className="field-label">到達等候區</div><div className="field-value">{p.ArriveTime || '—'}</div></div>
+            <div className="modal-field"><div className="field-label">離開刀房</div><div className="field-value">{p.LeaveTime || '—'}</div></div>
+            <div className="modal-field"><div className="field-label">去向</div><div className="field-value">{p.Destination || '—'}</div></div>
+            <div className="modal-field"></div>
           </div>
           <div className="modal-row"><div className="modal-field full"><div className="field-label">備註</div><div className="field-value" style={{ fontSize: '15px', fontWeight: '400' }}>{p.Notes || '無'}</div></div></div>
         </div>
@@ -188,13 +197,13 @@ export default function WardTab() {
   // 統計改以「刀數」計（由各房今日手術聯集；今日總刀＝後端穩定 count）
   const allSurgeries = useMemo(() => rooms.flatMap(r => r.Surgeries || []), [rooms])
   const completedList = useMemo(
-    () => rooms.flatMap(r => (r.Surgeries || []).filter(s => s.SurgeryStatus === '已完成').map(s => ({ ...s, roomId: r.RoomId }))),
+    () => rooms.flatMap(r => (r.Surgeries || []).filter(s => s.SurgeryStatus === '已離開' || s.SurgeryStatus === '手術結束').map(s => ({ ...s, roomId: r.RoomId }))),
     [rooms])
   const stats = useMemo(() => ({
     roomTotal:  rooms.length,
     inSurgery:  allSurgeries.filter(s => s.SurgeryStatus === '手術中').length,
-    prep:       allSurgeries.filter(s => s.SurgeryStatus === '準備中' || s.SurgeryStatus === '排程').length,
-    completed:  allSurgeries.filter(s => s.SurgeryStatus === '已完成').length,
+    prep:       allSurgeries.filter(s => s.SurgeryStatus === '待手術' || s.SurgeryStatus === '等候中').length,
+    completed:  allSurgeries.filter(s => s.SurgeryStatus === '已離開' || s.SurgeryStatus === '手術結束').length,
     erKnife:    allSurgeries.filter(s => s.SurgerySource === '急診刀').length,
     opKnife:    allSurgeries.filter(s => s.SurgerySource === '門診刀').length,
     inpKnife:   allSurgeries.filter(s => s.SurgerySource === '住院刀').length,
@@ -237,7 +246,7 @@ export default function WardTab() {
               <div className={`ws-item${filter === 'inp' ? ' active' : ''}`} data-filter="inp" onClick={() => handleFilter('inp')}><div className="ws-value ws-inpknife">{stats.inpKnife}</div><div className="ws-label">住院刀</div></div>
             </div>
             <div className="ws-row">
-              <div className={`ws-item${filter === 'prep' ? ' active' : ''}`} data-filter="prep" onClick={() => handleFilter('prep')}><div className="ws-value ws-prep">{stats.prep}</div><div className="ws-label">排程</div></div>
+              <div className={`ws-item${filter === 'prep' ? ' active' : ''}`} data-filter="prep" onClick={() => handleFilter('prep')}><div className="ws-value ws-prep">{stats.prep}</div><div className="ws-label">待手術</div></div>
               <div className="ws-item" style={{ cursor: 'pointer' }} onClick={() => setShowCompleted(true)}><div className="ws-value ws-done">{stats.completed}</div><div className="ws-label">已完成 ▸</div></div>
               <div className="ws-item"><div className="ws-value ws-empty">{stats.empty}</div><div className="ws-label">空房</div></div>
             </div>
@@ -252,7 +261,7 @@ export default function WardTab() {
         <button className={`badge badge-filter badge-op${filter === 'op' ? ' active' : ''}`} onClick={() => handleFilter('op')}>門診刀</button>
         <button className={`badge badge-filter badge-inp${filter === 'inp' ? ' active' : ''}`} onClick={() => handleFilter('inp')}>住院刀</button>
         <button className={`filter-btn${filter === 'busy' ? ' active' : ''}`} onClick={() => handleFilter('busy')}>手術中</button>
-        <button className={`filter-btn${filter === 'prep' ? ' active' : ''}`} onClick={() => handleFilter('prep')}>排程</button>
+        <button className={`filter-btn${filter === 'prep' ? ' active' : ''}`} onClick={() => handleFilter('prep')}>待手術</button>
         <button className="filter-btn" onClick={() => setShowCompleted(true)}>已完成 ▸</button>
       </div>
 

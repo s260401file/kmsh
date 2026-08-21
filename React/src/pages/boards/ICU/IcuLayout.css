@@ -279,7 +279,7 @@
   border-bottom: 1px solid #DCE8E1; padding-bottom: 2px; margin-bottom: 2px;
 }
 .icu-board .icu-duty-r { display: flex; align-items: baseline; gap: 6px; font-size: 18px; line-height: 1.35; }
-.icu-board .icu-duty-role { color: var(--text-secondary); flex-shrink: 0; width: 74px; }
+.icu-board .icu-duty-role { color: var(--text-secondary); flex-shrink: 0; width: 94px; }
 .icu-board .icu-duty-name { font-weight: 700; color: var(--text-primary); white-space: nowrap; }
 .icu-board .icu-duty-ext  { font-family: var(--font-num); color: var(--text-secondary); font-size: 16px; margin-left: auto; }
 .icu-board .icu-duty-shift { display: flex; gap: 4px; }

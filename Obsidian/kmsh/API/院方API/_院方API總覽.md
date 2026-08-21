@@ -18,6 +18,7 @@ tags: [kmsh, API, 院方]
 | `Board_AICUUD` | **AICU 用藥/抗生素** | `{}` | ICU 抗生素頁 | 2026-07 自 Board_bed 拆出（解耦、免拖慢）|
 | `AICUPHY` | **AICU 身體約束** | `{}` | ICU「約束」旗標 | `Restraint=Y`→需約束；⚠端點**無 `Board_` 前綴** |
 | `Board_HCA` | **策盟註記**（≠0＝轉入，值＝來源機構名）| `{}` | ER「轉入」 | HcaMark 非 0 即轉入 |
+| `Board_Note` | **臨床註記**（洗腎/禁治療/禁食）| `{}` | W52/ICU 病室動態徽章 | [[Board_Note]]；院方為主、後台為輔（2026-08）|
 
 主機：`http://10.20.111.84:8088`（民生 copy 區 84，內網限定）。
 
@@ -29,6 +30,7 @@ tags: [kmsh, API, 院方]
 - **Board_AICUUD**：病歷號/姓名/藥名/起訖日期時間。
 - **AICUPHY**：病歷號/姓名/病房/床位/**Restraint**(Y=約束)。
 - **Board_HCA**：病歷號/姓名/病房/床位/**HcaMark**(≠0＝轉入來源機構)。
+- **Board_Note**：病歷號/姓名/病房/床位/**洗腎註記**(Y/N)/**禁治療註記**(null或值)/**禁食註記**(null或 NPO 文字)。判定＝非空且≠"N"。詳 [[Board_Note]]。
 - **Board_ER_TypeE**：ER 死亡類別在室清單（不佔床）。
 
 ## Board_bed（住院在床清單）— 2026-06 確認可用

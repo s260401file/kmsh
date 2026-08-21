@@ -135,6 +135,21 @@ public class BoardController : ControllerBase
         var consultBeds = w52ConsultRows.Where(r => !string.IsNullOrWhiteSpace(r.BedId))
             .Select(r => BareBed(r.BedId)).ToHashSet(StringComparer.OrdinalIgnoreCase);
 
+        // 院方 Board_Note：洗腎／禁治療／禁食（院方為主、後台為輔）。全院一次抓、45 秒快取、非空才更新。
+        var noteByHis = (await FreshOrStaleAsync("note:board", 45, () => _board.GetNoteAsync(ct)))
+            .Where(n => !string.IsNullOrWhiteSpace(n.Hhisnum))
+            .GroupBy(n => n.Hhisnum!.Trim())
+            .ToDictionary(g => g.Key, g => g.First());
+        static bool NoteOn(string? s) => !string.IsNullOrWhiteSpace(s) && s!.Trim() != "N";
+        // 院方有此病人 → 以院方為準（N／空即 false）；院方查無 → 後台臨床補充為輔。
+        (bool renal, bool noTreat, bool npo) MergeNote(string? hhis, WardPatientExtItem? ext)
+        {
+            var his = hhis?.Trim();
+            if (!string.IsNullOrEmpty(his) && noteByHis.TryGetValue(his, out var n))
+                return (NoteOn(n.Dialysis), NoteOn(n.NoTreat), NoteOn(n.Npo));
+            return (ext?.Renal ?? false, ext?.NoTreatment ?? false, ext?.Npo ?? false);
+        }
+
         foreach (var code in W52_BEDS)
         {
             var bedId = $"W52-{code}";
@@ -147,6 +162,7 @@ public class BoardController : ControllerBase
 
             WardPatientExtItem? e = null;
             if (!string.IsNullOrWhiteSpace(o.Hhisnum)) extByHis.TryGetValue(o.Hhisnum!.Trim(), out e);
+            var nf = MergeNote(o.Hhisnum, e);   // 洗腎／禁治療／禁食：院方 Board_Note 為主、後台為輔
 
             resp.Beds.Add(new WardBedDto
             {
@@ -174,14 +190,14 @@ public class BoardController : ControllerBase
                     FallRisk = e?.FallRisk ?? false,
                     Dependency = e?.Dependency,
                     Confidential = e?.Confidential ?? false,
-                    NoTreatment = e?.NoTreatment ?? false,
-                    Npo = e?.Npo ?? false,
+                    NoTreatment = nf.noTreat,   // 禁治療：Board_Note 為主
+                    Npo = nf.npo,               // 禁食：Board_Note 為主
                     Allergy = e?.Allergy ?? false,
                     Rrt = e?.Rrt ?? false,
                     Chemo = e?.Chemo ?? false,
                     Transport = e?.Transport,
                     Oxygen = e?.Oxygen ?? false,
-                    Renal = e?.Renal ?? false,
+                    Renal = nf.renal,           // 洗腎：Board_Note 為主
                     PortCath = e?.PortCath ?? false,
                     DLVC = e?.DLVC ?? false,
                     Foley = e?.Foley ?? false,
@@ -270,6 +286,21 @@ public class BoardController : ControllerBase
                 : 0
         };
 
+        // 院方 Board_Note：洗腎／禁治療／禁食（院方為主、後台為輔）。與 W52 共用 45 秒快取鍵 "note:board"。
+        var noteByHis = (await FreshOrStaleAsync("note:board", 45, () => _board.GetNoteAsync(ct)))
+            .Where(n => !string.IsNullOrWhiteSpace(n.Hhisnum))
+            .GroupBy(n => n.Hhisnum!.Trim())
+            .ToDictionary(g => g.Key, g => g.First());
+        static bool NoteOn(string? s) => !string.IsNullOrWhiteSpace(s) && s!.Trim() != "N";
+        // 院方有此病人 → 以院方為準（N／空即 false）；院方查無 → 後台為輔。ICU 洗腎徽章讀 Crrt。
+        (bool renal, bool noTreat, bool npo) MergeNote(string? hhis, WardPatientExtItem? ext)
+        {
+            var his = hhis?.Trim();
+            if (!string.IsNullOrEmpty(his) && noteByHis.TryGetValue(his, out var n))
+                return (NoteOn(n.Dialysis), NoteOn(n.NoTreat), NoteOn(n.Npo));
+            return (ext?.Crrt ?? false, ext?.NoTreatment ?? false, ext?.Npo ?? false);
+        }
+
         void AddFloor(int floor, int[] nums, List<BoardBedItem> occ)
         {
             foreach (var num in nums)
@@ -281,6 +312,7 @@ public class BoardController : ControllerBase
                 {
                     WardPatientExtItem? e = null;
                     if (!string.IsNullOrWhiteSpace(o.Hhisnum)) extByHis.TryGetValue(o.Hhisnum!.Trim(), out e);
+                    var nf = MergeNote(o.Hhisnum, e);   // 洗腎／禁治療／禁食：院方 Board_Note 為主、後台為輔
                     bed.Status = string.IsNullOrWhiteSpace(e?.BedStatus) ? "occupied" : e!.BedStatus!;
                     bed.Patient = new IcuPatientDto
                     {
@@ -294,12 +326,12 @@ public class BoardController : ControllerBase
                         Movement = o.Movement,   // 院方動態
                         Condition = string.IsNullOrWhiteSpace(e?.Condition) ? "危急" : e!.Condition,  // ICU 病況預設 A級（危急）；無後台設定即 A
                         Isolation = e?.Isolation,
-                        Dnr = e?.Dnr ?? false, Ventilator = e?.Ventilator ?? false, Crrt = e?.Crrt ?? false,
+                        Dnr = e?.Dnr ?? false, Ventilator = e?.Ventilator ?? false, Crrt = nf.renal,   // Crrt＝洗腎徽章：Board_Note 為主
                         Ng = e?.Ng ?? false, Foley = e?.Foley ?? false, Cvc = e?.CVC ?? false,
                         Restraint = !string.IsNullOrWhiteSpace(o.Hhisnum) && restraintByHis.TryGetValue(o.Hhisnum!.Trim(), out var rst) && rst,  // 約束：AICUPHY（4F）
 
                         FallRisk = e?.FallRisk ?? false, Dependency = e?.Dependency, Confidential = e?.Confidential ?? false,
-                        NoTreatment = e?.NoTreatment ?? false, Npo = e?.Npo ?? false, Allergy = e?.Allergy ?? false,
+                        NoTreatment = nf.noTreat, Npo = nf.npo, Allergy = e?.Allergy ?? false,   // 禁治療／禁食：Board_Note 為主
                         Rrt = e?.Rrt ?? false, Chemo = e?.Chemo ?? false, Transport = e?.Transport, Oxygen = e?.Oxygen ?? false,
                         // 手術/檢查/會診：改由實際來源(病歷號)判定，取代原臨床補充旗標
                         Surgery = !string.IsNullOrWhiteSpace(o.Hhisnum) && icuSurgeryHis.Contains(o.Hhisnum!.Trim()),
@@ -574,18 +606,28 @@ public class BoardController : ControllerBase
     public async Task<IActionResult> GetOr(CancellationToken ct = default)
     {
         var today = DateTime.Today; var now = DateTime.Now;
-        await SyncOrDailyIfFetchedAsync(ct);   // 取 Board_OR 成功才同步當日快照（失敗則僅讀快照）
 
-        var daily = (await _ward.GetOrDailyAsync(today, today, ct)).ToList();   // 當日累積快照（含已完成）
-        // 取消排除：Board_OR 消失＝已完成，但「取消」的刀也會消失而被誤判。
-        // 以 OPORDER(OrSurgery) 今日 StatusCode=82（取消）為準，將這些刀自快照剔除（不視為已完成、不上看板、不計入總刀數）。
-        var cancelledKeys = (await _ward.GetOrSurgeryListAsync(today, today, ct))
-            .Where(x => x.StatusCode == "82")
-            .Select(x => OsnKey(x.OpDate, x.RoomId, x.ChartNo, x.OpTime))
-            .ToHashSet();
-        if (cancelledKeys.Count > 0)
-            daily = daily.Where(d => !cancelledKeys.Contains(OsnKey(d.SurgeryDate, d.RoomId, d.Hhisnum, d.OpTime))).ToList();
+        // 骨幹：今日 OPORDER（本地 OrSurgery），排除取消(82)。含未報到的刀。
+        var rows = (await _ward.GetOrSurgeryListAsync(today, today, ct))
+            .Where(x => x.StatusCode != "82")
+            .ToList();
+
+        // 狀態層：OR_SYSTEM（院方流程時間軸，即時＋20s 快取）；以到達時間日期過濾成今日，依病歷號分組、各組依到達時間排序成佇列供 zip。
+        var sysToday = (await FreshOrStaleAsync("or:system", 20, () => _board.GetOrSystemAsync(ct)))
+            .Where(s => ParseZh(s.ComTime)?.Date == today)
+            .ToList();
+        var sysByHis = sysToday
+            .Where(s => !string.IsNullOrWhiteSpace(s.Hhisnum))
+            .GroupBy(s => s.Hhisnum!.Trim())
+            .ToDictionary(g => g.Key,
+                          g => new Queue<OrSystemItem>(g.OrderBy(x => ParseZh(x.ComTime) ?? DateTime.MaxValue)),
+                          StringComparer.OrdinalIgnoreCase);
+
+        // 房間主檔 ＋ ApiRoom→RoomId ＋ 臨床補充 overlay ＋ 逐台刀覆蓋
         var rooms = (await _ward.GetOrRoomsAsync("OR", includeAll: false, ct)).ToList();
+        var roomMap = rooms.Where(r => !string.IsNullOrWhiteSpace(r.ApiRoom))
+            .GroupBy(r => r.ApiRoom!.Trim(), StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(g => g.Key, g => g.First().RoomId, StringComparer.OrdinalIgnoreCase);
         var extList = (await _ward.GetExtAsync("OR", includeAll: false, ct)).ToList();
         var extByHis = extList
             .Where(e => !string.IsNullOrWhiteSpace(e.Hhisnum))
@@ -597,23 +639,41 @@ public class BoardController : ControllerBase
             if (!string.IsNullOrWhiteSpace(his)) extByHis.TryGetValue(his!.Trim(), out e);
             return e;
         }
-        // 「已完成」僅以實際出刀房時間(overlay EndTime)為準（唯一可信的完成訊號）。
-        // 從 Board_OR 消失(Completed=1)但未登記出刀房者，完成與否未明（可能已完成/改期/未登記）→ 暫不上看板，
-        // 避免把「消失」誤判為已完成，或殘留成排程。院方提供 ORSTATUS 完成碼後再改以其為準。
-        daily = daily.Where(d => !d.Completed || !string.IsNullOrWhiteSpace(ExtOf(d.Hhisnum)?.EndTime)).ToList();
-        // 逐台刀刷手/流動/備註覆蓋（今日）
         var osn = (await _ward.GetOrSurgeryNurseAsync(today, today, ct))
             .GroupBy(x => OsnKey(x.OpDate, x.RoomId, x.ChartNo, x.OpTime))
             .ToDictionary(g => g.Key, g => g.First());
-        OrSurgeryNurseItem? OsnOf(OrDailySurgeryItem d) => osn.TryGetValue(OsnKey(d.SurgeryDate, d.RoomId, d.Hhisnum, d.OpTime), out var a) ? a : null;
 
-        var byRoom = daily
-            .GroupBy(d => d.RoomId ?? "", StringComparer.OrdinalIgnoreCase)
-            .ToDictionary(g => g.Key, g => g.OrderBy(x => x.OpTime).ToList(), StringComparer.OrdinalIgnoreCase);
+        // 逐台刀：配對 OR_SYSTEM（同病歷號多台→ OPORDER 依 OpTime、OR_SYSTEM 依到達時間依序 zip；不以房號配對，因會臨時改房）。
+        // 實際房優先（OR_SYSTEM 手術房→RoomId），未報到則用 OPORDER 排定房。
+        var built = new List<(string roomId, OrSurgeryDto dto)>();
+        foreach (var r in rows.OrderBy(x => (x.ChartNo ?? "").Trim()).ThenBy(x => x.OpTime))
+        {
+            var his = (r.ChartNo ?? "").Trim();
+            OrSystemItem? m = null;
+            if (sysByHis.TryGetValue(his, out var q) && q.Count > 0) m = q.Dequeue();
+            var a = osn.TryGetValue(OsnKey(r.OpDate, r.RoomId, r.ChartNo, r.OpTime), out var an) ? an : null;
+            var dto = BuildOrSurgeryFromOpOrder(r, m, ExtOf(his), a);
+            var roomId = r.RoomId ?? "";
+            if (m is not null && !string.IsNullOrWhiteSpace(m.Room))
+                roomId = roomMap.TryGetValue(m.Room.Trim(), out var rid) ? rid : (r.RoomId ?? m.Room.Trim());
+            built.Add((roomId, dto));
+        }
+
+        // walk-in：OR_SYSTEM 有但今日 OPORDER 無此病歷號 → 記錄、不上看板（罕見）
+        var backboneHis = rows.Select(x => (x.ChartNo ?? "").Trim())
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        foreach (var kv in sysByHis)
+            if (kv.Value.Count > 0 && !backboneHis.Contains(kv.Key))
+                _logger.LogInformation("OR_SYSTEM 有但今日 OPORDER 無此病歷號，未上看板：{His}", kv.Key);
+
+        var byRoom = built
+            .GroupBy(x => x.roomId ?? "", StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(g => g.Key, g => g.Select(x => x.dto).OrderBy(x => x.ScheduledTime).ToList(), StringComparer.OrdinalIgnoreCase);
 
         var resp = new OrBoardResponse
         {
-            Count = daily.Count,   // 當日總刀數（累積、整天穩定）
+            Count = built.Count,   // 當日總刀數（排除取消）
             Version = extList.Count > 0
                 ? new DateTimeOffset(extList.Max(e => e.UpdatedAt), TimeSpan.Zero).ToUnixTimeSeconds()
                 : 0
@@ -624,16 +684,18 @@ public class BoardController : ControllerBase
             var dto = new OrRoomDto { RoomId = r.RoomId, ApiRoom = r.ApiRoom, SortOrder = r.SortOrder };
             if (byRoom.TryGetValue(r.RoomId, out var list) && list.Count > 0)
             {
-                dto.Surgeries = list.Select(d => BuildOrSurgeryFromDaily(d, ExtOf(d.Hhisnum), OsnOf(d), now)).ToList();
-                dto.TodayCount = dto.Surgeries.Count;
-                // 房卡顯示（Surgeries 已依時間排序）：手術中優先；否則顯示「第一台仍在保留期內」的刀——
-                // 每台過預定時間後房卡仍停留 OrCardHoldMinutes 分鐘，超過才換下一台；全部過保留則停在最後一台。
+                dto.Surgeries = list;
+                dto.TodayCount = list.Count;
+                // 房卡顯示（已依排程時間排序）：手術中 > 手術結束 > 等候中 > 保留期內的待手術 > 最後一台。
+                // 已離開＝完成、不佔 active（比照舊「已完成」）。
                 var nowMinOr = now.Hour * 60 + now.Minute;
-                var active = dto.Surgeries.Where(s => s.SurgeryStatus != "已完成").ToList();
+                var active = list.Where(s => s.SurgeryStatus != "已離開").ToList();
                 var current = active.FirstOrDefault(s => s.SurgeryStatus == "手術中")
-                           ?? active.FirstOrDefault(s => { var m = HmToMin(s.ScheduledTime); return m is null || m.Value + OrCardHoldMinutes > nowMinOr; })
+                           ?? active.FirstOrDefault(s => s.SurgeryStatus == "手術結束")
+                           ?? active.FirstOrDefault(s => s.SurgeryStatus == "等候中")
+                           ?? active.FirstOrDefault(s => { var mm = HmToMin(s.ScheduledTime); return mm is null || mm.Value + OrCardHoldMinutes > nowMinOr; })
                            ?? active.LastOrDefault()
-                           ?? dto.Surgeries[^1];
+                           ?? list[^1];
                 dto.Patient = current;
                 dto.Status = StatusToClass(current.SurgeryStatus);
             }
@@ -722,13 +784,16 @@ public class BoardController : ControllerBase
         return "排程";
     }
 
-    /// <summary>手術狀態中文 → 卡片 class；排程/未知則 scheduled。</summary>
+    /// <summary>手術狀態中文 → 卡片 class。手術中/手術結束＝in-surgery；等候中＝prep；已離開/已完成＝completed；待手術/未知＝scheduled。</summary>
     private static string StatusToClass(string? status) => status switch
     {
         "手術中" => "in-surgery",
+        "手術結束" => "in-surgery",   // 已停刀、病人仍在房內，視覺同手術中一類
+        "等候中" => "prep",
         "準備中" => "prep",
+        "已離開" => "completed",
         "已完成" => "completed",
-        _ => "scheduled"
+        _ => "scheduled"              // 待手術/排程/未知
     };
 
     /// <summary>來源代碼 → 急/門/住刀（實測全 O，暫定對照，待院方代碼表）；未知則回原碼。</summary>
@@ -740,6 +805,102 @@ public class BoardController : ControllerBase
         null or "" => null,
         var s => s
     };
+
+    /// <summary>OPORDER 案類 CaseType（A/O/E）→ 住院/門診/急診刀（取代退場的 Board_OR Source）；未知回原碼。</summary>
+    private static string? CaseTypeToLabel(string? caseType) => (caseType?.Trim()) switch
+    {
+        "A" => "住院刀",
+        "O" => "門診刀",
+        "E" => "急診刀",
+        null or "" => null,
+        var s => s
+    };
+
+    // ── OR_SYSTEM（院方手術流程時間軸）輔助 ────────────────────────────────
+    private static readonly CultureInfo ZhTw = CultureInfo.GetCultureInfo("zh-TW");
+
+    /// <summary>解析院方中文日期時間字串（如「2026/8/19 上午 08:43:00」，含上午/下午）；空/失敗回 null。視為在地時間。</summary>
+    private static DateTime? ParseZh(string? raw)
+        => string.IsNullOrWhiteSpace(raw) ? null
+           : DateTime.TryParse(raw.Trim(), ZhTw, DateTimeStyles.None, out var d) ? d : (DateTime?)null;
+
+    /// <summary>院方時間字串 → HH:mm 顯示；空/失敗回 null。</summary>
+    private static string? HmOf(string? raw) => ParseZh(raw) is { } d ? d.ToString("HH:mm") : null;
+
+    /// <summary>SEND_OPT 去向：1恢復室 2等候區 3加護病房；未知回 null。</summary>
+    private static string? SendOptToLabel(string? s) => (s?.Trim()) switch
+    {
+        "1" => "恢復室",
+        "2" => "等候區",
+        "3" => "加護病房",
+        _ => null
+    };
+
+    /// <summary>依 OR_SYSTEM 四個時間點推導手術狀態：離開→已離開；結束→手術結束；進房→手術中；到達→等候中；無對應→待手術。</summary>
+    private static string DeriveOrSystemStatus(OrSystemItem? m)
+    {
+        if (m is null) return "待手術";
+        if (ParseZh(m.ResTime) is not null) return "已離開";
+        if (ParseZh(m.CutTime) is not null) return "手術結束";
+        if (ParseZh(m.EntTime) is not null) return "手術中";
+        if (ParseZh(m.ComTime) is not null) return "等候中";
+        return "待手術";
+    }
+
+    /// <summary>狀態進展排序（同病歷號取最進展一筆用）。</summary>
+    private static int StatusRank(string s) => s switch { "已離開" => 4, "手術結束" => 3, "手術中" => 2, "等候中" => 1, _ => 0 };
+
+    /// <summary>手術動態五態 → 手術資訊分頁三態（供 or/surgeries、{unit}/surgeries 收斂）：已離開/手術結束→已完成；手術中→手術中；其餘→待手術。</summary>
+    private static string MapToInfoStatus(string s) => s switch
+    {
+        "已離開" or "手術結束" => "已完成",
+        "手術中" => "手術中",
+        _ => "待手術"
+    };
+
+    /// <summary>今日 OR_SYSTEM 狀態覆蓋：病歷號 → 手術動態狀態（同病歷號取最進展一筆）。供手術資訊分頁共用。</summary>
+    private async Task<Dictionary<string, string>> BuildOrSystemStatusByHisAsync(DateTime today, CancellationToken ct)
+    {
+        var sys = (await FreshOrStaleAsync("or:system", 20, () => _board.GetOrSystemAsync(ct)))
+            .Where(s => ParseZh(s.ComTime)?.Date == today && !string.IsNullOrWhiteSpace(s.Hhisnum));
+        var map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var g in sys.GroupBy(s => s.Hhisnum!.Trim()))
+            map[g.Key] = DeriveOrSystemStatus(g.OrderByDescending(s => StatusRank(DeriveOrSystemStatus(s))).First());
+        return map;
+    }
+
+    /// <summary>今日 OPORDER 一列 ＋ 配對 OR_SYSTEM（可空，退回手動 overlay）＋ 逐台刀覆蓋 → OR 手術 DTO。</summary>
+    private static OrSurgeryDto BuildOrSurgeryFromOpOrder(OrSurgeryListRow r, OrSystemItem? m, WardPatientExtItem? e, OrSurgeryNurseItem? a)
+    {
+        string status; string? startT, endT, arriveT = null, leaveT = null, dest = null;
+        if (m is not null)   // OR_SYSTEM 有對應（已報到）→ 以時間軸自動判定
+        {
+            status = DeriveOrSystemStatus(m);
+            arriveT = HmOf(m.ComTime); startT = HmOf(m.EntTime); endT = HmOf(m.CutTime); leaveT = HmOf(m.ResTime);
+            if (status == "已離開") dest = SendOptToLabel(m.SendOpt);
+        }
+        else   // 無對應（未報到 / OR_SYSTEM 斷線）→ 退回手動 overlay（實際進/出刀房）
+        {
+            startT = string.IsNullOrWhiteSpace(e?.StartTime) ? null : e!.StartTime;
+            endT = string.IsNullOrWhiteSpace(e?.EndTime) ? null : e!.EndTime;
+            status = endT is not null ? "手術結束" : startT is not null ? "手術中" : "待手術";
+        }
+        return new OrSurgeryDto
+        {
+            PatientName = MaskName(r.PatientName), Gender = r.Sex, Age = r.Age,
+            MedRecord = r.ChartNo,
+            Diagnosis = string.IsNullOrWhiteSpace(r.Diagnosis) ? e?.Diagnosis : r.Diagnosis,
+            SurgeryName = r.SurgeryName, Doctor = r.SurgeonName, AnesType = r.Anesthesia,
+            SurgerySource = CaseTypeToLabel(r.CaseType),
+            ScheduledTime = r.OpTime,
+            SurgeryStatus = status,
+            StartTime = startT, EndTime = endT, ArriveTime = arriveT, LeaveTime = leaveT, Destination = dest,
+            Department = string.IsNullOrWhiteSpace(r.Department) ? e?.Department : r.Department,
+            ScrubNurse = a?.ScrubNurse ?? e?.ScrubNurse,
+            CircNurse = a?.CircNurse ?? e?.CircNurse,
+            Notes = a?.Note ?? e?.Notes
+        };
+    }
 
     // ── 臨床補充層 後台 CRUD ───────────────────────────────────────
     /// <summary>查詢某單位的臨床補充列（後台，含停用）。</summary>
@@ -1259,22 +1420,30 @@ public class BoardController : ControllerBase
     public async Task<IActionResult> SaveOrRoomEnv([FromBody] OrRoomEnvBatchRequest req, CancellationToken ct = default)
         => Ok(new { saved = await _ward.SaveOrRoomEnvBatchAsync(req.Entries ?? new(), ct) });
 
-    /// <summary>OR 手術清單（全部排程，攤平）：供 ICU/W52「手術資訊」分頁；狀態依時間推導。</summary>
+    /// <summary>OR 手術清單（全部排程，攤平）：供 ICU/W52「手術資訊」分頁。骨幹＝本地 OrSurgery(OPORDER)；今日狀態疊 OR_SYSTEM。</summary>
     [HttpGet("or/surgeries")]
     public async Task<IActionResult> GetOrSurgeries(CancellationToken ct = default)
     {
         var now = DateTime.Now; var today = DateTime.Today;
-        await SyncOrDailyIfFetchedAsync(ct);   // 同步當日快照（成功才寫；失敗僅讀）
-
-        // 讀當日快照（涵蓋手術資訊日期列 ±範圍）；已完成的刀亦留存
-        var daily = (await _ward.GetOrDailyAsync(today.AddDays(-7), today.AddDays(14), ct)).ToList();
-        var list = daily.Select(d => new OrSurgeryListItem
+        var overlay = await BuildOrSystemStatusByHisAsync(today, ct);   // 今日 OR_SYSTEM 狀態（病歷號→狀態）
+        var rows = (await _ward.GetOrSurgeryListAsync(today.AddDays(-7), today.AddDays(14), ct))
+            .Where(r => r.StatusCode != "82")
+            .ToList();
+        var list = rows.Select(r =>
         {
-            OrRoom = d.RoomId ?? d.ApiRoom, Date = d.SurgeryDate.ToString("yyyy-MM-dd"), ScheduledTime = d.OpTime,
-            PatientName = MaskName(d.PatientName), Gender = d.Gender, Age = CalcAge(d.BirthDate),
-            Procedure = d.SurgeryName, Diagnosis = d.Diagnosis, AnesthesiaMethod = d.AnesType,
-            AttendingSurgeon = d.Doctor,
-            Status = d.Completed ? "已完成" : DeriveSurgeryStatus(d.SurgeryDate, d.OpTime, now, today)
+            string status;
+            if (r.OpDate.Date < today) status = "已完成";
+            else if (r.OpDate.Date == today && !string.IsNullOrWhiteSpace(r.ChartNo) && overlay.TryGetValue(r.ChartNo!.Trim(), out var st))
+                status = MapToInfoStatus(st);
+            else status = DeriveSurgeryStatus(r.OpDate, r.OpTime, now, today);
+            return new OrSurgeryListItem
+            {
+                OrRoom = r.RoomId ?? r.Room, Date = r.OpDate.ToString("yyyy-MM-dd"), ScheduledTime = r.OpTime,
+                PatientName = MaskName(r.PatientName), Gender = r.Sex, Age = r.Age,
+                Procedure = r.SurgeryName, Diagnosis = r.Diagnosis, AnesthesiaMethod = r.Anesthesia,
+                AttendingSurgeon = r.SurgeonName,
+                Status = status
+            };
         }).OrderBy(x => x.Date).ThenBy(x => x.ScheduledTime).ToList();
         return Ok(list);
     }
@@ -1317,39 +1486,23 @@ public class BoardController : ControllerBase
             .Where(r => !string.IsNullOrWhiteSpace(r.ChartNo) && inBed.Contains(r.ChartNo!.Trim()))
             .ToList();
 
-        // 交叉參照院方 Board_OR 當日快照（OrDailySurgery）：提供「已完成」訊號＋補上 OPORDER 常缺的診斷文字。
-        var daily = (await _ward.GetOrDailyAsync(f, t, ct)).ToList();
-        // 已完成：OrDailySurgery.Completed（院方 Board_OR 消失即標完成），以「病歷號｜日期」比對；OPORDER EndTime=00:00 佔位不可用。
-        var completedKeys = daily.Where(d => d.Completed && !string.IsNullOrWhiteSpace(d.Hhisnum))
-            .Select(d => $"{d.Hhisnum.Trim()}|{d.SurgeryDate:yyyy-MM-dd}")
-            .ToHashSet(StringComparer.OrdinalIgnoreCase);
-        // 診斷補充：OPORDER 的 ORDIAG 常為空，改以 Board_OR 診斷補上（先「病歷號｜日期｜時間」精準對應，再退回「病歷號｜日期」）。
-        var dailyDiag = daily.Where(d => !string.IsNullOrWhiteSpace(d.Hhisnum) && !string.IsNullOrWhiteSpace(d.Diagnosis)).ToList();
-        var diagByExact = dailyDiag
-            .GroupBy(d => $"{d.Hhisnum.Trim()}|{d.SurgeryDate:yyyy-MM-dd}|{(d.OpTime ?? "").Trim()}")
-            .ToDictionary(g => g.Key, g => g.First().Diagnosis!.Trim(), StringComparer.OrdinalIgnoreCase);
-        var diagByPatientDate = dailyDiag
-            .GroupBy(d => $"{d.Hhisnum.Trim()}|{d.SurgeryDate:yyyy-MM-dd}")
-            .ToDictionary(g => g.Key, g => g.First().Diagnosis!.Trim(), StringComparer.OrdinalIgnoreCase);
+        // 完成訊號改由 OR_SYSTEM（今日）判定；過去日視為已完成。診斷以 OPORDER ORDIAG 為主（Board_OR 已退場，不再補值）。
+        var overlay = await BuildOrSystemStatusByHisAsync(today, ct);
 
         var list = rows.Select(r =>
         {
-            string st = (r.StatusCode == "82" || !string.IsNullOrWhiteSpace(r.CancelReason)) ? "取消"
-                     : completedKeys.Contains($"{r.ChartNo!.Trim()}|{r.OpDate:yyyy-MM-dd}") ? "已完成"
-                     : DeriveSurgeryStatus(r.OpDate, r.OpTime, now, today);
+            string st;
+            if (r.StatusCode == "82" || !string.IsNullOrWhiteSpace(r.CancelReason)) st = "取消";
+            else if (r.OpDate.Date < today) st = "已完成";
+            else if (r.OpDate.Date == today && !string.IsNullOrWhiteSpace(r.ChartNo) && overlay.TryGetValue(r.ChartNo!.Trim(), out var sysSt))
+                st = MapToInfoStatus(sysSt);
+            else st = DeriveSurgeryStatus(r.OpDate, r.OpTime, now, today);
             if (st == "手術中" || st == "待手術") st = "排程";   // W52/ICU 手術頁：未完成/未取消一律顯示「排程」（無手術中/待手術之分）
-            var diag = r.Diagnosis;
-            if (string.IsNullOrWhiteSpace(diag))   // OPORDER 無診斷 → 補 Board_OR 診斷
-            {
-                var chart = r.ChartNo!.Trim(); var dstr = r.OpDate.ToString("yyyy-MM-dd");
-                diag = diagByExact.TryGetValue($"{chart}|{dstr}|{(r.OpTime ?? "").Trim()}", out var de) ? de
-                     : diagByPatientDate.TryGetValue($"{chart}|{dstr}", out var dp) ? dp : r.Diagnosis;
-            }
             return new OrSurgeryListItem
             {
                 OrRoom = r.RoomId ?? r.Room, Date = r.OpDate.ToString("yyyy-MM-dd"), ScheduledTime = r.OpTime,
                 PatientName = MaskName(r.PatientName), Gender = r.Sex, Age = r.Age,
-                Procedure = r.SurgeryName, Diagnosis = diag, AnesthesiaMethod = r.Anesthesia,
+                Procedure = r.SurgeryName, Diagnosis = r.Diagnosis, AnesthesiaMethod = r.Anesthesia,
                 AttendingSurgeon = r.SurgeonName,
                 Status = st
             };

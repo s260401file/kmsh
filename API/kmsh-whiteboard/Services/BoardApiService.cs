@@ -240,6 +240,53 @@ public class BoardApiService : IBoardApiService
         catch (Exception ex) { _logger.LogWarning(ex, "Board_HCA 取得失敗，轉入以 overlay 續行"); return new(); }
     }
 
+    /// <summary>Board_Note（院方臨床註記：洗腎／禁治療／禁食）全院清單；同主機同 x-api-key。失敗回空清單（白板不中斷）。</summary>
+    public async Task<List<BoardNoteItem>> GetNoteAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            using var req = new HttpRequestMessage(HttpMethod.Post, "api/v1/Board_Note") { Content = JsonContent.Create(new { }) };
+            if (!string.IsNullOrWhiteSpace(_options.ApiKey))
+                req.Headers.TryAddWithoutValidation("x-api-key", _options.ApiKey);
+            var resp = await _http.SendAsync(req, ct);
+            resp.EnsureSuccessStatusCode();
+            var raw = await resp.Content.ReadAsStringAsync(ct);
+            var parsed = JsonSerializer.Deserialize<BoardNoteResponse>(raw, _json);
+            var list = parsed?.Data ?? new List<BoardNoteItem>();
+            foreach (var it in list)
+            {
+                it.Hhisnum = Trim(it.Hhisnum); it.Hnamec = Trim(it.Hnamec); it.Ward = Trim(it.Ward); it.Hbed = Trim(it.Hbed);
+                it.Dialysis = Trim(it.Dialysis); it.NoTreat = Trim(it.NoTreat); it.Npo = Trim(it.Npo);
+            }
+            return list;
+        }
+        catch (Exception ex) { _logger.LogWarning(ex, "Board_Note 取得失敗，洗腎／禁治療／禁食以後台續行"); return new(); }
+    }
+
+    /// <summary>OR_SYSTEM（院方手術流程時間軸：到達／進房／結束／離開＋去向 SEND_OPT）全院清單；同主機同 x-api-key。失敗回空清單（白板不中斷）。</summary>
+    public async Task<List<OrSystemItem>> GetOrSystemAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            using var req = new HttpRequestMessage(HttpMethod.Post, "api/v1/OR_SYSTEM") { Content = JsonContent.Create(new { }) };
+            if (!string.IsNullOrWhiteSpace(_options.ApiKey))
+                req.Headers.TryAddWithoutValidation("x-api-key", _options.ApiKey);
+            var resp = await _http.SendAsync(req, ct);
+            resp.EnsureSuccessStatusCode();
+            var raw = await resp.Content.ReadAsStringAsync(ct);
+            var parsed = JsonSerializer.Deserialize<OrSystemResponse>(raw, _json);
+            var list = parsed?.Data ?? new List<OrSystemItem>();
+            foreach (var it in list)
+            {
+                it.Room = Trim(it.Room); it.Hhisnum = Trim(it.Hhisnum); it.Hnamec = Trim(it.Hnamec);
+                it.ComTime = Trim(it.ComTime); it.EntTime = Trim(it.EntTime); it.CutTime = Trim(it.CutTime);
+                it.ResTime = Trim(it.ResTime); it.SendOpt = Trim(it.SendOpt);
+            }
+            return list;
+        }
+        catch (Exception ex) { _logger.LogWarning(ex, "OR_SYSTEM 取得失敗，OR 狀態以排程續行"); return new(); }
+    }
+
     /// <summary>去除前後半形與全形空白。</summary>
     private static string? Trim(string? s)
         => string.IsNullOrEmpty(s) ? s : s.Trim().Trim('　');

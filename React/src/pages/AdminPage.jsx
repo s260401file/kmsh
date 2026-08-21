@@ -1184,7 +1184,7 @@ function WardExtSection({ unitCode }) {
           )}
           {unitCode === 'OR' && (
             <>
-              <label style={s.label}>手術欄位（OR；以病歷號對應 Board_OR 今日手術）</label>
+              <label style={s.label}>手術欄位（OR；以病歷號對應今日手術）</label>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0 16px', marginBottom: '4px' }}>
                 <div style={s.formRow}><label style={s.label}>刷手護理師</label><NurseSelect options={nurseOpts} value={form.scrubNurse} onChange={v => setF('scrubNurse', v)} allowFree placeholder="輸入或點選護理師" /></div>
                 <div style={s.formRow}><label style={s.label}>流動護理師</label><NurseSelect options={nurseOpts} value={form.circNurse} onChange={v => setF('circNurse', v)} allowFree placeholder="輸入或點選護理師" /></div>
@@ -1192,7 +1192,7 @@ function WardExtSection({ unitCode }) {
                 <div style={s.formRow}><label style={s.label}>實際進刀房(HH:mm)</label><input style={s.input} value={form.startTime} onChange={e => setF('startTime', e.target.value)} placeholder="09:05" /></div>
                 <div style={s.formRow}><label style={s.label}>實際出刀房(HH:mm)</label><input style={s.input} value={form.endTime} onChange={e => setF('endTime', e.target.value)} placeholder="10:18" /></div>
               </div>
-              <div style={{ fontSize: '12px', color: '#9ca3af', margin: '0 0 12px' }}>手術狀態由系統自動判定（不使用「準備中」）：未登記進刀房一律<b>排程</b>、已填實際進刀房且已到→<b>手術中</b>、已填實際出刀房→<b>已完成</b>。房卡：某台過預定時間後仍停留 60 分鐘，之後若有下一台則改顯示下一台。</div>
+              <div style={{ fontSize: '12px', color: '#9ca3af', margin: '0 0 12px' }}>手術狀態現由院方 OR_SYSTEM（到達/進房/結束/離開時間）<b>自動判定</b>：待手術→等候中→手術中→手術結束→已離開（含去向）。此處進/出刀房為<b>手動備援</b>，僅在該病人尚無 OR_SYSTEM 資料時採用（有填實際進刀房→手術中、實際出刀房→手術結束）。</div>
             </>
           )}
           {unitCode !== 'ER' && (<>
@@ -1347,7 +1347,12 @@ function OnCallScheduleSection({ unitCode } = {}) {
 
   useEffect(() => {
     if (!deptCode) return
-    wardApi.getDoctors(deptCode, true).then(ds => setDoctors(ds ?? [])).catch(() => {})
+    const d = depts.find(x => x.deptCode === deptCode)
+    // 急診科（DoctorSource='ErDoctor'）醫師下拉改吃「急診醫師」主檔；其餘照舊吃 Doctor 主檔依科別
+    const load = d?.doctorSource === 'ErDoctor'
+      ? wardApi.getErDoctors(true)          // ErDoctor 回 {name, ext,…}，與 docOptions 相容
+      : wardApi.getDoctors(deptCode, true)
+    load.then(ds => setDoctors(ds ?? [])).catch(() => {})
   }, [deptCode, depts])
 
   const loadRoster = useCallback(async () => {

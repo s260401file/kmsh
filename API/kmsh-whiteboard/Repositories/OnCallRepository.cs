@@ -13,7 +13,7 @@ public class OnCallRepository : IOnCallRepository
     private readonly DbConnectionFactory _db;
     public OnCallRepository(DbConnectionFactory db) => _db = db;
 
-    private const string DeptCols = "Id, DeptCode, DeptName, Slots, CallOutRule, Remark, HolidayContact, Ext, Mobile, OwnerUnit, SortOrder, IsActive, UpdatedAt, CreatedAt";
+    private const string DeptCols = "Id, DeptCode, DeptName, Slots, CallOutRule, Remark, HolidayContact, Ext, Mobile, OwnerUnit, DoctorSource, SortOrder, IsActive, UpdatedAt, CreatedAt";
     private const string RosterCols = "Id, DeptCode, OnCallDate, Slot, DoctorName, Ext, Mobile, EmpNo, Note, SortOrder, IsActive, UpdatedAt, CreatedAt";
 
     // ── 科別設定 OnCallDept ──
@@ -38,9 +38,9 @@ public class OnCallRepository : IOnCallRepository
 
     public async Task<int> CreateDeptAsync(OnCallDeptUpsertRequest req, CancellationToken ct = default)
     {
-        var sql = @"INSERT INTO [dbo].[OnCallDept] (DeptCode, DeptName, Slots, CallOutRule, Remark, HolidayContact, Ext, Mobile, OwnerUnit, SortOrder, IsActive, UpdatedAt, CreatedAt)
+        var sql = @"INSERT INTO [dbo].[OnCallDept] (DeptCode, DeptName, Slots, CallOutRule, Remark, HolidayContact, Ext, Mobile, OwnerUnit, DoctorSource, SortOrder, IsActive, UpdatedAt, CreatedAt)
                     OUTPUT INSERTED.Id
-                    VALUES (@DeptCode, @DeptName, @Slots, @CallOutRule, @Remark, @HolidayContact, @Ext, @Mobile, @OwnerUnit, @SortOrder, @IsActive, GETDATE(), GETDATE())";
+                    VALUES (@DeptCode, @DeptName, @Slots, @CallOutRule, @Remark, @HolidayContact, @Ext, @Mobile, @OwnerUnit, @DoctorSource, @SortOrder, @IsActive, GETDATE(), GETDATE())";
         using var conn = _db.Create();
         return await conn.ExecuteScalarAsync<int>(new CommandDefinition(sql, req, cancellationToken: ct));
     }
@@ -49,11 +49,11 @@ public class OnCallRepository : IOnCallRepository
     {
         var sql = @"UPDATE [dbo].[OnCallDept] SET
                     DeptCode=@DeptCode, DeptName=@DeptName, Slots=@Slots, CallOutRule=@CallOutRule, Remark=@Remark,
-                    HolidayContact=@HolidayContact, Ext=@Ext, Mobile=@Mobile, OwnerUnit=@OwnerUnit, SortOrder=@SortOrder, IsActive=@IsActive, UpdatedAt=GETDATE()
+                    HolidayContact=@HolidayContact, Ext=@Ext, Mobile=@Mobile, OwnerUnit=@OwnerUnit, DoctorSource=@DoctorSource, SortOrder=@SortOrder, IsActive=@IsActive, UpdatedAt=GETDATE()
                     WHERE Id=@Id";
         using var conn = _db.Create();
         var rows = await conn.ExecuteAsync(new CommandDefinition(sql,
-            new { req.DeptCode, req.DeptName, req.Slots, req.CallOutRule, req.Remark, req.HolidayContact, req.Ext, req.Mobile, req.OwnerUnit, req.SortOrder, req.IsActive, Id = id },
+            new { req.DeptCode, req.DeptName, req.Slots, req.CallOutRule, req.Remark, req.HolidayContact, req.Ext, req.Mobile, req.OwnerUnit, req.DoctorSource, req.SortOrder, req.IsActive, Id = id },
             cancellationToken: ct));
         return rows > 0;
     }

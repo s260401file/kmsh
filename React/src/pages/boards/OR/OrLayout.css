@@ -109,8 +109,13 @@
 .or-board .badge-門診刀 { background:#1976D2; color:#fff; }
 .or-board .badge-住院刀 { background:#27AE60; color:#fff; }
 .or-board .badge-手術中 { background:#1DBF5E; color:#0A1E10; font-weight:800; }
+.or-board .badge-手術結束 { background:#26A69A; color:#062B27; font-weight:800; }
+.or-board .badge-等候中 { background:#F5B942; color:#1E1A0A; }
 .or-board .badge-準備中 { background:#F5B942; color:#1E1A0A; }
+.or-board .badge-已離開 { background:#607D8B; color:#fff; }
 .or-board .badge-已完成 { background:#607D8B; color:#fff; }
+.or-board .badge-待手術 { background:#90A4AE; color:#fff; }
+.or-board .badge-dest { background:#455A64; color:#fff; font-weight:700; }
 .or-board .badge-er { background:#CC3333; color:#fff; }
 .or-board .badge-op { background:#1976D2; color:#fff; }
 .or-board .badge-inp { background:#27AE60; color:#fff; }
