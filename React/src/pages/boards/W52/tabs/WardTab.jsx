@@ -85,6 +85,8 @@ function BedCard({ bed, filteredOut, onClick }) {
   }
   const p = bed.Patient
   const allBadges = buildBadges(p, bed.Status)
+  // 入院/轉入日 → MM-dd（無法解析或空值則不顯示）
+  const admMd = (() => { const d = new Date(p.AdmissionDate); return isNaN(d) ? '' : `${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` })()
   return (
     <div
       className={`bed-card ${bed.Status} bed-${bed.BedId}${filteredOut ? ' filtered-out' : ''}`}
@@ -93,7 +95,7 @@ function BedCard({ bed, filteredOut, onClick }) {
       <div className="card-row1"><span className="bed-num">{bedLabel}</span></div>
       <div className="card-row2">
         <span className={`patient-name ${p.Gender === 'M' ? 'gender-m' : 'gender-f'}`}>{p.PatientName}</span>
-        <span className="patient-basic">{p.Gender}/{p.Age}</span>
+        <span className="patient-basic">{p.Gender}/{p.Age}{admMd && `　${admMd}`}</span>
       </div>
       {/* 註記形狀列：每個 badge 渲染一個 SVG 形狀標記 */}
       <div className="dots-row">

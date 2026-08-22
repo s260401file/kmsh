@@ -92,6 +92,31 @@ public class ErDoctorUpsertRequest
     public bool IsActive { get; set; } = true;
 }
 
+/// <summary>外傷小組醫師主檔一列（獨立主檔，比照 ErDoctor；DeptName 由 Department join 帶出供顯示）。</summary>
+public class TraumaDoctorItem
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = "";
+    public string? DeptCode { get; set; }          // 科別代碼（對應 Department.Code）
+    public string? DeptName { get; set; }          // 科別中文（join 帶出）
+    public string? Ext { get; set; }               // 分機
+    public string? Note { get; set; }              // 備註
+    public int SortOrder { get; set; }
+    public bool IsActive { get; set; }
+    public DateTime UpdatedAt { get; set; }
+    public DateTime CreatedAt { get; set; }
+}
+
+public class TraumaDoctorUpsertRequest
+{
+    public string Name { get; set; } = "";
+    public string? DeptCode { get; set; }
+    public string? Ext { get; set; }
+    public string? Note { get; set; }
+    public int SortOrder { get; set; }
+    public bool IsActive { get; set; } = true;
+}
+
 /// <summary>ER 急診醫師「每日緊急編組／點班」一列（join ErDoctor/Department 帶出姓名/科別/分機）。</summary>
 public class ErDoctorGroupItem
 {

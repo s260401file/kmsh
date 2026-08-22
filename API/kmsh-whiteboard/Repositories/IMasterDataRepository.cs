@@ -31,6 +31,12 @@ public interface IMasterDataRepository
     Task<bool> UpdateErDoctorAsync(int id, ErDoctorUpsertRequest req, CancellationToken ct = default);
     Task<bool> DeleteErDoctorAsync(int id, CancellationToken ct = default);
 
+    // ── 外傷小組 醫師主檔（獨立，比照急診醫師）──
+    Task<IEnumerable<TraumaDoctorItem>> GetTraumaDoctorsAsync(bool includeAll, CancellationToken ct = default);
+    Task<int> CreateTraumaDoctorAsync(TraumaDoctorUpsertRequest req, CancellationToken ct = default);
+    Task<bool> UpdateTraumaDoctorAsync(int id, TraumaDoctorUpsertRequest req, CancellationToken ct = default);
+    Task<bool> DeleteTraumaDoctorAsync(int id, CancellationToken ct = default);
+
     // ── ER 急診醫師 每日緊急編組／點班 ──
     Task<IEnumerable<ErDoctorGroupItem>> GetErDoctorGroupsAsync(string workDate, CancellationToken ct = default);
     Task<int> SaveErDoctorGroupAsync(string workDate, IEnumerable<ErDoctorGroupEntry> entries, CancellationToken ct = default);

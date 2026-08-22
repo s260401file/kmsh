@@ -147,6 +147,8 @@ function BedCard({ bed, filteredOut, onClick }) {
   const allBadges = buildBadges(p)
   // 責任護理師：只顯示「當前時段」該床的主護（班別依三班排程對應）
   const curNurses = (p.nurses ?? []).filter(n => n.shift === currentShift()).map(n => n.name).filter(Boolean)
+  // 入院/轉入日 → MM-dd（無法解析或空值則不顯示）
+  const admMd = (() => { const d = new Date(p.admission); return isNaN(d) ? '' : `${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` })()
   return (
     <div
       className={`bed-card ${bed.status} bed-${bed.id}${filteredOut ? ' filtered-out' : ''}`}
@@ -155,7 +157,7 @@ function BedCard({ bed, filteredOut, onClick }) {
       <div className="card-row1"><span className="bed-num">{bedLabel}</span></div>
       <div className="card-row2">
         <span className={`patient-name ${p.gender === 'M' ? 'gender-m' : 'gender-f'}`}>{p.name}</span>
-        <span className="patient-basic">{p.gender}/{p.age}</span>
+        <span className="patient-basic">{p.gender}/{p.age}{admMd && `　${admMd}`}</span>
       </div>
       {(p.doctor || curNurses.length > 0) && (
         <div className="card-row-dr">

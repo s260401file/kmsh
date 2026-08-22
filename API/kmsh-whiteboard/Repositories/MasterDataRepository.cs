@@ -179,6 +179,45 @@ public class MasterDataRepository : IMasterDataRepository
         return rows > 0;
     }
 
+    // ── 外傷小組 醫師主檔（獨立，比照急診醫師）─────────────────
+    public async Task<IEnumerable<TraumaDoctorItem>> GetTraumaDoctorsAsync(bool includeAll, CancellationToken ct = default)
+    {
+        var sql = @"SELECT d.Id, d.Name, d.DeptCode, dep.Name AS DeptName, d.Ext, d.Note, d.SortOrder, d.IsActive, d.UpdatedAt, d.CreatedAt
+                    FROM [dbo].[TraumaDoctor] d
+                    LEFT JOIN [dbo].[Department] dep ON dep.Code = d.DeptCode
+                    WHERE (@IncludeAll=1 OR d.IsActive=1) ORDER BY d.SortOrder, d.Id";
+        using var conn = _db.Create();
+        return await conn.QueryAsync<TraumaDoctorItem>(
+            new CommandDefinition(sql, new { IncludeAll = includeAll ? 1 : 0 }, cancellationToken: ct));
+    }
+
+    public async Task<int> CreateTraumaDoctorAsync(TraumaDoctorUpsertRequest req, CancellationToken ct = default)
+    {
+        var sql = @"INSERT INTO [dbo].[TraumaDoctor] (Name, DeptCode, Ext, Note, SortOrder, IsActive, UpdatedAt, CreatedAt)
+                    OUTPUT INSERTED.Id
+                    VALUES (@Name, @DeptCode, @Ext, @Note, @SortOrder, @IsActive, GETDATE(), GETDATE())";
+        using var conn = _db.Create();
+        return await conn.ExecuteScalarAsync<int>(new CommandDefinition(sql, req, cancellationToken: ct));
+    }
+
+    public async Task<bool> UpdateTraumaDoctorAsync(int id, TraumaDoctorUpsertRequest req, CancellationToken ct = default)
+    {
+        var sql = @"UPDATE [dbo].[TraumaDoctor] SET Name=@Name, DeptCode=@DeptCode, Ext=@Ext, Note=@Note,
+                        SortOrder=@SortOrder, IsActive=@IsActive, UpdatedAt=GETDATE() WHERE Id=@Id";
+        using var conn = _db.Create();
+        var rows = await conn.ExecuteAsync(new CommandDefinition(sql,
+            new { req.Name, req.DeptCode, req.Ext, req.Note, req.SortOrder, req.IsActive, Id = id }, cancellationToken: ct));
+        return rows > 0;
+    }
+
+    public async Task<bool> DeleteTraumaDoctorAsync(int id, CancellationToken ct = default)
+    {
+        using var conn = _db.Create();
+        var rows = await conn.ExecuteAsync(new CommandDefinition(
+            "DELETE FROM [dbo].[TraumaDoctor] WHERE Id=@Id", new { Id = id }, cancellationToken: ct));
+        return rows > 0;
+    }
+
     // ── 各單位「顯示照服員」選取 UnitCareAide ─────────────────
     public async Task<IEnumerable<UnitCareAideItem>> GetUnitAidesAsync(string unitCode, CancellationToken ct = default)
     {

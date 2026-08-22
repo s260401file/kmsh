@@ -2079,6 +2079,24 @@ public class BoardController : ControllerBase
     public async Task<IActionResult> DeleteErDoctor(int id, CancellationToken ct = default)
         => await _master.DeleteErDoctorAsync(id, ct) ? NoContent() : NotFound();
 
+    // ── 外傷小組 醫師主檔 TraumaDoctor（獨立，比照急診醫師）─────
+    /// <summary>查詢外傷小組醫師名單清單。</summary>
+    [HttpGet("trauma-doctor")]
+    public async Task<IActionResult> GetTraumaDoctors([FromQuery] bool includeAll = true, CancellationToken ct = default)
+        => Ok(await _master.GetTraumaDoctorsAsync(includeAll, ct));
+    /// <summary>新增外傷小組醫師名單。</summary>
+    [HttpPost("trauma-doctor")]
+    public async Task<IActionResult> CreateTraumaDoctor([FromBody] TraumaDoctorUpsertRequest req, CancellationToken ct = default)
+    { var id = await _master.CreateTraumaDoctorAsync(req, ct); return Ok(new { id }); }
+    /// <summary>更新外傷小組醫師名單。</summary>
+    [HttpPut("trauma-doctor/{id:int}")]
+    public async Task<IActionResult> UpdateTraumaDoctor(int id, [FromBody] TraumaDoctorUpsertRequest req, CancellationToken ct = default)
+        => await _master.UpdateTraumaDoctorAsync(id, req, ct) ? NoContent() : NotFound();
+    /// <summary>刪除外傷小組醫師名單。</summary>
+    [HttpDelete("trauma-doctor/{id:int}")]
+    public async Task<IActionResult> DeleteTraumaDoctor(int id, CancellationToken ct = default)
+        => await _master.DeleteTraumaDoctorAsync(id, ct) ? NoContent() : NotFound();
+
     // ── ER 急診醫師 每日緊急編組／點班 ─────
     /// <summary>查詢急診緊急應變編組清單。</summary>
     [HttpGet("er-doctor-group")]

@@ -125,6 +125,7 @@ const MENU_CONFIG = [
       { id: 'er-shift',  label: '醫師/照服員設定', available: true },   // 原「三班醫護人員」；護理師改由三班護理師供給
       { id: 'er-shift-roster', label: '三班護理師', available: true },   // 護理師來源（餵 ER 看板三班面板）
       { id: 'er-doctor', label: '急診醫師', available: true },   // 急診醫師主檔（供 ER 緊急編組納入醫師）
+      { id: 'trauma-team', label: '外傷小組', available: true },   // 外傷小組醫師主檔（獨立，比照急診醫師；供值班醫師排程）
     ]
   },
   {
@@ -1348,8 +1349,10 @@ function OnCallScheduleSection({ unitCode } = {}) {
   useEffect(() => {
     if (!deptCode) return
     const d = depts.find(x => x.deptCode === deptCode)
-    // 急診科（DoctorSource='ErDoctor'）醫師下拉改吃「急診醫師」主檔；其餘照舊吃 Doctor 主檔依科別
-    const load = d?.doctorSource === 'ErDoctor'
+    // 醫師下拉來源分流：外傷小組→外傷小組主檔、急診科→急診醫師主檔；其餘照舊吃 Doctor 主檔依科別
+    const load = d?.doctorSource === 'TraumaDoctor'
+      ? wardApi.getTraumaDoctors(true)      // 外傷小組主檔，回 {name, ext,…}，與 docOptions 相容
+      : d?.doctorSource === 'ErDoctor'
       ? wardApi.getErDoctors(true)          // ErDoctor 回 {name, ext,…}，與 docOptions 相容
       : wardApi.getDoctors(deptCode, true)
     load.then(ds => setDoctors(ds ?? [])).catch(() => {})
@@ -3681,6 +3684,77 @@ function ErDoctorSection({ departments }) {
   )
 }
 
+// 外傷小組醫師主檔（獨立，比照急診醫師）：姓名／科別(下拉)／分機／備註／排序／啟用
+const emptyTraumaDoctorForm = { name: '', deptCode: '', ext: '', note: '', sortOrder: 0, isActive: true }
+function TraumaDoctorManager() {
+  const [depts, setDepts] = useState([])
+  useEffect(() => { wardApi.getDepartments(true).then(d => setDepts(d ?? [])).catch(() => {}) }, [])
+  return (
+    <div>
+      <div style={{ fontSize: '12px', color: '#9ca3af', marginBottom: '10px' }}>外傷小組醫師名單（獨立主檔，供「值班醫師排程」外傷小組挑選）。科別請於「系統管理→科別」維護。</div>
+      <TraumaDoctorSection departments={depts} />
+    </div>
+  )
+}
+function TraumaDoctorSection({ departments }) {
+  const deptName = (code) => departments?.find(d => d.code === code)?.name || code || '—'
+  const { list, form, setField: setF, editId, msg, handleSubmit, handleEdit, handleDelete, resetForm } = useCrudSection({
+    emptyForm: emptyTraumaDoctorForm,
+    fetchList: () => wardApi.getTraumaDoctors(true),
+    create: (p) => wardApi.createTraumaDoctor(p),
+    update: (id, p) => wardApi.updateTraumaDoctor(id, p),
+    remove: (id) => wardApi.removeTraumaDoctor(id),
+    toPayload: (f) => ({ name: f.name.trim(), deptCode: f.deptCode || null, ext: f.ext?.trim() || null, note: f.note?.trim() || null, sortOrder: Number(f.sortOrder) || 0, isActive: f.isActive }),
+    toForm: (i) => ({ name: i.name, deptCode: i.deptCode ?? '', ext: i.ext ?? '', note: i.note ?? '', sortOrder: i.sortOrder, isActive: i.isActive }),
+    failMsg: '操作失敗',
+  })
+  return (
+    <div>
+      {msg.text && <div style={{ ...s.msg, background: msg.error ? '#fee2e2' : '#d1fae5', color: msg.error ? '#991b1b' : '#065f46' }}>{msg.text}</div>}
+      <div style={s.formCard}>
+        <h4 style={s.formTitle}>{editId ? `修改外傷小組醫師 (ID: ${editId})` : '新增外傷小組醫師'}</h4>
+        <form onSubmit={handleSubmit}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 100px', gap: '0 16px' }}>
+            <div style={s.formRow}><label style={s.label}>姓名 *</label><input style={s.input} value={form.name} required onChange={e => setF('name', e.target.value)} placeholder="王小明" /></div>
+            <div style={s.formRow}><label style={s.label}>科別</label>
+              <select style={s.input} value={form.deptCode} onChange={e => setF('deptCode', e.target.value)}>
+                <option value="">— 選擇科別 —</option>
+                {departments.map(d => <option key={d.code} value={d.code}>{d.name}</option>)}
+              </select>
+            </div>
+            <div style={s.formRow}><label style={s.label}>分機</label><input style={s.input} value={form.ext} onChange={e => setF('ext', e.target.value)} placeholder="分機 2681" /></div>
+            <div style={s.formRow}><label style={s.label}>排序</label><input type="number" style={s.input} value={form.sortOrder} onChange={e => setF('sortOrder', Number(e.target.value))} /></div>
+          </div>
+          <div style={s.formRow}><label style={s.label}>備註</label><input style={s.input} value={form.note} onChange={e => setF('note', e.target.value)} placeholder="備註" /></div>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '14px', cursor: 'pointer', marginTop: '4px' }}>
+            <input type="checkbox" checked={form.isActive} onChange={e => setF('isActive', e.target.checked)} />啟用
+          </label>
+          <div style={{ marginTop: '14px', display: 'flex', gap: '8px' }}>
+            <button type="submit" style={s.btnPrimary}>{editId ? '儲存修改' : '+ 新增外傷小組醫師'}</button>
+            {editId && <button type="button" style={s.btnSecondary} onClick={resetForm}>取消</button>}
+          </div>
+        </form>
+      </div>
+      <div style={s.formCard}>
+        <h4 style={s.formTitle}>外傷小組醫師清單（共 {list.length} 筆）</h4>
+        {list.length === 0 ? <p style={{ color: '#9ca3af', fontSize: '14px' }}>尚無外傷小組醫師，請先新增</p> : (
+          <table style={s.table}>
+            <thead><tr>{['排序', '姓名', '科別', '分機', '備註', '啟用', '操作'].map(h => <th key={h} style={s.th}>{h}</th>)}</tr></thead>
+            <tbody>{list.map((it, i) => (
+              <tr key={it.id} style={{ background: editId === it.id ? '#fef9c3' : i % 2 ? '#f9fafb' : '#fff' }}>
+                <td style={s.td}>{it.sortOrder}</td><td style={s.td}>{it.name}</td><td style={s.td}>{it.deptName || deptName(it.deptCode)}</td>
+                <td style={s.td}>{it.ext || '—'}</td><td style={s.td}>{it.note || '—'}</td>
+                <td style={s.td}><span style={{ ...s.badge, background: it.isActive ? '#d1fae5' : '#f3f4f6', color: it.isActive ? '#065f46' : '#6b7280' }}>{it.isActive ? '✓ 啟用' : '停用'}</span></td>
+                <td style={s.td}><button style={s.btnEdit} onClick={() => handleEdit(it)}>編輯</button><button style={s.btnDel} onClick={() => handleDelete(it.id, `確定刪除外傷小組醫師「${it.name}」？`)}>刪除</button></td>
+              </tr>
+            ))}</tbody>
+          </table>
+        )}
+      </div>
+    </div>
+  )
+}
+
 const emptyAideForm = { name: '', contact: '', sortOrder: 0, isActive: true }
 function CareAideSection() {
   const { list, form, setField: setF, editId, msg, handleSubmit, handleEdit, handleDelete, resetForm } = useCrudSection({
@@ -4031,6 +4105,7 @@ export default function AdminPage() {
       case 'er-oncall-display': return <OnCallDisplaySection unitCode="ER" maxSelect={10} />
       case 'er-shift':       return <ErShiftPanelSection key="ERshift" />
       case 'er-doctor':      return <ErDoctorManager />
+      case 'trauma-team':    return <TraumaDoctorManager />
       case 'w52-shift':      return <ShiftRosterSection unit="W52" key="W52roster" />
       case 'w52-oncall-display': return <OnCallDisplaySection unitCode="W52" />
       case 'w52-aide-display': return <AideDisplaySection unitCode="W52" />

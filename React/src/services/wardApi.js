@@ -319,6 +319,11 @@ export async function removeErDoctor(id) { return handle(await apiFetch(`${BASE}
 // ER 急診醫師 每日緊急編組／點班
 export async function getErDoctorGroups(date) { return handle(await apiFetch(`${BASE}/er-doctor-group?date=${encodeURIComponent(date)}`)) }
 export async function saveErDoctorGroups(data) { return handle(await apiFetch(`${BASE}/er-doctor-group`, { method: 'POST', headers, body: JSON.stringify(data) })) }
+// 外傷小組 醫師主檔（獨立，比照急診醫師）
+export async function getTraumaDoctors(includeAll = true) { return handle(await apiFetch(`${BASE}/trauma-doctor?includeAll=${includeAll ? 'true' : 'false'}`)) }
+export async function createTraumaDoctor(data) { return handle(await apiFetch(`${BASE}/trauma-doctor`, { method: 'POST', headers, body: JSON.stringify(data) })) }
+export async function updateTraumaDoctor(id, data) { return handle(await apiFetch(`${BASE}/trauma-doctor/${id}`, { method: 'PUT', headers, body: JSON.stringify(data) })) }
+export async function removeTraumaDoctor(id) { return handle(await apiFetch(`${BASE}/trauma-doctor/${id}`, { method: 'DELETE' })) }
 // 各單位「顯示照服員」選取（UnitCareAide）
 // GET {unitCode}/aide-display → 該單位選取的照服員（含順序＋姓名／聯絡方式）；供後台載入與前台顯示
 export async function getUnitCareAides(unitCode) { return handle(await apiFetch(`${BASE}/${unitCode}/aide-display`)) }
