@@ -83,6 +83,22 @@ export async function getNightNurse(from, to) {
 export async function saveNightNurseMonth(body) {
   return handle(await apiFetch(`${BASE}/night-nurse/month`, { method: 'POST', headers, body: JSON.stringify(body) }))
 }
+// ── 當日專師排班（SpecialistRoster；依站別、每日可多位）──
+export async function getSpecialists(unitCode, from, to) {
+  const p = new URLSearchParams(); if (from) p.set('from', from); if (to) p.set('to', to)
+  return handle(await apiFetch(`${BASE}/${unitCode.toLowerCase()}/specialist?${p}`))
+}
+export async function saveSpecialistMonth(unitCode, body) {
+  return handle(await apiFetch(`${BASE}/${unitCode.toLowerCase()}/specialist/month`, { method: 'POST', headers, body: JSON.stringify(body) }))
+}
+// ── 當日住院醫師排班（ResidentRoster；依站別、每日可多位；純手動 keyin）──
+export async function getResidents(unitCode, from, to) {
+  const p = new URLSearchParams(); if (from) p.set('from', from); if (to) p.set('to', to)
+  return handle(await apiFetch(`${BASE}/${unitCode.toLowerCase()}/resident?${p}`))
+}
+export async function saveResidentMonth(unitCode, body) {
+  return handle(await apiFetch(`${BASE}/${unitCode.toLowerCase()}/resident/month`, { method: 'POST', headers, body: JSON.stringify(body) }))
+}
 // ── 護理行政值班表（AdminDutyRoster；無科別、每日大夜/白班/小夜）──
 export async function getAdminDuty(from, to) {
   const p = new URLSearchParams(); if (from) p.set('from', from); if (to) p.set('to', to)
@@ -158,6 +174,10 @@ export async function getAntibioticLive(unitCode = 'ICU') {
 export async function createAntibiotic(data) { return handle(await apiFetch(`${BASE}/antibiotic`, { method: 'POST', headers, body: JSON.stringify(data) })) }
 export async function updateAntibiotic(id, data) { return handle(await apiFetch(`${BASE}/antibiotic/${id}`, { method: 'PUT', headers, body: JSON.stringify(data) })) }
 export async function removeAntibiotic(id) { return handle(await apiFetch(`${BASE}/antibiotic/${id}`, { method: 'DELETE' })) }
+// POST /api/Board/{unitCode}/antibiotic/firstdose → 依 病歷號+藥名+開始時間 upsert「首次給藥時間」（後台補填）
+export async function saveAntibioticFirstDose(unitCode = 'ICU', data) {
+  return handle(await apiFetch(`${BASE}/${unitCode}/antibiotic/firstdose`, { method: 'POST', headers, body: JSON.stringify(data) }))
+}
 
 // ══ 人員管理（自建；人員主檔＋多單位多角色＋排班＋床位指派＋查房＋交班）══
 // 看板組裝（各站頁籤）

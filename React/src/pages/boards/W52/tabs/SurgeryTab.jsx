@@ -18,6 +18,9 @@ export default function SurgeryTab() {
     [...(data ?? [])].sort((a, b) => STATUS_ORDER.indexOf(a.status) - STATUS_ORDER.indexOf(b.status)),
     [data])
 
+  // 當日日期（顯示於「當日手術」左方）
+  const today = useMemo(() => { const d = new Date(); return `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}` }, [])
+
   if (loading) return <main className="main-content"><BoardLoading /></main>   // 院方資料載入中
 
   return (
@@ -30,6 +33,7 @@ export default function SurgeryTab() {
 
         <div className="surg-card">
           <div className="surg-card-header">
+            <span className="surg-card-date">{today}</span>
             當日手術
             <span className="surg-card-count">{items.length} 筆</span>
           </div>
@@ -37,18 +41,19 @@ export default function SurgeryTab() {
             <table className="surg-table">
               <thead>
                 <tr>
-                  <th>刀房</th><th>排程時間</th><th>姓名</th>
+                  <th>手術間</th><th>排程時間</th><th>病床號</th><th>姓名</th>
                   <th>術式</th><th>診斷</th><th>麻醉方式</th><th>主治醫師</th>
                   <th className="surg-th-center">狀態</th>
                 </tr>
               </thead>
               <tbody>
                 {items.length === 0
-                  ? <tr className="surg-empty-row"><td colSpan="8">本日無手術排程</td></tr>
+                  ? <tr className="surg-empty-row"><td colSpan="9">本日無手術排程</td></tr>
                   : items.map((item, idx) => (
                     <tr key={idx} className={item.status === '取消' ? 'surg-row-cancel' : ''}>
                       <td><span className="surg-td-or">{item.orRoom}</span></td>
                       <td className="surg-td-time">{item.scheduledTime}</td>
+                      <td><span className="surg-td-bed">{item.bedId || '—'}</span></td>
                       <td className="surg-td-name">
                         <span className={`surg-name surg-gender-${item.gender === 'M' ? 'm' : 'f'}`}>{item.patientName}</span>
                         <span className="surg-basic">{item.gender}/{item.age}</span>

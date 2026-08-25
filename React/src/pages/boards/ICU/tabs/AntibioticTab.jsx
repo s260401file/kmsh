@@ -72,7 +72,7 @@ function AbxModal({ bed, abxList, onClose }) {
             : (
               <table className="ab-table">
                 <thead>
-                  <tr><th>藥品名稱</th><th>開始時間</th><th>首次給藥時間</th><th>結束時間</th></tr>
+                  <tr><th>藥品名稱</th><th>開始時間</th><th>首次時間</th><th>結束時間</th></tr>
                 </thead>
                 <tbody>
                   {sorted.map(ab => (

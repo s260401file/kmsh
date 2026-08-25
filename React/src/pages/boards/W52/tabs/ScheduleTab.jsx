@@ -92,17 +92,17 @@ export default function ScheduleTab() {
           <div className="sc-col-right">
             <div className="sc-card">
               <div className="sc-card-header">
-                專科護理師
+                當日專科護理師
                 <span className="sc-card-count">{shift.specialists.length} 人</span>
               </div>
               <div className="sc-table-wrap">
                 <table className="sc-table">
-                  <thead><tr><th>姓名</th><th>專科</th><th>分機</th></tr></thead>
+                  <thead><tr><th>姓名</th></tr></thead>
                   <tbody>
                     {shift.specialists.length === 0
-                      ? <tr className="sc-empty-row"><td colSpan="3">本班無專師</td></tr>
+                      ? <tr className="sc-empty-row"><td colSpan="1">本日無專師</td></tr>
                       : shift.specialists.map(s => (
-                        <tr key={s.staffId}><td>{s.peName}</td><td>{s.specialty}</td><td className="sc-td-ext">{s.extension}</td></tr>
+                        <tr key={s.staffId}><td>{s.peName}</td></tr>
                       ))
                     }
                   </tbody>
@@ -111,17 +111,17 @@ export default function ScheduleTab() {
             </div>
             <div className="sc-card">
               <div className="sc-card-header">
-                住院醫師
+                當日住院醫師
                 <span className="sc-card-count">{shift.residents.length} 人</span>
               </div>
               <div className="sc-table-wrap">
                 <table className="sc-table">
-                  <thead><tr><th>姓名</th><th>科別</th><th>分機</th></tr></thead>
+                  <thead><tr><th>姓名</th></tr></thead>
                   <tbody>
                     {shift.residents.length === 0
-                      ? <tr className="sc-empty-row"><td colSpan="3">本班無住院醫師</td></tr>
+                      ? <tr className="sc-empty-row"><td colSpan="1">本日無住院醫師</td></tr>
                       : shift.residents.map(r => (
-                        <tr key={r.staffId}><td>{r.peName}</td><td>{r.department}</td><td className="sc-td-ext">{r.extension}</td></tr>
+                        <tr key={r.id}><td>{r.peName}</td></tr>
                       ))
                     }
                   </tbody>

@@ -1158,6 +1158,44 @@ public class BoardController : ControllerBase
     public async Task<IActionResult> SaveAdminDutyMonth([FromBody] AdminDutyMonthSaveRequest req, CancellationToken ct = default)
         => Ok(new { saved = await _oncall.SaveAdminDutyMonthAsync(req, ct) });
 
+    // ── 當日專師排班 SpecialistRoster（依站別；每日可多位；供 {unit}/schedule 專科護理師）──
+    /// <summary>某站專師排班（區間；供後台月曆載入）。GET 匿名。</summary>
+    [HttpGet("{unitCode}/specialist")]
+    public async Task<IActionResult> GetSpecialists(string unitCode, [FromQuery] string? from, [FromQuery] string? to, CancellationToken ct = default)
+    {
+        var today = DateTime.Today;
+        var f = string.IsNullOrWhiteSpace(from) ? new DateTime(today.Year, today.Month, 1) : DateTime.Parse(from);
+        var t = string.IsNullOrWhiteSpace(to) ? f.AddMonths(1).AddDays(-1) : DateTime.Parse(to);
+        return Ok(await _oncall.GetSpecialistsAsync(unitCode, f, t, ct));
+    }
+
+    /// <summary>某站專師排班 月曆整月存檔（覆寫該站該月）。</summary>
+    [HttpPost("{unitCode}/specialist/month")]
+    public async Task<IActionResult> SaveSpecialistMonth(string unitCode, [FromBody] SpecialistMonthSaveRequest req, CancellationToken ct = default)
+    {
+        req.UnitCode = unitCode;   // 以路由為準
+        return Ok(new { saved = await _oncall.SaveSpecialistMonthAsync(req, ct) });
+    }
+
+    // ── 當日住院醫師排班 ResidentRoster（依站別；每日可多位；純手動 keyin）──
+    /// <summary>某站住院醫師排班（區間；供後台月曆載入）。GET 匿名。</summary>
+    [HttpGet("{unitCode}/resident")]
+    public async Task<IActionResult> GetResidents(string unitCode, [FromQuery] string? from, [FromQuery] string? to, CancellationToken ct = default)
+    {
+        var today = DateTime.Today;
+        var f = string.IsNullOrWhiteSpace(from) ? new DateTime(today.Year, today.Month, 1) : DateTime.Parse(from);
+        var t = string.IsNullOrWhiteSpace(to) ? f.AddMonths(1).AddDays(-1) : DateTime.Parse(to);
+        return Ok(await _oncall.GetResidentsAsync(unitCode, f, t, ct));
+    }
+
+    /// <summary>某站住院醫師排班 月曆整月存檔（覆寫該站該月）。</summary>
+    [HttpPost("{unitCode}/resident/month")]
+    public async Task<IActionResult> SaveResidentMonth(string unitCode, [FromBody] ResidentMonthSaveRequest req, CancellationToken ct = default)
+    {
+        req.UnitCode = unitCode;   // 以路由為準
+        return Ok(new { saved = await _oncall.SaveResidentMonthAsync(req, ct) });
+    }
+
     // ── ER 三班醫護人員面板（自建；護理師掛人員管理）──────────────────
     /// <summary>看板：ER 四班面板，護理師 Staff.Id→姓名解析；回 camelCase。</summary>
     [HttpGet("{unitCode}/shiftpanel")]
@@ -1476,22 +1514,21 @@ public class BoardController : ControllerBase
     public async Task<IActionResult> GetUnitSurgeries(string unitCode, [FromQuery] DateTime? from, [FromQuery] DateTime? to, CancellationToken ct = default)
     {
         var u = unitCode.ToUpperInvariant();
-        // 取該單位目前在床病歷號集合（SafeBoardAsync 內含 try/catch，失敗回空）
-        HashSet<string> inBed;
+        // 取該單位目前在床病人：病歷號 → 病床號（SafeBoardAsync 內含 try/catch，失敗回空）
+        List<BoardBedItem> boards;
         if (u == "W52")
-            inBed = (await SafeBoardAsync("W52", ct))
-                .Where(o => !string.IsNullOrWhiteSpace(o.Hhisnum))
-                .Select(o => o.Hhisnum!.Trim())
-                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            boards = await SafeBoardAsync("W52", ct);
         else if (u == "ICU")
-            inBed = (await SafeBoardAsync("AICU", ct)).Concat(await SafeBoardAsync("CICU", ct))
-                .Where(o => !string.IsNullOrWhiteSpace(o.Hhisnum))
-                .Select(o => o.Hhisnum!.Trim())
-                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            boards = (await SafeBoardAsync("AICU", ct)).Concat(await SafeBoardAsync("CICU", ct)).ToList();
         else
             return BadRequest(new { message = $"尚未支援單位 {unitCode} 的手術過濾（目前僅 W52 / ICU）" });
 
-        if (inBed.Count == 0) return Ok(new List<OrSurgeryListItem>());   // 無在床病人 → 無內容
+        var bedByHis = boards
+            .Where(o => !string.IsNullOrWhiteSpace(o.Hhisnum))
+            .GroupBy(o => o.Hhisnum!.Trim())
+            .ToDictionary(g => g.Key, g => (g.First().Hbed ?? "").Trim(), StringComparer.OrdinalIgnoreCase);
+
+        if (bedByHis.Count == 0) return Ok(new List<OrSurgeryListItem>());   // 無在床病人 → 無內容
 
         var now = DateTime.Now; var today = DateTime.Today;
         var f = from?.Date ?? today;
@@ -1499,28 +1536,49 @@ public class BoardController : ControllerBase
         if (t < f) (f, t) = (t, f);
         if ((t - f).TotalDays > 14) return BadRequest(new { message = "查詢區間過長（上限 14 天）" });
 
-        // 查區間本地手術表，再過濾成「病歷號屬該單位在床病人」者
-        var rows = (await _ward.GetOrSurgeryListAsync(f, t, ct))
-            .Where(r => !string.IsNullOrWhiteSpace(r.ChartNo) && inBed.Contains(r.ChartNo!.Trim()))
+        // 查區間本地手術表（先取全部供「刀次」計算，再過濾成該單位在床病人）
+        var allRows = (await _ward.GetOrSurgeryListAsync(f, t, ct)).ToList();
+        // 刀次：每(日,刀房)依排程時間排序給序號（1-based，排除取消 82）
+        string SeqKey(OrSurgeryListRow r) => $"{r.OpDate:yyyy-MM-dd}|{(r.RoomId ?? r.Room ?? "").Trim()}|{(r.ChartNo ?? "").Trim()}|{(r.OpTime ?? "").Trim()}";
+        var seqByKey = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        foreach (var grp in allRows.Where(r => r.StatusCode != "82")
+                     .GroupBy(r => $"{r.OpDate:yyyy-MM-dd}|{(r.RoomId ?? r.Room ?? "").Trim()}"))
+        {
+            int i = 0;
+            foreach (var r in grp.OrderBy(r => (r.OpTime ?? "").Trim())) seqByKey[SeqKey(r)] = ++i;
+        }
+        var rows = allRows
+            .Where(r => !string.IsNullOrWhiteSpace(r.ChartNo) && bedByHis.ContainsKey(r.ChartNo!.Trim()))
             .ToList();
 
-        // 完成訊號改由 OR_SYSTEM（今日）判定；過去日視為已完成。診斷以 OPORDER ORDIAG 為主（Board_OR 已退場，不再補值）。
+        // 完成訊號由 OR_SYSTEM（今日）判定；過去日視為已完成。
         var overlay = await BuildOrSystemStatusByHisAsync(today, ct);
+        // 診斷補充：OPORDER ORDIAG 常為空 → 以院方 Board_OR 依病歷號補（enrichment，失敗回空不中斷、20 秒快取）。
+        var diagByHis = (await FreshOrStaleAsync("or:board", 20, async () =>
+                { try { return await _board.GetOrListAsync(ct); } catch { return new List<BoardOrItem>(); } }))
+            .Where(o => !string.IsNullOrWhiteSpace(o.Hhisnum) && !string.IsNullOrWhiteSpace(o.Diagnosis))
+            .GroupBy(o => o.Hhisnum!.Trim())
+            .ToDictionary(g => g.Key, g => g.First().Diagnosis, StringComparer.OrdinalIgnoreCase);
 
         var list = rows.Select(r =>
         {
+            var chart = r.ChartNo!.Trim();
             string st;
             if (r.StatusCode == "82" || !string.IsNullOrWhiteSpace(r.CancelReason)) st = "取消";
             else if (r.OpDate.Date < today) st = "已完成";
-            else if (r.OpDate.Date == today && !string.IsNullOrWhiteSpace(r.ChartNo) && overlay.TryGetValue(r.ChartNo!.Trim(), out var sysSt))
+            else if (r.OpDate.Date == today && overlay.TryGetValue(chart, out var sysSt))
                 st = MapToInfoStatus(sysSt);
             else st = DeriveSurgeryStatus(r.OpDate, r.OpTime, now, today);
             if (st == "手術中" || st == "待手術") st = "排程";   // W52/ICU 手術頁：未完成/未取消一律顯示「排程」（無手術中/待手術之分）
             return new OrSurgeryListItem
             {
-                OrRoom = r.RoomId ?? r.Room, Date = r.OpDate.ToString("yyyy-MM-dd"), ScheduledTime = r.OpTime,
+                OrRoom = r.RoomId ?? r.Room, SeqNo = seqByKey.TryGetValue(SeqKey(r), out var sq) ? sq : (int?)null,
+                Date = r.OpDate.ToString("yyyy-MM-dd"), ScheduledTime = r.OpTime,
+                BedId = bedByHis.GetValueOrDefault(chart),
                 PatientName = MaskName(r.PatientName), Gender = r.Sex, Age = r.Age,
-                Procedure = r.SurgeryName, Diagnosis = r.Diagnosis, AnesthesiaMethod = r.Anesthesia,
+                Procedure = r.SurgeryName,
+                Diagnosis = FirstNonBlank(r.Diagnosis, diagByHis.GetValueOrDefault(chart)),
+                AnesthesiaMethod = r.Anesthesia,
                 AttendingSurgeon = r.SurgeonName,
                 Status = st
             };
@@ -1636,22 +1694,35 @@ public class BoardController : ControllerBase
         var (examWards, inBedHis) = await ExamContextAsync(unitCode, ct);
         // 院方全院檢查清單：45 秒快取（三站 /exam 共用），院方逾時則沿用上次成功值。
         var examList = await FreshOrStaleAsync("exam:board:examine", 45, () => _board.GetExamineAsync(ct));
+        // 已結案（完成68／完報64）超過 24h 才隱藏；未結案（執行中/未執行/未排程/已排程/初報/取消醫囑）不論多舊都顯示。
+        var examCut = DateTime.Now.AddHours(-24);
         var exams = examList
             .Where(x => examWards.Contains((x.Ward ?? "").Trim())
                      && !string.IsNullOrWhiteSpace(x.Hhisnum)
                      && inBedHis.Contains(x.Hhisnum!.Trim()))
-            .OrderBy(x => (x.Hbed ?? "").Trim())
-            .ThenBy(x => (x.ExamName ?? "").Trim())
+            .Where(x =>
+            {
+                var code = (x.Status ?? "").Trim();
+                if (code != "68" && code != "64") return true;                  // 未結案：一律顯示
+                return ParseExamDateTime(x.ExamDate, x.ExamTime) is { } t && t >= examCut;   // 已結案：僅近 24h
+            })
+            // 去重：院方會回完全重複列（同病歷號｜檢查名稱｜執行日期｜執行時間）
+            .GroupBy(x => $"{(x.Hhisnum ?? "").Trim()}|{(x.ExamName ?? "").Trim()}|{(x.ExamDate ?? "").Trim()}|{(x.ExamTime ?? "").Trim()}")
+            .Select(g => g.First())
+            // 依 執行日期＋執行時間 由小到大（空日期墊底），次鍵床號
+            .OrderBy(x => { var d = FormatExamDate(x.ExamDate); return string.IsNullOrEmpty(d) ? "9999-99-99" : d; })
+            .ThenBy(x => (x.ExamTime ?? "").Trim())
+            .ThenBy(x => (x.Hbed ?? "").Trim())
             .Select(x => new
         {
             bedId = (x.Hbed ?? "").Trim(), patientName = MaskName(x.Hnamec), gender = (string?)null,
-            examName = (x.ExamName ?? "").Trim(), scheduledDate = FormatExamDate(x.AdmitDate), timeSlot = "",
+            examName = (x.ExamName ?? "").Trim(), scheduledDate = FormatExamDate(x.ExamDate), timeSlot = (x.ExamTime ?? "").Trim(),
             status = MapExamStatus(x.Status), notes = ""
         });
 
         var consults = rows.Where(r => r.Kind == "會診")
-            // 未完成（待回覆）視為進行中排最前，其餘依會診完成時間新到舊
-            .OrderByDescending(r => string.IsNullOrWhiteSpace(r.CompletedTime) ? "9999-99-99 99:99" : r.CompletedTime)
+            // 依會診完成時間由小到大；未完成（無完成時間）以哨兵墊底排最後
+            .OrderBy(r => string.IsNullOrWhiteSpace(r.CompletedTime) ? "9999-99-99 99:99" : r.CompletedTime)
             .Select(r => new
         {
             bedId = r.BedId, patientName = MaskName(r.PatientName), gender = r.Gender, consultDept = r.ItemName,
@@ -1707,8 +1778,20 @@ public class BoardController : ControllerBase
     /// <summary>Board_Examine 狀態代碼→顯示。31 未執行、32 未排程、34 已排程；其他顯示原碼。</summary>
     private static string MapExamStatus(string? code) => (code ?? "").Trim() switch
     {
-        "31" => "未執行", "32" => "未排程", "34" => "已排程", var s => s
+        "68" => "完成", "64" => "完報", "31" => "未執行", "38" => "執行中",
+        "82" => "取消醫囑", "32" => "未排程", "34" => "已排程", "62" => "初報",
+        var s => s
     };
+
+    /// <summary>執行日期(ISO)＋執行時間(HH:mm) → DateTime；日期無法解析回 null。供 24h 窗過濾。</summary>
+    private static DateTime? ParseExamDateTime(string? date, string? time)
+    {
+        if (!DateTime.TryParse((date ?? "").Trim(), CultureInfo.InvariantCulture, DateTimeStyles.None, out var d)) return null;
+        var dt = d.Date;
+        var p = (time ?? "").Trim().Split(':');
+        if (p.Length >= 2 && int.TryParse(p[0], out var hh) && int.TryParse(p[1], out var mm)) dt = dt.AddHours(hh).AddMinutes(mm);
+        return dt;
+    }
 
     /// <summary>轉入日期（ISO/含 T）→ yyyy-MM-dd；無法解析則取前 10 碼或原字串。</summary>
     private static string FormatExamDate(string? raw)
@@ -1762,6 +1845,14 @@ public class BoardController : ControllerBase
     public async Task<IActionResult> DeleteAntibiotic(int id, CancellationToken ct = default)
         => await _ward.DeleteAntibioticAsync(id, ct) ? NoContent() : NotFound();
 
+    /// <summary>後台補「首次給藥時間」：依自然鍵(病歷號+藥名+開始時間) upsert 覆蓋（供即時用藥帶出補填）。</summary>
+    [HttpPost("{unitCode}/antibiotic/firstdose")]
+    public async Task<IActionResult> SaveAntibioticFirstDose(string unitCode, [FromBody] IcuAntibioticUpsertRequest req, CancellationToken ct = default)
+    {
+        await _ward.UpsertAntibioticFirstDoseAsync(unitCode, req.Hhisnum, req.DrugName, req.StartDateTime, req.EndDateTime, req.FirstDoseDateTime, ct);
+        return Ok(new { message = "已儲存" });
+    }
+
     /// <summary>看板：ICU 實際用藥（自院方 Board_AICUUD 專用端點帶入，與病室動態 census 解耦）。
     /// 欄名雖為「抗生素」實為全部用藥、暫不過濾藥品種類；僅取「使用中」(結束日 ≥ 今日或無結束日) 避免列出大量歷史。
     /// 前端以病歷號對在床病人顯示（非在床者自然不出現），故此處不需 census；回傳 camelCase 形狀不變，前端免改。</summary>
@@ -1770,6 +1861,10 @@ public class BoardController : ControllerBase
     {
         if (unitCode.ToUpperInvariant() != "ICU") return Ok(Array.Empty<object>());
         var uds = await _board.GetAicuUdAsync(ct);
+        // 首次給藥時間 overlay（後台補填）：以 病歷號|藥名|開始時間 為鍵併回
+        var ovByKey = (await _ward.GetAntibioticAsync("ICU", false, ct))
+            .GroupBy(a => $"{(a.Hhisnum ?? "").Trim()}|{(a.DrugName ?? "").Trim()}|{(a.StartDateTime ?? "").Trim()}")
+            .ToDictionary(g => g.Key, g => g.First().FirstDoseDateTime, StringComparer.OrdinalIgnoreCase);
         var today = DateTime.Today;
         var rows = new List<object>();
         int id = 0;
@@ -1778,11 +1873,13 @@ public class BoardController : ControllerBase
             if (string.IsNullOrWhiteSpace(u.Hhisnum) || string.IsNullOrWhiteSpace(u.Drug)) continue;
             var end = TryDate(u.EndDate);
             if (end is { } ed && ed.Date < today) continue;   // 只留使用中（含未來/未結束）
+            var startDt = JoinDateTime(u.StartDate, u.StartTime);
+            var key = $"{u.Hhisnum!.Trim()}|{u.Drug!.Trim()}|{(startDt ?? "").Trim()}";
             rows.Add(new
             {
                 id = ++id, hhisnum = u.Hhisnum!.Trim(), drugName = u.Drug!.Trim(),
-                startDateTime = JoinDateTime(u.StartDate, u.StartTime),
-                firstDoseDateTime = (string?)null,   // 院方未提供首次給藥
+                startDateTime = startDt,
+                firstDoseDateTime = ovByKey.TryGetValue(key, out var fd) ? fd : null,   // 後台補填（overlay）；院方未提供
                 endDateTime = JoinDateTime(u.EndDate, u.EndTime),
             });
         }
@@ -2147,10 +2244,17 @@ public class BoardController : ControllerBase
         var bedsByStaff = beds.GroupBy(b => b.StaffId)
             .ToDictionary(g => g.Key, g => g.OrderBy(x => x.SortOrder).Select(x => x.BedId).ToList());
 
+        // 專科護理師／住院醫師改讀「當日專師/住院醫師排班」(Specialist/ResidentRoster)，day-level、跨班相同；不再由 StaffSchedule 職別推導。
+        var dDate = DateTime.Parse(d);
+        var daySpecialists = (await _oncall.GetSpecialistsAsync(unitCode, dDate, dDate, ct))
+            .Select(sp => new { staffId = sp.StaffId ?? sp.Id, peName = sp.Name, specialty = sp.Department, extension = sp.Ext })
+            .ToList();
+        var dayResidents = (await _oncall.GetResidentsAsync(unitCode, dDate, dDate, ct))
+            .Select(rs => new { id = rs.Id, peName = rs.Name })
+            .ToList();
+
         string Cat(string? role) => role switch
         {
-            var r when r != null && r.Contains("住院") => "resident",
-            var r when r != null && (r.Contains("專科") || r.Contains("專師")) => "specialist",
             var r when r != null && r.Contains("護理") => "nurse",
             _ => "other"
         };
@@ -2162,10 +2266,8 @@ public class BoardController : ControllerBase
                 bedNos = bedsByStaff.TryGetValue(r.StaffId, out var bn) ? bn : new List<string>(),
                 emergencyGroup = r.EmergencyGroup, checkIn = r.IsCharge
             }),
-            specialists = g.Where(r => Cat(r.Role) == "specialist").Select(r => new {
-                staffId = r.StaffId, peNo = r.EmployeeNo, peName = r.Name, specialty = r.Department, extension = r.Ext }),
-            residents = g.Where(r => Cat(r.Role) == "resident").Select(r => new {
-                staffId = r.StaffId, peNo = r.EmployeeNo, peName = r.Name, department = r.Department, extension = r.Ext })
+            specialists = daySpecialists,   // day-level：當天所有專師，各班相同
+            residents = dayResidents        // day-level：當天所有住院醫師，各班相同
         });
         return Ok(new { unitCode, queryDate = d, shifts });
     }

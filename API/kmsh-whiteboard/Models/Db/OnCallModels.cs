@@ -156,3 +156,69 @@ public class AdminDutyEntry
     public string? Name { get; set; }
     public int SortOrder { get; set; }
 }
+
+// ── 當日專師排班（SpecialistRoster；依站別、每日可多位；供 {unit}/schedule 專科護理師）──
+
+/// <summary>某站某日一位專師（day-level；姓名/科別/分機為快照）。</summary>
+public class SpecialistItem
+{
+    public int Id { get; set; }
+    public string UnitCode { get; set; } = "";
+    public DateTime OnCallDate { get; set; }
+    public int? StaffId { get; set; }
+    public string? Name { get; set; }
+    public string? Department { get; set; }
+    public string? Ext { get; set; }
+    public int SortOrder { get; set; }
+    public bool IsActive { get; set; }
+}
+
+/// <summary>專師排班整月存檔請求（覆寫該站該月）。</summary>
+public class SpecialistMonthSaveRequest
+{
+    [Required] public string UnitCode { get; set; } = "";
+    public int Year { get; set; }
+    public int Month { get; set; }
+    public List<SpecialistEntry> Entries { get; set; } = new();
+}
+
+/// <summary>專師月曆單格（某日一位）。</summary>
+public class SpecialistEntry
+{
+    [Required] public string OnCallDate { get; set; } = "";   // yyyy-MM-dd
+    public int? StaffId { get; set; }
+    public string? Name { get; set; }
+    public string? Department { get; set; }
+    public string? Ext { get; set; }
+    public int SortOrder { get; set; }
+}
+
+// ── 當日住院醫師排班（ResidentRoster；依站別、每日可多位；純手動 keyin 姓名）──
+
+/// <summary>某站某日一位住院醫師（day-level；姓名純文字）。</summary>
+public class ResidentItem
+{
+    public int Id { get; set; }
+    public string UnitCode { get; set; } = "";
+    public DateTime OnCallDate { get; set; }
+    public string? Name { get; set; }
+    public int SortOrder { get; set; }
+    public bool IsActive { get; set; }
+}
+
+/// <summary>住院醫師排班整月存檔請求（覆寫該站該月）。</summary>
+public class ResidentMonthSaveRequest
+{
+    [Required] public string UnitCode { get; set; } = "";
+    public int Year { get; set; }
+    public int Month { get; set; }
+    public List<ResidentEntry> Entries { get; set; } = new();
+}
+
+/// <summary>住院醫師月曆單格（某日一位）。</summary>
+public class ResidentEntry
+{
+    [Required] public string OnCallDate { get; set; } = "";   // yyyy-MM-dd
+    public string? Name { get; set; }
+    public int SortOrder { get; set; }
+}

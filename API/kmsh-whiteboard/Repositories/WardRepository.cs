@@ -579,6 +579,25 @@ public class WardRepository : IWardRepository
         return rows > 0;
     }
 
+    /// <summary>依自然鍵(UnitCode+病歷號+藥名+開始時間) upsert「首次給藥時間」覆蓋；供後台由即時用藥帶出補填。</summary>
+    public async Task<int> UpsertAntibioticFirstDoseAsync(string unitCode, string? hhisnum, string? drugName, string? startDateTime, string? endDateTime, string? firstDoseDateTime, CancellationToken ct = default)
+    {
+        const string sql = @"
+UPDATE [dbo].[IcuAntibiotic]
+   SET FirstDoseDateTime=@FirstDoseDateTime, EndDateTime=@EndDateTime, IsActive=1, UpdatedAt=GETDATE()
+ WHERE UnitCode=@UnitCode
+   AND ISNULL(Hhisnum,'')=ISNULL(@Hhisnum,'')
+   AND ISNULL(DrugName,'')=ISNULL(@DrugName,'')
+   AND ISNULL(StartDateTime,'')=ISNULL(@StartDateTime,'');
+IF @@ROWCOUNT=0
+   INSERT INTO [dbo].[IcuAntibiotic] (UnitCode, Hhisnum, DrugName, StartDateTime, FirstDoseDateTime, EndDateTime, SortOrder, IsActive, UpdatedAt, CreatedAt)
+   VALUES (@UnitCode, @Hhisnum, @DrugName, @StartDateTime, @FirstDoseDateTime, @EndDateTime, 0, 1, GETDATE(), GETDATE());";
+        using var conn = _db.Create();
+        return await conn.ExecuteAsync(new CommandDefinition(sql,
+            new { UnitCode = unitCode, Hhisnum = hhisnum, DrugName = drugName, StartDateTime = startDateTime, EndDateTime = endDateTime, FirstDoseDateTime = firstDoseDateTime },
+            cancellationToken: ct));
+    }
+
     // ── 照護提醒 [dbo].[CareReminder] ─────────────────────────────
     private const string CrCols = @"cr.Id, cr.UnitCode, cr.BedId, cr.PatientName, cr.Gender, cr.Age, cr.Priority,
         cr.Category, cr.Content, cr.RemindTime, cr.PrimaryNurseStaffId, cr.IsDone, cr.SortOrder, cr.IsActive,

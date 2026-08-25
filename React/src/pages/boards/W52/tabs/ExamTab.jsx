@@ -28,7 +28,7 @@ export default function ExamTab() {
             </div>
             <div className="ec-table-wrap">
               <table className="ec-table">
-                <thead><tr><th>床號</th><th>姓名</th><th>檢查項目</th><th>轉入日</th><th>時段</th><th className="ec-th-center">狀態</th><th>備註</th></tr></thead>
+                <thead><tr><th>床號</th><th>姓名</th><th>檢查項目</th><th>預定執行日期</th><th>時段</th><th className="ec-th-center">狀態</th><th>備註</th></tr></thead>
                 <tbody>
                   {exams.length === 0
                     ? <tr className="ec-empty-row"><td colSpan="7">無待執行檢查</td></tr>

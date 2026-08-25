@@ -35,4 +35,14 @@ public interface IOnCallRepository
     Task<IEnumerable<AdminDutyItem>> GetAdminDutyAsync(DateTime from, DateTime to, CancellationToken ct = default);
     /// <summary>覆寫某月護理行政值班：交易內先刪該月、再插入 entries。回傳插入筆數。</summary>
     Task<int> SaveAdminDutyMonthAsync(AdminDutyMonthSaveRequest req, CancellationToken ct = default);
+
+    // ── 當日專師排班 SpecialistRoster ──
+    Task<IEnumerable<SpecialistItem>> GetSpecialistsAsync(string unitCode, DateTime from, DateTime to, CancellationToken ct = default);
+    /// <summary>覆寫某站某月專師排班：交易內先刪該站該月、再插入 entries（姓名空白略過）。回傳插入筆數。</summary>
+    Task<int> SaveSpecialistMonthAsync(SpecialistMonthSaveRequest req, CancellationToken ct = default);
+
+    // ── 當日住院醫師排班 ResidentRoster ──
+    Task<IEnumerable<ResidentItem>> GetResidentsAsync(string unitCode, DateTime from, DateTime to, CancellationToken ct = default);
+    /// <summary>覆寫某站某月住院醫師排班：交易內先刪該站該月、再插入 entries（姓名空白略過）。回傳插入筆數。</summary>
+    Task<int> SaveResidentMonthAsync(ResidentMonthSaveRequest req, CancellationToken ct = default);
 }

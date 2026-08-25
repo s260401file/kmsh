@@ -70,7 +70,7 @@ export default function SurgeryTab() {
             <table className="surg-table">
               <thead>
                 <tr>
-                  <th>刀房</th><th>排程時間</th><th>姓名</th>
+                  <th>刀房</th><th>刀次</th><th>排程時間</th><th>病床號</th><th>姓名</th>
                   <th>術式</th><th>診斷</th><th>麻醉方式</th><th>主治醫師</th>
                   <th className="surg-th-center">狀態</th>
                 </tr>
@@ -78,11 +78,13 @@ export default function SurgeryTab() {
               <tbody>
                 {/* 無排程時顯示佔位列；取消的手術整列套用刪除線樣式 */}
                 {items.length === 0
-                  ? <tr className="surg-empty-row"><td colSpan="8">本日無手術排程</td></tr>
+                  ? <tr className="surg-empty-row"><td colSpan="10">本日無手術排程</td></tr>
                   : items.map((item, idx) => (
                     <tr key={idx} className={item.status === '取消' ? 'surg-row-cancel' : ''}>
                       <td><span className="surg-td-or">{item.orRoom}</span></td>
+                      <td className="surg-td-seq">{item.seqNo ?? '—'}</td>
                       <td className="surg-td-time">{item.scheduledTime}</td>
+                      <td><span className="surg-td-bed">{item.bedId || '—'}</span></td>
                       <td className="surg-td-name">
                         <span className={`surg-name surg-gender-${item.gender === 'M' ? 'm' : 'f'}`}>{item.patientName}</span>
                         <span className="surg-basic">{item.gender}/{item.age}</span>

@@ -25,4 +25,7 @@
 .er-board .ec-status-未執行 { background: #FFF3CD; color: #856404; }
 .er-board .ec-status-未排程 { background: #ECEFF1; color: #546E7A; }
 .er-board .ec-status-已排程 { background: #E3F2FD; color: #1565C0; }
+.er-board .ec-status-完報     { background: #E8F5EE; color: var(--accent-green); }
+.er-board .ec-status-取消醫囑 { background: #ECEFF1; color: #546E7A; }
+.er-board .ec-status-初報     { background: #E3F2FD; color: #1565C0; }
 .er-board .ec-note { font-size: 13px; color: var(--text-muted); }

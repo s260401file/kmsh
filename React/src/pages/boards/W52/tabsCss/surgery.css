@@ -12,6 +12,7 @@
 .w52-board .surg-title-bar { display: inline-block; width: 5px; height: 24px; background: var(--accent-blue); border-radius: 3px; }
 .w52-board .surg-card { flex: 1; background: var(--bg-card-occ); border: 1px solid var(--divider); border-radius: var(--radius-card); display: flex; flex-direction: column; overflow: hidden; min-height: 0; }
 .w52-board .surg-card-header { font-size: 17px; font-weight: 700; color: var(--accent-green); padding: 13px 18px 12px; border-bottom: 1px solid var(--divider); flex-shrink: 0; display: flex; align-items: center; gap: 8px; }
+.w52-board .surg-card-date { font-size: 15px; font-weight: 600; color: var(--text-muted); font-family: var(--font-num); }
 .w52-board .surg-card-count { font-size: 13px; font-weight: 900; color: var(--text-muted); font-family: var(--font-num); }
 .w52-board .surg-table-wrap { flex: 1; overflow-y: auto; overflow-x: auto; touch-action: pan-y; }
 .w52-board .surg-table-wrap::-webkit-scrollbar { width: 4px; height: 4px; }

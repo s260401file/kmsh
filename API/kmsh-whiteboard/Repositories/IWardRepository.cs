@@ -82,6 +82,7 @@ public interface IWardRepository
     Task<int> CreateAntibioticAsync(IcuAntibioticUpsertRequest req, CancellationToken ct = default);
     Task<bool> UpdateAntibioticAsync(int id, IcuAntibioticUpsertRequest req, CancellationToken ct = default);
     Task<bool> DeleteAntibioticAsync(int id, CancellationToken ct = default);
+    Task<int> UpsertAntibioticFirstDoseAsync(string unitCode, string? hhisnum, string? drugName, string? startDateTime, string? endDateTime, string? firstDoseDateTime, CancellationToken ct = default);
 
     // ── ER 三班醫護面板 [dbo].[ErShiftStaff] ──
     Task<IEnumerable<ErShiftStaffItem>> GetErShiftAsync(string unitCode, bool includeAll = false, CancellationToken ct = default);

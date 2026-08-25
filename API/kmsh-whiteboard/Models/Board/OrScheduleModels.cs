@@ -73,8 +73,10 @@ public class OrHandoverData
 public class OrSurgeryListItem
 {
     public string? OrRoom { get; set; }            // OR-xx（R 經主檔對應）
+    public int? SeqNo { get; set; }                // 刀次：該日該刀房依時間排序之序號（1-based）
     public string? Date { get; set; }              // yyyy-MM-dd（手術日期）
     public string? ScheduledTime { get; set; }     // HH:mm
+    public string? BedId { get; set; }             // 病人目前病床號（Board_bed；供 {unit}/surgeries）
     public string? PatientName { get; set; }
     public string? Gender { get; set; }
     public int? Age { get; set; }

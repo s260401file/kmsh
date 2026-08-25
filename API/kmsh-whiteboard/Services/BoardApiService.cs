@@ -186,6 +186,7 @@ public class BoardApiService : IBoardApiService
             {
                 it.Hhisnum = Trim(it.Hhisnum); it.Hnamec = Trim(it.Hnamec); it.Category = Trim(it.Category);
                 it.Ward = Trim(it.Ward); it.Hbed = Trim(it.Hbed); it.AdmitDate = Trim(it.AdmitDate);
+                it.ExamDate = Trim(it.ExamDate); it.ExamTime = Trim(it.ExamTime);
                 it.Status = Trim(it.Status); it.ExamName = Trim(it.ExamName);
             }
             return list;

@@ -78,6 +78,8 @@ const MENU_CONFIG = [
       { id: 'w52-care', label: '照護提醒', available: true },
       { id: 'w52-exam', label: '檢查/會診', available: true },
       { id: 'w52-shift', label: '三班護理師', available: true },   // 值班表三班護理師（每班可多人）
+      { id: 'w52-specialist', label: '當日專師排班', available: true },   // 月曆型；每日可多位；供排班資訊「專科護理師」
+      { id: 'w52-resident', label: '當日住院醫師排班', available: true },   // 月曆型；每日可多位；純手動 keyin；供排班資訊「住院醫師」
       { id: 'w52-oncall-display', label: '顯示值班醫師', available: true }, // 引用中央值班排程，選科別＋排序
       { id: 'w52-aide-display', label: '顯示照服員', available: true }, // 引用照服員主檔，選人＋排序
       { id: 'w52-contact-phone', label: '顯示聯絡電話', available: true }, // 值班表面板聯絡電話清單（標題/名稱/電話）
@@ -91,6 +93,7 @@ const MENU_CONFIG = [
       { id: 'icu-acct', label: '帳號設定', available: true },
       { id: 'icu-ext',  label: '病人臨床補充', available: true },  // 3F/4F 不分（以病歷號為鍵）
       { id: 'icu-exam', label: '檢查/會診', available: true },
+      { id: 'icu-abx-firstdose', label: '補充抗生素首次時間', available: true }, // 院方即時用藥帶出、人工補首次時間（overlay 併回彈窗）
       { id: 'icu-shift', label: '三班護理師', available: true },   // 值班表三班護理師（每班可多人；W52 式）
       { id: 'icu-oncall-roster', label: '值班醫師排程', available: true }, // 每日輪值月曆（僅列 OwnerUnit=ICU 科別，如呼吸治療科日/夜兩班）
       { id: 'icu-oncall-display', label: '顯示值班醫師', available: true }, // 引用中央值班排程，選科別＋排序
@@ -1438,6 +1441,306 @@ function OnCallScheduleSection({ unitCode } = {}) {
               )
             })}
           </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// 當日專師排班：每日格子的「＋加入」可打字下拉（挑該站人員；點選即加入並清空）
+function SpecialistAddSelect({ options, onAdd }) {
+  const [q, setQ] = useState('')
+  const [open, setOpen] = useState(false)
+  const filtered = q ? options.filter(o => o.person.name.includes(q)) : options
+  return (
+    <div style={{ position: 'relative' }}>
+      <input value={q} placeholder="＋加入專師"
+        style={{ width: '100%', boxSizing: 'border-box', padding: '3px 5px', fontSize: '12px', border: '1px solid #d1d5db', borderRadius: '4px', fontFamily: 'inherit' }}
+        onFocus={() => setOpen(true)}
+        onChange={e => { setQ(e.target.value); setOpen(true) }}
+        onBlur={() => setTimeout(() => setOpen(false), 150)} />
+      {open && filtered.length > 0 && (
+        <div style={{ position: 'absolute', zIndex: 40, left: 0, right: 0, top: '100%', marginTop: '2px', maxHeight: '170px', overflowY: 'auto', background: '#fff', border: '1px solid #d1d5db', borderRadius: '6px', boxShadow: '0 4px 14px rgba(0,0,0,.14)' }}>
+          {filtered.map(o => (
+            <div key={o.value} onMouseDown={() => { onAdd(o.person); setQ(''); setOpen(false) }}
+              style={{ padding: '5px 8px', cursor: 'pointer', fontSize: '12px', whiteSpace: 'nowrap' }}
+              onMouseEnter={e => (e.currentTarget.style.background = '#f0fdf4')}
+              onMouseLeave={e => (e.currentTarget.style.background = '#fff')}>{o.label}</div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// 當日專師排班 — 月曆後台（無科別；每日可多位；下拉挑該站人員）。前台排班資訊「專科護理師」依日期顯示。
+function SpecialistScheduleSection({ unitCode = 'W52' }) {
+  const [ym, setYm] = useState(pmToday().slice(0, 7))     // 'YYYY-MM'
+  const [people, setPeople] = useState([])                // [{staffId,name,department,ext}]
+  const [grid, setGrid] = useState({})                    // 'YYYY-MM-DD' → [{staffId,name,department,ext}]
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [msg, show] = pmMsgHook()
+
+  const [y, m] = ym.split('-').map(Number)
+  const daysInMonth = (y && m) ? new Date(y, m, 0).getDate() : 30
+  const firstWd = (y && m) ? new Date(y, m - 1, 1).getDay() : 1     // 0=日
+  const lead = firstWd === 0 ? 6 : firstWd - 1                       // 週一為首
+  const opts = people.map(p => ({ value: String(p.staffId), label: `${p.name}${p.ext ? `（分機 ${p.ext}）` : ''}`, person: p }))
+
+  useEffect(() => {
+    wardApi.getUnitRoles(null, unitCode, false).then(rs => {
+      const seen = new Map()
+      ;(rs ?? []).forEach(r => { if (r.staffId && !seen.has(r.staffId)) seen.set(r.staffId, { staffId: r.staffId, name: r.name, department: r.department ?? '', ext: r.ext ?? '' }) })
+      setPeople([...seen.values()])
+    }).catch(() => {})
+  }, [unitCode])
+
+  const loadRoster = useCallback(async () => {
+    if (!y || !m) return
+    setLoading(true)
+    try {
+      const from = `${ym}-01`; const to = `${ym}-${String(new Date(y, m, 0).getDate()).padStart(2, '0')}`
+      const rows = await wardApi.getSpecialists(unitCode, from, to)
+      const g = {}; (rows ?? []).forEach(r => { const k = String(r.onCallDate).slice(0, 10); (g[k] = g[k] || []).push({ staffId: r.staffId, name: r.name ?? '', department: r.department ?? '', ext: r.ext ?? '' }) })
+      setGrid(g)
+    } catch { show('讀取排程失敗', true) }
+    finally { setLoading(false) }
+  }, [unitCode, ym, y, m])   // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { loadRoster() }, [loadRoster])
+
+  const addPerson = (dateIso, person) => setGrid(g => {
+    const cur = g[dateIso] || []
+    if (cur.some(x => x.staffId === person.staffId)) return g   // 同日不重複
+    return { ...g, [dateIso]: [...cur, person] }
+  })
+  const removePerson = (dateIso, staffId) => setGrid(g => ({ ...g, [dateIso]: (g[dateIso] || []).filter(x => x.staffId !== staffId) }))
+
+  const save = async () => {
+    setSaving(true)
+    try {
+      const entries = []
+      Object.entries(grid).forEach(([dt, arr]) => (arr || []).forEach((p, idx) => {
+        if (!p.name) return
+        entries.push({ onCallDate: dt, staffId: p.staffId ?? null, name: p.name, department: p.department || null, ext: p.ext || null, sortOrder: idx })
+      }))
+      await wardApi.saveSpecialistMonth(unitCode, { unitCode, year: y, month: m, entries }); show(`已存 ${ym}（${entries.length} 筆）`); loadRoster()
+    } catch { show('存檔失敗', true) }
+    finally { setSaving(false) }
+  }
+
+  const cells = []
+  for (let i = 0; i < lead; i++) cells.push(null)
+  for (let d = 1; d <= daysInMonth; d++) cells.push(d)
+
+  return (
+    <div>
+      <PmMsg msg={msg} />
+      <div style={{ fontSize: '12px', color: '#9ca3af', marginBottom: '10px' }}>當日專科護理師排班（月曆）。選月份 → 每日可加多位（下拉挑 {unitCode} 人員、可刪），按「儲存本月」覆寫本月。前台「排班資訊 › 專科護理師」依日期顯示（各班相同）。</div>
+      <div style={s.formCard}>
+        <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-end', flexWrap: 'wrap', marginBottom: '4px' }}>
+          <div style={{ ...s.formRow, marginBottom: 0 }}><label style={s.label}>月份</label><input type="month" style={{ ...s.input, width: '170px' }} value={ym} onChange={e => setYm(e.target.value || pmToday().slice(0, 7))} /></div>
+          <button style={s.btnPrimary} onClick={save} disabled={saving || loading}>{saving ? '儲存中…' : '儲存本月'}</button>
+        </div>
+      </div>
+      <div style={s.listCard}>
+        <h4 style={s.formTitle}>{ym}　{unitCode} 當日專師月曆</h4>
+        {loading ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#6b7280', padding: '12px 0' }}>
+            <span style={{ width: '20px', height: '20px', border: '3px solid #d6e0ea', borderTopColor: '#2D7A55', borderRadius: '50%', animation: 'board-spin 0.9s linear infinite' }} />載入中…
+          </div>
+        ) : people.length === 0 ? (
+          <div style={{ color: '#9ca3af', fontSize: '13px' }}>此站尚無人員（請先到人員管理設定 {unitCode} 人員）</div>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', gap: '4px' }}>
+            {['一', '二', '三', '四', '五', '六', '日'].map(w => <div key={w} style={{ textAlign: 'center', fontWeight: 700, fontSize: '13px', color: '#374151', padding: '4px 0' }}>{w}</div>)}
+            {cells.map((d, i) => {
+              if (d === null) return <div key={`b${i}`} />
+              const dateIso = `${ym}-${String(d).padStart(2, '0')}`
+              const wd = new Date(y, m - 1, d).getDay(); const weekend = wd === 0 || wd === 6
+              const arr = grid[dateIso] || []
+              return (
+                <div key={dateIso} style={{ border: '1px solid #e5e7eb', borderRadius: '6px', padding: '4px', minHeight: '64px', background: weekend ? '#fafafa' : '#fff' }}>
+                  <div style={{ fontSize: '12px', fontWeight: 700, color: weekend ? '#b91c1c' : '#374151', marginBottom: '3px' }}>{d}</div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '3px', marginBottom: '3px' }}>
+                    {arr.map(p => (
+                      <span key={p.staffId} style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', background: '#E8F5EE', color: '#065f46', borderRadius: '10px', padding: '1px 6px', fontSize: '11px' }}>
+                        {p.name}<span onMouseDown={() => removePerson(dateIso, p.staffId)} style={{ cursor: 'pointer', color: '#6b7280' }}>✕</span>
+                      </span>
+                    ))}
+                  </div>
+                  <SpecialistAddSelect options={opts} onAdd={person => addPerson(dateIso, person)} />
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// 當日住院醫師排班：每日格子的純文字「＋輸入姓名」（Enter/失焦加入並清空）
+function ResidentAddInput({ onAdd }) {
+  const [q, setQ] = useState('')
+  const commit = () => { const v = q.trim(); if (v) { onAdd(v); setQ('') } }
+  return (
+    <input value={q} placeholder="＋輸入姓名"
+      style={{ width: '100%', boxSizing: 'border-box', padding: '3px 5px', fontSize: '12px', border: '1px solid #d1d5db', borderRadius: '4px', fontFamily: 'inherit' }}
+      onChange={e => setQ(e.target.value)}
+      onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); commit() } }}
+      onBlur={commit} />
+  )
+}
+
+// 當日住院醫師排班 — 月曆後台（無科別；每日可多位；純手動 keyin 姓名）。前台排班資訊「當日住院醫師」依日期顯示。
+function ResidentScheduleSection({ unitCode = 'W52' }) {
+  const [ym, setYm] = useState(pmToday().slice(0, 7))     // 'YYYY-MM'
+  const [grid, setGrid] = useState({})                    // 'YYYY-MM-DD' → [姓名字串]
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [msg, show] = pmMsgHook()
+
+  const [y, m] = ym.split('-').map(Number)
+  const daysInMonth = (y && m) ? new Date(y, m, 0).getDate() : 30
+  const firstWd = (y && m) ? new Date(y, m - 1, 1).getDay() : 1     // 0=日
+  const lead = firstWd === 0 ? 6 : firstWd - 1                       // 週一為首
+
+  const loadRoster = useCallback(async () => {
+    if (!y || !m) return
+    setLoading(true)
+    try {
+      const from = `${ym}-01`; const to = `${ym}-${String(new Date(y, m, 0).getDate()).padStart(2, '0')}`
+      const rows = await wardApi.getResidents(unitCode, from, to)
+      const g = {}; (rows ?? []).forEach(r => { const k = String(r.onCallDate).slice(0, 10); (g[k] = g[k] || []).push(r.name ?? '') })
+      setGrid(g)
+    } catch { show('讀取排程失敗', true) }
+    finally { setLoading(false) }
+  }, [unitCode, ym, y, m])   // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { loadRoster() }, [loadRoster])
+
+  const addName = (dateIso, name) => setGrid(g => {
+    const cur = g[dateIso] || []
+    if (cur.includes(name)) return g   // 同日不重複
+    return { ...g, [dateIso]: [...cur, name] }
+  })
+  const removeName = (dateIso, idx) => setGrid(g => ({ ...g, [dateIso]: (g[dateIso] || []).filter((_, i) => i !== idx) }))
+
+  const save = async () => {
+    setSaving(true)
+    try {
+      const entries = []
+      Object.entries(grid).forEach(([dt, arr]) => (arr || []).forEach((nm, idx) => { if (nm && nm.trim()) entries.push({ onCallDate: dt, name: nm.trim(), sortOrder: idx }) }))
+      await wardApi.saveResidentMonth(unitCode, { unitCode, year: y, month: m, entries }); show(`已存 ${ym}（${entries.length} 筆）`); loadRoster()
+    } catch { show('存檔失敗', true) }
+    finally { setSaving(false) }
+  }
+
+  const cells = []
+  for (let i = 0; i < lead; i++) cells.push(null)
+  for (let d = 1; d <= daysInMonth; d++) cells.push(d)
+
+  return (
+    <div>
+      <PmMsg msg={msg} />
+      <div style={{ fontSize: '12px', color: '#9ca3af', marginBottom: '10px' }}>當日住院醫師排班（月曆）。選月份 → 每日手動輸入姓名（Enter 加入，可多位、可刪），按「儲存本月」覆寫本月。前台「排班資訊 › 當日住院醫師」依日期顯示（各班相同）。</div>
+      <div style={s.formCard}>
+        <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-end', flexWrap: 'wrap', marginBottom: '4px' }}>
+          <div style={{ ...s.formRow, marginBottom: 0 }}><label style={s.label}>月份</label><input type="month" style={{ ...s.input, width: '170px' }} value={ym} onChange={e => setYm(e.target.value || pmToday().slice(0, 7))} /></div>
+          <button style={s.btnPrimary} onClick={save} disabled={saving || loading}>{saving ? '儲存中…' : '儲存本月'}</button>
+        </div>
+      </div>
+      <div style={s.listCard}>
+        <h4 style={s.formTitle}>{ym}　{unitCode} 當日住院醫師月曆</h4>
+        {loading ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#6b7280', padding: '12px 0' }}>
+            <span style={{ width: '20px', height: '20px', border: '3px solid #d6e0ea', borderTopColor: '#2D7A55', borderRadius: '50%', animation: 'board-spin 0.9s linear infinite' }} />載入中…
+          </div>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', gap: '4px' }}>
+            {['一', '二', '三', '四', '五', '六', '日'].map(w => <div key={w} style={{ textAlign: 'center', fontWeight: 700, fontSize: '13px', color: '#374151', padding: '4px 0' }}>{w}</div>)}
+            {cells.map((d, i) => {
+              if (d === null) return <div key={`b${i}`} />
+              const dateIso = `${ym}-${String(d).padStart(2, '0')}`
+              const wd = new Date(y, m - 1, d).getDay(); const weekend = wd === 0 || wd === 6
+              const arr = grid[dateIso] || []
+              return (
+                <div key={dateIso} style={{ border: '1px solid #e5e7eb', borderRadius: '6px', padding: '4px', minHeight: '64px', background: weekend ? '#fafafa' : '#fff' }}>
+                  <div style={{ fontSize: '12px', fontWeight: 700, color: weekend ? '#b91c1c' : '#374151', marginBottom: '3px' }}>{d}</div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '3px', marginBottom: '3px' }}>
+                    {arr.map((nm, idx) => (
+                      <span key={idx} style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', background: '#E3F2FD', color: '#0d47a1', borderRadius: '10px', padding: '1px 6px', fontSize: '11px' }}>
+                        {nm}<span onMouseDown={() => removeName(dateIso, idx)} style={{ cursor: 'pointer', color: '#6b7280' }}>✕</span>
+                      </span>
+                    ))}
+                  </div>
+                  <ResidentAddInput onAdd={name => addName(dateIso, name)} />
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// 補充抗生素首次時間 — 由院方即時用藥帶出，逐筆填「首次時間」存檔（overlay，併回看板彈窗）
+function AntibioticFirstDoseSection() {
+  const [rows, setRows] = useState([])          // 即時用藥（院方）
+  const [roster, setRoster] = useState({})      // 病歷號 → {bedId, name}
+  const [edits, setEdits] = useState({})        // key → 首次時間輸入值
+  const [loading, setLoading] = useState(true)
+  const [msg, show] = pmMsgHook()
+  const keyOf = r => `${(r.hhisnum || '').trim()}|${(r.drugName || '').trim()}|${(r.startDateTime || '').trim()}`
+  const load = useCallback(async () => {
+    setLoading(true)
+    try {
+      const [live, ros] = await Promise.all([wardApi.getAntibioticLive('ICU'), wardApi.getRoster('ICU').catch(() => [])])
+      const rmap = {}; (ros ?? []).forEach(p => { rmap[(p.hhisnum || '').trim()] = { bedId: p.bedId, name: p.patientName } })
+      setRoster(rmap)
+      const sorted = [...(live ?? [])].sort((a, b) => (a.hhisnum || '').localeCompare(b.hhisnum || '') || (a.drugName || '').localeCompare(b.drugName || ''))
+      setRows(sorted); setEdits({})
+    } catch { show('讀取失敗', true) }
+    finally { setLoading(false) }
+  }, [])   // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { load() }, [load])
+  const saveRow = async (r) => {
+    const k = keyOf(r); const fd = (edits[k] ?? r.firstDoseDateTime ?? '').trim()
+    try {
+      await wardApi.saveAntibioticFirstDose('ICU', { unitCode: 'ICU', hhisnum: r.hhisnum, drugName: r.drugName, startDateTime: r.startDateTime, endDateTime: r.endDateTime, firstDoseDateTime: fd || null })
+      show('已儲存'); load()
+    } catch { show('儲存失敗', true) }
+  }
+  return (
+    <div>
+      <PmMsg msg={msg} />
+      <div style={{ fontSize: '12px', color: '#9ca3af', marginBottom: '10px' }}>由院方即時用藥帶出（僅使用中）。每筆右方填「首次時間」（格式 <b>yyyy-MM-dd HH:mm</b>）後按「存」，前台抗生素彈窗即顯示。院方未提供首次時間、需人工補。</div>
+      <div style={s.listCard}>
+        <h4 style={s.formTitle}>ICU 即時用藥（共 {rows.length} 筆）</h4>
+        {loading ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#6b7280', padding: '12px 0' }}>
+            <span style={{ width: '20px', height: '20px', border: '3px solid #d6e0ea', borderTopColor: '#2D7A55', borderRadius: '50%', animation: 'board-spin 0.9s linear infinite' }} />載入中…
+          </div>
+        ) : rows.length === 0 ? <p style={{ color: '#9ca3af', fontSize: '14px' }}>目前無使用中用藥</p> : (
+          <table style={s.table}>
+            <thead><tr>{['床', '姓名', '病歷號', '藥品', '開始時間', '結束時間', '首次時間', ''].map((h, i) => <th key={i} style={s.th}>{h}</th>)}</tr></thead>
+            <tbody>{rows.map((r, i) => {
+              const k = keyOf(r); const info = roster[(r.hhisnum || '').trim()] || {}
+              return (
+                <tr key={k + i} style={{ background: i % 2 ? '#f9fafb' : '#fff' }}>
+                  <td style={s.td}>{info.bedId || '—'}</td>
+                  <td style={s.td}>{info.name || '—'}</td>
+                  <td style={s.td}>{r.hhisnum}</td>
+                  <td style={s.td}>{r.drugName}</td>
+                  <td style={s.td}>{r.startDateTime || '—'}</td>
+                  <td style={s.td}>{r.endDateTime || '—'}</td>
+                  <td style={s.td}><input style={{ ...s.input, width: '150px' }} value={edits[k] ?? r.firstDoseDateTime ?? ''} placeholder="yyyy-MM-dd HH:mm" onChange={e => setEdits(x => ({ ...x, [k]: e.target.value }))} /></td>
+                  <td style={s.td}><button style={s.btnPrimary} onClick={() => saveRow(r)}>存</button></td>
+                </tr>
+              )
+            })}</tbody>
+          </table>
         )}
       </div>
     </div>
@@ -4094,6 +4397,7 @@ export default function AdminPage() {
       case 'w52-care':       return <CareReminderSection key="W52care" />
       case 'w52-exam':       return <ExamConsultSection key="W52e" unitCode="W52" />
       case 'icu-exam':       return <ExamConsultSection key="ICUe" unitCode="ICU" />
+      case 'icu-abx-firstdose': return <AntibioticFirstDoseSection key="ICUabx" />
       case 'er-exam':        return <ExamConsultSection key="ERe"  unitCode="ER" />
       case 'w52-ext':        return <WardExtSection key="W52" unitCode="W52" />
       case 'icu-ext':        return <WardExtSection key="ICU" unitCode="ICU" />
@@ -4107,6 +4411,8 @@ export default function AdminPage() {
       case 'er-doctor':      return <ErDoctorManager />
       case 'trauma-team':    return <TraumaDoctorManager />
       case 'w52-shift':      return <ShiftRosterSection unit="W52" key="W52roster" />
+      case 'w52-specialist': return <SpecialistScheduleSection unitCode="W52" key="W52spec" />
+      case 'w52-resident':   return <ResidentScheduleSection unitCode="W52" key="W52resident" />
       case 'w52-oncall-display': return <OnCallDisplaySection unitCode="W52" />
       case 'w52-aide-display': return <AideDisplaySection unitCode="W52" />
       case 'w52-contact-phone': return <ContactPhoneSection unitCode="W52" />

@@ -264,4 +264,86 @@ public class OnCallRepository : IOnCallRepository
         catch { tx.Rollback(); throw; }
         return n;
     }
+
+    // ── 當日專師排班 SpecialistRoster（依站別、每日可多位）──
+    private const string SprCols = "Id, UnitCode, OnCallDate, StaffId, Name, Department, Ext, SortOrder, IsActive";
+
+    public async Task<IEnumerable<SpecialistItem>> GetSpecialistsAsync(string unitCode, DateTime from, DateTime to, CancellationToken ct = default)
+    {
+        var sql = $@"SELECT {SprCols} FROM [dbo].[SpecialistRoster]
+                     WHERE IsActive=1 AND UnitCode=@Unit AND OnCallDate >= @From AND OnCallDate <= @To
+                     ORDER BY OnCallDate, SortOrder, Id";
+        using var conn = _db.Create();
+        return await conn.QueryAsync<SpecialistItem>(
+            new CommandDefinition(sql, new { Unit = unitCode, From = from.Date, To = to.Date }, cancellationToken: ct));
+    }
+
+    /// <summary>覆寫某站某月專師排班：交易內先刪該站該月既有列、再插入 entries（姓名空白略過）。回傳插入筆數。</summary>
+    public async Task<int> SaveSpecialistMonthAsync(SpecialistMonthSaveRequest req, CancellationToken ct = default)
+    {
+        var monthStart = new DateTime(req.Year, req.Month, 1);
+        var monthEnd = monthStart.AddMonths(1).AddDays(-1);
+        const string delSql = "DELETE FROM [dbo].[SpecialistRoster] WHERE UnitCode=@Unit AND OnCallDate >= @Start AND OnCallDate <= @End";
+        const string insSql = @"INSERT INTO [dbo].[SpecialistRoster] (UnitCode, OnCallDate, StaffId, Name, Department, Ext, SortOrder, IsActive, UpdatedAt, CreatedAt)
+                                VALUES (@UnitCode, @OnCallDate, @StaffId, @Name, @Department, @Ext, @SortOrder, 1, GETDATE(), GETDATE())";
+        using var conn = _db.Create();
+        conn.Open();
+        using var tx = conn.BeginTransaction();
+        int n = 0;
+        try
+        {
+            await conn.ExecuteAsync(new CommandDefinition(delSql, new { Unit = req.UnitCode, Start = monthStart, End = monthEnd }, tx, cancellationToken: ct));
+            foreach (var e in req.Entries ?? new())
+            {
+                if (string.IsNullOrWhiteSpace(e.Name)) continue;   // 空格不寫
+                n += await conn.ExecuteAsync(new CommandDefinition(insSql,
+                    new { UnitCode = req.UnitCode, OnCallDate = DateTime.Parse(e.OnCallDate).Date, e.StaffId, Name = e.Name!.Trim(), e.Department, e.Ext, e.SortOrder },
+                    tx, cancellationToken: ct));
+            }
+            tx.Commit();
+        }
+        catch { tx.Rollback(); throw; }
+        return n;
+    }
+
+    // ── 當日住院醫師排班 ResidentRoster（依站別、每日可多位；純姓名）──
+    private const string RsrCols = "Id, UnitCode, OnCallDate, Name, SortOrder, IsActive";
+
+    public async Task<IEnumerable<ResidentItem>> GetResidentsAsync(string unitCode, DateTime from, DateTime to, CancellationToken ct = default)
+    {
+        var sql = $@"SELECT {RsrCols} FROM [dbo].[ResidentRoster]
+                     WHERE IsActive=1 AND UnitCode=@Unit AND OnCallDate >= @From AND OnCallDate <= @To
+                     ORDER BY OnCallDate, SortOrder, Id";
+        using var conn = _db.Create();
+        return await conn.QueryAsync<ResidentItem>(
+            new CommandDefinition(sql, new { Unit = unitCode, From = from.Date, To = to.Date }, cancellationToken: ct));
+    }
+
+    /// <summary>覆寫某站某月住院醫師排班：交易內先刪該站該月既有列、再插入 entries（姓名空白略過）。回傳插入筆數。</summary>
+    public async Task<int> SaveResidentMonthAsync(ResidentMonthSaveRequest req, CancellationToken ct = default)
+    {
+        var monthStart = new DateTime(req.Year, req.Month, 1);
+        var monthEnd = monthStart.AddMonths(1).AddDays(-1);
+        const string delSql = "DELETE FROM [dbo].[ResidentRoster] WHERE UnitCode=@Unit AND OnCallDate >= @Start AND OnCallDate <= @End";
+        const string insSql = @"INSERT INTO [dbo].[ResidentRoster] (UnitCode, OnCallDate, Name, SortOrder, IsActive, UpdatedAt, CreatedAt)
+                                VALUES (@UnitCode, @OnCallDate, @Name, @SortOrder, 1, GETDATE(), GETDATE())";
+        using var conn = _db.Create();
+        conn.Open();
+        using var tx = conn.BeginTransaction();
+        int n = 0;
+        try
+        {
+            await conn.ExecuteAsync(new CommandDefinition(delSql, new { Unit = req.UnitCode, Start = monthStart, End = monthEnd }, tx, cancellationToken: ct));
+            foreach (var e in req.Entries ?? new())
+            {
+                if (string.IsNullOrWhiteSpace(e.Name)) continue;   // 空格不寫
+                n += await conn.ExecuteAsync(new CommandDefinition(insSql,
+                    new { UnitCode = req.UnitCode, OnCallDate = DateTime.Parse(e.OnCallDate).Date, Name = e.Name!.Trim(), e.SortOrder },
+                    tx, cancellationToken: ct));
+            }
+            tx.Commit();
+        }
+        catch { tx.Rollback(); throw; }
+        return n;
+    }
 }
