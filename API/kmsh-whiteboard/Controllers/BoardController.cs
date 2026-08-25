@@ -643,6 +643,15 @@ public class BoardController : ControllerBase
             .GroupBy(x => OsnKey(x.OpDate, x.RoomId, x.ChartNo, x.OpTime))
             .ToDictionary(g => g.Key, g => g.First());
 
+        // Board_OR 補充（生日/科別/診斷）：OPORDER 鏡像缺這三欄，OR_SYSTEM 也無 → 以院方 Board_OR 依病歷號補。
+        // 僅作 enrichment（不影響狀態/排程）；失敗回空、不中斷。以病歷號索引。
+        var boByHis = (await FreshOrStaleAsync("or:board", 20, async () =>
+                { try { return await _board.GetOrListAsync(ct); } catch { return new List<BoardOrItem>(); } }))
+            .Where(o => !string.IsNullOrWhiteSpace(o.Hhisnum))
+            .GroupBy(o => o.Hhisnum!.Trim())
+            .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
+        BoardOrItem? BoOf(string? his) => !string.IsNullOrWhiteSpace(his) && boByHis.TryGetValue(his!.Trim(), out var bo) ? bo : null;
+
         // 逐台刀：配對 OR_SYSTEM（同病歷號多台→ OPORDER 依 OpTime、OR_SYSTEM 依到達時間依序 zip；不以房號配對，因會臨時改房）。
         // 實際房優先（OR_SYSTEM 手術房→RoomId），未報到則用 OPORDER 排定房。
         var built = new List<(string roomId, OrSurgeryDto dto)>();
@@ -652,7 +661,7 @@ public class BoardController : ControllerBase
             OrSystemItem? m = null;
             if (sysByHis.TryGetValue(his, out var q) && q.Count > 0) m = q.Dequeue();
             var a = osn.TryGetValue(OsnKey(r.OpDate, r.RoomId, r.ChartNo, r.OpTime), out var an) ? an : null;
-            var dto = BuildOrSurgeryFromOpOrder(r, m, ExtOf(his), a);
+            var dto = BuildOrSurgeryFromOpOrder(r, m, ExtOf(his), a, BoOf(his));
             var roomId = r.RoomId ?? "";
             if (m is not null && !string.IsNullOrWhiteSpace(m.Room))
                 roomId = roomMap.TryGetValue(m.Room.Trim(), out var rid) ? rid : (r.RoomId ?? m.Room.Trim());
@@ -869,8 +878,12 @@ public class BoardController : ControllerBase
         return map;
     }
 
-    /// <summary>今日 OPORDER 一列 ＋ 配對 OR_SYSTEM（可空，退回手動 overlay）＋ 逐台刀覆蓋 → OR 手術 DTO。</summary>
-    private static OrSurgeryDto BuildOrSurgeryFromOpOrder(OrSurgeryListRow r, OrSystemItem? m, WardPatientExtItem? e, OrSurgeryNurseItem? a)
+    /// <summary>第一個非空白字串；全空回 null。</summary>
+    private static string? FirstNonBlank(params string?[] vals)
+    { foreach (var v in vals) if (!string.IsNullOrWhiteSpace(v)) return v; return null; }
+
+    /// <summary>今日 OPORDER 一列 ＋ 配對 OR_SYSTEM（可空，退回手動 overlay）＋ 逐台刀覆蓋 ＋ Board_OR 補生日/科別/診斷 → OR 手術 DTO。</summary>
+    private static OrSurgeryDto BuildOrSurgeryFromOpOrder(OrSurgeryListRow r, OrSystemItem? m, WardPatientExtItem? e, OrSurgeryNurseItem? a, BoardOrItem? bo)
     {
         string status; string? startT, endT, arriveT = null, leaveT = null, dest = null;
         if (m is not null)   // OR_SYSTEM 有對應（已報到）→ 以時間軸自動判定
@@ -887,15 +900,20 @@ public class BoardController : ControllerBase
         }
         return new OrSurgeryDto
         {
-            PatientName = MaskName(r.PatientName), Gender = r.Sex, Age = r.Age,
+            PatientName = MaskName(r.PatientName),
+            Gender = FirstNonBlank(r.Sex, bo?.Hsex),
+            Age = r.Age ?? CalcAge(bo?.Hbirthdt),                 // OPORDER 年齡優先，無則由 Board_OR 生日概算
+            BirthDate = FormatBirth(bo?.Hbirthdt),                // 生日：OPORDER 無此欄，取 Board_OR
             MedRecord = r.ChartNo,
-            Diagnosis = string.IsNullOrWhiteSpace(r.Diagnosis) ? e?.Diagnosis : r.Diagnosis,
-            SurgeryName = r.SurgeryName, Doctor = r.SurgeonName, AnesType = r.Anesthesia,
-            SurgerySource = CaseTypeToLabel(r.CaseType),
-            ScheduledTime = r.OpTime,
+            Diagnosis = FirstNonBlank(r.Diagnosis, bo?.Diagnosis, e?.Diagnosis),   // OPORDER 常空 → 補 Board_OR → 手動 overlay
+            SurgeryName = FirstNonBlank(r.SurgeryName, bo?.Surgery),
+            Doctor = FirstNonBlank(r.SurgeonName, bo?.Doctor),
+            AnesType = FirstNonBlank(r.Anesthesia, bo?.Anes),
+            SurgerySource = CaseTypeToLabel(r.CaseType) ?? SourceToLabel(bo?.Source),
+            ScheduledTime = FirstNonBlank(r.OpTime, bo?.OpTime),
             SurgeryStatus = status,
             StartTime = startT, EndTime = endT, ArriveTime = arriveT, LeaveTime = leaveT, Destination = dest,
-            Department = string.IsNullOrWhiteSpace(r.Department) ? e?.Department : r.Department,
+            Department = FirstNonBlank(r.Department, bo?.Department, e?.Department),   // 科別：OPORDER 常空 → 補 Board_OR
             ScrubNurse = a?.ScrubNurse ?? e?.ScrubNurse,
             CircNurse = a?.CircNurse ?? e?.CircNurse,
             Notes = a?.Note ?? e?.Notes
