@@ -4,7 +4,7 @@
 import { useState } from 'react'
 
 // 開發用：底排顯示「auto」自動帶入正確密碼，方便測試。★上正式線前改為 false（改成退格鍵）。
-const DEV_AUTOFILL = false
+const DEV_AUTOFILL = true
 
 export default function OrViewGate({ expected, onUnlock, onCancel }) {
   const [digits, setDigits] = useState('')   // 已輸入（最多 4）
