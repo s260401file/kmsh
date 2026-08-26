@@ -8,6 +8,9 @@ import { useOrWard } from '../../../../hooks/useOrWard'
 import { useOrRoomEnv } from '../../../../hooks/useOrRoomEnv'   // 今日各刀房溫溼度
 import BoardLoading from '../../../../components/BoardLoading'   // 院方資料載入中動畫
 
+// 狀態顯示文字：值仍為「已離開」（供邏輯/CSS class），但畫面顯示「已完成」
+const orStatusLabel = s => (s === '已離開' ? '已完成' : s)
+
 // 依手術來源回傳對應的 CSS class（急診/門診/住院刀）
 function sourceClass(source) {
   if (source === '急診刀') return 'src-er'
@@ -68,7 +71,6 @@ function RoomCard({ room, filteredOut, onClick }) {
         {p.SurgerySource && <span className={`badge badge-${p.SurgerySource}`}>{p.SurgerySource}</span>}
         <span className={`badge badge-${status}`}>{status}</span>
         {p.Destination && <span className="badge badge-dest">→{p.Destination}</span>}
-        {room.TodayCount > 1 && <span className="badge badge-count">今日 {room.TodayCount} 台</span>}
       </div>
       <div className="card-row2">
         <span className={`patient-name ${p.Gender === 'M' ? 'gender-m' : 'gender-f'}`}>{p.PatientName}</span>
@@ -102,6 +104,67 @@ function EnvCard({ rooms, envByRoom, date }) {
   )
 }
 
+// 第 8 格：壓縮版手術統計小卡（原右側 300px 統計區搬入 OR-05 下方那格；篩選鈕與已完成互動沿用）
+function StatsCard({ stats, count, filter, onFilter, onShowCompleted }) {
+  const Item = ({ v, label, cls, f, onClick, active }) => (
+    <div
+      className={`os-item${f ? ' os-click' : ''}${active ? ' active' : ''}`}
+      {...(f ? { 'data-filter': f } : {})}
+      onClick={onClick}
+    >
+      <div className={`os-value ${cls || ''}`}>{v}</div>
+      <div className="os-label">{label}</div>
+    </div>
+  )
+  return (
+    <div className="or-stats-card">
+      <div className="or-stats-title">手術統計</div>
+      <div className="or-stats-body">
+        <Item v={count} label="今日總刀" />
+        <Item v={stats.inSurgery} label="手術中" cls="ws-busy" f="busy" active={filter === 'busy'} onClick={() => onFilter('busy')} />
+        <Item v={stats.prep} label="待手術" cls="ws-prep" f="prep" active={filter === 'prep'} onClick={() => onFilter('prep')} />
+        <Item v={stats.completed} label="已完成 ▸" cls="ws-done" onClick={onShowCompleted} />
+        <Item v={stats.empty} label="空房" cls="ws-empty" />
+        <Item v={stats.erKnife} label="急診刀" cls="ws-erknife" f="er" active={filter === 'er'} onClick={() => onFilter('er')} />
+        <Item v={stats.opKnife} label="門診刀" cls="ws-opknife" f="op" active={filter === 'op'} onClick={() => onFilter('op')} />
+        <Item v={stats.inpKnife} label="住院刀" cls="ws-inpknife" f="inp" active={filter === 'inp'} onClick={() => onFilter('inp')} />
+      </div>
+    </div>
+  )
+}
+
+// 右側欄（原統計區位置）：今日刀房清單——攤平當日全部刀、依房號→排程時間排；點列開該房詳情
+function OrListPanel({ items, onOpenRow }) {
+  return (
+    <div className="or-list-panel">
+      <div className="stats-title">▌ 今日刀房清單　<span className="or-list-count">{items.length} 台</span></div>
+      <div className="or-list-body">
+        {items.length === 0
+          ? <div className="or-list-empty">今日尚無排刀</div>
+          : items.map((s, i) => {
+            const status = s.SurgeryStatus || '待手術'
+            const done = status === '已離開' || status === '手術結束'
+            return (
+              <div key={i} className={`or-list-row${done ? ' is-done' : ''}`} onClick={() => onOpenRow(s.roomId)}>
+                <div className="olr-line1">
+                  <span className="olr-room">{s.roomId}</span>
+                  <span className="olr-time">{s.ScheduledTime || '—'}</span>
+                  <span className={`badge badge-${status} olr-status`}>{orStatusLabel(status)}</span>
+                  {s.Destination && <span className="badge badge-dest">→{s.Destination}</span>}
+                </div>
+                <div className="olr-line2">
+                  <span className={`olr-name ${s.Gender === 'M' ? 'gender-m' : 'gender-f'}`}>{s.PatientName}</span>
+                  <span className="olr-basic">{s.Gender}/{s.Age ?? '—'}</span>
+                  <span className="olr-surg">{s.SurgeryName || '—'}</span>
+                </div>
+              </div>
+            )
+          })}
+      </div>
+    </div>
+  )
+}
+
 // 點擊刀房卡片後彈出的病患詳情視窗（今日台次清單可切換；顯示診斷、術式、派班、麻醉、時間、備註）
 function RoomModal({ room, onClose }) {
   const list = room.Surgeries?.length ? room.Surgeries : (room.Patient ? [room.Patient] : [])
@@ -125,7 +188,7 @@ function RoomModal({ room, onClose }) {
             <span className="modal-basic">{p.Gender === 'M' ? '男' : '女'} / {p.Age ?? '—'}歲</span>
             <div className="modal-badges">
               {p.SurgerySource && <span className={`badge badge-${p.SurgerySource}`}>{p.SurgerySource}</span>}
-              <span className={`badge badge-${status}`}>{status}</span>
+              <span className={`badge badge-${status}`}>{orStatusLabel(status)}</span>
               {p.Destination && <span className="badge badge-dest">→{p.Destination}</span>}
             </div>
           </div>
@@ -160,7 +223,7 @@ function RoomModal({ room, onClose }) {
           <div className="modal-row">
             <div className="modal-field"><div className="field-label">麻醉方式</div><div className="field-value">{p.AnesType || '—'}</div></div>
             <div className="modal-field"><div className="field-label">手術來源</div><div className="field-value">{p.SurgerySource || '—'}</div></div>
-            <div className="modal-field"><div className="field-label">手術狀態</div><div className="field-value">{status}{p.Destination ? `（→${p.Destination}）` : ''}</div></div>
+            <div className="modal-field"><div className="field-label">手術狀態</div><div className="field-value">{orStatusLabel(status)}{p.Destination ? `（→${p.Destination}）` : ''}</div></div>
           </div>
           <div className="modal-row">
             <div className="modal-field"><div className="field-label">排程時間</div><div className="field-value">{p.ScheduledTime || '—'}</div></div>
@@ -209,6 +272,15 @@ export default function WardTab() {
     inpKnife:   allSurgeries.filter(s => s.SurgerySource === '住院刀').length,
     empty:      rooms.filter(r => !r.Patient).length,
   }), [rooms, allSurgeries])
+  // 今日刀房清單（右欄）：攤平各房今日全部刀，依房號(SortOrder)→排程時間 由小到大
+  const surgeryList = useMemo(() => {
+    const toMin = t => { if (!t) return 9999; const [h, m] = String(t).split(':').map(Number); return (h || 0) * 60 + (m || 0) }
+    return rooms
+      .flatMap(r => (r.Surgeries || []).map(s => ({ ...s, roomId: r.RoomId, sortOrder: r.SortOrder })))
+      .sort((a, b) => (a.sortOrder - b.sortOrder) || (toMin(a.ScheduledTime) - toMin(b.ScheduledTime)))
+  }, [rooms])
+  // 點清單某列 → 開該房詳情彈窗（沿用檢視密碼門檻）；房卡雖空房但仍有今日排程時亦可開
+  const openRoomById = id => { const r = rooms.find(x => x.RoomId === id); if (r && (r.Surgeries?.length || r.Patient)) openRoom(r) }
   // 點同一篩選鈕再點一次即取消（回到 all）；all 本身不切換
   const handleFilter = f => setFilter(prev => (prev === f && f !== 'all') ? 'all' : f)
 
@@ -228,30 +300,12 @@ export default function WardTab() {
                 onClick={room.Status !== 'empty' ? () => openRoom(room) : undefined}
               />
             ))}
-            {/* 溫溼度卡（第 8 格）暫先移除、留空不顯示；日後恢復把下行取消註解即可
-            <EnvCard rooms={rooms} envByRoom={envByRoom} date={envDate} /> */}
+            {/* 第 8 格（OR-05 下方）：壓縮版手術統計小卡（原右側統計區搬入） */}
+            <StatsCard stats={stats} count={count} filter={filter} onFilter={handleFilter} onShowCompleted={() => setShowCompleted(true)} />
           </div>
         </div>
 
-        <div className="stats-panel">
-          <div className="stats-title">▌ 手術統計</div>
-          <div className="stats-body">
-            <div className="ws-row">
-              <div className="ws-item"><div className="ws-value">{count}</div><div className="ws-label">今日總刀</div></div>
-              <div className={`ws-item${filter === 'busy' ? ' active' : ''}`} data-filter="busy" onClick={() => handleFilter('busy')}><div className="ws-value ws-busy">{stats.inSurgery}</div><div className="ws-label">手術中</div></div>
-            </div>
-            <div className="ws-row">
-              <div className={`ws-item${filter === 'er' ? ' active' : ''}`} data-filter="er" onClick={() => handleFilter('er')}><div className="ws-value ws-erknife">{stats.erKnife}</div><div className="ws-label">急診刀</div></div>
-              <div className={`ws-item${filter === 'op' ? ' active' : ''}`} data-filter="op" onClick={() => handleFilter('op')}><div className="ws-value ws-opknife">{stats.opKnife}</div><div className="ws-label">門診刀</div></div>
-              <div className={`ws-item${filter === 'inp' ? ' active' : ''}`} data-filter="inp" onClick={() => handleFilter('inp')}><div className="ws-value ws-inpknife">{stats.inpKnife}</div><div className="ws-label">住院刀</div></div>
-            </div>
-            <div className="ws-row">
-              <div className={`ws-item${filter === 'prep' ? ' active' : ''}`} data-filter="prep" onClick={() => handleFilter('prep')}><div className="ws-value ws-prep">{stats.prep}</div><div className="ws-label">待手術</div></div>
-              <div className="ws-item" style={{ cursor: 'pointer' }} onClick={() => setShowCompleted(true)}><div className="ws-value ws-done">{stats.completed}</div><div className="ws-label">已完成 ▸</div></div>
-              <div className="ws-item"><div className="ws-value ws-empty">{stats.empty}</div><div className="ws-label">空房</div></div>
-            </div>
-          </div>
-        </div>
+        <OrListPanel items={surgeryList} onOpenRow={openRoomById} />
       </main>
 
       <div className="filter-bar">

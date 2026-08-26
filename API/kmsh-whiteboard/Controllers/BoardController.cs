@@ -693,20 +693,20 @@ public class BoardController : ControllerBase
             var dto = new OrRoomDto { RoomId = r.RoomId, ApiRoom = r.ApiRoom, SortOrder = r.SortOrder };
             if (byRoom.TryGetValue(r.RoomId, out var list) && list.Count > 0)
             {
-                dto.Surgeries = list;
+                dto.Surgeries = list;   // 今日全部（含未到院排程）供右側「今日刀房清單」
                 dto.TodayCount = list.Count;
-                // 房卡顯示（已依排程時間排序）：手術中 > 手術結束 > 等候中 > 保留期內的待手術 > 最後一台。
-                // 已離開＝完成、不佔 active（比照舊「已完成」）。
-                var nowMinOr = now.Hour * 60 + now.Minute;
-                var active = list.Where(s => s.SurgeryStatus != "已離開").ToList();
-                var current = active.FirstOrDefault(s => s.SurgeryStatus == "手術中")
-                           ?? active.FirstOrDefault(s => s.SurgeryStatus == "手術結束")
-                           ?? active.FirstOrDefault(s => s.SurgeryStatus == "等候中")
-                           ?? active.FirstOrDefault(s => { var mm = HmToMin(s.ScheduledTime); return mm is null || mm.Value + OrCardHoldMinutes > nowMinOr; })
-                           ?? active.LastOrDefault()
-                           ?? list[^1];
-                dto.Patient = current;
-                dto.Status = StatusToClass(current.SurgeryStatus);
+                // 房卡以 OR_SYSTEM 為主，且「已離開＝病人離室」→ 不佔房卡（該房轉空房）。
+                // 只顯示仍在房者（等候中/手術中/手術結束）；僅有排程未到院、或已離開 → 空房。
+                var present = list.Where(s => s.SurgeryStatus is "手術中" or "手術結束" or "等候中").ToList();
+                var current = present.FirstOrDefault(s => s.SurgeryStatus == "手術中")
+                           ?? present.FirstOrDefault(s => s.SurgeryStatus == "手術結束")
+                           ?? present.FirstOrDefault(s => s.SurgeryStatus == "等候中");
+                if (current is not null)
+                {
+                    dto.Patient = current;
+                    dto.Status = StatusToClass(current.SurgeryStatus);
+                }
+                // else：無在房病人（未到院／已離開）→ 保持預設空房（Status="empty"、Patient=null）
             }
             resp.Rooms.Add(dto);
         }
@@ -836,12 +836,12 @@ public class BoardController : ControllerBase
     /// <summary>院方時間字串 → HH:mm 顯示；空/失敗回 null。</summary>
     private static string? HmOf(string? raw) => ParseZh(raw) is { } d ? d.ToString("HH:mm") : null;
 
-    /// <summary>SEND_OPT 去向：1恢復室 2等候區 3加護病房；未知回 null。</summary>
+    /// <summary>SEND_OPT 去向：1恢復室 2等候區 3病房；未知回 null。</summary>
     private static string? SendOptToLabel(string? s) => (s?.Trim()) switch
     {
         "1" => "恢復室",
         "2" => "等候區",
-        "3" => "加護病房",
+        "3" => "病房",
         _ => null
     };
 
