@@ -121,6 +121,11 @@ export async function getOnCallBoardForUnit(unitCode, date) {
   const p = date ? `?date=${date}` : ''
   return handle(await apiFetch(`${BASE}/${unitCode}/oncall-display/board${p}`))
 }
+// 前台：當日外傷小組(TR)值班醫師（單筆）→ { deptCode:'TR', deptName, doctorName, ext, mobile, slot }
+export async function getTraumaOnCall(date) {
+  const p = date ? `?date=${date}` : ''
+  return handle(await apiFetch(`${BASE}/oncall-display/trauma${p}`))
+}
 // ── ER 床位主檔（病室動態平面圖 + 後台 CRUD）──────────────────────
 // GET /api/Board/{unitCode}/bed?includeAll= → 該單位 ER 床位主檔（含座標/分區）
 export async function getErBeds(unitCode, includeAll = false) {

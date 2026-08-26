@@ -1046,6 +1046,15 @@ public class BoardController : ControllerBase
         return Ok(result);
     }
 
+    /// <summary>ER 白板：當日外傷小組(TR)值班醫師（單一全日；08:00 前算前一日，與各科面板 effective date 一致）。</summary>
+    [HttpGet("oncall-display/trauma")]
+    public async Task<IActionResult> GetTraumaOnCall([FromQuery] string? date, CancellationToken ct = default)
+    {
+        var d = string.IsNullOrWhiteSpace(date) ? OnCallEffectiveDate() : DateTime.Parse(date);
+        var rows = (await _oncall.GetDayAsync(d, ct)).ToList();
+        return Ok(BuildOnCallEntry("TR", "外傷小組", rows));   // { deptCode, deptName, doctorName, ext, mobile, slot }
+    }
+
     // 值班醫師「日切點」：每日 08:00 交班；08:00 前仍算前一日（未帶明確 date 時採用）。
     private const int OnCallCutoverHour = 8;      // 日班/交班起點 08:00
     private const int DayShiftEndHour = 17;       // 日班結束 17:30 → 之後為夜班

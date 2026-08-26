@@ -55,6 +55,9 @@
 .er-board .filter-bar .flag-dot{width:18px;height:18px}
 .er-board .filter-bar .badge-filter:hover{transform:translateY(-1px);box-shadow:0 2px 8px rgba(0,0,0,0.35)}
 .er-board .filter-bar .badge-filter.active{box-shadow:0 0 0 2.5px #1A2635,0 0 0 5px rgba(0,0,0,0.15)}
+.er-board .filter-bar .er-trauma-wrap{flex:1;display:flex;justify-content:center;align-items:center}
+.er-board .filter-bar .er-trauma{font-size:18px;font-weight:800;color:var(--accent-red);white-space:nowrap}
+.er-board .filter-bar .er-trauma .er-trauma-ext{font-size:14px;color:var(--text-muted);font-family:var(--font-num);margin-left:4px}
 
 /* ── Bottom tabs ── */
 .er-board .bottom-tabs{height:var(--tabs-h);background:var(--bg-tabs);display:flex;flex-shrink:0;border-top:1px solid var(--divider)}

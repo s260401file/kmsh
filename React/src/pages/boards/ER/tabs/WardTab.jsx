@@ -238,6 +238,9 @@ export default function WardTab() {
   // 各科值班醫師：引用中央值班排程，只顯示本單位(ER)後台「顯示值班醫師」所選科別，依所設順序（當日值班；免 F5 自動更新）
   const { data: onCallData } = usePolling(() => wardApi.getOnCallBoardForUnit('ER'), { intervalMs: BULLETIN_MS, deps: ['ER-oncall'] })
   const onCallDocs = onCallData ?? []
+  // 外傷小組（排不進上方 10 格）：當日 TR 值班醫師，顯示於底部註記列右側；effective date 與面板一致
+  const { data: traumaData } = usePolling(() => wardApi.getTraumaOnCall(), { intervalMs: BULLETIN_MS, deps: ['ER-trauma'] })
+  const trauma = traumaData ?? null
   // 三班醫護人員面板：醫師/照服員＋班別結構取自「醫師/照服員設定」(ErShiftPanel)；護理師改由「三班護理師」(排班)供給
   const { data: shiftData } = usePolling(() => wardApi.getErShiftPanel('ER'), { intervalMs: BULLETIN_MS, deps: ['ER-shift'] })
   const shifts = shiftData ?? []
@@ -435,6 +438,12 @@ export default function WardTab() {
             <FlagDot k={label} flagStyle={FLAG_STYLE} title={false} />{label}{f === '死亡' ? `(${deceasedCount})` : ''}
           </button>
         ))}
+        {/* 外傷小組：置中於住院右側空白（排不進上方 10 格） */}
+        <div className="er-trauma-wrap">
+          <span className="er-trauma">外傷小組：<b>{trauma?.doctorName || '—'}</b>
+            {trauma?.ext ? <ContactValue className="er-trauma-ext" label={`外傷小組 ${trauma?.doctorName || ''}`.trim()} value={trauma.ext} onReveal={setReveal} /> : null}
+          </span>
+        </div>
       </div>
 
       {liveSelectedBed && liveSelectedBed.Patient && <BedModal bed={liveSelectedBed} onClose={() => setSelectedBed(null)} />}
