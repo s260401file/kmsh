@@ -161,7 +161,11 @@ function BedModal({ bed, onClose }) {
             <div className="modal-field"><div className="field-label">DNR</div><div className="field-value">{p.Dnr ? '是 ✓' : '否'}</div></div>
             <div className="modal-field"><div className="field-label">急診狀態</div><div className="field-value">{erStatuses.length > 0 ? erStatuses.join('、') : '看診中'}</div></div>
           </div>
-          <div className="modal-row"><div className="modal-field"><div className="field-label">動向狀態</div><div className="field-value">{FLOW_LABEL[p.Flow] || p.Flow || '—'}</div></div></div>
+          <div className="modal-row">
+            <div className="modal-field"><div className="field-label">動向狀態</div><div className="field-value">{FLOW_LABEL[p.Flow] || p.Flow || '—'}</div></div>
+            {/* 待床時間：院方尚未提供 API，先固定 0m；日後接資料改為 p.WaitBedMinutes */}
+            <div className="modal-field"><div className="field-label">待床時間</div><div className="field-value">0m</div></div>
+          </div>
           {(p.TransferHospital || p.TransferInHospital || p.Admitted) && <div className="modal-row">
             <div className="modal-field"><div className="field-label">轉出醫院</div><div className="field-value">{p.TransferHospital || '—'}</div></div>
             <div className="modal-field"><div className="field-label">轉入醫院</div><div className="field-value">{p.TransferInHospital || '—'}</div></div>
@@ -404,6 +408,8 @@ export default function WardTab() {
             <div className="ws-row">
               <div className="ws-item"><div className="ws-value">{totalBeds}</div><div className="ws-label">總床數</div></div>
               <div className="ws-item"><div className="ws-value">{stats.attending}</div><div className="ws-label">看診中</div></div>
+              {/* 待看診：院方尚未提供資料，先固定 0；日後接資料改為 stats.waiting */}
+              <div className="ws-item"><div className="ws-value">0</div><div className="ws-label">待看診</div></div>
             </div>
             <div className="ws-row">
               <div className={`ws-item${filter==='obs'?' active':''}`} data-filter="obs" onClick={() => handleFilter('obs')}><div className="ws-value ws-obs">{stats.observation}</div><div className="ws-label">留觀</div></div>

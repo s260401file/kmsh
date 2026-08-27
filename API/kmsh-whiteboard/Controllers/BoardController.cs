@@ -1705,7 +1705,10 @@ public class BoardController : ControllerBase
         var examList = await FreshOrStaleAsync("exam:board:examine", 45, () => _board.GetExamineAsync(ct));
         // 已結案（完成68／完報64）超過 24h 才隱藏；未結案（執行中/未執行/未排程/已排程/初報/取消醫囑）不論多舊都顯示。
         var examCut = DateTime.Now.AddHours(-24);
-        var exams = examList
+        // ICU／W52：時間大的在前（新→舊）；其餘站：時間小的在前（舊→新）
+        var examUnit = (unitCode ?? "").Trim().ToUpperInvariant();
+        var descExam = examUnit == "ICU" || examUnit == "W52";
+        var examBase = examList
             .Where(x => examWards.Contains((x.Ward ?? "").Trim())
                      && !string.IsNullOrWhiteSpace(x.Hhisnum)
                      && inBedHis.Contains(x.Hhisnum!.Trim()))
@@ -1717,22 +1720,28 @@ public class BoardController : ControllerBase
             })
             // 去重：院方會回完全重複列（同病歷號｜檢查名稱｜執行日期｜執行時間）
             .GroupBy(x => $"{(x.Hhisnum ?? "").Trim()}|{(x.ExamName ?? "").Trim()}|{(x.ExamDate ?? "").Trim()}|{(x.ExamTime ?? "").Trim()}")
-            .Select(g => g.First())
-            // 依 執行日期＋執行時間 由小到大（空日期墊底），次鍵床號
-            .OrderBy(x => { var d = FormatExamDate(x.ExamDate); return string.IsNullOrEmpty(d) ? "9999-99-99" : d; })
-            .ThenBy(x => (x.ExamTime ?? "").Trim())
-            .ThenBy(x => (x.Hbed ?? "").Trim())
-            .Select(x => new
+            .Select(g => g.First());
+        // 依 執行日期＋執行時間 排序；空日期一律墊底（升冪用 9999、降冪用 0000 皆排最後），次鍵床號
+        var examOrdered = descExam
+            ? examBase.OrderByDescending(x => { var d = FormatExamDate(x.ExamDate); return string.IsNullOrEmpty(d) ? "0000-00-00" : d; })
+                      .ThenByDescending(x => (x.ExamTime ?? "").Trim())
+                      .ThenBy(x => (x.Hbed ?? "").Trim())
+            : examBase.OrderBy(x => { var d = FormatExamDate(x.ExamDate); return string.IsNullOrEmpty(d) ? "9999-99-99" : d; })
+                      .ThenBy(x => (x.ExamTime ?? "").Trim())
+                      .ThenBy(x => (x.Hbed ?? "").Trim());
+        var exams = examOrdered.Select(x => new
         {
             bedId = (x.Hbed ?? "").Trim(), patientName = MaskName(x.Hnamec), gender = (string?)null,
             examName = (x.ExamName ?? "").Trim(), scheduledDate = FormatExamDate(x.ExamDate), timeSlot = (x.ExamTime ?? "").Trim(),
             status = MapExamStatus(x.Status), notes = ""
         });
 
-        var consults = rows.Where(r => r.Kind == "會診")
-            // 依會診完成時間由小到大；未完成（無完成時間）以哨兵墊底排最後
-            .OrderBy(r => string.IsNullOrWhiteSpace(r.CompletedTime) ? "9999-99-99 99:99" : r.CompletedTime)
-            .Select(r => new
+        var consultBase = rows.Where(r => r.Kind == "會診");
+        // 依會診完成時間排序；未完成（無完成時間）一律墊底
+        var consultOrdered = descExam
+            ? consultBase.OrderByDescending(r => string.IsNullOrWhiteSpace(r.CompletedTime) ? "0000-00-00 00:00" : r.CompletedTime)
+            : consultBase.OrderBy(r => string.IsNullOrWhiteSpace(r.CompletedTime) ? "9999-99-99 99:99" : r.CompletedTime);
+        var consults = consultOrdered.Select(r => new
         {
             bedId = r.BedId, patientName = MaskName(r.PatientName), gender = r.Gender, consultDept = r.ItemName,
             consultDoctor = r.Doctor, completedTime = r.CompletedTime, status = r.Status, notes = r.Notes
@@ -1870,10 +1879,14 @@ public class BoardController : ControllerBase
     {
         if (unitCode.ToUpperInvariant() != "ICU") return Ok(Array.Empty<object>());
         var uds = await _board.GetAicuUdAsync(ct);
-        // 首次給藥時間 overlay（後台補填）：以 病歷號|藥名|開始時間 為鍵併回
+        // 首次給藥時間 overlay（後台補填）：以 病歷號|藥名|開始時間|結束時間 為鍵併回
+        // （含結束時間，才能區分同藥同開始、僅結束不同的兩筆，避免補填一筆連動另一筆）
         var ovByKey = (await _ward.GetAntibioticAsync("ICU", false, ct))
-            .GroupBy(a => $"{(a.Hhisnum ?? "").Trim()}|{(a.DrugName ?? "").Trim()}|{(a.StartDateTime ?? "").Trim()}")
-            .ToDictionary(g => g.Key, g => g.First().FirstDoseDateTime, StringComparer.OrdinalIgnoreCase);
+            .GroupBy(a => $"{(a.Hhisnum ?? "").Trim()}|{(a.DrugName ?? "").Trim()}|{(a.StartDateTime ?? "").Trim()}|{(a.EndDateTime ?? "").Trim()}")
+            // 同鍵有殘留多列時取最後更新且首次時間非空者，避免舊的空值列蓋掉新填的值
+            .ToDictionary(g => g.Key, g => g.OrderByDescending(a => !string.IsNullOrWhiteSpace(a.FirstDoseDateTime))
+                                            .ThenByDescending(a => a.UpdatedAt).ThenByDescending(a => a.Id)
+                                            .First().FirstDoseDateTime, StringComparer.OrdinalIgnoreCase);
         var today = DateTime.Today;
         var rows = new List<object>();
         int id = 0;
@@ -1883,13 +1896,14 @@ public class BoardController : ControllerBase
             var end = TryDate(u.EndDate);
             if (end is { } ed && ed.Date < today) continue;   // 只留使用中（含未來/未結束）
             var startDt = JoinDateTime(u.StartDate, u.StartTime);
-            var key = $"{u.Hhisnum!.Trim()}|{u.Drug!.Trim()}|{(startDt ?? "").Trim()}";
+            var endDt = JoinDateTime(u.EndDate, u.EndTime);
+            var key = $"{u.Hhisnum!.Trim()}|{u.Drug!.Trim()}|{(startDt ?? "").Trim()}|{(endDt ?? "").Trim()}";
             rows.Add(new
             {
                 id = ++id, hhisnum = u.Hhisnum!.Trim(), drugName = u.Drug!.Trim(),
                 startDateTime = startDt,
                 firstDoseDateTime = ovByKey.TryGetValue(key, out var fd) ? fd : null,   // 後台補填（overlay）；院方未提供
-                endDateTime = JoinDateTime(u.EndDate, u.EndTime),
+                endDateTime = endDt,
             });
         }
         return Ok(rows);

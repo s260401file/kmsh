@@ -237,7 +237,7 @@ function RoomModal({ room, onClose }) {
             <div className="modal-field"><div className="field-label">去向</div><div className="field-value">{p.Destination || '—'}</div></div>
             <div className="modal-field"></div>
           </div>
-          <div className="modal-row"><div className="modal-field full"><div className="field-label">備註</div><div className="field-value" style={{ fontSize: '15px', fontWeight: '400' }}>{p.Notes || '無'}</div></div></div>
+          <div className="modal-row"><div className="modal-field full"><div className="field-label">手術名稱</div><div className="field-value" style={{ fontSize: '15px', fontWeight: '400' }}>{p.Notes || ''}</div></div></div>
         </div>
         <div className="modal-footer"><button className="btn-close-modal" onClick={onClose}>關閉</button></div>
       </div>

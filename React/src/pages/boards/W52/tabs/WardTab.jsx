@@ -148,7 +148,7 @@ function BedModal({ bed, onClose }) {
           <div className="modal-row">
             <div className="modal-field"><div className="field-label">入院日期</div><div className="field-value">{p.AdmissionDate || '—'}</div></div>
             <div className="modal-field"><div className="field-label">住院天數</div><div className="field-value">{daysSince >= 0 ? daysSince + ' 天' : '—'}</div></div>
-            <div className="modal-field"><div className="field-label">病況等級</div><div className="field-value">{p.Condition || '—'}</div></div>
+            <div className="modal-field"><div className="field-label">疾病嚴重程度</div><div className="field-value">{p.Condition || '—'}</div></div>
           </div>
           <div className="modal-row">
             <div className="modal-field"><div className="field-label">隔離狀態</div><div className="field-value">{p.Isolation || '無'}</div></div>

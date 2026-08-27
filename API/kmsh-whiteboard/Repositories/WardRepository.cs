@@ -584,11 +584,12 @@ public class WardRepository : IWardRepository
     {
         const string sql = @"
 UPDATE [dbo].[IcuAntibiotic]
-   SET FirstDoseDateTime=@FirstDoseDateTime, EndDateTime=@EndDateTime, IsActive=1, UpdatedAt=GETDATE()
+   SET FirstDoseDateTime=@FirstDoseDateTime, IsActive=1, UpdatedAt=GETDATE()
  WHERE UnitCode=@UnitCode
    AND ISNULL(Hhisnum,'')=ISNULL(@Hhisnum,'')
    AND ISNULL(DrugName,'')=ISNULL(@DrugName,'')
-   AND ISNULL(StartDateTime,'')=ISNULL(@StartDateTime,'');
+   AND ISNULL(StartDateTime,'')=ISNULL(@StartDateTime,'')
+   AND ISNULL(EndDateTime,'')=ISNULL(@EndDateTime,'');
 IF @@ROWCOUNT=0
    INSERT INTO [dbo].[IcuAntibiotic] (UnitCode, Hhisnum, DrugName, StartDateTime, FirstDoseDateTime, EndDateTime, SortOrder, IsActive, UpdatedAt, CreatedAt)
    VALUES (@UnitCode, @Hhisnum, @DrugName, @StartDateTime, @FirstDoseDateTime, @EndDateTime, 0, 1, GETDATE(), GETDATE());";

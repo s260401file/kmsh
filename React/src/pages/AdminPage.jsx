@@ -1034,6 +1034,8 @@ const WARD_BOOLS_NOSEC = WARD_BOOLS.filter(([k]) => !['surgery', 'exam', 'consul
 // 依單位取得該站的臨床補充旗標清單
 const boolsForUnit = (u) => u === 'ER' ? ER_BOOLS : (u === 'W52' || u === 'ICU') ? WARD_BOOLS_NOSEC : WARD_BOOLS
 const COND_OPTS = ['', '穩定', '重症', '危急']
+// 下拉顯示文字（帶等級後綴）；儲存值仍為 穩定/重症/危急（看板 C/B/A 對照與篩選依此值，勿動）
+const COND_LABEL = { '穩定': '穩定-C', '重症': '重症-B', '危急': '危急-A' }
 const BEDSTATUS_OPTS = ['', 'occupied', 'isolation', 'transfer', 'transfer-in', 'discharge']
 const ISO_OPTS = ['', '無', '接觸隔離', '飛沫隔離', '空氣隔離', '負壓隔離']
 const DEP_OPTS = ['', 'L1', 'L2', 'L3']
@@ -1154,7 +1156,7 @@ function WardExtSection({ unitCode }) {
             )}
             {/* ER 規格書無「病況等級/床位狀態/運送/依賴度」，僅保留隔離 */}
             {unitCode !== 'ER' && (<>
-            <div style={s.formRow}><label style={s.label}>病況等級</label><select style={s.input} value={form.condition} onChange={e => setF('condition', e.target.value)}>{COND_OPTS.map(o => <option key={o} value={o}>{o || '（無）'}</option>)}</select></div>
+            <div style={s.formRow}><label style={s.label}>疾病嚴重程度</label><select style={s.input} value={form.condition} onChange={e => setF('condition', e.target.value)}>{COND_OPTS.map(o => <option key={o} value={o}>{o ? (COND_LABEL[o] || o) : '（無）'}</option>)}</select></div>
             <div style={s.formRow}><label style={s.label}>床位狀態</label><select style={s.input} value={form.bedStatus} onChange={e => setF('bedStatus', e.target.value)}>{BEDSTATUS_OPTS.map(o => <option key={o} value={o}>{o || '（占床 occupied）'}</option>)}</select></div>
             </>)}
             <div style={s.formRow}><label style={s.label}>隔離</label><select style={s.input} value={form.isolation} onChange={e => setF('isolation', e.target.value)}>{ISO_OPTS.map(o => <option key={o} value={o}>{o || '（無）'}</option>)}</select></div>
@@ -1164,7 +1166,7 @@ function WardExtSection({ unitCode }) {
             </>)}
           </div>
           {/* 診斷：四站皆由院方 API 帶入（Board_bed / Board_ER / Board_OR），後台不再輸入 */}
-          <div style={s.formRow}><label style={s.label}>備註</label><textarea style={{ ...s.input, height: '52px', resize: 'vertical' }} value={form.notes} onChange={e => setF('notes', e.target.value)} /></div>
+          <div style={s.formRow}><label style={s.label}>{unitCode === 'OR' ? '手術名稱' : '備註'}</label><textarea style={{ ...s.input, height: '52px', resize: 'vertical' }} value={form.notes} onChange={e => setF('notes', e.target.value)} /></div>
           {unitCode === 'ER' && (
             <>
               {/* 到院日/到院時間由院方 Board_ER 帶入，後台不再輸入 */}
@@ -1246,7 +1248,7 @@ function WardExtSection({ unitCode }) {
                       ...(ext.transport ? ['運送'] : []),
                       ...(ext.dependency ? ['依賴度'] : []),
                     ] : []),
-                    ...(ext.notes ? ['備註'] : []),
+                    ...(ext.notes ? [unitCode === 'OR' ? '手術名稱' : '備註'] : []),
                   ] : []
                   return (
                     <tr key={(p.onBed ? 'b-' : 'h-') + p.hhisnum} style={{ background: selPat?.hhisnum === p.hhisnum ? '#fef9c3' : (!p.onBed ? '#fafafa' : (i % 2 ? '#f9fafb' : '#fff')) }}>
@@ -1685,6 +1687,10 @@ function ResidentScheduleSection({ unitCode = 'W52' }) {
   )
 }
 
+// 首次時間 時/分 下拉選項（避免手打錯字；00–23 / 00–59）
+const HH_OPTS = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'))
+const MM_OPTS = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0'))
+
 // 補充抗生素首次時間 — 由院方即時用藥帶出，逐筆填「首次時間」存檔（overlay，併回看板彈窗）
 function AntibioticFirstDoseSection() {
   const [rows, setRows] = useState([])          // 即時用藥（院方）
@@ -1699,14 +1705,15 @@ function AntibioticFirstDoseSection() {
       const [live, ros] = await Promise.all([wardApi.getAntibioticLive('ICU'), wardApi.getRoster('ICU').catch(() => [])])
       const rmap = {}; (ros ?? []).forEach(p => { rmap[(p.hhisnum || '').trim()] = { bedId: p.bedId, name: p.patientName } })
       setRoster(rmap)
+      // 院方即時用藥全數列出（同藥同開始、僅結束不同者仍為 2 筆，與看板一致）
       const sorted = [...(live ?? [])].sort((a, b) => (a.hhisnum || '').localeCompare(b.hhisnum || '') || (a.drugName || '').localeCompare(b.drugName || ''))
       setRows(sorted); setEdits({})
     } catch { show('讀取失敗', true) }
     finally { setLoading(false) }
   }, [])   // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { load() }, [load])
-  const saveRow = async (r) => {
-    const k = keyOf(r); const fd = (edits[k] ?? r.firstDoseDateTime ?? '').trim()
+  const saveRow = async (r, rk) => {
+    const fd = (edits[rk] ?? r.firstDoseDateTime ?? '').trim()
     try {
       await wardApi.saveAntibioticFirstDose('ICU', { unitCode: 'ICU', hhisnum: r.hhisnum, drugName: r.drugName, startDateTime: r.startDateTime, endDateTime: r.endDateTime, firstDoseDateTime: fd || null })
       show('已儲存'); load()
@@ -1726,17 +1733,33 @@ function AntibioticFirstDoseSection() {
           <table style={s.table}>
             <thead><tr>{['床', '姓名', '病歷號', '藥品', '開始時間', '結束時間', '首次時間', ''].map((h, i) => <th key={i} style={s.th}>{h}</th>)}</tr></thead>
             <tbody>{rows.map((r, i) => {
-              const k = keyOf(r); const info = roster[(r.hhisnum || '').trim()] || {}
+              const rk = `${keyOf(r)}#${i}`; const info = roster[(r.hhisnum || '').trim()] || {}   // rk：每列獨立編輯鍵（含索引），避免同自然鍵兩列連動
+              // 首次時間拆成 日期／時／分 三個點選控制；組回 'yyyy-MM-dd HH:mm' 存 edits[rk]（無日期＝清空）
+              const cur = edits[rk] ?? r.firstDoseDateTime ?? ''
+              const mo = /^(\d{4}-\d{2}-\d{2})[ T]?(\d{2})?:?(\d{2})?/.exec(cur) || []
+              const fd = mo[1] || '', fh = mo[2] || '', fm = mo[3] || ''
+              const setFd = (nd, nh, nm) => setEdits(x => ({ ...x, [rk]: nd ? `${nd} ${nh || '00'}:${nm || '00'}` : '' }))
               return (
-                <tr key={k + i} style={{ background: i % 2 ? '#f9fafb' : '#fff' }}>
+                <tr key={rk} style={{ background: i % 2 ? '#f9fafb' : '#fff' }}>
                   <td style={s.td}>{info.bedId || '—'}</td>
                   <td style={s.td}>{info.name || '—'}</td>
                   <td style={s.td}>{r.hhisnum}</td>
                   <td style={s.td}>{r.drugName}</td>
                   <td style={s.td}>{r.startDateTime || '—'}</td>
                   <td style={s.td}>{r.endDateTime || '—'}</td>
-                  <td style={s.td}><input style={{ ...s.input, width: '150px' }} value={edits[k] ?? r.firstDoseDateTime ?? ''} placeholder="yyyy-MM-dd HH:mm" onChange={e => setEdits(x => ({ ...x, [k]: e.target.value }))} /></td>
-                  <td style={s.td}><button style={s.btnPrimary} onClick={() => saveRow(r)}>存</button></td>
+                  <td style={s.td}>
+                    <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                      <input type="date" style={{ ...s.input, width: '140px' }} value={fd} onChange={e => setFd(e.target.value, fh, fm)} />
+                      <select style={{ ...s.input, width: '62px', padding: '8px 6px' }} value={fh} onChange={e => setFd(fd, e.target.value, fm)}>
+                        <option value="">時</option>{HH_OPTS.map(o => <option key={o} value={o}>{o}</option>)}
+                      </select>
+                      <span style={{ color: '#6b7280' }}>:</span>
+                      <select style={{ ...s.input, width: '62px', padding: '8px 6px' }} value={fm} onChange={e => setFd(fd, fh, e.target.value)}>
+                        <option value="">分</option>{MM_OPTS.map(o => <option key={o} value={o}>{o}</option>)}
+                      </select>
+                    </div>
+                  </td>
+                  <td style={s.td}><button style={s.btnPrimary} onClick={() => saveRow(r, rk)}>儲存</button></td>
                 </tr>
               )
             })}</tbody>
