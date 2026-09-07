@@ -2546,7 +2546,7 @@ public class BoardController : ControllerBase
     private static int? TriageLevel(string? raw)
         => (raw?.Trim().ToUpperInvariant()) switch
         {
-            "E" or "2" => 1,            // 重症 → A
+            "E" or "1" or "2" => 1,      // 重症 → A（1＝最緊急，先前漏判致該病人檢傷空白、未計入統計）
             "3" => 2,                    // 中症 → B
             "4" or "5" or "9" => 3,      // 輕症 → C
             _ => (int?)null
