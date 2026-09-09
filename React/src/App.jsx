@@ -27,6 +27,7 @@ import TeamTab from './pages/boards/W52/tabs/TeamTab'
 
 // ICU Layout + Tabs
 import IcuLayout from './pages/boards/ICU/IcuLayout'
+import IcuScheduleTab from './pages/boards/ICU/tabs/ScheduleTab'
 import IcuWardTab from './pages/boards/ICU/tabs/WardTab'
 import AntibioticTab from './pages/boards/ICU/tabs/AntibioticTab'
 import TubeTab from './pages/boards/ICU/tabs/TubeTab'
@@ -98,6 +99,7 @@ function App() {
       <Route path="/icu" element={<IcuLayout />}>
         <Route index element={<Navigate to="ward" replace />} />
         <Route path="ward"       element={<IcuWardTab />} />
+        <Route path="schedule"   element={<IcuScheduleTab />} />
         <Route path="antibiotic" element={<AntibioticTab />} />
         <Route path="tube"       element={<TubeTab />} />
         <Route path="surgery"    element={<IcuSurgeryTab />} />

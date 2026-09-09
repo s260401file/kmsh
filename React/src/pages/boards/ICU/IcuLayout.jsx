@@ -11,6 +11,7 @@ import './IcuLayout.css'
 // 底部分頁定義：path 對應巢狀路由、label 為顯示中文（順序即顯示順序）
 const TABS = [
   { path: 'ward',       label: '病室動態' },
+  { path: 'schedule',   label: '排班資訊' },
   { path: 'antibiotic', label: '抗生素' },
   { path: 'tube',       label: '管路' },
   { path: 'surgery',    label: '手術資訊' },

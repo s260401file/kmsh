@@ -1,0 +1,42 @@
+/* 排班資訊（ICU）— 所有選擇器以 .icu-board 為根；比照 W52，但無專師/住院醫師右欄，護理人員表滿版 */
+.icu-board .sc-panel { flex: 1; display: flex; flex-direction: column; overflow: hidden; padding: 16px 20px 12px; gap: 12px; }
+.icu-board .sc-title { font-size: 24px; font-weight: 800; color: var(--text-primary); display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.icu-board .sc-title-bar { display: inline-block; width: 5px; height: 24px; background: var(--accent-green); border-radius: 3px; }
+.icu-board .sc-shift-bar { display: flex; gap: 8px; flex-shrink: 0; }
+.icu-board .sc-shift-btn { display: inline-flex; align-items: center; gap: 6px; padding: 6px 22px; border-radius: var(--radius-pill); font-size: 16px; font-weight: 700; cursor: pointer; border: 2px solid var(--divider); background: var(--bg-card-empty); color: var(--text-secondary); transition: background .15s, color .15s, border-color .15s; white-space: nowrap; font-family: inherit; }
+.icu-board .sc-shift-btn:hover { border-color: var(--text-secondary); color: var(--text-primary); }
+.icu-board .sc-shift-btn.is-current { border-color: var(--accent-green); color: var(--accent-green); background: #EAF5EF; }
+.icu-board .sc-shift-btn.active { background: var(--text-primary); color: #FFFFFF; border-color: var(--text-primary); }
+.icu-board .sc-shift-btn.is-current.active { background: var(--accent-green); border-color: var(--accent-green); color: #FFFFFF; }
+.icu-board .sc-shift-time { font-size: 13px; font-weight: 400; opacity: .75; }
+.icu-board .sc-columns { flex: 1; display: flex; gap: 16px; overflow: hidden; min-height: 0; }
+.icu-board .sc-col-left { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.icu-board .sc-card { background: var(--bg-card-occ); border: 1px solid var(--divider); border-radius: var(--radius-card); display: flex; flex-direction: column; overflow: hidden; flex-shrink: 0; }
+.icu-board .sc-col-left .sc-card { flex: 1; overflow: hidden; }
+.icu-board .sc-card-header { font-size: 17px; font-weight: 700; color: var(--accent-green); padding: 13px 18px 12px; border-bottom: 1px solid var(--divider); flex-shrink: 0; display: flex; align-items: center; gap: 8px; }
+.icu-board .sc-card-count { font-size: 13px; font-weight: 900; color: var(--text-muted); font-family: var(--font-num); }
+.icu-board .sc-table-wrap { flex: 1; overflow-y: auto; touch-action: pan-y; }
+.icu-board .sc-table-wrap::-webkit-scrollbar { width: 4px; }
+.icu-board .sc-table-wrap::-webkit-scrollbar-thumb { background: var(--divider); border-radius: 2px; }
+.icu-board .sc-table { width: 100%; border-collapse: collapse; }
+.icu-board .sc-table thead tr { background: #E8F4EE; }
+.icu-board .sc-table th { font-size: 14px; font-weight: 700; color: var(--text-secondary); text-align: left; padding: 10px 18px; white-space: nowrap; border-bottom: 1px solid var(--divider); }
+.icu-board .sc-th-center { text-align: center; }
+.icu-board .sc-table tbody tr { border-bottom: 1px solid var(--bg-card-empty); }
+.icu-board .sc-table tbody tr:last-child { border-bottom: none; }
+.icu-board .sc-table td { font-size: 17px; color: var(--text-primary); padding: 12px 18px; vertical-align: middle; }
+.icu-board .sc-td-role { font-size: 14px; font-weight: 700; color: var(--text-muted); white-space: nowrap; }
+.icu-board .sc-td-ext { font-size: 15px; color: var(--text-secondary); white-space: nowrap; }
+.icu-board .sc-td-name { white-space: nowrap; }
+.icu-board .sc-beds { display: flex; flex-wrap: wrap; gap: 4px; }
+.icu-board .sc-bed-tag { font-size: 12px; font-weight: 700; font-family: var(--font-num); background: var(--bg-card-empty); color: var(--text-secondary); border: 1px solid var(--divider); border-radius: 4px; padding: 1px 6px; white-space: nowrap; }
+.icu-board .sc-beds-none { font-size: 14px; color: var(--text-muted); }
+.icu-board .sc-group-badge { display: inline-flex; align-items: center; justify-content: center; padding: 2px 10px; border-radius: var(--radius-pill); font-size: 13px; font-weight: 800; white-space: nowrap; }
+.icu-board .sc-group-指揮 { background: #FFEBEE; color: #C62828; }
+.icu-board .sc-group-A    { background: #E3F2FD; color: #1565C0; }
+.icu-board .sc-group-B    { background: #F3E5F5; color: #6A1B9A; }
+.icu-board .sc-group-none { color: var(--text-muted); font-size: 14px; }
+.icu-board .sc-td-checkin { text-align: center; }
+.icu-board .sc-checkin-yes { font-size: 18px; font-weight: 800; color: var(--accent-green); }
+.icu-board .sc-checkin-no  { font-size: 16px; color: var(--text-muted); }
+.icu-board .sc-empty-row td { text-align: center; color: var(--text-muted); padding: 32px 18px; font-size: 18px; }
