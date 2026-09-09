@@ -6,6 +6,7 @@ import { useState, useMemo } from 'react'
 import { usePolling } from '../../../../hooks/usePolling'
 import * as wardApi from '../../../../services/wardApi'
 import { CENSUS_MS } from '../../../../config/pollingConfig'
+import { fmtSurgeryTime } from '../../../../utils/surgeryTime'   // 23:59 → TF
 import '../tabsCss/surgery.css'
 
 const DAYS = ['日','一','二','三','四','五','六']            // 星期顯示字
@@ -83,7 +84,7 @@ export default function SurgeryTab() {
                     <tr key={idx} className={item.status === '取消' ? 'surg-row-cancel' : ''}>
                       <td><span className="surg-td-or">{item.orRoom}</span></td>
                       <td className="surg-td-seq">{item.seqNo ?? '—'}</td>
-                      <td className="surg-td-time">{item.scheduledTime}</td>
+                      <td className="surg-td-time">{fmtSurgeryTime(item.scheduledTime)}</td>
                       <td><span className="surg-td-bed">{item.bedId || '—'}</span></td>
                       <td className="surg-td-name">
                         <span className={`surg-name surg-gender-${item.gender === 'M' ? 'm' : 'f'}`}>{item.patientName}</span>

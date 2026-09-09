@@ -7,9 +7,13 @@ import { useOutletContext } from 'react-router-dom'
 import { useOrWard } from '../../../../hooks/useOrWard'
 import { useOrRoomEnv } from '../../../../hooks/useOrRoomEnv'   // 今日各刀房溫溼度
 import BoardLoading from '../../../../components/BoardLoading'   // 院方資料載入中動畫
+import { fmtSurgeryTime } from '../../../../utils/surgeryTime'   // 23:59 → TF
 
 // 狀態顯示文字：值仍為「已離開」（供邏輯/CSS class），但畫面顯示「已完成」
 const orStatusLabel = s => (s === '已離開' ? '已完成' : s)
+
+// 手術時間顯示：23:59 → TF（共用工具）
+const orTime = fmtSurgeryTime
 
 // 依手術來源回傳對應的 CSS class（急診/門診/住院刀）
 function sourceClass(source) {
@@ -74,7 +78,7 @@ function RoomCard({ room, filteredOut, onClick }) {
       </div>
       <div className="card-row2">
         <span className={`patient-name ${p.Gender === 'M' ? 'gender-m' : 'gender-f'}`}>{p.PatientName}</span>
-        <span className="patient-basic">{p.Gender}/{p.Age ?? '—'}　{p.ScheduledTime || ''}</span>
+        <span className="patient-basic">{p.Gender}/{p.Age ?? '—'}　{orTime(p.ScheduledTime)}</span>
       </div>
       <div className="card-row3">{p.SurgeryName}</div>
       <div className="card-row4">術：{p.Doctor || '—'}{p.AnesType ? `　麻：${p.AnesType}` : ''}</div>
@@ -148,7 +152,7 @@ function OrListPanel({ items, onOpenRow }) {
               <div key={i} className={`or-list-row${done ? ' is-done' : ''}`} onClick={() => onOpenRow(s.roomId)}>
                 <div className="olr-line1">
                   <span className="olr-room">{s.roomId}</span>
-                  <span className="olr-time">{s.ScheduledTime || '—'}</span>
+                  <span className="olr-time">{orTime(s.ScheduledTime) || '—'}</span>
                   <span className={`badge badge-${status} olr-status`}>{orStatusLabel(status)}</span>
                   {s.Destination && <span className="badge badge-dest">→{s.Destination}</span>}
                 </div>
@@ -201,7 +205,7 @@ function RoomModal({ room, onClose }) {
             <span className="or-today-label">今日 {list.length} 台：</span>
             {list.map((s, i) => (
               <button key={i} className={`or-today-item${i === idx ? ' active' : ''}`} onClick={() => setIdx(i)}>
-                {s.ScheduledTime || '—'} {s.PatientName}
+                {orTime(s.ScheduledTime) || '—'} {s.PatientName}
               </button>
             ))}
           </div>
@@ -226,7 +230,7 @@ function RoomModal({ room, onClose }) {
             <div className="modal-field"><div className="field-label">手術狀態</div><div className="field-value">{orStatusLabel(status)}{p.Destination ? `（→${p.Destination}）` : ''}</div></div>
           </div>
           <div className="modal-row">
-            <div className="modal-field"><div className="field-label">排程時間</div><div className="field-value">{p.ScheduledTime || '—'}</div></div>
+            <div className="modal-field"><div className="field-label">排程時間</div><div className="field-value">{orTime(p.ScheduledTime) || '—'}</div></div>
             <div className="modal-field"><div className="field-label">進房時間</div><div className="field-value">{started ? (p.StartTime || '—') : '—'}</div></div>
             <div className="modal-field"><div className="field-label">結束時間</div><div className="field-value">{p.EndTime || (status === '手術中' ? '進行中' : '—')}</div></div>
             <div className="modal-field"><div className="field-label">手術時長</div><div className="field-value">{duration}</div></div>
@@ -346,7 +350,7 @@ function CompletedModal({ items, onClose }) {
                 : items.map((s, i) => (
                   <tr key={i}>
                     <td><span className="surg-td-or">{s.roomId}</span></td>
-                    <td>{s.ScheduledTime || '—'}</td>
+                    <td>{orTime(s.ScheduledTime) || '—'}</td>
                     <td><span className={s.Gender === 'M' ? 'gender-m' : 'gender-f'}>{s.PatientName}</span> {s.Gender}/{s.Age ?? '—'}</td>
                     <td>{s.SurgeryName || '—'}</td>
                     <td>{s.Doctor || '—'}</td>

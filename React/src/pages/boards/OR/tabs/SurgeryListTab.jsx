@@ -6,6 +6,7 @@ import { useState } from 'react'
 import { usePolling } from '../../../../hooks/usePolling'
 import * as wardApi from '../../../../services/wardApi'
 import { BULLETIN_MS } from '../../../../config/pollingConfig'
+import { fmtSurgeryTime } from '../../../../utils/surgeryTime'   // 23:59 → TF
 import '../tabsCss/surgerylist.css'
 
 const pad2 = n => String(n).padStart(2, '0')
@@ -119,7 +120,7 @@ export default function SurgeryListTab() {
                       title={cancelled && r.cancelReason ? `取消：${r.cancelReason}` : undefined}>
                     <td className="sl-col-date">
                       <div className="sl-date">{(r.opDate || '').slice(0, 10)}</div>
-                      <div className="sl-time">{r.opTime}</div>
+                      <div className="sl-time">{fmtSurgeryTime(r.opTime)}</div>
                     </td>
                     <td className="sl-mono">{r.chartNo}</td>
                     <td>

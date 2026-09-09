@@ -261,9 +261,10 @@ export default function WardTab() {
     ;(adminDutyData ?? []).forEach(r => { if (ad[r.slot] !== undefined) ad[r.slot] = r.name || '' })
     return ad
   }, [adminDutyData])
-  // 急診醫師/照服員只顯示白班(白)、大夜(夜) 於標題右側
-  const dayDoc = shifts.find(s => s.shift === '白班')?.doctor
-  const nightDoc = shifts.find(s => s.shift === '大夜')?.doctor
+  // 白班/夜班「醫師」改吃值班醫師排程（急診科 ER 的 日班/夜班）；照服員仍吃醫師/照服員設定(shifts)
+  const { data: erDocData } = usePolling(() => wardApi.getErAttendingOnCall(), { intervalMs: BULLETIN_MS, deps: ['ER-erdoc'] })
+  const dayDoc = erDocData?.day?.doctorName
+  const nightDoc = erDocData?.night?.doctorName
   const dayAide = shifts.find(s => s.shift === '白班')?.aide
   const nightAide = shifts.find(s => s.shift === '大夜')?.aide
   // 再次點同一篩選即取消（回到 all）；點 all 維持 all

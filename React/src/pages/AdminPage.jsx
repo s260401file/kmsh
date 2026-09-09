@@ -125,7 +125,7 @@ const MENU_CONFIG = [
       { id: 'er-night-nurse', label: '專師值班排程', available: true }, // 專師值班月曆（無科別；小夜/小夜貳組）
       { id: 'er-admin-duty', label: '護理行政值班排程', available: true }, // 護理行政值班月曆（無科別；大夜/白班/小夜）
       { id: 'er-oncall-display', label: '顯示值班醫師', available: true }, // 引用中央值班排程；ER 前台最多 10 科
-      { id: 'er-shift',  label: '醫師/照服員設定', available: true },   // 原「三班醫護人員」；護理師改由三班護理師供給
+      { id: 'er-shift',  label: '照服員設定', available: true },   // 原「醫師/照服員設定」；醫師改由值班醫師排程，護理師由三班護理師
       { id: 'er-shift-roster', label: '三班護理師', available: true },   // 護理師來源（餵 ER 看板三班面板）
       { id: 'er-doctor', label: '急診醫師', available: true },   // 急診醫師主檔（供 ER 緊急編組納入醫師）
       { id: 'trauma-team', label: '外傷小組', available: true },   // 外傷小組醫師主檔（獨立，比照急診醫師；供值班醫師排程）
@@ -3353,7 +3353,7 @@ function BedNurseAdminSection({ units }) {
   )
 }
 
-// ── 醫師/照服員設定（ER 面板固定班別的醫師、照服員；護理師改由「三班護理師」供給）──
+// ── 照服員設定（ER 面板固定班別的照服員；醫師改由「值班醫師排程 › 急診科」，護理師由「三班護理師」）──
 function ErShiftPanelSection({ unit = 'ER' } = {}) {
   const [list, setList] = useState([])
   const [aides, setAides] = useState([])   // 照服員主檔（供下拉來源）
@@ -3373,19 +3373,16 @@ function ErShiftPanelSection({ unit = 'ER' } = {}) {
     <div>
       <PmMsg msg={msg} />
       <div style={{ fontSize: '12px', color: '#9ca3af', marginBottom: '10px' }}>
-        ER 病室動態右上面板的醫師 / 照服員（班別/時間固定；醫師自由輸入，<b>照服員由主檔下拉選擇</b>，來源為系統管理 › 照服員；看板僅顯示<b>白班、大夜</b>）。<b>護理師改由「三班護理師」設定</b>。
+        ER 病室動態右上面板的照服員（班別/時間固定；<b>照服員由主檔下拉選擇</b>，來源為系統管理 › 照服員；看板僅顯示<b>白班、大夜</b>）。<b>醫師改由「值班醫師排程 › 急診科」，護理師由「三班護理師」設定</b>。
       </div>
       {list.filter(r => r.shiftLabel === '大夜' || r.shiftLabel === '白班').sort((a, b) => (a.shiftLabel === '白班' ? 0 : 1) - (b.shiftLabel === '白班' ? 0 : 1)).map(r => (
         <div key={r.id} style={s.formCard}>
           <h4 style={s.formTitle}>{r.shiftLabel === '大夜' ? '夜班' : r.shiftLabel}</h4>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 16px' }}>
-            <div style={s.formRow}><label style={s.label}>醫師</label><input style={s.input} value={r.doctor ?? ''} onChange={e => setRow(r.id, 'doctor', e.target.value)} placeholder="如 張○哲醫師" /></div>
-            <div style={s.formRow}><label style={s.label}>照服員</label>
-              <NurseSelect
-                options={r.aide && !aides.some(a => a.name === r.aide) ? [...aideOpts, { value: r.aide, label: r.aide }] : aideOpts}
-                value={r.aide ?? ''} onChange={v => setRow(r.id, 'aide', v)}
-                placeholder="查詢／選擇照服員" />
-            </div>
+          <div style={s.formRow}><label style={s.label}>照服員</label>
+            <NurseSelect
+              options={r.aide && !aides.some(a => a.name === r.aide) ? [...aideOpts, { value: r.aide, label: r.aide }] : aideOpts}
+              value={r.aide ?? ''} onChange={v => setRow(r.id, 'aide', v)}
+              placeholder="查詢／選擇照服員" />
           </div>
           <button style={s.btnPrimary} onClick={() => save(r)}>儲存此班</button>
         </div>
