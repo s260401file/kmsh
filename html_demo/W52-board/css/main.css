@@ -202,10 +202,11 @@ body { flex-direction: column; }
 .beds-area .empty-bed-num { font-size: 12px; margin-bottom: 2px; }
 .beds-area .bed-card .flag-dot { width: 12px; height: 12px; }
 .beds-area .dots-row { gap: 2px; min-height: 13px; }
-/* 第 3 排：主治醫師　轉入日期 */
-.card-row3 { display:flex; align-items:baseline; justify-content:space-between; gap:6px; }
-.card-row3 .card-doc   { font-size:16px; font-weight:600; color:var(--text-primary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }   /* 醫師姓名放大 */
-.card-row3 .card-admit { font-size:14px; font-weight:600; font-family:var(--font-num); color:var(--text-secondary); white-space:nowrap; flex-shrink:0; }   /* 住院日期放大 */
+/* 第 3 排：主治醫師　轉入日期
+   窄卡片一律不換行：醫師名優先完整顯示,放不下時日期在右側被裁切(可點開看完整) */
+.beds-area .card-row3 { display:flex; align-items:baseline; justify-content:flex-start; flex-wrap:nowrap; gap:3px; overflow:hidden; }
+.card-row3 .card-doc   { font-size:14px; font-weight:600; color:var(--text-primary); white-space:nowrap; flex-shrink:0; }   /* 醫師姓名（不縮、不裁） */
+.card-row3 .card-admit { font-size:14px; font-weight:600; font-family:var(--font-num); color:var(--text-secondary); white-space:nowrap; overflow:hidden; }   /* 住院日期：放不下才裁 */
 /* 策盟註記：床號右側小標記「策」 */
 .bed-cema { display:inline-flex; align-items:center; justify-content:center; margin-left:4px; width:17px; height:17px; border-radius:4px; background:#B71C1C; color:#fff; font-size:11px; font-weight:800; line-height:1; }
 
