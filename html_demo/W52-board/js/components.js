@@ -105,10 +105,15 @@ function renderBedCard(bed) {
          data-tube-cardiac="${p.CardiacCath ? '1' : '0'}">
       <div class="card-row1">
         <span class="bed-num">${bedLabel}</span>
+        ${p.Cema ? '<span class="bed-cema" title="策盟">策</span>' : ''}
       </div>
       <div class="card-row2">
         <span class="patient-name ${genderCls}">${p.PatientName}</span>
         <span class="patient-basic">${genderAge}</span>
+      </div>
+      <div class="card-row3">
+        <span class="card-doc">${p.AttendingDoctor ? 'Dr ' + p.AttendingDoctor.replace(/醫師$/, '') : '—'}</span>
+        <span class="card-admit">${p.AdmissionDate || ''}</span>
       </div>
       <div class="dots-row">${dotsHTML(allBadges)}</div>
     </div>`;
@@ -133,7 +138,7 @@ function renderStats(beds) {
 
 // 渲染所有床位到單一 CSS Grid（不再分房間）
 function renderAllBeds(beds) {
-  const grid = document.getElementById("ward-grid");
+  const grid = document.getElementById("beds-area") || document.getElementById("ward-grid");
   grid.querySelectorAll(".bed-card").forEach(el => el.remove());
   beds.forEach(bed => grid.insertAdjacentHTML("beforeend", renderBedCard(bed)));
   grid.querySelectorAll(".bed-card:not(.empty)").forEach(card => {

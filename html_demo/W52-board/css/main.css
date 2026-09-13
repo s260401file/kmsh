@@ -183,61 +183,47 @@ body { flex-direction: column; }
 .ward-grid .bed-card .flag-dot { width: 14px; height: 14px; }
 .ward-grid .dots-row { gap: 3px; min-height: 16px; }
 
-/* ── 左翼上段（R1-R3）── */
-.bed-W52-052 { grid-column: 1; grid-row: 1; }
-.bed-W52-053 { grid-column: 2; grid-row: 1; }
-.bed-W52-055 { grid-column: 3; grid-row: 1; }
-.bed-W52-056 { grid-column: 4; grid-row: 1; }
-.bed-W52-051 { grid-column: 1; grid-row: 2; }
-.bed-W52-050 { grid-column: 1; grid-row: 3; }
+/* ── 改版：病房區（beds-area）依 w52病床.xlsx 配置（8 欄 × 7 列）；單人房佔 2 格（跨 2 列）── */
+.beds-area {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  grid-template-rows: repeat(7, minmax(0, 1fr));
+  gap: 5px;
+  min-height: 0;
+  overflow: hidden;
+}
+.beds-area .bed-card { padding: 4px 4px; gap: 2px; overflow: hidden; }
+.beds-area .bed-card > * { flex-shrink: 0; }
+.beds-area .bed-num  { font-size: 15px; }
+.beds-area .card-row2 { display: flex; align-items: baseline; gap: 3px; flex-wrap: nowrap; overflow: hidden; }
+.beds-area .patient-name { font-size: 22px; font-weight: 700; white-space: nowrap; flex-shrink: 0; }   /* 姓名 22px */
+.beds-area .patient-basic { font-size: 12px; white-space: nowrap; flex-shrink: 0; }   /* 性別/年齡（在姓名右邊）*/
+.beds-area .empty-label  { font-size: 14px; }
+.beds-area .empty-bed-num { font-size: 12px; margin-bottom: 2px; }
+.beds-area .bed-card .flag-dot { width: 12px; height: 12px; }
+.beds-area .dots-row { gap: 2px; min-height: 13px; }
+/* 第 3 排：主治醫師　轉入日期 */
+.card-row3 { display:flex; align-items:baseline; justify-content:space-between; gap:6px; }
+.card-row3 .card-doc   { font-size:16px; font-weight:600; color:var(--text-primary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }   /* 醫師姓名放大 */
+.card-row3 .card-admit { font-size:14px; font-weight:600; font-family:var(--font-num); color:var(--text-secondary); white-space:nowrap; flex-shrink:0; }   /* 住院日期放大 */
+/* 策盟註記：床號右側小標記「策」 */
+.bed-cema { display:inline-flex; align-items:center; justify-content:center; margin-left:4px; width:17px; height:17px; border-radius:4px; background:#B71C1C; color:#fff; font-size:11px; font-weight:800; line-height:1; }
 
-/* ── 左翼中上段（R4-R5）── */
-.bed-W52-039 { grid-column: 1; grid-row: 4; }
-.bed-W52-038 { grid-column: 2; grid-row: 4; }
-.bed-W52-037 { grid-column: 1; grid-row: 5; }
+/* 房型外框（4/3/5 人房）：覆於床卡上僅畫框線＋角落標籤；pointer-events:none 讓點擊穿透到床卡 */
+.beds-area .room-frame { z-index:2; pointer-events:none; border:2.5px solid; border-radius:8px; background:transparent; position:relative; }
+.beds-area .rf-lbl { position:absolute; top:-1px; left:-1px; font-size:11px; font-weight:800; color:#fff; padding:1px 7px; border-radius:6px 0 6px 0; }
+.beds-area .rf-4 { border-color:#2E7D32; } .beds-area .rf-4 .rf-lbl { background:#2E7D32; }
+.beds-area .rf-3 { border-color:#1565C0; } .beds-area .rf-3 .rf-lbl { background:#1565C0; }
+.beds-area .rf-5 { border-color:#AD1457; } .beds-area .rf-5 .rf-lbl { background:#AD1457; }
 
-/* ── 左翼中段（R6-R7）── */
-.bed-W52-036 { grid-column: 1; grid-row: 6; }
-.bed-W52-035 { grid-column: 2; grid-row: 6; }
-.bed-W52-033 { grid-column: 3; grid-row: 6; }
-.bed-W52-032 { grid-column: 1; grid-row: 7; }
-.bed-W52-031 { grid-column: 2; grid-row: 7; }
-
-/* ── 右側雙排 上排（R7，靠窗側）── */
-.bed-W52-002 { grid-column:  8; grid-row: 7; }
-.bed-W52-005 { grid-column:  9; grid-row: 7; }
-.bed-W52-007 { grid-column: 10; grid-row: 7; }
-.bed-W52-009 { grid-column: 11; grid-row: 7; }
-.bed-W52-011 { grid-column: 12; grid-row: 7; }
-.bed-W52-013 { grid-column: 13; grid-row: 7; }
-.bed-W52-016 { grid-column: 14; grid-row: 7; }
-
-/* ── 右側雙排 下排（R8，靠走廊側）── */
-.bed-W52-001 { grid-column:  8; grid-row: 8; }
-.bed-W52-003 { grid-column:  9; grid-row: 8; }
-.bed-W52-006 { grid-column: 10; grid-row: 8; }
-.bed-W52-008 { grid-column: 11; grid-row: 8; }
-.bed-W52-010 { grid-column: 12; grid-row: 8; }
-.bed-W52-012 { grid-column: 13; grid-row: 8; }
-.bed-W52-015 { grid-column: 14; grid-row: 8; }
-
-/* ── 左翼下段（R9-R10）── */
-.bed-W52-030 { grid-column: 1; grid-row: 9; }
-.bed-W52-029 { grid-column: 2; grid-row: 9; }
-.bed-W52-028 { grid-column: 1; grid-row: 10; }
-.bed-W52-027 { grid-column: 2; grid-row: 10; }
-
-/* ── 底排（R11，走廊底端，C6-C14）── */
-/* ── 底排（R11，走廊底端，C6-C14）── */
-.bed-W52-026 { grid-column:  6; grid-row: 11; }
-.bed-W52-025 { grid-column:  7; grid-row: 11; }
-.bed-W52-023 { grid-column:  8; grid-row: 11; }
-.bed-W52-022 { grid-column:  9; grid-row: 11; }
-.bed-W52-021 { grid-column: 10; grid-row: 11; }
-.bed-W52-020 { grid-column: 11; grid-row: 11; }
-.bed-W52-019 { grid-column: 12; grid-row: 11; }
-.bed-W52-018 { grid-column: 13; grid-row: 11; }
-.bed-W52-017 { grid-column: 14; grid-row: 11; }
+/* 各床位置（依 w52病床.xlsx；單人房 017、018–026 佔 2 格＝跨列） */
+.beds-area .bed-W52-001{grid-column:1;grid-row:1} .beds-area .bed-W52-003{grid-column:2;grid-row:1} .beds-area .bed-W52-006{grid-column:3;grid-row:1} .beds-area .bed-W52-008{grid-column:4;grid-row:1} .beds-area .bed-W52-010{grid-column:5;grid-row:1} .beds-area .bed-W52-012{grid-column:6;grid-row:1} .beds-area .bed-W52-015{grid-column:7;grid-row:1}
+.beds-area .bed-W52-017{grid-column:8;grid-row:1/3}
+.beds-area .bed-W52-002{grid-column:1;grid-row:2} .beds-area .bed-W52-005{grid-column:2;grid-row:2} .beds-area .bed-W52-007{grid-column:3;grid-row:2} .beds-area .bed-W52-009{grid-column:4;grid-row:2} .beds-area .bed-W52-011{grid-column:5;grid-row:2} .beds-area .bed-W52-013{grid-column:6;grid-row:2} .beds-area .bed-W52-016{grid-column:7;grid-row:2}
+.beds-area .bed-W52-018{grid-column:1;grid-row:3/5} .beds-area .bed-W52-019{grid-column:2;grid-row:3/5} .beds-area .bed-W52-020{grid-column:3;grid-row:3/5} .beds-area .bed-W52-021{grid-column:4;grid-row:3/5} .beds-area .bed-W52-022{grid-column:5;grid-row:3/5} .beds-area .bed-W52-023{grid-column:6;grid-row:3/5} .beds-area .bed-W52-024{grid-column:7;grid-row:3/5} .beds-area .bed-W52-026{grid-column:8;grid-row:3/5}
+.beds-area .bed-W52-027{grid-column:1;grid-row:5} .beds-area .bed-W52-029{grid-column:2;grid-row:5} .beds-area .bed-W52-031{grid-column:3;grid-row:5} .beds-area .bed-W52-033{grid-column:4;grid-row:5} .beds-area .bed-W52-036{grid-column:5;grid-row:5} .beds-area .bed-W52-038{grid-column:6;grid-row:5} .beds-area .bed-W52-050{grid-column:7;grid-row:5}
+.beds-area .bed-W52-028{grid-column:1;grid-row:6} .beds-area .bed-W52-030{grid-column:2;grid-row:6} .beds-area .bed-W52-032{grid-column:3;grid-row:6} .beds-area .bed-W52-035{grid-column:4;grid-row:6} .beds-area .bed-W52-037{grid-column:5;grid-row:6} .beds-area .bed-W52-039{grid-column:6;grid-row:6}
+.beds-area .bed-W52-051{grid-column:1;grid-row:7} .beds-area .bed-W52-052{grid-column:2;grid-row:7} .beds-area .bed-W52-053{grid-column:3;grid-row:7} .beds-area .bed-W52-055{grid-column:4;grid-row:7} .beds-area .bed-W52-056{grid-column:5;grid-row:7}
 
 /* ── 房型輪廓 ── */
 .room-grp {
@@ -261,16 +247,34 @@ body { flex-direction: column; }
 .rl-three { color: #1565C0; }
 .rl-four  { color: #2E7D32; }
 
-/* ── Stats wrap（透明容器，C4-C7 × R3-R10，flex 垂直居中；與值班表對調至中段）── */
-.stats-wrap {
-  grid-column: 4 / 8;
-  grid-row: 3 / 11;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 5px;
-  padding: 6px 0;
+/* ── 改版：空白保留區（4×2）── */
+.w52-blank {
+  display:flex; align-items:center; justify-content:center;
+  border:1.5px dashed var(--divider); border-radius:8px;
+  color:var(--text-muted); font-size:14px; letter-spacing:1px;
+  background:repeating-linear-gradient(45deg,#fafafa,#fafafa 8px,#f2f2f2 8px,#f2f2f2 16px);
 }
+/* ── 改版：病房統計（右 2 欄，2 格/列）── */
+.stats-col {
+  display:flex; flex-direction:column;
+  background:#fff;
+  border:1.5px solid var(--accent-green); border-radius:10px;
+  overflow:hidden; min-height:0; box-shadow:0 1px 5px rgba(0,0,0,.08);
+}
+/* 標題：與值班表(duty-head)一致的綠底白字橫幅 */
+.stats-col .sc2-title {
+  background: var(--accent-green); color:#fff;
+  font-size:22px; font-weight:800; letter-spacing:4px;
+  padding:7px 12px; flex-shrink:0; text-align:center;
+}
+.stats-col .sc2-body { flex:1; display:flex; flex-direction:column; padding:5px; gap:5px; min-height:0; }
+.stats-col .sc2-row { flex:1; display:flex; gap:5px; min-height:0; }
+.stats-col .sc2-item { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; background:var(--bg-card-empty); border-radius:6px; padding:2px; cursor:default; }
+.stats-col .sc2-item.sc2-empty { background:transparent; }
+.stats-col .sc2-v { font-size:34px; font-weight:900; font-family:var(--font-num); color:var(--text-primary); line-height:1; }
+.stats-col .sc2-l { font-size:15px; color:var(--text-secondary); margin-top:4px; white-space:nowrap; }
+.stats-col .sc2-v.ws-surgery{color:#1565C0} .stats-col .sc2-v.ws-exam{color:#E65100} .stats-col .sc2-v.ws-consult{color:#6A1B9A}
+.stats-col .sc2-v.ws-iso{color:#00838F} .stats-col .sc2-v.ws-dnr{color:#C62828} .stats-col .sc2-v.ws-rrt{color:#AD1457}
 
 .ws-row {
   display: flex;

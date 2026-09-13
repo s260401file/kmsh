@@ -19,7 +19,7 @@ const MOCK_DATA = {
   Beds: [
     // ── 右側雙排 下排（R8，靠走廊側）──
     { BedId:"W52-001", Status:"occupied",
-      Patient:{ PatientName:"林○志", Gender:"M", Age:75,
+      Patient:{ PatientName:"林○志", Gender:"M", Age:75, Cema:true,
         AdmissionDate:"05/08", Diagnosis:"Hip fracture, Post-OP Day 3",
         AttendingDoctor:"張○醫師", PrimaryNurse:"陳○護理師、王○護理師",
         Condition:"穩定", Isolation:"無",
@@ -43,7 +43,7 @@ const MOCK_DATA = {
         Department:"骨科", Notes:"對盤尼西林過敏" } },
 
     { BedId:"W52-006", Status:"isolation",
-      Patient:{ PatientName:"王○豪", Gender:"M", Age:58,
+      Patient:{ PatientName:"王○豪", Gender:"M", Age:58, Cema:true,
         AdmissionDate:"05/10", Diagnosis:"Cellulitis, right lower limb, MRSA",
         AttendingDoctor:"李○醫師", PrimaryNurse:"鄭○護理師",
         Condition:"重症", Isolation:"接觸隔離",
@@ -272,7 +272,7 @@ const MOCK_DATA = {
         MedicalRecordNo:"T001234568", IdNo:"T0******68", BirthDate:"1948/06/17",
         Department:"胸腔內科", Notes:"" } },
 
-    { BedId:"W52-025", Status:"occupied",
+    { BedId:"W52-024", Status:"occupied",
       Patient:{ PatientName:"江○如", Gender:"F", Age:51,
         AdmissionDate:"05/14", Diagnosis:"Mastectomy, Left, Post-OP Day 1",
         AttendingDoctor:"柯○醫師", PrimaryNurse:"蔡○護理師",
