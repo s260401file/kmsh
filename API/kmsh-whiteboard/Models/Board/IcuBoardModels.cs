@@ -51,6 +51,7 @@ public class IcuPatientDto
     public bool Crrt { get; set; }
     public bool Ng { get; set; }
     public bool Restraint { get; set; }          // 身體約束（來源：院方 AICUPHY 即時 API，非自建 overlay）
+    public string? Hca { get; set; }             // 策盟(轉入)來源機構名（來源：院方 Board_HCA 策盟註記≠0）；空/null＝非策盟轉入
     public bool Foley { get; set; }
     public bool Cvc { get; set; }
     public bool FallRisk { get; set; }

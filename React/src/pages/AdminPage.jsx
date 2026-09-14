@@ -1031,8 +1031,10 @@ const ER_BOOLS = [
 ]
 // W52/ICU：手術/檢查/會診 統計改由實際來源(surgery、exam 頁)判定，臨床補充不再設定此三註記
 const WARD_BOOLS_NOSEC = WARD_BOOLS.filter(([k]) => !['surgery', 'exam', 'consult'].includes(k))
+// ICU 無化療（且策盟轉入由院方 Board_HCA 帶入，非後台設定）→ 額外拿掉 chemo；W52/OR 仍保留化療
+const ICU_BOOLS = WARD_BOOLS_NOSEC.filter(([k]) => k !== 'chemo')
 // 依單位取得該站的臨床補充旗標清單
-const boolsForUnit = (u) => u === 'ER' ? ER_BOOLS : (u === 'W52' || u === 'ICU') ? WARD_BOOLS_NOSEC : WARD_BOOLS
+const boolsForUnit = (u) => u === 'ER' ? ER_BOOLS : u === 'ICU' ? ICU_BOOLS : (u === 'W52') ? WARD_BOOLS_NOSEC : WARD_BOOLS
 const COND_OPTS = ['', '穩定', '重症', '危急']
 // 下拉顯示文字（帶等級後綴）；儲存值仍為 穩定/重症/危急（看板 C/B/A 對照與篩選依此值，勿動）
 const COND_LABEL = { '穩定': '穩定-C', '重症': '重症-B', '危急': '危急-A' }

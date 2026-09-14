@@ -234,6 +234,14 @@ public class BoardController : ControllerBase
             .GroupBy(x => x.Hhisnum!.Trim())
             .ToDictionary(g => g.Key, g => string.Equals(g.First().Restraint, "Y", StringComparison.OrdinalIgnoreCase));
 
+        // 策盟(轉入)：院方 Board_HCA 策盟註記 ≠ "0"(且非空)＝自該機構轉入，值即來源機構名。以病歷號對在室病人（不依病房過濾，與 ER 一致）。
+        var hcaByHis = (await _board.GetHcaAsync(ct))
+            .Where(h => !string.IsNullOrWhiteSpace(h.Hhisnum))
+            .GroupBy(h => h.Hhisnum!.Trim())
+            .ToDictionary(g => g.Key,
+                          g => g.Select(x => (x.HcaMark ?? "").Trim()).FirstOrDefault(m => m != "" && m != "0"));
+        string? HcaOf(BoardBedItem o) => (!string.IsNullOrWhiteSpace(o.Hhisnum) && hcaByHis.TryGetValue(o.Hhisnum!.Trim(), out var m)) ? m : null;
+
         // 責任護理師：由「勾床配對」（依床號，今日，AssignType=主護）決定；班別再對應當日「三班護理師排程」。
         var today = DateTime.Today.ToString("yyyy-MM-dd");
         var assigns = (await _staff.GetBedAssignAsync("ICU", today, "主護", false, ct))
@@ -329,6 +337,7 @@ public class BoardController : ControllerBase
                         Dnr = e?.Dnr ?? false, Ventilator = e?.Ventilator ?? false, Crrt = nf.renal,   // Crrt＝洗腎徽章：Board_Note 為主
                         Ng = e?.Ng ?? false, Foley = e?.Foley ?? false, Cvc = e?.CVC ?? false,
                         Restraint = !string.IsNullOrWhiteSpace(o.Hhisnum) && restraintByHis.TryGetValue(o.Hhisnum!.Trim(), out var rst) && rst,  // 約束：AICUPHY（4F）
+                        Hca = HcaOf(o),   // 策盟(轉入)：Board_HCA 策盟註記(≠0)之來源機構名；空/null=非策盟轉入
 
                         FallRisk = e?.FallRisk ?? false, Dependency = e?.Dependency, Confidential = e?.Confidential ?? false,
                         NoTreatment = nf.noTreat, Npo = nf.npo, Allergy = e?.Allergy ?? false,   // 禁治療／禁食：Board_Note 為主

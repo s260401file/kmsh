@@ -100,7 +100,7 @@ function buildBadges(patient) {
   if (patient.npo)                                      b.push('禁食')
   if (patient.allergy)                                  b.push('過敏')
   if (patient.rrt)                                      b.push('RRT')
-  if (patient.chemo)                                    b.push('化療')
+  if (patient.hca)                                      b.push('策盟')
   if (patient.transport === '輪椅')                     b.push('輪椅')
   else if (patient.transport === '推床')                b.push('推床')
   if (patient.oxygen)                                   b.push('氧氣設備')
@@ -220,6 +220,7 @@ function BedModal({ bed, onClose }) {
             <div className="modal-field"><div className="field-label">隔離狀態</div><div className="field-value">{p.isolation || '無'}</div></div>
             <div className="modal-field"><div className="field-label">DNR</div><div className="field-value">{p.dnr ? '是 ✓' : '否'}</div></div>
             <div className="modal-field"><div className="field-label">動向狀態</div><div className="field-value">{MOVEMENT_LABEL[p.movement] || p.movement || '—'}</div></div>
+            <div className="modal-field"><div className="field-label">策盟</div><div className="field-value">{p.hca || '無'}</div></div>
           </div>
           <div className="modal-row">
             <div className="modal-field"><div className="field-label">氣管內管</div><div className="field-value">{p.ventilator ? '使用中 ✓' : '無'}</div></div>
@@ -240,7 +241,7 @@ const FILTER_BADGES = [
   {f:'依賴L3',cls:'badge-依賴L3',label:'依賴L3'},{f:'隔離',cls:'badge-隔離',label:'隔離'},
   {f:'保密',cls:'badge-保密',label:'保密'},{f:'禁治療',cls:'badge-禁治療',label:'禁治療'},
   {f:'禁食',cls:'badge-禁食',label:'禁食'},{f:'過敏',cls:'badge-過敏',label:'過敏'},
-  {f:'RRT',cls:'badge-RRT',label:'RRT'},{f:'化療',cls:'badge-化療',label:'化療'},
+  {f:'RRT',cls:'badge-RRT',label:'RRT'},{f:'策盟',cls:'badge-策盟',label:'策盟'},
   {f:'輪椅',cls:'badge-輪椅',label:'輪椅'},{f:'推床',cls:'badge-推床',label:'推床'},
   {f:'氧氣設備',cls:'badge-氧氣設備',label:'氧氣設備'},{f:'洗腎',cls:'badge-洗腎',label:'洗腎'},
   {f:'約束',cls:'badge-約束',label:'約束'},
