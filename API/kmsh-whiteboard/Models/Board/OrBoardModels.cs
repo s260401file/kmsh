@@ -11,6 +11,8 @@ public class OrBoardResponse
 {
     [JsonPropertyName("Count")]   public int Count { get; set; }    // 今日總台數
     [JsonPropertyName("Version")] public long Version { get; set; }
+    [JsonPropertyName("DataStale")] public bool DataStale { get; set; }        // 本地快照過舊 → 前台顯示「資料可能延遲」
+    [JsonPropertyName("SyncedAt")]  public string? SyncedAt { get; set; }
     [JsonPropertyName("Rooms")]   public List<OrRoomDto> Rooms { get; set; } = new();
 }
 

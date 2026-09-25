@@ -8,6 +8,8 @@ public class IcuBoardResponse
 {
     public IcuHospitalInfo HospitalInfo { get; set; } = new();
     public long Version { get; set; }
+    public bool DataStale { get; set; }        // 本地快照過舊 → 前台頁首顯示「資料可能延遲」
+    public string? SyncedAt { get; set; }       // 來源 endpoint 中最舊的同步時間（yyyy-MM-dd HH:mm:ss）
     public List<IcuBedDto> Beds { get; set; } = new();
 }
 

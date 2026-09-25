@@ -8,6 +8,8 @@ tags: [kmsh, API, 院方]
 ## 已知端點（真正可用，白板實際使用中）
 > 全部 **`POST http://10.20.111.84:8088/api/v1/<端點>`**、header `x-api-key: cf0b5fadd56e4362a4fb`、body **`{}`**（僅 Board_bed 帶 `{"病房":...}`）。回 `{ success, data[] }`；字串補空白（含全形）需 trim。實作見 `Services/BoardApiService.cs`。★2026-07 起新增的端點皆**容錯**（失敗回空清單、不中斷看板）。
 
+> **★2026-09 起：顯示端不再即時呼叫這些 API。** 改由 [[00-WhiteboardSync總覽|WhiteboardSync]] 定時（high 1 分 / mid 3 分）直讀 DB2_DUMP 落地成本地 `dbo.Sync_Snapshot`，白板 API 以 `Services/BoardDbService.cs` 讀本地快照還原成相同 DTO（DI 已由 `BoardApiService` 換成 `BoardDbService`；HTTP 版保留供回滾）。院方短暫不通→顯示最後快照＋頁首「資料可能延遲」，不再空白。這些 endpoint 現為「同步來源」（等同各 SQL，見 `Document/電子白板 sql 查詢/`）。
+
 | 端點 | 用途 | body | 主要用在 | 筆記 |
 |------|------|------|------|------|
 | `Board_bed` | **住院在床清單＋基本**（+2026-07 負責醫師/科別/診斷/**動態**/用藥）| `{"病房":"W52"/"AICU"/"CICU"}` | W52/ICU 病室動態 | [[Board_bed]] ★ |

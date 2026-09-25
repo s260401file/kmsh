@@ -13,6 +13,8 @@ public class ErBoardResponse
     [JsonPropertyName("DeceasedCount")] public int DeceasedCount { get; set; }  // 死亡類別(Board_ER_TypeE，不佔床)筆數
     [JsonPropertyName("Deceased")] public List<ErDeceasedDto> Deceased { get; set; } = new();  // 死亡類別明細（點「死亡」彈窗用）
     [JsonPropertyName("Version")] public long Version { get; set; }
+    [JsonPropertyName("DataStale")] public bool DataStale { get; set; }        // 本地快照過舊 → 前台顯示「資料可能延遲」
+    [JsonPropertyName("SyncedAt")]  public string? SyncedAt { get; set; }
     [JsonPropertyName("Beds")]    public List<ErBedDto> Beds { get; set; } = new();
 }
 

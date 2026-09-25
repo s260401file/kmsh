@@ -10,6 +10,8 @@ public class WardBoardResponse
 {
     [JsonPropertyName("HospitalInfo")] public WardHospitalInfo HospitalInfo { get; set; } = new();
     [JsonPropertyName("Version")]      public long Version { get; set; }
+    [JsonPropertyName("DataStale")]    public bool DataStale { get; set; }        // 本地快照過舊 → 前台顯示「資料可能延遲」
+    [JsonPropertyName("SyncedAt")]     public string? SyncedAt { get; set; }
     [JsonPropertyName("Beds")]         public List<WardBedDto> Beds { get; set; } = new();
 }
 

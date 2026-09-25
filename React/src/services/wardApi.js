@@ -22,6 +22,11 @@ export async function getBoard(unitCode) {
   return handle(await apiFetch(`${BASE}/${unitCode.toLowerCase()}`))
 }
 
+// 輕量：各站頁首「資料可能延遲」提示（只讀本地快照同步時間，不建 census）
+export async function getBoardStatus(unitCode) {
+  return handle(await apiFetch(`${BASE}/${unitCode.toLowerCase()}/status`))
+}
+
 // ── 臨床補充層 CRUD（後台用）──────────────────────────────────────
 // GET /api/Board/{unitCode}/ext?includeAll= → 該單位臨床補充列
 export async function getExt(unitCode, includeAll = true) {

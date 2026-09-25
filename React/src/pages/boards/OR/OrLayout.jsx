@@ -6,6 +6,7 @@ import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useClock } from '../../../hooks/useClock'      // 即時日期/時間
 import { useMarquee } from '../../../hooks/useMarquee'   // 跑馬燈公告文字
 import { useUnitInfo } from '../../../hooks/useUnitInfo'  // 頁首單位資訊（主任/護理，自建可後台編輯）
+import { useBoardStatus } from '../../../hooks/useBoardStatus' // 本地快照新鮮度（頁首「資料可能延遲」提示）
 import OrViewGate from './OrViewGate'                    // 檢視密碼鍵盤門檻
 import MOCK_DATA from './mockData'
 import './OrLayout.css'
@@ -27,6 +28,7 @@ const TABS = [
 
 export default function OrLayout() {
   const { date, time } = useClock()
+  const { dataStale, syncedAt } = useBoardStatus('OR')   // 本地快照過舊 → 頁首顯示提示
   const marquee = useMarquee('OR', '2026/05/24 手術室公告：今日共安排 7 台手術，OR-05 MVR 預計 13:00 完成，ICU 床位已預留。')
   const info = useUnitInfo('OR')   // 頁首主任/護理（自建）＋檢視密碼設定
   // 有存過紀錄→用存的值（空白即空白、不套 mock）；從未設定(null)→用預設。整格皆空則不顯示。
@@ -72,6 +74,12 @@ export default function OrLayout() {
           </div>}
         </div>
         <div className="header-right">
+          {dataStale && (
+            <div className="data-stale-badge" title={syncedAt ? '最後同步：' + syncedAt : undefined}
+                 style={{ alignSelf: 'center', color: '#8a5a00', background: '#fff3cd', border: '1px solid #ffd666', borderRadius: 6, padding: '2px 10px', fontSize: 14, fontWeight: 700, whiteSpace: 'nowrap', marginBottom: 2 }}>
+              ⚠ 資料可能延遲
+            </div>
+          )}
           <div className="clock-date">{date}</div>
           <div className="clock-time">{time}</div>
         </div>

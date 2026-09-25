@@ -168,18 +168,12 @@ var boardOptions = builder.Configuration
     .GetSection(BoardApiOptions.Section)
     .Get<BoardApiOptions>() ?? new BoardApiOptions();
 
-builder.Services
-    .AddHttpClient<IBoardApiService, BoardApiService>(client =>
-    {
-        if (!string.IsNullOrWhiteSpace(boardOptions.BaseUrl))
-            client.BaseAddress = new Uri(boardOptions.BaseUrl.TrimEnd('/') + "/");
-    })
-    .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
-    {
-        ServerCertificateCustomValidationCallback = boardOptions.IgnoreSslErrors
-            ? HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
-            : null
-    });
+// 顯示端改讀本地快照（WhiteboardSync 定時把院方各 endpoint 落地成 JSON）：
+// IBoardApiService 由 HTTP 版(BoardApiService) 換成本地快照版(BoardDbService)，Controller 免改。
+// 院方短暫不通只影響背景同步，顯示端永遠以最後一次快照呈現。HTTP 版原始碼保留供回滾。
+builder.Services.AddSingleton<SyncSnapshotStore>();
+builder.Services.AddScoped<IBoardApiService, BoardDbService>();
+_ = boardOptions;   // 保留設定解析（回滾用）；目前顯示端不再即時呼叫院方 API
 
 var app = builder.Build();
 

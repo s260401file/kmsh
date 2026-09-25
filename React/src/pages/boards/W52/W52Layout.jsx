@@ -5,6 +5,7 @@ import { Outlet, NavLink } from 'react-router-dom'
 import { useClock } from '../../../hooks/useClock'       // 時鐘 hook：回傳目前日期與時間字串
 import { useMarquee } from '../../../hooks/useMarquee'   // 跑馬燈 hook：回傳該站要捲動的公告文字
 import { useUnitInfo } from '../../../hooks/useUnitInfo'  // 頁首單位資訊（主任/護理，自建可後台編輯）
+import { useBoardStatus } from '../../../hooks/useBoardStatus' // 本地快照新鮮度（頁首「資料可能延遲」提示）
 import MOCK_DATA from './mockData'                        // 本站假資料（床位…），待接 API
 import './W52Layout.css'
 
@@ -25,6 +26,7 @@ const TABS = [
 
 export default function W52Layout() {
   const { date, time } = useClock()
+  const { dataStale, syncedAt } = useBoardStatus('W52')   // 本地快照過舊 → 頁首顯示提示
   // 跑馬燈內容：優先取後台設定的 W52 公告，第二參數為無資料時的預設文字
   const marquee = useMarquee('W52', '院內感染管制週宣導：請確實執行手部衛生，進出隔離病房務必穿戴適當防護裝備。')
   const info = useUnitInfo('W52')   // 頁首主任/護理（自建）
@@ -44,6 +46,12 @@ export default function W52Layout() {
           {(hLbl || hNam) && <div className="staff-block"><div className="staff-label">{hLbl}</div><div className="staff-name">{hNam}</div></div>}
         </div>
         <div className="header-right">
+          {dataStale && (
+            <div className="data-stale-badge" title={syncedAt ? '最後同步：' + syncedAt : undefined}
+                 style={{ alignSelf: 'center', color: '#8a5a00', background: '#fff3cd', border: '1px solid #ffd666', borderRadius: 6, padding: '2px 10px', fontSize: 14, fontWeight: 700, whiteSpace: 'nowrap', marginBottom: 2 }}>
+              ⚠ 資料可能延遲
+            </div>
+          )}
           <div className="clock-date">{date}</div>
           <div className="clock-time">{time}</div>
         </div>

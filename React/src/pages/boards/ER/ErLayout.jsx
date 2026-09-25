@@ -5,6 +5,7 @@ import { NavLink, Outlet } from 'react-router-dom'
 import { useClock } from '../../../hooks/useClock'      // 即時時鐘 hook（提供 date / time）
 import { useMarquee } from '../../../hooks/useMarquee'   // 跑馬燈公告 hook
 import { useUnitInfo } from '../../../hooks/useUnitInfo'  // 頁首單位資訊（主任/護理，自建可後台編輯）
+import { useBoardStatus } from '../../../hooks/useBoardStatus' // 本地快照新鮮度（頁首「資料可能延遲」提示）
 import MOCK_DATA from './mockData'                       // 假資料來源（頁首備援等）
 import './ErLayout.css'
 
@@ -20,6 +21,7 @@ const TABS = [
 
 export default function ErLayout() {
   const { date, time } = useClock()
+  const { dataStale, syncedAt } = useBoardStatus('ER')   // 本地快照過舊 → 頁首顯示提示
   // 跑馬燈：第一參數為站別代碼，第二參數為預設公告文字
   const marquee = useMarquee('ER', '2026/05/24 急診分流提醒：目前二級重症病人待床中，ICU 床位有限，請優先處理急救室病人轉出作業。')
   const info = useUnitInfo('ER')   // 頁首主任/護理（自建）
@@ -45,6 +47,12 @@ export default function ErLayout() {
           </div>}
         </div>
         <div className="header-right">
+          {dataStale && (
+            <div className="data-stale-badge" title={syncedAt ? '最後同步：' + syncedAt : undefined}
+                 style={{ alignSelf: 'center', color: '#8a5a00', background: '#fff3cd', border: '1px solid #ffd666', borderRadius: 6, padding: '2px 10px', fontSize: 14, fontWeight: 700, whiteSpace: 'nowrap', marginBottom: 2 }}>
+              ⚠ 資料可能延遲
+            </div>
+          )}
           <div className="clock-date">{date}</div>
           <div className="clock-time">{time}</div>
         </div>

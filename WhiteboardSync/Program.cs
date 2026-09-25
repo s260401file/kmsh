@@ -14,6 +14,8 @@ using WhiteboardSync.Jobs;
 int exitCode = 0;
 bool noPause = args.Contains("--no-pause", StringComparer.OrdinalIgnoreCase);
 int pauseSeconds = int.TryParse(GetArg(args, "--pause-seconds"), out var ps) ? ps : 15;
+// 分頻群組：high（約1分）/ mid（約3分）/ or（OrSurgery，維持原排程）/ all（全部，預設）
+string group = (GetArg(args, "--group") ?? "all").Trim().ToLowerInvariant();
 
 using var mutex = new Mutex(false, @"Global\WhiteboardSync", out _);
 bool held = false;
@@ -33,10 +35,12 @@ try
 
     using var log = new Logger(cfg.LogDir);
 
-    // 目前僅 OR 一個 job；日後可加其他單位 job 進此清單。
-    var jobs = new IEtlJob[] { new OrSurgeryJob() };
+    // 全部 job：OrSurgery（or）＋ 10 個院方 endpoint 快照（high/mid）。依 --group 篩選子集。
+    IEnumerable<IEtlJob> allJobs = new IEtlJob[] { new OrSurgeryJob() }.Concat(WhiteboardSync.Jobs.SnapshotJobs.All());
+    var jobs = (group == "all" ? allJobs : allJobs.Where(j => string.Equals(j.Group, group, StringComparison.OrdinalIgnoreCase))).ToArray();
+    if (jobs.Length == 0) { Console.Error.WriteLine($"--group={group} 沒有對應的 job（可用：high/mid/or/all）。"); MaybePause(noPause, pauseSeconds); return 2; }
 
-    log.Info($"===== 開始：{jobs.Length} 個 job（窗={cfg.WindowMonthsBack} 個月）=====");
+    log.Info($"===== 開始：group={group}，{jobs.Length} 個 job（窗={cfg.WindowMonthsBack} 個月）=====");
     var sw = System.Diagnostics.Stopwatch.StartNew();
     int failed = 0;
 

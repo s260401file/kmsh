@@ -27,11 +27,13 @@ public class BoardController : ControllerBase
     private readonly IMasterDataRepository _master;
     private readonly IOnCallRepository _oncall;
     private readonly IMemoryCache _cache;
+    private readonly SyncSnapshotStore _sync;
     private readonly ILogger<BoardController> _logger;
 
-    public BoardController(IBoardApiService board, IWardRepository ward, IPersonnelRepository staff, ILdapAuthenticator ldap, ILdapAdminService ldapAdmin, IJwtTokenService jwt, IOrReportRepository orReport, IMasterDataRepository master, IOnCallRepository oncall, IMemoryCache cache, ILogger<BoardController> logger)
+    public BoardController(IBoardApiService board, IWardRepository ward, IPersonnelRepository staff, ILdapAuthenticator ldap, ILdapAdminService ldapAdmin, IJwtTokenService jwt, IOrReportRepository orReport, IMasterDataRepository master, IOnCallRepository oncall, IMemoryCache cache, SyncSnapshotStore sync, ILogger<BoardController> logger)
     {
         _board = board;
+        _sync = sync;
         _ward = ward;
         _staff = staff;
         _ldap = ldap;
@@ -42,6 +44,33 @@ public class BoardController : ControllerBase
         _oncall = oncall;
         _cache = cache;
         _logger = logger;
+    }
+
+    /// <summary>某站本地快照新鮮度：任一來源 endpoint 逾門檻即視為「資料可能延遲」；回傳最舊同步時間。</summary>
+    private async Task<(bool stale, string? syncedAt)> SyncFreshnessAsync(CancellationToken ct, params string[] endpoints)
+    {
+        var map = await _sync.GetAllSyncedAtAsync(ct);
+        var stale = SyncSnapshotStore.AnyStale(map, DateTime.Now, endpoints);
+        var oldest = SyncSnapshotStore.OldestSyncedAt(map, endpoints);
+        return (stale, oldest?.ToString("yyyy-MM-dd HH:mm:ss"));
+    }
+
+    /// <summary>某站來源 endpoint（供新鮮度判斷）。</summary>
+    private static string[] StatusEndpoints(string unitCode) => unitCode.ToUpperInvariant() switch
+    {
+        "ICU" => new[] { "Board_bed", "AICUPHY", "Board_Examine", "Board_HCA", "Board_Note" },
+        "W52" => new[] { "Board_bed", "Board_Examine", "Board_Note" },
+        "ER"  => new[] { "Board_ER", "Board_HCA", "Board_ER_TypeE" },
+        "OR"  => new[] { "OR_SYSTEM", "Board_OR" },
+        _     => Array.Empty<string>()
+    };
+
+    /// <summary>輕量：各站頁首「資料可能延遲」提示用（不建 census，只讀本地快照同步時間）。</summary>
+    [HttpGet("{unitCode}/status")]
+    public async Task<IActionResult> GetStatus(string unitCode, CancellationToken ct = default)
+    {
+        var (stale, syncedAt) = await SyncFreshnessAsync(ct, StatusEndpoints(unitCode));
+        return Ok(new { dataStale = stale, syncedAt });
     }
 
     /// <summary>
@@ -212,6 +241,7 @@ public class BoardController : ControllerBase
             });
         }
 
+        (resp.DataStale, resp.SyncedAt) = await SyncFreshnessAsync(ct, "Board_bed", "Board_Examine", "Board_Note");
         return Ok(resp);
     }
 
@@ -355,6 +385,7 @@ public class BoardController : ControllerBase
 
         AddFloor(4, ICU_4F, occ4);
         AddFloor(3, ICU_3F, occ3);
+        (resp.DataStale, resp.SyncedAt) = await SyncFreshnessAsync(ct, "Board_bed", "AICUPHY", "Board_Examine", "Board_HCA", "Board_Note");
         return Ok(resp);
     }
 
@@ -558,6 +589,7 @@ public class BoardController : ControllerBase
             });
         }
 
+        (resp.DataStale, resp.SyncedAt) = await SyncFreshnessAsync(ct, "Board_ER", "Board_HCA", "Board_ER_TypeE");
         return Ok(resp);
     }
 
@@ -719,6 +751,7 @@ public class BoardController : ControllerBase
             }
             resp.Rooms.Add(dto);
         }
+        (resp.DataStale, resp.SyncedAt) = await SyncFreshnessAsync(ct, "OR_SYSTEM", "Board_OR");
         return Ok(resp);
     }
 

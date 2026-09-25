@@ -8,6 +8,9 @@ public interface IEtlJob
     /// <summary>job 名稱（記錄用）。</summary>
     string Name { get; }
 
+    /// <summary>分頻群組（供 --group 篩選）：high／mid／or。</summary>
+    string Group { get; }
+
     /// <summary>執行一輪（連線已開啟，由呼叫端 using 釋放）。</summary>
     void Run(SqlConnection src, SqlConnection dst, AppConfig cfg, Logger log);
 }

@@ -10,6 +10,7 @@ namespace WhiteboardSync.Jobs;
 public sealed class OrSurgeryJob : IEtlJob
 {
     public string Name => "OrSurgery";
+    public string Group => "or";
 
     // 清洗後要寫入的資料欄（順序＝DataTable/staging/MERGE 一致；不含 Id/IsActive/UpdatedAt/CreatedAt）
     private static readonly string[] Cols =

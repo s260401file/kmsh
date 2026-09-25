@@ -4,12 +4,35 @@ tags: [kmsh, WhiteboardSync, 資料同步, ETL, MOC]
 # WhiteboardSync 總覽（本地清洗同步工具）
 
 ## 一句話
-獨立 .NET 8 console ETL 工具，把資訊室同步庫 **DB2_DUMP** 的資料**清洗**後落地到**本地 `Whiteboard` DB** 的整齊表，供白板/報表**直接讀取**（快、穩、資料已清乾淨），不必即時遠端 join、也不必經 Board_* API。目前**只做 OR**（`dbo.OrSurgery`），結構預留日後加其他單位。
+獨立 .NET 8 console ETL 工具，把資訊室同步庫 **DB2_DUMP** 的資料落地到**本地 `Whiteboard` DB**，供白板**直接讀取**，不必即時經院方 Board_* API。分兩類 job：**(1) OrSurgery**（清洗版 `dbo.OrSurgery`，OR 手術清單頁用）；**(2) 全 endpoint 快照**（`dbo.Sync_Snapshot`，四站顯示端資料來源，2026-09 起）。
 
 - 專案：`C:\WorkDir\Nursing Whiteboard\WhiteboardSync`（比照 [[DbSync-同步策略|DbSync]] 寫法）。
 - 跑在**本機 101**（可同時連 DB2_DUMP 與本地 `.\SQLEXPRESS`）。每次執行做**一輪** ETL 後結束。
-- 排程：Windows 工作排程器 **每 10 分鐘**（工作名 `WhiteboardSync`，SYSTEM 帳戶）。
-- 資料鏈：高榮 DB2 →（Java dump＋[[DbSync-同步策略|DbSync]]）→ **DB2_DUMP** →（**本工具**清洗）→ 本地 `OrSurgery` → 白板 OR「手術清單」頁（`GET /api/Board/or/surgerylist`）。
+- 排程：Windows 工作排程器（OrSurgery 每 10 分；快照 high 每 1 分、mid 每 3 分）。
+- 資料鏈：高榮 DB2 →（Java dump＋[[DbSync-同步策略|DbSync]]）→ **DB2_DUMP** →（**本工具**）→ 本地表 → 白板 API 直讀。
+
+## ★ 2026-09 擴充：全 endpoint 本地快照（顯示端脫離院方 API）
+**動機**：顯示端原本每次即時 HTTP 呼叫院方 Board_* API（`http://10.20.111.84:8088/api/v1`）；院方 API／網路當下不通就整片空白。改為**定時把各 endpoint 落地成本地快照，顯示端一律讀本地**——院方短暫不通只會讓資料舊一點、不會空白。依賴時機從「顯示當下」移到「背景同步當下」。
+
+**同步端（本工具）**
+- 通用 `Jobs/SnapshotJob.cs`：對 DB2_DUMP 跑某 endpoint 的 SQL → reader 轉 JSON 陣列（欄名＝SQL 原輸出名）→ upsert 進單表 **`dbo.Sync_Snapshot`**（`Endpoint` PK、`Payload` NVARCHAR(MAX)、`RowCount`、`SyncedAt`、`DurationMs`）。**抽取/序列化失敗就不 upsert → 保留上一次快照**。
+- `Jobs/SnapshotJobs.cs`：10 個 endpoint 設定（SQL 逐字取自 `Document/電子白板 sql 查詢/`）。Endpoint 鍵沿用 API 路徑名。
+  - **high（每約 1 分）**：`Board_bed`、`Board_ER`、`Board_ER_TypeE`、`OR_SYSTEM`
+  - **mid（每約 3 分）**：`Board_OR`、`AICUPHY`、`Board_Examine`（**限 W52/AICU/CICU**，24,655→約 4,581 列）、`Board_AICUUD`、`Board_HCA`、`Board_Note`
+  - 未納入：`病人禁治療.txt`（程式未使用）。
+- `Program.cs` 加 `--group high|mid|or|all`（`or`＝既有 OrSurgery；`all`＝全部，backstop）。`IEtlJob` 加 `Group`。
+
+**讀取端（白板 API，`kmsh-whiteboard`）**
+- `Services/SyncSnapshotStore.cs`：讀 `Sync_Snapshot`（payload/syncedAt）＋新鮮度（high 逾 3 分、mid 逾 9 分視為延遲）。
+- `Services/BoardDbService.cs : IBoardApiService`：讀 JSON→還原成**與原院方 HTTP 版完全相同的 10 種 DTO**（SQL 欄名→屬性對映在此）。`Program.cs` DI 由 HTTP 版 `BoardApiService` **換成** `BoardDbService`（HTTP 版原始碼保留供回滾）。**`BoardController` 免改**。
+- 四站回應加 `DataStale`/`SyncedAt`；另 `GET /api/Board/{unit}/status`（輕量，不建 census）供頁首提示。
+- 已實測四站（w52/icu/er/or）輸出與 live HTTP 版**完全一致**（床數、策盟、檢查等旗標）。
+
+**前台**：`hooks/useBoardStatus.js` + 四站 `*Layout.jsx` 頁首（原時鐘處）條件顯示琥珀色「⚠ 資料可能延遲」，正常隱藏、滑過顯示最後同步時間。
+
+**新鮮度門檻**（`SyncSnapshotStore`）：high 3 分、mid 9 分（約排程間隔 ×3）。
+
+> 注意：`dbo.KMSH_institution`（策盟對照）在 DB2_DUMP、資訊室維護、可 SELECT，但登入帳號 `db2_88` **看不到其 metadata → 程式勿用 `OBJECT_ID` 判斷其存在**。
 
 ## 建置（Build / 發佈）
 - 語言/套件：.NET 8、`Microsoft.Data.SqlClient`（來源與目標皆 SQL Server，含 `SqlBulkCopy`）。
@@ -41,20 +64,23 @@ tags: [kmsh, WhiteboardSync, 資料同步, ETL, MOC]
 3. **排程**：Windows 工作排程器每 10 分鐘（見下指令）。exit code：`0` 成功、`1` 失敗、`2` 參數錯。
 
 ## 指令（Commands）
-### 建立每 10 分鐘排程（系統管理員視窗）
-PowerShell：
+### 建立三個排程（系統管理員視窗）
+OrSurgery（每 10 分，`--group or`）＋ 快照 high（每 1 分）＋ 快照 mid（每 3 分）：
 ```powershell
 $exe = "C:\WorkDir\Nursing Whiteboard\WhiteboardSync\publish\WhiteboardSync.exe"
-$a = New-ScheduledTaskAction -Execute $exe -Argument "--no-pause" -WorkingDirectory (Split-Path $exe)
-$t = New-ScheduledTaskTrigger -Once -At (Get-Date) -RepetitionInterval (New-TimeSpan -Minutes 10)
+$dir = Split-Path $exe
 $p = New-ScheduledTaskPrincipal -UserId "SYSTEM" -LogonType ServiceAccount -RunLevel Highest
-$s = New-ScheduledTaskSettingsSet -MultipleInstances IgnoreNew -StartWhenAvailable -ExecutionTimeLimit (New-TimeSpan -Minutes 8)
-Register-ScheduledTask -TaskName "WhiteboardSync" -Action $a -Trigger $t -Principal $p -Settings $s -Force
+function Reg($name,$grp,$min,$limit){
+  $a = New-ScheduledTaskAction -Execute $exe -Argument "--group $grp --no-pause" -WorkingDirectory $dir
+  $t = New-ScheduledTaskTrigger -Once -At (Get-Date) -RepetitionInterval (New-TimeSpan -Minutes $min)
+  $s = New-ScheduledTaskSettingsSet -MultipleInstances IgnoreNew -StartWhenAvailable -ExecutionTimeLimit (New-TimeSpan -Minutes $limit)
+  Register-ScheduledTask -TaskName $name -Action $a -Trigger $t -Principal $p -Settings $s -Force
+}
+Reg "WhiteboardSync"      "or"   10 8    # 既有：OR 手術清單（改帶 --group or，避免重複跑 high/mid）
+Reg "WhiteboardSync-High" "high" 1  2    # 病床/急診/當日病故/OR流程
+Reg "WhiteboardSync-Mid"  "mid"  3  3    # 刀房/約束/檢查/抗生素/策盟/Note
 ```
-cmd（一行版）：
-```
-schtasks /Create /TN "WhiteboardSync" /TR "\"C:\WorkDir\Nursing Whiteboard\WhiteboardSync\publish\WhiteboardSync.exe\" --no-pause" /SC MINUTE /MO 10 /RU SYSTEM /RL HIGHEST /F
-```
+> 舊的 `WhiteboardSync` 若原本無參數（跑 all），改成上面的 `--group or` 即可；high/mid 為新增。
 
 ### 操作 / 監看
 ```powershell
@@ -73,6 +99,12 @@ SELECT CONVERT(char(7),OpDate,23) ym, COUNT(*) FROM dbo.OrSurgery GROUP BY CONVE
 SELECT * FROM dbo.OrSurgery WHERE OpDate >= '2026-06-01' AND OpDate < '2026-07-01' ORDER BY OpDate, OpTime;
 ```
 白板消費：OR 看板底部**第 7 頁籤「手術清單」**讀 `GET /api/Board/or/surgerylist?from=&to=`（預設本月；上/下個月/今日/自訂範圍）。
+
+全 endpoint 快照 `dbo.Sync_Snapshot`（一列＝一個 endpoint 的整份 JSON）：
+```sql
+SELECT Endpoint, [RowCount], LEN(Payload) AS PayloadLen, SyncedAt, DurationMs FROM dbo.Sync_Snapshot ORDER BY Endpoint;
+-- 各站顯示端讀本地快照：GET /api/Board/{w52|icu|er|or}（回應含 DataStale/SyncedAt）；輕量新鮮度：GET /api/Board/{unit}/status
+```
 
 ## 移除
 ```powershell
