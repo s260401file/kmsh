@@ -122,6 +122,6 @@ Unregister-ScheduledTask -TaskName "WhiteboardSync" -Confirm:$false      # 移�
 - **去重 185 筆**：同 `(日期,房,病歷號,時間)` 多列（多為同一台刀多術式明細行）先取一筆；待資訊室確認「多列＝多術式或重複輸入」再定案（是否合併術式/健保碼）。
 - **狀態碼**（`ORSTATUS` 31/32/82…）代碼表待院方 → 82 暫視為「取消」。
 - **診斷**目前僅 ICD 代碼（無自由文字）；**補充/刷手/流動/麻醉護士**屬護理 overlay，未串。
-- **下一步（另案）**：API `or/monthly`（直讀 DB2_DUMP 的慢速雛形）可改讀本地 `OrSurgery`。
+- **✅ 已完成（2026-09-25）**：API `or/monthly`（OR 月報）已改讀本地 `dbo.OrSurgery`（`OrReportRepository`），不再於請求當下連 DB2_DUMP。註：讀去重後清洗表，台數與「手術清單」頁一致；抽取窗＝WindowMonthsBack（預設 6 個月），更舊月份需加大同步窗。
 
 相關：[[00-總覽]] · [[DbSync-同步策略]] · [[OR排程系統-高榮欄位需求]] · [[系統架構]] · [[待辦清單]]
