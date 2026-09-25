@@ -32,6 +32,10 @@ tags: [kmsh, WhiteboardSync, 資料同步, ETL, MOC]
 
 **新鮮度門檻**（`SyncSnapshotStore`）：high 3 分、mid 9 分（約排程間隔 ×3）。
 
+**並行設計（重要）**：分頻後 high/mid/or 各自一個排程、可**同時**各跑一個行程，故：
+- Mutex 名稱**含 group**（`Global\WhiteboardSync-{group}`）：只防同 group 自我重疊，不同 group 並行——否則慢的 OrSurgery(約4分) 會卡住每分鐘的 high，Board_bed/ER 每 10 分就 stale。
+- `Logger` 開檔用 **`FileShare.ReadWrite` + `FileMode.Append`**：多行程共寫同一日誌檔不會崩潰（原本 `StreamWriter(append:true)` 預設 `FileShare.Read`，第二個行程開檔失敗→未處理例外→整個 task 崩潰、LastResult=0xE04xxxxx）。
+
 > 注意：`dbo.KMSH_institution`（策盟對照）在 DB2_DUMP、資訊室維護、可 SELECT，但登入帳號 `db2_88` **看不到其 metadata → 程式勿用 `OBJECT_ID` 判斷其存在**。
 
 ## 建置（Build / 發佈）

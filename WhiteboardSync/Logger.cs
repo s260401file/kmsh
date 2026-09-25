@@ -10,7 +10,10 @@ public sealed class Logger : IDisposable
     {
         Directory.CreateDirectory(logDir);
         var file = Path.Combine(logDir, $"whiteboardsync-{DateTime.Now:yyyyMMdd}.log");
-        _writer = new StreamWriter(file, append: true) { AutoFlush = true };
+        // FileShare.ReadWrite：分頻後 high/mid/or 會同時各跑一個行程、共寫同一日誌檔，
+        // 需允許多行程同時開檔附加（否則第二個行程開檔失敗→未處理例外→崩潰）。FileMode.Append 讓每次寫入落在檔尾。
+        var fs = new FileStream(file, FileMode.Append, FileAccess.Write, FileShare.ReadWrite);
+        _writer = new StreamWriter(fs) { AutoFlush = true };
     }
 
     public void Info(string msg) => Write("INFO", msg);

@@ -17,7 +17,9 @@ int pauseSeconds = int.TryParse(GetArg(args, "--pause-seconds"), out var ps) ? p
 // 分頻群組：high（約1分）/ mid（約3分）/ or（OrSurgery，維持原排程）/ all（全部，預設）
 string group = (GetArg(args, "--group") ?? "all").Trim().ToLowerInvariant();
 
-using var mutex = new Mutex(false, @"Global\WhiteboardSync", out _);
+// 每個 group 各自一把鎖：僅防「同 group 上一輪未跑完就再觸發」，不同 group（high/mid/or）可並行，
+// 避免慢的 OrSurgery(約4分) 卡住每分鐘的 high 快照。
+using var mutex = new Mutex(false, @"Global\WhiteboardSync-" + group, out _);
 bool held = false;
 try
 {
