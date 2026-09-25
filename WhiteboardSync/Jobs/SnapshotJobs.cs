@@ -1,7 +1,7 @@
 namespace WhiteboardSync.Jobs;
 
 /// <summary>
-/// 10 個院方 Board_* endpoint 的快照設定（SQL 逐字取自 Document/電子白板 sql 查詢/）。
+/// 10 個院方 Board_* endpoint 的快照設定（SQL 逐字取自 Document/05-SQL查詢/）。
 /// 分頻：high＝約 1 分（即時性最高）；mid＝約 3 分。Endpoint 鍵沿用 API 路徑名，供白板 API 對應還原。
 /// 檢查(Board_Examine)僅同步白板會用到的病房（W52/AICU/CICU）。
 /// </summary>

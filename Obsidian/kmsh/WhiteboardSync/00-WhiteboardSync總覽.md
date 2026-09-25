@@ -16,7 +16,7 @@ tags: [kmsh, WhiteboardSync, 資料同步, ETL, MOC]
 
 **同步端（本工具）**
 - 通用 `Jobs/SnapshotJob.cs`：對 DB2_DUMP 跑某 endpoint 的 SQL → reader 轉 JSON 陣列（欄名＝SQL 原輸出名）→ upsert 進單表 **`dbo.Sync_Snapshot`**（`Endpoint` PK、`Payload` NVARCHAR(MAX)、`RowCount`、`SyncedAt`、`DurationMs`）。**抽取/序列化失敗就不 upsert → 保留上一次快照**。
-- `Jobs/SnapshotJobs.cs`：10 個 endpoint 設定（SQL 逐字取自 `Document/電子白板 sql 查詢/`）。Endpoint 鍵沿用 API 路徑名。
+- `Jobs/SnapshotJobs.cs`：10 個 endpoint 設定（SQL 逐字取自 `Document/05-SQL查詢/`）。Endpoint 鍵沿用 API 路徑名。
   - **high（每約 1 分）**：`Board_bed`、`Board_ER`、`Board_ER_TypeE`、`OR_SYSTEM`
   - **mid（每約 3 分）**：`Board_OR`、`AICUPHY`、`Board_Examine`（**限 W52/AICU/CICU**，24,655→約 4,581 列）、`Board_AICUUD`、`Board_HCA`、`Board_Note`
   - 未納入：`病人禁治療.txt`（程式未使用）。
